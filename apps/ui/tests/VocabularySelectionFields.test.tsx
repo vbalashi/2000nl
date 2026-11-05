@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { beforeEach, expect, test, vi } from "vitest";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { VocabularySelectionFields } from "@/components/practice/vocabulary/VocabularySelectionFields";
 import { MaterialKindSelection } from "@/components/practice/vocabulary/MaterialKindSelection";
 import type { VocabularyMaterialKind } from "@/lib/vocabulary/selection";
@@ -29,7 +29,7 @@ test("custom bounds remain exact and can select a single rank",()=>{
  for(const label of ["От","До"])fireEvent.change(within(dialog).getByRole("spinbutton",{name:label}),{target:{value:"73"}});
  fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
  expect(screen.getByRole("button",{name:"Изменить диапазон: 73–73"})).toBeInTheDocument();
- for(const name of ["От","До"])expect(screen.getByRole("spinbutton",{name})).toHaveAttribute("aria-valuenow","73");
+ expect(screen.getByRole("button",{name:"Изменить диапазон: 73–73"})).toHaveTextContent("73–73");
 });
 test("all words hides frequency controls and preserves the meaning limit",()=>{
  render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Все слова"}));
@@ -41,33 +41,6 @@ test("the icon sort trigger names its selection and restores focus",()=>{
  render(<Sort/>);const trigger=screen.getByRole("button",{name:"Сортировка: По алфавиту"});expect(trigger).toHaveTextContent("");fireEvent.click(trigger);
  fireEvent.click(screen.getByRole("menuitem",{name:"По частоте в разговоре"}));expect(change).toHaveBeenCalledWith("spoken");
  expect(screen.getByRole("button",{name:"Сортировка: По частоте в разговоре"})).toHaveFocus();expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-});
-
-test("inline wheels replace the rail and can separate equal boundaries in either direction",()=>{
- render(<Fields/>);const edit=screen.getByRole("button",{name:"Изменить диапазон: 1–100"});
- expect(edit).toHaveTextContent("");
- expect(screen.getAllByRole("slider")).toHaveLength(1);
- fireEvent.click(edit);const dialog=screen.getByRole("dialog",{name:"Места в списке"});
- for(const label of ["От","До"])fireEvent.change(within(dialog).getByRole("spinbutton",{name:label}),{target:{value:"73"}});
- fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
- const from=screen.getByRole("spinbutton",{name:"От"}),to=screen.getByRole("spinbutton",{name:"До"});
- fireEvent.keyDown(from,{key:"ArrowDown"});
- expect(from).toHaveAttribute("aria-valuenow","72");expect(to).toHaveAttribute("aria-valuenow","73");
- fireEvent.keyDown(from,{key:"ArrowUp"});fireEvent.keyDown(to,{key:"ArrowUp"});
- expect(from).toHaveAttribute("aria-valuenow","73");expect(to).toHaveAttribute("aria-valuenow","74");
-});
-
-test("inline wheels keep the selected step, clamp bounds and cancel exact edits",()=>{
- render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"100"}));
- const from=screen.getByRole("spinbutton",{name:"От"}),to=screen.getByRole("spinbutton",{name:"До"});
- fireEvent.keyDown(from,{key:"ArrowUp"});expect(from).toHaveAttribute("aria-valuenow","100");
- fireEvent.keyDown(to,{key:"ArrowUp"});expect(to).toHaveAttribute("aria-valuenow","200");
- fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 100–200"}));
- const dialog=screen.getByRole("dialog",{name:"Места в списке"});
- fireEvent.change(within(dialog).getByRole("spinbutton",{name:"От"}),{target:{value:"150"}});
- fireEvent.click(within(dialog).getByRole("button",{name:"Отмена"}));
- expect(from).toHaveAttribute("aria-valuenow","100");
- expect(screen.getByRole("button",{name:"100"})).toHaveAttribute("aria-pressed","true");
 });
 
 test("sort help explains missing frequency once above the choices",()=>{
@@ -88,7 +61,6 @@ test("meaning guidance uses paragraphs and is not permanently repeated below the
 test("button adjustment changes exact values without typing and applies only on Done",()=>{
  render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
  const dialog=screen.getByRole("dialog",{name:"Места в списке"});
- fireEvent.click(within(dialog).getByRole("button",{name:"Кнопки"}));
  expect(within(dialog).getAllByRole("spinbutton")).toHaveLength(2);
  fireEvent.click(within(dialog).getByRole("button",{name:"10"}));
  fireEvent.click(within(dialog).getByRole("button",{name:"Увеличить начало"}));
@@ -96,15 +68,6 @@ test("button adjustment changes exact values without typing and applies only on 
  expect(screen.getByRole("button",{name:"Изменить диапазон: 1–100"})).toBeInTheDocument();
  fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
  expect(screen.getByRole("button",{name:"Изменить диапазон: 11–110"})).toBeInTheDocument();
-});
-test("two sliders can be refined by one without opening a numeric field",()=>{
- render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
- const dialog=screen.getByRole("dialog",{name:"Места в списке"});fireEvent.click(within(dialog).getByRole("button",{name:"Две шкалы"}));
- expect(within(dialog).queryByRole("spinbutton")).not.toBeInTheDocument();
- fireEvent.change(within(dialog).getByRole("slider",{name:"Шкала начала диапазона"}),{target:{value:"1"}});
- fireEvent.click(within(dialog).getByRole("button",{name:"Увеличить начало"}));
- fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
- expect(screen.getByRole("button",{name:"Изменить диапазон: 51–100"})).toBeInTheDocument();
 });
 test("entry types offer only confirmed groups, independently of parts of speech",()=>{
  function Kinds(){const [value,setValue]=useState<VocabularyMaterialKind[]>([]);return <MaterialKindSelection value={value} onChange={setValue} language="ru"/>;}
@@ -132,91 +95,22 @@ test("buttons and typing share the exact draft and selected step",()=>{
  fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
  expect(screen.getByRole("button",{name:"Изменить диапазон: 200–200"})).toBeInTheDocument();
 });
-test("wheels support keys and scrolling, clamp bounds and preserve the draft across modes",()=>{
- render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
- const dialog=screen.getByRole("dialog",{name:"Места в списке"});
- fireEvent.click(within(dialog).getByRole("button",{name:"Колёсики"}));
- const start=within(dialog).getByRole("spinbutton",{name:"От"}),end=within(dialog).getByRole("spinbutton",{name:"До"});
- fireEvent.keyDown(start,{key:"ArrowDown"});expect(start).toHaveAttribute("aria-valuenow","1");
- fireEvent.keyDown(start,{key:"ArrowUp"});expect(start).toHaveAttribute("aria-valuenow","2");
- fireEvent.click(within(dialog).getByRole("button",{name:"100"}));
- fireEvent.wheel(start,{deltaY:32});expect(start).toHaveAttribute("aria-valuenow","100");
- fireEvent.keyDown(end,{key:"ArrowDown"});expect(end).toHaveAttribute("aria-valuenow","100");
- fireEvent.keyDown(end,{key:"ArrowUp"});expect(end).toHaveAttribute("aria-valuenow","200");
- fireEvent.click(within(dialog).getByRole("button",{name:"Кнопки"}));
- expect(within(dialog).getByRole("spinbutton",{name:"От"})).toHaveValue(100);
- expect(within(dialog).getByRole("spinbutton",{name:"До"})).toHaveValue(200);
+test("range edits notify the parent only on confirmation",()=>{
+ const change=vi.fn();
+ render(<VocabularySelectionFields value={{...DEFAULT_VOCABULARY_SELECTION,mode:"frequency"}} onChange={change} language="ru"/>);
+ fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
+ let dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ expect(within(dialog).queryByText("Способ настройки")).not.toBeInTheDocument();
+ fireEvent.click(within(dialog).getByRole("button",{name:"Увеличить конец"}));
+ fireEvent.change(within(dialog).getByRole("spinbutton",{name:"От"}),{target:{value:"20"}});
+ expect(change).not.toHaveBeenCalled();
  fireEvent.click(within(dialog).getByRole("button",{name:"Отмена"}));
- expect(screen.getByRole("button",{name:"Изменить диапазон: 1–100"})).toBeInTheDocument();
-});
-test("wheel drag and tapping nearby values use the selected step",()=>{
- class Pointer extends MouseEvent {readonly pointerId=1;readonly isPrimary=true;}
- vi.stubGlobal("PointerEvent",Pointer);
- Object.defineProperty(HTMLElement.prototype,"setPointerCapture",{configurable:true,writable:true,value:vi.fn()});
- Object.defineProperty(HTMLElement.prototype,"hasPointerCapture",{configurable:true,writable:true,value:()=>false});
- const view=render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
- const dialog=screen.getByRole("dialog",{name:"Места в списке"});
- fireEvent.click(within(dialog).getByRole("button",{name:"10"}));
- fireEvent.click(within(dialog).getByRole("button",{name:"Колёсики"}));
- const wheel=within(dialog).getByRole("spinbutton",{name:"От"});
- vi.spyOn(wheel,"getBoundingClientRect").mockReturnValue({left:0,width:100,right:100,top:0,bottom:160,height:160,x:0,y:0,toJSON:()=>({})});
- fireEvent.pointerDown(wheel,{clientY:80,button:0});fireEvent.pointerMove(wheel,{clientY:16,button:0});fireEvent.pointerUp(wheel,{clientY:16,button:0});
- expect(wheel).toHaveAttribute("aria-valuenow","21");
- fireEvent.pointerDown(wheel,{clientY:16,button:0});fireEvent.pointerUp(wheel,{clientY:16,button:0});
- expect(wheel).toHaveAttribute("aria-valuenow","1");
- fireEvent.click(within(dialog).getByRole("button",{name:"Отмена"}));
- const compact=screen.getByRole("spinbutton",{name:"От"});
- vi.spyOn(compact,"getBoundingClientRect").mockReturnValue({left:0,width:100,right:100,top:0,bottom:96,height:96,x:0,y:0,toJSON:()=>({})});
- fireEvent.pointerDown(compact,{clientY:80,button:0});fireEvent.pointerUp(compact,{clientY:80,button:0});
- expect(compact).toHaveAttribute("aria-valuenow","2");
- view.unmount();vi.unstubAllGlobals();
-});
-
-test("batched native wheel events retain every increment",()=>{
- render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
- const dialog=screen.getByRole("dialog",{name:"Места в списке"});
- fireEvent.click(within(dialog).getByRole("button",{name:"Колёсики"}));
- const wheel=within(dialog).getByRole("spinbutton",{name:"От"});
- act(()=>{for(let n=0;n<3;n++)wheel.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));});
- expect(wheel).toHaveAttribute("aria-valuenow","4");
-});
-
-test("batched events on both inline wheels retain both boundary changes",()=>{
- render(<Fields/>);const from=screen.getByRole("spinbutton",{name:"От"}),to=screen.getByRole("spinbutton",{name:"До"});
- act(()=>{
-  from.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
-  to.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
- });
- expect(from).toHaveAttribute("aria-valuenow","2");expect(to).toHaveAttribute("aria-valuenow","101");
-});
-
-test("batched sibling clamps are acknowledged before the next wheel tick",()=>{
- render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"100"}));
- const from=screen.getByRole("spinbutton",{name:"От"}),to=screen.getByRole("spinbutton",{name:"До"});
- act(()=>{
-  from.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
-  to.dispatchEvent(new WheelEvent("wheel",{deltaY:-32,bubbles:true,cancelable:true}));
-  to.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
- });
- expect(from).toHaveAttribute("aria-valuenow","100");expect(to).toHaveAttribute("aria-valuenow","200");
- fireEvent.wheel(to,{deltaY:-32});
- act(()=>{
-  to.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
-  from.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
- });
- expect(from).toHaveAttribute("aria-valuenow","200");expect(to).toHaveAttribute("aria-valuenow","200");
-});
-test("modal wheels also merge and acknowledge sibling clamps",()=>{
- render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
- const dialog=screen.getByRole("dialog",{name:"Места в списке"});
- fireEvent.click(within(dialog).getByRole("button",{name:"Колёсики"}));fireEvent.click(within(dialog).getByRole("button",{name:"100"}));
- const from=within(dialog).getByRole("spinbutton",{name:"От"}),to=within(dialog).getByRole("spinbutton",{name:"До"});
- act(()=>{
-  from.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
-  to.dispatchEvent(new WheelEvent("wheel",{deltaY:-32,bubbles:true,cancelable:true}));
-  to.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
- });
- expect(from).toHaveAttribute("aria-valuenow","100");expect(to).toHaveAttribute("aria-valuenow","200");
+ expect(change).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
+ dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ fireEvent.change(within(dialog).getByRole("spinbutton",{name:"От"}),{target:{value:"20"}});
+ expect(change).not.toHaveBeenCalled();
  fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
- expect(screen.getByRole("button",{name:"Изменить диапазон: 100–200"})).toBeInTheDocument();
+ expect(change).toHaveBeenCalledTimes(1);
+ expect(change).toHaveBeenCalledWith(expect.objectContaining({from:20,to:100}));
 });

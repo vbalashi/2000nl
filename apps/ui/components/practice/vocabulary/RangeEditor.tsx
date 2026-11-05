@@ -6,8 +6,6 @@ import { frequencyRangeSteps, validFrequencyRange } from "@/lib/vocabulary/selec
 import { RangeStepControl } from "./RangeStepControl";
 import { NumberWheel } from "./NumberWheel";
 import { DialogSurface } from "../ui/DialogSurface";
-import { SegmentedControl } from "../ui/SegmentedControl";
-import { BuilderChoice } from "../builder/BuilderChoice";
 import { IconAction } from "../ui/IconAction";
 import controls from "../builder/builderControls.module.css";
 import workspace from "../library/libraryWorkspace.module.css";
@@ -22,7 +20,8 @@ const copy={
 };
 export function RangeEditor({initialFrom,initialTo,language,title,onCancel,onApply}:{initialFrom:number;initialTo:number;language:OnboardingLanguage;title:string;onCancel:()=>void;onApply:(from:number,to:number)=>void}){
  const id=useId(),t=copy[language];
- const [mode,setMode]=useState<Mode>("buttons"),[step,setStep]=useState(1);
+ const [mode]=useState<Mode>("buttons");
+ const [step,setStep]=useState(1);
  const [draft,setDraft]=useState({from:String(initialFrom),to:String(initialTo)});
  const pending=useRef(draft);pending.current=draft;
  const from=Number(draft.from),to=Number(draft.to),valid=validFrequencyRange(from,to);
@@ -47,7 +46,6 @@ export function RangeEditor({initialFrom,initialTo,language,title,onCancel,onApp
  return <DialogSurface onDismiss={onCancel} aria-labelledby={`${id}-title`} className={s.rangeDialog}>
   <form onSubmit={event=>{event.preventDefault();if(valid)onApply(from,to);}}>
    <h2 id={`${id}-title`}>{title}</h2>
-   <SegmentedControl standard label={t.mode}>{(["buttons","sliders","wheel"] as const).map(option=><BuilderChoice key={option} active={mode===option} onClick={()=>setMode(option)}>{t[option]}</BuilderChoice>)}</SegmentedControl>
    <>
     <RangeStepControl value={step} onChange={setStep} label={t.step}/>
     <div className={mode==="wheel"&&valid?s.wheelColumns:s.boundaries}>{(["from","to"] as const).map(boundary=><div key={boundary} className={controls.rangeGroup} role="group" aria-label={labels[boundary]}>
