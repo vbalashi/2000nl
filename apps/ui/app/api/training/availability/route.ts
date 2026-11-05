@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   try {
     const { data, error } = await auth.supabase.rpc("read_training_recipe_availability_v1", {
       p_user_id: auth.user.id, ...availabilityRpcScope(recipe),
-    });
+    }).abortSignal(request.signal);
     const result = error ? null : parseTrainingAvailability(data);
     return result ? jsonNoStore(result) : jsonNoStore({ error: "training_availability_unavailable" }, 503);
   } catch { return jsonNoStore({ error: "training_availability_unavailable" }, 503); }

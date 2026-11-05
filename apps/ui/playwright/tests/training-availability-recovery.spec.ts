@@ -29,3 +29,20 @@ for(const profile of [{name:'desktop-light',width:1280,height:900,dark:false},{n
  await expect(strip.getByRole('alert')).toHaveCount(0);await expect(strip.getByRole('status')).toBeEmpty();
  await expect.poll(()=>limitedCalls).toBe(2);
 });
+test('renaming a saved training reuses counts for its unchanged normalized recipe',async({page})=>{
+ await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:'en'}}});
+ const draft={family:'meaning',scenarioId:'understanding',modes:['word-to-definition'],cardFilter:'both',listValue:'curated:list-attribution',materialMode:'collection',newReviewRatio:2,dateWindow:'all',sourceValue:'all',sessionSize:5};
+ let snapshot={revision:1,document:{schemaVersion:1,mainTrainingId:'saved-70',trainings:[{id:'saved-70',name:'Frequency test',languageCode:'nl',draft}]}};
+ await page.route('**/api/training/setups',async route=>{if(route.request().method()==='PUT'){snapshot={revision:snapshot.revision+1,document:route.request().postDataJSON().document};}await route.fulfill({json:snapshot});});
+ let calls=0;
+ await page.route('**/api/training/availability',async route=>{calls++;await route.fulfill({json:{dueToday:1,totalReviews:4,newCards:6,studyDay:new Date().toISOString().slice(0,10),timezone:'Europe/Amsterdam',asOf:new Date().toISOString()}});});
+ await page.reload();await page.getByRole('button',{name:'Edit Frequency test',exact:true}).first().click();
+ await expect(page.getByRole('region',{name:'Available for training'}).getByRole('status')).toBeEmpty();
+ expect(calls).toBe(1);
+ await page.getByRole('button',{name:'Training name',exact:true}).click();
+ await page.getByRole('textbox',{name:'Training name'}).fill('Renamed frequency');
+ await page.getByRole('button',{name:'Save changes',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Renamed frequency',exact:true})).toBeVisible();
+ await expect(page.getByRole('region',{name:'Available for training'}).getByRole('status')).toBeEmpty();
+ expect(calls).toBe(1);
+});

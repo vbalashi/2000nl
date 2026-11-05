@@ -293,7 +293,9 @@ export function TrainingTodaySetup({
     enabled:!startPending && !queuedLanguageStart && !sourceReferenceBlocked && account.status === "ready" && material.status === "ready" &&
       Boolean(availabilityRecipe && availabilityRecipe.languageCode === trainingLanguageCode && !pendingLanguage && !isTrainingSetupPaused(availabilityRecipe.draft) && isTrainingSetupMaterialAvailable(availabilityRecipe.draft,lists,dictionaries)),
     debounceMs:screen === "setup"?250:0,
-    refresh:JSON.stringify([account.snapshot.revision,accountMaterial?.snapshot?.revision,ownedSession?.id,ownedSession?.completed,stats.reviewCardsDone,stats.newCardsToday,translationTargetLanguageCode])});
+    // Recipe identity already tracks saved setup changes; renames and main-selection
+    // writes do not change the candidate pool. Material and learning revisions do.
+    refresh:JSON.stringify([accountMaterial?.snapshot?.revision,ownedSession?.id,ownedSession?.completed,stats.reviewCardsDone,stats.newCardsToday,translationTargetLanguageCode])});
   const availability = availabilityRecipe ? {trainingId:selectedTrainingId??"current-setup",status:availabilityResult.status === "ready"?"ready" as const:availabilityResult.status === "error"?"error" as const:"loading" as const,
     dueToday:availabilityResult.status === "ready"?availabilityResult.value.dueToday:null,
     totalReviews:availabilityResult.status === "ready"?availabilityResult.value.totalReviews:null,
