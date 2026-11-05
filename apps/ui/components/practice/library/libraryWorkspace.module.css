@@ -267,3 +267,10 @@
     display: none;
   }
 }
+
+.scopeRow { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.scopeSummary { display:flex; align-items:center; gap:6px; min-width:0; }
+.scopeSummary > .scope { min-width:0; overflow-wrap:anywhere; }
+.scopeRow > .scope { flex:none; }
+.trainSelection { width:28px; height:28px; padding:0; border:0; border-radius:8px; background:transparent; color:var(--practice-text-muted); }
+.trainSelection:hover { background:var(--practice-surface-hover); color:var(--practice-text-secondary); }

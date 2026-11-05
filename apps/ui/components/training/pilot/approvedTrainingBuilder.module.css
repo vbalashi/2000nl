@@ -417,3 +417,6 @@
 @media (max-width: 360px) {
   .sessionSummary { min-block-size: 6.4em; }
 }
+
+.filterFields { display:grid; gap:24px; }
+.filterFields > .field { margin:0; }

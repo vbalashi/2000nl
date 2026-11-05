@@ -1,1 +1,21 @@
-.strip{position:relative;width:100%;max-width:720px;margin:0 auto 18px;padding-right:22px;box-sizing:border-box}.help{position:absolute;right:0;top:0}.strip p{margin-top:8px}.strip dl dd{font-size:var(--practice-overview-count-size-short)}
+.strip {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  max-width:720px;
+  margin:0 auto 12px;
+  padding:12px 18px;
+  box-sizing:border-box;
+  background:linear-gradient(120deg,var(--practice-hero),var(--practice-hero-end));
+  border:1px solid var(--practice-border);
+  border-radius:20px;
+}
+.help { display:flex; align-items:center; }
+.strip dl > div { gap:4px; }
+.strip dl dd { font-size:var(--practice-overview-count-size-short); }
+.strip p { grid-column:1/-1; margin-top:4px; }
+@media(max-width:430px) {
+  .strip { padding:10px 14px; }
+}

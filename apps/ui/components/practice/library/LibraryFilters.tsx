@@ -128,7 +128,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
           </div>)}</div>}
 
           </BuilderSection>}
-          <VocabularySelectionFields section="meanings" language={locale} value={vocabulary} onChange={vocabulary=>update({vocabulary})}/>
+          <div className={f.meanings}><VocabularySelectionFields section="meanings" language={locale} value={vocabulary} onChange={vocabulary=>update({vocabulary})}/></div>
           </div></div>
         </div>
         <div className={f.page} ref={node=>{node?.toggleAttribute("inert",page === "main");}} aria-hidden={page === "main"}>

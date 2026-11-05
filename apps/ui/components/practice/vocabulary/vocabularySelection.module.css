@@ -34,3 +34,8 @@
 .rangeValue.rangeValue{min-width:28px;min-height:28px;justify-content:center}
 .inlineRange .stepChoice{margin-top:8px}
 .inlineRange .wheelColumns{margin-top:12px}
+
+.meaningHeader { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 16px; }
+.meaningLabel, .meaningSelection { font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui); }
+.meaningLabel { color:var(--practice-text-muted); }
+.meaningSelection { color:var(--practice-text-secondary); margin-left:auto; text-align:right; }

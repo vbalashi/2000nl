@@ -1,4 +1,5 @@
 "use client";
+import {IconAction} from "@/components/practice/ui/IconAction";
 import {LibrarySortControl} from "@/components/practice/library/LibrarySortControl";
 import {librarySelectionToTraining,type LibraryTrainingHandoff} from "@/lib/vocabulary/libraryTrainingHandoff";
 import {vocabularySelectionActive} from "@/lib/vocabulary/selection";
@@ -17,7 +18,7 @@ import { LibraryCategoryResults } from "./LibraryCategoryResults";
 import type { LibraryMaterialScope } from "@/lib/platform/librarySearchScope";
 import { LibraryPresentationContext } from "@/components/practice/library/LibraryPresentationContext";
 import { LIBRARY_PAGE_SIZE } from "@/lib/platform/libraryPagination";
-import { SlidersHorizontal, ChevronLeft, ChevronRight, FileText, Folder } from "lucide-react";
+import { SlidersHorizontal, ChevronLeft, ChevronRight, FileText, Folder, Play } from "lucide-react";
 import { LibraryResultList, LibraryResultRow } from "@/components/practice/library/LibraryResultList";
 import { AccountLibraryFilters } from "@/components/practice/library/AccountLibraryFilters";
 import {SelectedCollectionSourceStatus,collectionSourceMessage,type CollectionSourceRead} from '@/components/library/sharing/SelectedCollectionSourceStatus';
@@ -589,24 +590,35 @@ export function DictionarySearchTab({
         </div>
 
 
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div
-            className={
-              workspace.scope
-            }
-          >
-            {languageDisplayName(interfaceLanguage, searchLanguage)} ·{" "}
-            {searchState.labelId ? <Folder size={14} aria-hidden="true" className="inline align-text-bottom"/> : useViewedListFilter ? <FileText size={14} aria-hidden="true" className="inline align-text-bottom"/> : null}{" "}{resultScopeLabel}
-            {searchState.entryFilters?.parts.map(part=>
-              <React.Fragment key={part}> · {getUiMessages(interfaceLanguage).builder.parts[LIBRARY_PART_LABELS[part]]}
-                {part === "noun" && searchState.entryFilters?.article ? ` (${searchState.entryFilters.article})` : ""}
-              </React.Fragment>)}
+        <div className={workspace.scopeRow}>
+          <div className={workspace.scopeSummary}>
+            <div className={workspace.scope}>
+              {languageDisplayName(interfaceLanguage, searchLanguage)} ·{" "}
+              {searchState.labelId ? <Folder size={14} aria-hidden="true" className="inline align-text-bottom"/> : useViewedListFilter ? <FileText size={14} aria-hidden="true" className="inline align-text-bottom"/> : null}{" "}{resultScopeLabel}
+              {searchState.entryFilters?.parts.map(part=>
+                <React.Fragment key={part}> · {getUiMessages(interfaceLanguage).builder.parts[LIBRARY_PART_LABELS[part]]}
+                  {part === "noun" && searchState.entryFilters?.article ? ` (${searchState.entryFilters.article})` : ""}
+                </React.Fragment>)}
+            </div>
+            {onTrainSelection && searchMaterialReady && (
+              <IconAction
+                className={workspace.trainSelection}
+                label={{ru:"Тренировать эти слова",en:"Train these words",nl:"Deze woorden oefenen"}[interfaceLanguage]}
+                title={{ru:"Настроить тренировку по этим словам",en:"Set up training with these words",nl:"Training instellen met deze woorden"}[interfaceLanguage]}
+                onClick={() => onTrainSelection(librarySelectionToTraining({
+                  languageCode: searchLanguage,
+                  filters: searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS,
+                  dictionaryId, labelId: searchState.labelId, labelName: searchState.labelName,
+                  collection: useViewedListFilter && viewedList ? {id:viewedList.id,type:viewedList.type} : undefined,
+                  query, category: categorySearchActive ? searchState.searchCategory ?? "headwords" : undefined,
+                }))}
+              ><Play size={14} aria-hidden="true"/></IconAction>
+            )}
           </div>
           {categorySearchActive && <span ref={setCategoryCountHost} className={workspace.scope}/> }
           {!categorySearchActive && hasCurrentResults && <span className={workspace.scope}>{formatUiMessage(getUiMessages(interfaceLanguage).librarySearch.foundCount,{count:number(!groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length))})}</span>}
         </div>
 
-        {onTrainSelection&&searchMaterialReady&&<button type="button" className={workspace.filterButton} style={{width:"auto",paddingInline:10}} onClick={()=>onTrainSelection(librarySelectionToTraining({languageCode:searchLanguage,filters:searchState.entryFilters??EMPTY_LIBRARY_ENTRY_FILTERS,dictionaryId,labelId:searchState.labelId,labelName:searchState.labelName,collection:useViewedListFilter&&viewedList?{id:viewedList.id,type:viewedList.type}:undefined,query,category:categorySearchActive?searchState.searchCategory??"headwords":undefined}))}>{{ru:"Тренировать эти слова",en:"Train these words",nl:"Deze woorden oefenen"}[interfaceLanguage]}</button>}
         {categorySearchActive && <div ref={setCategoryTabsHost}/> }
 
         {useViewedListFilter&&selectedSourceRead&&<SelectedCollectionSourceStatus read={selectedSourceRead} locale={interfaceLanguage}/>}
