@@ -1,10 +1,9 @@
-export type OnboardingLanguage = "en" | "ru" | "nl";
+import { getInterfaceCatalog } from "@/lib/i18n/catalog";
+import { defaultInterfaceLanguage, isInterfaceLanguage, matchInterfaceLanguage, type InterfaceLanguage } from "@/lib/i18n/registry";
 
-export function isOnboardingLanguage(
-  value: unknown,
-): value is OnboardingLanguage {
-  return value === "en" || value === "ru" || value === "nl";
-}
+/** Legacy name retained for callers and saved preferences. */
+export type OnboardingLanguage = InterfaceLanguage;
+export const isOnboardingLanguage = isInterfaceLanguage;
 
 export type OnboardingTranslation = {
   onboarding: {
@@ -30,70 +29,36 @@ export type OnboardingTranslation = {
 };
 
 const ONBOARDING_LANG_KEY = "onboarding_language";
+export const INTERFACE_LANGUAGE_EVENT = "2000nl:interface-language";
 
-// Import translations statically for bundling
-import en from "@/locales/en.json";
-import ru from "@/locales/ru.json";
-import nl from "@/locales/nl.json";
-
-const translations: Record<OnboardingLanguage, OnboardingTranslation> = {
-  en: en as OnboardingTranslation,
-  ru: ru as OnboardingTranslation,
-  nl: nl as OnboardingTranslation,
-};
-
-export function getStoredOnboardingLanguage(): OnboardingLanguage | null {
+export function getStoredOnboardingLanguage(): InterfaceLanguage | null {
   if (typeof window === "undefined") return null;
   try {
     const saved = window.localStorage.getItem(ONBOARDING_LANG_KEY);
-    if (saved === "en" || saved === "ru" || saved === "nl") {
-      return saved;
+    return isInterfaceLanguage(saved) ? saved : null;
+  } catch { return null; }
+}
+export function getOnboardingLanguage(): InterfaceLanguage {
+  return getStoredOnboardingLanguage() ?? defaultInterfaceLanguage;
+}
+
+/** Detect from browser preferences only; learning and translation choices are independent. */
+export function detectOnboardingLanguage(_translationLang?: string | null): InterfaceLanguage {
+  if (typeof window === "undefined") return defaultInterfaceLanguage;
+  try {
+    for (const locale of navigator.languages?.length ? navigator.languages : [navigator.language]) {
+      const language = matchInterfaceLanguage(locale);
+      if (language) return language;
     }
-  } catch {
-    // Ignore storage errors
-  }
-  return null;
+  } catch { /* Use the default if browser preferences are unavailable. */ }
+  return defaultInterfaceLanguage;
 }
 
-export function getOnboardingLanguage(): OnboardingLanguage {
-  return getStoredOnboardingLanguage() ?? "en";
-}
-
-// Auto-detect onboarding language from system/user preferences
-export function detectOnboardingLanguage(
-  translationLang?: string | null
-): OnboardingLanguage {
-  if (typeof window === "undefined") return "en";
-
-  // 1. Try translation language setting
-  if (translationLang === "ru" || translationLang === "nl") {
-    return translationLang;
-  }
-
-  // 2. Try system language
-  try {
-    const systemLang = navigator.language.toLowerCase();
-    if (systemLang.startsWith("ru")) return "ru";
-    if (systemLang.startsWith("nl")) return "nl";
-  } catch {
-    // Ignore errors
-  }
-
-  // 3. Fall back to English
-  return "en";
-}
-
-export function setOnboardingLanguage(lang: OnboardingLanguage): void {
+export function setOnboardingLanguage(lang: InterfaceLanguage): void {
   if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(ONBOARDING_LANG_KEY, lang);
-  } catch {
-    // Ignore storage errors
-  }
+  try { window.localStorage.setItem(ONBOARDING_LANG_KEY, lang); } catch { /* The in-memory choice still applies. */ }
+  window.dispatchEvent(new CustomEvent(INTERFACE_LANGUAGE_EVENT, { detail: lang }));
 }
-
-export function getOnboardingTranslation(
-  lang: OnboardingLanguage
-): OnboardingTranslation {
-  return translations[lang];
+export function getOnboardingTranslation(lang: InterfaceLanguage): OnboardingTranslation {
+  return getInterfaceCatalog(lang);
 }

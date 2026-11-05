@@ -1,3 +1,4 @@
+import { getInterfaceCatalog } from "@/lib/i18n/catalog";
 import { checkAdmission } from "@/lib/admission/server";
 import crypto from "node:crypto";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
@@ -7,15 +8,16 @@ import {
   jsonNoStore,
 } from "@/lib/platform/serverSupabase";
 
-export const CONNECT_SCOPES = {
-  "platform:read": "Read your 2000NL dictionary and learning state",
-  "platform:write": "Update your 2000NL learning progress",
-  offline_access: "Stay connected after closing the browser",
-} as const;
-
-export type ConnectedClientScope = keyof typeof CONNECT_SCOPES;
-
-const CONNECT_SCOPE_SET = new Set(Object.keys(CONNECT_SCOPES));
+// Permission identities belong to the authorization contract, not localization.
+const CONNECT_SCOPE_IDS = ["platform:read", "platform:write", "offline_access"] as const;
+export type ConnectedClientScope = typeof CONNECT_SCOPE_IDS[number];
+const scopeCopy = getInterfaceCatalog("en").features.connect.scopes;
+export const CONNECT_SCOPES: Record<ConnectedClientScope, string> = {
+  "platform:read": scopeCopy["platform:read"],
+  "platform:write": scopeCopy["platform:write"],
+  offline_access: scopeCopy.offline_access,
+};
+const CONNECT_SCOPE_SET = new Set<string>(CONNECT_SCOPE_IDS);
 
 export type ConnectedClientRow = {
   client_id: string;

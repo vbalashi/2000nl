@@ -833,7 +833,8 @@ describe("TrainingSenseCardV2Session", () => {
 
       await waitFor(() => expect(performAction).toHaveBeenCalledOnce());
       expect(onProgressActionAccepted).toHaveBeenCalledOnce();
-      expect(await screen.findByText("presentation_failed")).toBeVisible();
+      expect(await screen.findByText(platformV2Message("en", "senseCard.training.temporaryFailure"))).toBeVisible();
+      expect(screen.queryByText("presentation_failed")).not.toBeInTheDocument();
       await waitFor(() =>
         expect(wrapper.getAttribute("style")).toContain("translateX(0px)"),
       );
@@ -2495,7 +2496,8 @@ describe("TrainingSenseCardV2Session", () => {
     fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
     fireEvent.click(screen.getByRole("button", { name: "Afspelen" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("audio_failed");
+    expect(await screen.findByRole("alert")).toHaveTextContent(platformV2Message("nl", "senseCard.audio.failed"));
+    expect(screen.queryByText("audio_failed")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Afspelen" })).toBeVisible();
   });
 

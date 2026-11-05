@@ -171,3 +171,9 @@
 .noteMaterialText{white-space:pre-wrap;overflow-wrap:anywhere}
 
 .literalTranslation{font-size:var(--practice-literal-translation-size);font-style:italic}
+
+/* A note and its translation share a reading size, including nested notes. */
+.detail [data-kind=usage-note]>.contentPair>p,
+.detail [data-kind=usage-note]>.contentPair .translation{font-size:var(--practice-reading-caption)}
+.detail[data-nested-reading] .children [data-kind=usage-note]>.contentPair>p,
+.detail[data-nested-reading] .children [data-kind=usage-note]>.contentPair .translation{font-size:var(--practice-reading-small)}

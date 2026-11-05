@@ -1,4 +1,8 @@
 "use client";
+import {languageAutonym} from "@/lib/languages/languageDisplayName";
+
+import { localizedSection, localizedField } from "@/lib/i18n/catalog";
+
 import { dictionarySourceProfile } from "@/lib/dictionary/sourceProfile";
 import React, { useState } from "react";
 import type {
@@ -110,19 +114,13 @@ export function FooterStats({
   const [controlsOpen, setControlsOpen] = useState(false);
   const versionInfo = appVersionInfo();
   const text = footerCopy[interfaceLanguage];
+  const scopeCopy = localizedSection("trainingScope")[interfaceLanguage];
+  const scenarioCopy = localizedSection("sessionLabels")[interfaceLanguage].scenario;
   const statsAvailable = statsStatus === "ready";
   const unknownLabel =
     statsStatus === "pending"
-      ? interfaceLanguage === "nl"
-        ? "wordt geladen"
-        : interfaceLanguage === "ru"
-          ? "загружается"
-          : "loading"
-      : interfaceLanguage === "nl"
-        ? "niet beschikbaar"
-        : interfaceLanguage === "ru"
-          ? "недоступно"
-          : "unavailable";
+      ? localizedField("legacyFooter", "loading")[interfaceLanguage]
+      : localizedField("legacyFooter", "unavailable")[interfaceLanguage];
   const {
     newCardsToday,
     reviewCardsDone,
@@ -135,13 +133,10 @@ export function FooterStats({
     ? initialReviewDue ?? reviewCardsDone + stats.reviewCardsDue
     : null;
 
-  const fallbackLanguageOptions = [{ value: "nl", label: "Nederlands" }];
+  const fallbackLanguageOptions = [{ value: "nl", label: languageAutonym("nl") }];
 
-  const cardFilterOptions: { value: CardFilter; label: string }[] = [
-    { value: "both", label: "Nieuw + Herhaling" },
-    { value: "new", label: "Alleen nieuw" },
-    { value: "review", label: "Alleen herhaling" },
-  ];
+  const filterLabels = localizedSection("trainingFilter")[interfaceLanguage];
+  const cardFilterOptions = (["both", "new", "review"] as const).map(value => ({value, label: filterLabels[value]}));
 
   const progress = (
     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300 sm:flex-nowrap sm:gap-x-5">
@@ -210,8 +205,9 @@ export function FooterStats({
               }
             >
               <EffectiveTrainingScopeSummary
+                interfaceLanguage={interfaceLanguage}
                 activeList={activeList ?? null}
-                activeScenarioName={activeScenarioName ?? "Begrip"}
+                activeScenarioName={activeScenarioName ?? scenarioCopy.understanding}
                 cardFilter={cardFilter}
                 language={language}
                 showFooterSelectorHint
@@ -225,7 +221,7 @@ export function FooterStats({
                   aria-controls="training-footer-controls"
                   className="rounded-full border border-slate-200 bg-white/85 px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-100 dark:hover:bg-slate-800"
                 >
-                  Wijzigen
+                  {scopeCopy.change}
                 </button>
               ) : null}
             </div>
@@ -239,7 +235,8 @@ export function FooterStats({
             >
               <div className="grid w-full gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <DropUpSelect
-                  label="Leertaal"
+                  interfaceLanguage={interfaceLanguage}
+                  label={scopeCopy.learningLanguage}
                   showLabel={false}
                   uppercase={false}
                   buttonClassName="w-full justify-between px-3 py-2"
@@ -253,7 +250,8 @@ export function FooterStats({
                 />
                 {listOptions?.length && activeListValue && onListChange ? (
                   <DropUpSelect
-                    label="Trainingslijst"
+                  interfaceLanguage={interfaceLanguage}
+                    label={scopeCopy.list}
                     showLabel={false}
                     uppercase={false}
                     buttonClassName="w-full justify-between px-3 py-2"
@@ -263,12 +261,12 @@ export function FooterStats({
                     onChange={onListChange}
                   />
                 ) : (
-                  <Tooltip content="Wijzig lijst in Instellingen" side="top">
+                  <Tooltip content={scopeCopy.changeList} side="top">
                     <button
                       type="button"
                       onClick={onOpenSettings}
                       className="flex w-full items-center justify-between gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800/60"
-                      aria-label="Wijzig trainingslijst in Instellingen"
+                      aria-label={scopeCopy.changeList}
                     >
                       <span className="text-slate-800 dark:text-white">
                         {activeListName ?? dictionarySourceProfile().coreListName}
@@ -276,20 +274,21 @@ export function FooterStats({
                     </button>
                   </Tooltip>
                 )}
-                <Tooltip content="Wijzig scenario in Instellingen" side="top">
+                <Tooltip content={scopeCopy.changeScenario} side="top">
                   <button
                     type="button"
                     onClick={onOpenSettings}
                     className="flex w-full items-center justify-between gap-2 rounded-full bg-slate-100/70 px-3 py-2 text-[11px] tracking-wide text-slate-600 transition hover:bg-slate-200/80 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700/80"
-                    aria-label="Wijzig scenario in Instellingen"
+                    aria-label={scopeCopy.changeScenario}
                   >
                     <span className="font-semibold text-slate-800 dark:text-white">
-                      {activeScenarioName ?? "Begrip"}
+                      {activeScenarioName ?? scenarioCopy.understanding}
                     </span>
                   </button>
                 </Tooltip>
                 <DropUpSelect
-                  label="Kaarten"
+                  interfaceLanguage={interfaceLanguage}
+                  label={scopeCopy.cards}
                   showLabel={false}
                   uppercase={false}
                   buttonClassName="w-full justify-between px-3 py-2"

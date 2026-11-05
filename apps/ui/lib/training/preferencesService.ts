@@ -1,3 +1,4 @@
+import type { InterfaceLanguage } from "@/lib/i18n/registry";
 import type { AudioQuality } from "../audio/types";
 import { supabase } from "../supabaseClient";
 import type { CardFilter, TrainingMode } from "../types";
@@ -17,7 +18,7 @@ export type UserPreferences = {
   /** Flexible JSON preferences for features that don't need dedicated columns */
   preferences: {
     onboardingCompleted?: boolean;
-    onboardingLanguage?: "en" | "ru" | "nl";
+    onboardingLanguage?: InterfaceLanguage;
     [key: string]: any; // Allow arbitrary preferences
   };
   /** @deprecated Use modesEnabled instead */

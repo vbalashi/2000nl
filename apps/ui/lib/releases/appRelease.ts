@@ -1,3 +1,4 @@
+import { isInterfaceLanguage, type InterfaceLanguage } from "@/lib/i18n/registry";
 export type ReleaseBuild = {
   version: string;
   commit: string;
@@ -6,7 +7,7 @@ export type ReleaseBuild = {
 export type ReleaseAnnouncement = {
   id: string;
   publishedAt: string;
-  locale: "en" | "ru" | "nl";
+  locale: InterfaceLanguage;
   title: string;
   summary: string;
   detailsUrl?: string;
@@ -46,7 +47,7 @@ function parseAnnouncement(value: unknown): ReleaseAnnouncement {
     !text(a.id, 100) ||
     !text(a.title, 100) ||
     !text(a.summary, 360) ||
-    !["en", "ru", "nl"].includes(a.locale) ||
+    !isInterfaceLanguage(a.locale) ||
     !Number.isFinite(Date.parse(a.publishedAt))
   )
     throw new Error("Invalid release announcement");

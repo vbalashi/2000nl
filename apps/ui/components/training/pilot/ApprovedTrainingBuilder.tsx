@@ -1,4 +1,6 @@
 "use client";
+import { localizedField } from "@/lib/i18n/catalog";
+
 import {VocabularySelectionFields} from "@/components/practice/vocabulary/VocabularySelectionFields";
 import {PartOfSpeechSelection} from "@/components/practice/vocabulary/PartOfSpeechSelection";
 import {MaterialKindSelection,MaterialKindHelp} from "@/components/practice/vocabulary/MaterialKindSelection";
@@ -110,16 +112,12 @@ export function ApprovedTrainingBuilder(p: Props) {
     formatUiCount(p.interfaceLanguage, n, b, "ratio");
   const saveAsLabel =
     p.saveAsLabel ??
-    { en: "Save as…", nl: "Opslaan als…", ru: "Сохранить как…" }[
+    localizedField("trainingBuilderActions", "saveAs")[
       p.interfaceLanguage
     ];
   const deleteLabel =
     p.deleteLabel ??
-    {
-      en: "Delete training",
-      nl: "Training verwijderen",
-      ru: "Удалить тренировку",
-    }[p.interfaceLanguage];
+    localizedField("trainingBuilderActions", "delete")[p.interfaceLanguage];
   const uid = useId();
   const builderRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -208,7 +206,7 @@ export function ApprovedTrainingBuilder(p: Props) {
         ? c.newOnly
         : ratioLabel(p.draft.newReviewRatio);
   const materialMode = p.draft.materialMode ?? "collection";
-  const material = p.draft.librarySelection?.labelId ? p.draft.librarySelection.labelName??({ru:"Выбранная метка",en:"Selected label",nl:"Geselecteerd label"})[p.interfaceLanguage] :
+  const material = p.draft.librarySelection?.labelId ? p.draft.librarySelection.labelName??(localizedField("trainingBuilderActions", "selectedLabel"))[p.interfaceLanguage] :
     materialMode === "all-dictionaries"
       ? c.allDictionaries
       : materialMode === "selected-dictionaries"
@@ -232,7 +230,7 @@ export function ApprovedTrainingBuilder(p: Props) {
   const activityScope = [
     p.draft.sourceValue !== "all"
       ? p.sources.find(option => option.value === p.draft.sourceValue)?.label ??
-        (p.draft.sourceValue === "kind:youtube" ? c.youtube : {en:"Saved source", nl:"Opgeslagen bron", ru:"Сохранённый источник"}[p.interfaceLanguage])
+        (p.draft.sourceValue === "kind:youtube" ? c.youtube : localizedField("trainingBuilderActions", "savedSource")[p.interfaceLanguage])
       : null,
     p.draft.dateWindow !== "all"
       ? p.draft.dateWindow === "today" ? c.today
@@ -296,11 +294,7 @@ export function ApprovedTrainingBuilder(p: Props) {
             />
           }
           {activityScope && <p className={`${s.help} ${s.activityNotice}`}>
-            {p.interfaceLanguage === "ru"
-              ? `Сохранённые фильтры активности слов по-прежнему действуют: ${activityScope}. Их редактирование пока недоступно.`
-              : p.interfaceLanguage === "nl"
-                ? `Opgeslagen filters voor woordactiviteit blijven gelden: ${activityScope}. Bewerken is nog niet beschikbaar.`
-                : `Saved word activity filters still apply: ${activityScope}. Editing them is not yet available.`}
+            {formatUiMessage(localizedField("trainingBuilderActions", "activityScopeNotice")[p.interfaceLanguage],{scope:activityScope})}
           </p>}
           <div className={`${s.section_group} builder-section-group`}>
             <section className={s.inline_language}>
@@ -476,11 +470,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                   </div>
                 </div>
                 <div className={s.field}>
-                  <h2 className={s.helpHeading}>{b.answerMode}<SettingsHelp label={b.answerMode} text={{
-                    ru:["Сейчас доступен режим «Показать и оценить»: откройте ответ и оцените, насколько хорошо вы его знали.","«Ввести ответ» и другие способы ответа планируем добавить позже."],
-                    en:["Reveal & self-rate is available now: reveal the answer and rate how well you knew it.","Type the answer and other response modes are planned for later."],
-                    nl:["Tonen en zelf beoordelen is nu beschikbaar: bekijk het antwoord en beoordeel hoe goed je het wist.","Antwoord typen en andere antwoordvormen willen we later toevoegen."],
-                  }[p.interfaceLanguage]}/></h2>
+                  <h2 className={s.helpHeading}>{b.answerMode}<SettingsHelp label={b.answerMode} text={localizedField("trainingBuilderActions", "responseModesHelp")[p.interfaceLanguage]}/></h2>
                   <SegmentedControl standard label={b.answerMode}>
                     <BuilderChoice active onClick={() => undefined}>
                       {b.answerModes["Reveal & self-rate"]}
@@ -498,11 +488,11 @@ export function ApprovedTrainingBuilder(p: Props) {
               partSummary,
               <div className={s.filterFields}>
                 <VocabularySelectionFields section="selection" value={p.draft.vocabulary??DEFAULT_VOCABULARY_SELECTION} language={p.interfaceLanguage} onChange={vocabulary=>p.onDraftChange(current=>({...current,vocabulary}))}/>
-                <div className={s.field}><h2>{{ru:"Тип статьи",en:"Entry type",nl:"Soort artikel"}[p.interfaceLanguage]}<MaterialKindHelp language={p.interfaceLanguage}/></h2><MaterialKindSelection language={p.interfaceLanguage} value={p.draft.vocabulary?.materialKinds??[]} onChange={materialKinds=>p.onDraftChange(current=>({...current,vocabulary:{...(current.vocabulary??DEFAULT_VOCABULARY_SELECTION),materialKinds}}))}/></div>
+                <div className={s.field}><h2>{localizedField("libraryFilters", "entryType")[p.interfaceLanguage]}<MaterialKindHelp language={p.interfaceLanguage}/></h2><MaterialKindSelection language={p.interfaceLanguage} value={p.draft.vocabulary?.materialKinds??[]} onChange={materialKinds=>p.onDraftChange(current=>({...current,vocabulary:{...(current.vocabulary??DEFAULT_VOCABULARY_SELECTION),materialKinds}}))}/></div>
                 {!p.draft.vocabulary?.materialKinds.includes("other")&&<div className={s.field}><h2>{b.partOfSpeech}</h2><PartOfSpeechSelection value={{parts:(p.draft.partOfSpeech??[]).map(partId).filter((id):id is NonNullable<typeof id>=>Boolean(id)),article:singleNounArticle(p.draft.nounArticles??[])}} language={p.interfaceLanguage} languageCode={p.languageCode} onChange={next=>p.onDraftChange(current=>({...current,partOfSpeech:next.parts.map(partCode),nounArticles:next.article?[next.article]:[]}))}/></div>}
                 {usesSourceWordSelection(family) && <SourceWordSelection translation={family === "word-in-context"} language={p.interfaceLanguage} value={p.draft.sourceWordStatus ?? "learning"} onChange={sourceWordStatus=>p.onDraftChange(current=>({...current,sourceWordStatus}))}/>}
                 <VocabularySelectionFields section="meanings" value={p.draft.vocabulary??DEFAULT_VOCABULARY_SELECTION} language={p.interfaceLanguage} onChange={vocabulary=>p.onDraftChange(current=>({...current,vocabulary}))}/>
-                {p.draft.librarySelection&&(p.draft.librarySelection.query||p.draft.librarySelection.labelId)&&<p className={s.help}>{[p.draft.librarySelection.labelName,p.draft.librarySelection.query?`${messages.librarySearch.labels[p.draft.librarySelection.category]}: «${p.draft.librarySelection.query}»`:null].filter(Boolean).join(" · ")} <button type="button" onClick={()=>p.onDraftChange(current=>({...current,librarySelection:(!current.materialMode||current.materialMode==="collection")&&current.librarySelection?.languageCode?{languageCode:current.librarySelection.languageCode,query:"",category:"headwords"}:undefined}))}>{{ru:"Убрать отбор из библиотеки",en:"Clear Library selection",nl:"Bibliotheekselectie wissen"}[p.interfaceLanguage]}</button></p>}
+                {p.draft.librarySelection&&(p.draft.librarySelection.query||p.draft.librarySelection.labelId)&&<p className={s.help}>{[p.draft.librarySelection.labelName,p.draft.librarySelection.query?`${messages.librarySearch.labels[p.draft.librarySelection.category]}: «${p.draft.librarySelection.query}»`:null].filter(Boolean).join(" · ")} <button type="button" onClick={()=>p.onDraftChange(current=>({...current,librarySelection:(!current.materialMode||current.materialMode==="collection")&&current.librarySelection?.languageCode?{languageCode:current.librarySelection.languageCode,query:"",category:"headwords"}:undefined}))}>{localizedField("trainingBuilderActions", "clearLibrarySelection")[p.interfaceLanguage]}</button></p>}
               </div>,
             )}
             {section(
@@ -524,7 +514,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                     formatExerciseCount(p.interfaceLanguage, count)
                   }
                   allDueLabel={c.allDueToday}
-                  allAvailableTick={{en:"All",nl:"Alle",ru:"Все"}[p.interfaceLanguage]}
+                  allAvailableTick={localizedField("trainingBuilderActions", "all")[p.interfaceLanguage]}
                   allDueHelp={c.allDueHelp}
                   allowAllDueToday={family === "meaning"}
                 />
@@ -542,11 +532,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                 <p className={s.session_note}>
                   <Info size={13} aria-hidden="true" />
                   <span>
-                    {p.interfaceLanguage === "ru"
-                      ? "Фактический размер сессии и баланс новых карточек и повторений зависят от доступных карточек."
-                      : p.interfaceLanguage === "nl"
-                        ? "De werkelijke sessiegrootte en verhouding tussen nieuwe kaarten en herhalingen hangen af van de beschikbare kaarten."
-                        : "Actual session size and new/review balance depend on available cards."}
+                    {localizedField("trainingBuilderActions", "availabilityHint")[p.interfaceLanguage]}
                   </span>
                 </p>
               </div>,
@@ -594,7 +580,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                     else setSaveOpen(true);
                   }}
                 >
-                  {p.hasUnsavedChanges && <span className={s.unsavedDot} role="status" aria-label={({en:"Unsaved changes",ru:"Несохранённые изменения",nl:"Niet-opgeslagen wijzigingen"})[p.interfaceLanguage]} title={({en:"Unsaved changes",ru:"Несохранённые изменения",nl:"Niet-opgeslagen wijzigingen"})[p.interfaceLanguage]} />}
+                  {p.hasUnsavedChanges && <span className={s.unsavedDot} role="status" aria-label={(localizedField("trainingBuilderActions", "unsaved"))[p.interfaceLanguage]} title={(localizedField("trainingBuilderActions", "unsaved"))[p.interfaceLanguage]} />}
                   {p.saveLabel}
                 </button>
                 {p.editing && p.onSaveAs && (

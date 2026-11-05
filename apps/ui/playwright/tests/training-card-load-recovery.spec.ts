@@ -35,7 +35,7 @@ test("a failed prepared card recovers after closing and continuing on desktop an
       .click();
     await page
       .getByRole("button", {
-        name: /Begin met leren|Учить|Start learning/i,
+        name: /^(?:Begin met leren|Учить|Start learning|Learn)$/i,
       })
       .click();
 
@@ -136,7 +136,7 @@ test("a missing Platform presentation identity is retired before the next sessio
     .click();
   await page
     .getByRole("button", {
-      name: /Begin met leren|Учить|Start learning/i,
+      name: /^(?:Begin met leren|Учить|Start learning|Learn)$/i,
     })
     .click();
 

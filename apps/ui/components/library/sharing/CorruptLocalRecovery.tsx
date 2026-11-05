@@ -1,4 +1,6 @@
 'use client';
+import { localizedSection } from "@/lib/i18n/catalog";
+
 import React,{useEffect,useRef,useState} from 'react';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import {DialogSurface} from '@/components/practice/ui/DialogSurface';
@@ -6,7 +8,7 @@ import {inspectLocalRecord,clearCorruptLocalRecord} from '@/lib/collections/shar
 import overlays from '@/components/practice/library/libraryOverlays.module.css';
 import s from '../organization/organization.module.css';
 import {organizationCopy} from '../organization/copy';
-const copy={en:{retry:'Retry',failed:'Could not check the current state. Local data has not changed.',title:'Local recovery',checking:'Local recovery data in this tab is damaged. Checking the current saved state. An earlier request may have completed.',ready:'The current saved state has been checked. Only the damaged local record will be cleared. Your articles, collections and progress are kept. No request will be resent.',clear:'Clear local record'},ru:{retry:'Повторить',failed:'Не удалось проверить текущее состояние. Локальные данные не изменены.',title:'Локальное восстановление',checking:'Локальные данные этой вкладки повреждены. Проверяем текущее сохранённое состояние. Ранее отправленный запрос мог выполниться.',ready:'Текущее сохранённое состояние проверено. Будет очищена только повреждённая запись в этой вкладке. Статьи, коллекции и прогресс сохранятся. Запрос не будет отправлен повторно.',clear:'Очистить запись'},nl:{retry:'Opnieuw proberen',failed:'De huidige toestand kon niet worden gecontroleerd. Lokale gegevens zijn niet gewijzigd.',title:'Lokaal herstel',checking:'Lokale herstelgegevens in dit tabblad zijn beschadigd. De huidige opgeslagen toestand wordt gecontroleerd. Een eerder verzoek kan al zijn uitgevoerd.',ready:'De huidige opgeslagen toestand is gecontroleerd. Alleen het beschadigde lokale record wordt gewist. Artikelen, collecties en voortgang blijven behouden. Geen verzoek wordt opnieuw verzonden.',clear:'Lokaal record wissen'}};
+const copy=localizedSection("localRecovery");
 /** Approved DyED8: automatic read, explicit corrupt-only cleanup; no write retry. */
 export function CorruptLocalRecovery({scopeKey,storageKey,valid,verify,trigger,locale,onClose,onReset,suspended=false}:{scopeKey:string;storageKey:string;valid:(raw:string)=>boolean;verify:(signal:AbortSignal)=>Promise<void>;trigger:string;locale:OnboardingLanguage;onClose:()=>void;onReset:()=>void;suspended?:boolean}){
  const current=useRef({scopeKey,valid,verify,onReset});current.current={scopeKey,valid,verify,onReset};

@@ -5,7 +5,6 @@ export const textSizes = [
   {
     id: "standard",
     label: "A",
-    name: "Standard",
     reading: 1,
     ui: 1,
     display: 1,
@@ -13,7 +12,6 @@ export const textSizes = [
   {
     id: "larger",
     label: "A+",
-    name: "Larger",
     reading: 1.25,
     ui: 1.15,
     display: 1.08,
@@ -21,7 +19,6 @@ export const textSizes = [
   {
     id: "large",
     label: "A++",
-    name: "Large",
     reading: 1.5,
     ui: 1.3,
     display: 1.18,
@@ -29,7 +26,6 @@ export const textSizes = [
   {
     id: "extra",
     label: "A+++",
-    name: "Extra large",
     reading: 2,
     ui: 1.5,
     display: 1.3,
