@@ -54,15 +54,15 @@ test("preview uses real group totals and aborted drafts cannot replace the curre
   await waitFor(() => expect(mocked.fetchPage).toHaveBeenCalledTimes(1));
   const oldSignal = mocked.fetchPage.mock.calls[0][0].signal;
   fireEvent.click(screen.getByRole("button", { name: "Nouns" }));
-  await screen.findByText("1 matching article");
+  await screen.findByText("Found: 1");
   expect(oldSignal.aborted).toBe(true);
   expect(mocked.fetchPage.mock.calls[1][0]).toMatchObject({
     query: "goed", translationTargetLanguageCode: null,
     libraryScope: { dictionaryIds: null, filters: { parts: ["noun"], article: null } },
   });
   await act(async () => { resolveOld({ librarySearch: { totalGroups: 99 } }); });
-  expect(screen.getByText("1 matching article")).toBeInTheDocument();
-  expect(screen.queryByText("99 matching articles")).not.toBeInTheDocument();
+  expect(screen.getByText("Found: 1")).toBeInTheDocument();
+  expect(screen.queryByText("Found: 99")).not.toBeInTheDocument();
 });
 
 test("count errors remain explicit and retry performs a read without applying the draft", async () => {
@@ -71,7 +71,7 @@ test("count errors remain explicit and retry performs a read without applying th
   const apply = vi.fn();
   render(<AccountLibraryFilters {...props} onApply={apply} />);
   fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
-  await screen.findByText("3 matching articles");
+  await screen.findByText("Found: 3");
   expect(mocked.fetchPage).toHaveBeenCalledTimes(2);
   expect(apply).not.toHaveBeenCalled();
 });
@@ -84,7 +84,7 @@ test("paused or unavailable material cannot trigger a preview or apply", async (
   mocked.material.currentLanguageAllowed = true;
   mocked.fetchPage.mockResolvedValue({ librarySearch: { totalGroups: 0 } });
   rerender(<AccountLibraryFilters {...props} />);
-  await screen.findByText("0 matching articles");
+  await screen.findByText("Found: 0");
   expect(screen.getByRole("button", { name: "Show results" })).toBeEnabled();
 });
 
@@ -96,10 +96,10 @@ test("empty query previews the current filter and exposes loading, failure and r
   expect(screen.queryByText("Enter a word to search")).not.toBeInTheDocument();
   await waitFor(()=>expect(mocked.fetchPage).toHaveBeenCalledTimes(1));
   expect(mocked.fetchPage).toHaveBeenLastCalledWith(expect.objectContaining({query:"",libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}}}));
-  expect(screen.queryByText(/matching articles/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Found:/)).not.toBeInTheDocument();
   await act(async()=>{reject(new Error("offline"));});
   fireEvent.click(await screen.findByRole("button",{name:"Try again"}));
-  await screen.findByText("14,449 matching articles");
+  await screen.findByText("Found: 14,449");
 });
 
 test("collection preview preserves the combined draft and does not turn failures into zero",async()=>{
@@ -107,7 +107,7 @@ test("collection preview preserves the combined draft and does not turn failures
  const draft={...value,applyListFilter:true,collectionId:"own",parts:["noun","verb"] as ("noun"|"verb")[],article:"de" as const};
  render(<AccountLibraryFilters {...props} value={draft} collections={[{id:"own",name:"Lesson",type:"user"}]} />);
  fireEvent.click(await screen.findByRole("button",{name:"Try again"}));
- await screen.findByText("2 matching articles");
+ await screen.findByText("Found: 2");
  expect(mocked.fetchPage).toHaveBeenLastCalledWith(expect.objectContaining({query:"goed",contentLanguageCode:"nl",libraryScope:{dictionaryIds:null,material:{kind:"collection",id:"own",collectionType:"user"},filters:{parts:["noun","verb"],article:"de"}}}));
  expect(mocked.fetchList).not.toHaveBeenCalled();
 });
@@ -124,7 +124,7 @@ test("label previews wait for the owner catalog and use a typed aggregate scope"
  mocked.labels.loading=false;
  mocked.labels.snapshot={revision:4,labels:[{id:"label",parent_id:null,name:"YouTube",description:null,created_at:"2026-10-25",updated_at:"2026-10-25"}],assignments:[]};
  rerender(<AccountLibraryFilters {...props} value={draft}/>);
- await screen.findByText("7 matching articles");
+ await screen.findByText("Found: 7");
  expect(mocked.fetchPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:null,material:{kind:"label",id:"label"},filters:{parts:["verb"],article:null}}}));
  expect(screen.getByRole("button",{name:"Show results"})).toBeEnabled();
  mocked.labels.error="unavailable";
