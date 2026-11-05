@@ -13,7 +13,9 @@ export async function fetchTrainingAvailability(ownerId: string, recipe: Trainin
         method: "POST", signal: controller.signal, body: JSON.stringify({ languageCode: recipe.languageCode, draft: recipe.draft }),
       });
       signal.throwIfAborted();
-      retry = response.status === 408 || response.status === 429 || response.status >= 500;
+      // A failed count can already have consumed the database deadline. Let the user
+      // retry instead of immediately repeating the same expensive recipe.
+      retry = response.status === 408 || response.status === 429;
       if (!retry) {
         const result = response.ok ? parseTrainingAvailability(await response.json()) : null;
         if (!result) throw new Error("training_availability_unavailable");

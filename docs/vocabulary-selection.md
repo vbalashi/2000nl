@@ -14,6 +14,48 @@ Library applies vocabulary predicates before grouping, counts and pagination. Fr
 
 The builder availability strip counts all eligible due-now reviews, introduced reviews and new cards for its current draft. Session size, balance and new/review choice determine the eventual plan, not those three availability totals. Changes debounce for 250 ms, obsolete reads are cancelled, previous-recipe values are hidden, and failures are shown without fabricated zeros. Start is authoritative and does not implicitly save the edited draft.
 
+## Availability validation before release
+
+Changes to selection or counting require both correctness and performance evidence.
+Small semantic fixtures, mocked browser responses and schema/permission probes do
+not establish that a full dictionary can be counted within the request deadline.
+
+- Run the real availability RPC against a synthetic dictionary with representative
+  entry and source-binding counts, multiple meanings per source group, and enough
+  unrelated entries to expose repeated scans. Record fixture size and PostgreSQL
+  settings; match the actual deployed settings and exercise both JIT on and off.
+  Exercise spoken and written ranks 1–100 with meanings `all`, `1`, `2` and `3`.
+  Assert correct
+  counts and enforce a statement timeout below the route deadline. Repeat after
+  warming caches and report first-run and repeated timings separately.
+  Include a wider noninitial range such as 400–800, not just the top 100 ranks.
+  Measure a new backend connection and repeated calls through the prepared-plan
+  threshold; distinguish warmed buffers from physical cold-disk measurements.
+  Include All words with each meaning limit and parent-word selection for Idioms
+  and word-in-context exercises; a fast frequency path does not establish that
+  those paths avoid repeated per-entry work. Compare selected entry IDs against
+  the scalar selection contract, including homonyms, mixed parts of speech,
+  unbound entries, pointer-only or archived first meanings and ordering ties.
+- Exercise the builder with its real availability hook/client: start with ready
+  counts, change the meaning limit, return HTTP 503, and verify that loading ends
+  with an actionable error without automatic retry. Separately exhaust the bounded
+  retries for network errors and HTTP 429. Manual retry must restore counts;
+  changing the selection must cancel obsolete work and never show its result.
+  Verify the pending state is visible in light and dark themes.
+- For a managed release, the operator must run the rank/meaning matrix and broad
+  exercise cases on staging with the full operator-supplied dictionary and frequency
+  resources, using the exact candidate application revision and database contract.
+  Time the authenticated availability route as well as SQL, with production query
+  settings and a documented budget below the route deadline. Any timeout,
+  unexpected count, or exhausted-retry loading state blocks promotion. Record
+  revision, dataset sizes, settings, timings and verdict in private release evidence;
+  keep content, account identifiers and request payloads out of public artifacts.
+
+These checks supplement the database contract and access probes. A successful
+health check or resource-profile count does not substitute for executing the
+filtered availability request. Managed provisioning and promotion still require
+the operator's separate release authorization.
+
 DB293 adds private frequency tables and shared selection helpers. Fresh-install bootstrap and read-only probes cover the application contract. Managed forward migration/data provisioning and release authorization remain separate operational work; applying this fresh-install migration in a local QA environment is not a managed deployment.
 
 Library handoff also pins its selected language for a collection, including collections whose primary language differs. A foreign-language draft reads a separate catalog while an owned run stays intact; the parent language switch is deferred until explicit Start. Word-search previews use server article-identity totals instead of hydrating every matching article just to count it. Filter reset keeps the independent display sorting.

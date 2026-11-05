@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
+  countPlatformV2LibraryGroups,
   fetchPlatformV2LibraryGroup,
   fetchPlatformV2LibraryGroupPage,
   fetchPlatformV2CrossReferenceTarget,
@@ -562,4 +563,19 @@ describe("translation gateway recovery", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({status:"failed",error:"provider_timeout"}), { status: 200 })));
     await expect(requestPlatformV2LibraryTranslation({ entryId: "entry", targetLanguageCode: "ru" })).resolves.toBe("failed");
   });
+});
+
+test("filter preview reads its authoritative total once without following article cursors",async()=>{
+ const fetchMock=vi.fn().mockImplementation(async(_url,init)=>new Response(JSON.stringify({...payload,page:{selectedTierComplete:true,nextGroupCursor:JSON.parse(init.body).cursor ? null : "second"},librarySearch:{totalGroups:200,matchingEntryIds:[financeEntry.entryId]}}),{status:200}));
+ vi.stubGlobal("fetch",fetchMock);
+ expect(await countPlatformV2LibraryGroups({query:"",cardTypeId:"word-to-definition",contentLanguageCode:"nl",translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}}})).toBe(200);
+ expect(fetchMock).toHaveBeenCalledTimes(1);
+ expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({countOnly:true,cursor:null});
+});
+
+test("dictionary-only count scope accepts the authoritative count without article results",async()=>{
+ const fetchMock=vi.fn().mockResolvedValue(new Response(JSON.stringify({...payload,groups:[],librarySearch:{totalGroups:200,matchingEntryIds:[]}}),{status:200}));
+ vi.stubGlobal('fetch',fetchMock);
+ expect(await countPlatformV2LibraryGroups({query:'',cardTypeId:'word-to-definition',contentLanguageCode:'nl',translationTargetLanguageCode:null,libraryScope:{dictionaryIds:[]}})).toBe(200);
+ expect(fetchMock).toHaveBeenCalledTimes(1);
 });

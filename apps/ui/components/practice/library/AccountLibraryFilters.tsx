@@ -8,7 +8,7 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { getUiMessages, formatUiMessage } from "@/lib/uiMessages";
 import type { LibraryEntryFilters } from "@/lib/platform/librarySearchScope";
 import { countDictionaryCategory, readDictionaryCategory, type DictionarySearchCategory } from "@/lib/platform/dictionaryCategorySearch";
-import { fetchPlatformV2LibraryGroupPage } from "@/lib/platform/platformV2LibraryClient";
+import { countPlatformV2LibraryGroups } from "@/lib/platform/platformV2LibraryClient";
 import { useAccountMaterial } from "../material/AccountMaterialProvider";
 import { useLibraryMaterialSelection } from "../material/useLibraryMaterialSelection";
 import { LibraryFilters, type LibraryFilterDraft } from "./LibraryFilters";
@@ -103,7 +103,7 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
           const page = await readDictionaryCategory(searchScope,request.category,()=>{});
           return {total:page.items.length,hasMore:page.page.hasMore};
         }
-        const page = await fetchPlatformV2LibraryGroupPage({
+        const total = await countPlatformV2LibraryGroups({
         query: request.query,
         cardTypeId: "word-to-definition",
         contentLanguageCode: request.languageCode,
@@ -117,7 +117,7 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
           filters: request.filters,
         },
         });
-        return {total:page.librarySearch!.totalGroups,hasMore:false};
+        return {total,hasMore:false};
       })().then(({total,hasMore}) => {
         if (!controller.signal.aborted) setPreview({key,status:"ready",total,hasMore});
       }).catch(() => {

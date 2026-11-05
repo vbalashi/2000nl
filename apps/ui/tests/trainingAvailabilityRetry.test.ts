@@ -8,7 +8,7 @@ const value={dueToday:2,totalReviews:4,newCards:1,studyDay:'2026-10-06',timezone
 beforeEach(()=>{vi.useFakeTimers();request.mockReset();});
 afterEach(()=>{vi.useRealTimers();});
 test('temporary server failure and network failure recover automatically',async()=>{
- request.mockResolvedValueOnce(new Response(null,{status:503})).mockRejectedValueOnce(new TypeError('network')).mockResolvedValueOnce(Response.json(value));
+ request.mockResolvedValueOnce(new Response(null,{status:429})).mockRejectedValueOnce(new TypeError('network')).mockResolvedValueOnce(Response.json(value));
  const pending=fetchTrainingAvailability('owner',recipe,new AbortController().signal);
  await vi.advanceTimersByTimeAsync(2000);
  expect(await pending).toEqual(value);expect(request).toHaveBeenCalledTimes(3);
@@ -25,13 +25,20 @@ test('access errors are not retried',async()=>{
  expect(request).toHaveBeenCalledTimes(1);
 });
 test('all attempts exhausted remain a bounded error',async()=>{
- request.mockResolvedValue(new Response(null,{status:503}));
+ request.mockResolvedValue(new Response(null,{status:429}));
  const pending=expect(fetchTrainingAvailability('owner',recipe,new AbortController().signal)).rejects.toThrow();
  await vi.advanceTimersByTimeAsync(2000);await pending;expect(request).toHaveBeenCalledTimes(3);
 });
 test('scope cancellation during backoff prevents further requests',async()=>{
- request.mockResolvedValue(new Response(null,{status:503}));const controller=new AbortController();
+ request.mockResolvedValue(new Response(null,{status:429}));const controller=new AbortController();
  const pending=expect(fetchTrainingAvailability('owner',recipe,controller.signal)).rejects.toBeDefined();
  await vi.advanceTimersByTimeAsync(100);controller.abort();await pending;
  await vi.advanceTimersByTimeAsync(50000);expect(request).toHaveBeenCalledTimes(1);
+});
+
+test('database availability failure is shown after the first response without repeating expensive SQL',async()=>{
+ request.mockResolvedValue(new Response(null,{status:503}));
+ await expect(fetchTrainingAvailability('owner',recipe,new AbortController().signal)).rejects.toThrow();
+ await vi.advanceTimersByTimeAsync(50000);
+ expect(request).toHaveBeenCalledTimes(1);
 });

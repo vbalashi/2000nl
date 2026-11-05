@@ -23,6 +23,7 @@ type PlatformV2LibraryLookupInput = {
   translationTargetLanguageCode: string | null;
   signal?: AbortSignal;
   libraryScope?: LibrarySearchScope;
+  countOnly?: boolean;
 } & (
   | { query: string; entryId?: never; cursor?: string | null }
   | { entryId: string; query?: never; cursor?: never }
@@ -35,6 +36,7 @@ async function fetchPlatformV2LibraryLookupOnce(
     signal: input.signal,
     ...(input.expectedUserId?{expectedUserId:input.expectedUserId}:{}),
     libraryScope: input.libraryScope,
+    countOnly: input.countOnly,
     body: {
       ...(input.entryId !== undefined
         ? { entryId: input.entryId }
@@ -105,6 +107,21 @@ export class PlatformV2LibraryLookupError extends Error {
     super(kind === "http-error" ? `lookup_http_${status}` : kind);
     this.name = "PlatformV2LibraryLookupError";
   }
+}
+
+/** Draft previews need the first page's exact total, never hydrated continuation pages. */
+export async function countPlatformV2LibraryGroups(input: {
+  query: string;
+  cardTypeId: CardTypeId;
+  contentLanguageCode: string;
+  translationTargetLanguageCode: string | null;
+  signal?: AbortSignal;
+  libraryScope: LibrarySearchScope;
+}): Promise<number> {
+  const payload = await fetchPlatformV2LibraryLookup({...input, cursor: null, countOnly: true});
+  if (!payload.librarySearch || !Number.isSafeInteger(payload.librarySearch.totalGroups) || payload.librarySearch.totalGroups < 0)
+    throw new Error("library_count_unavailable");
+  return payload.librarySearch.totalGroups;
 }
 
 export async function fetchPlatformV2LibraryGroupPage(input: {

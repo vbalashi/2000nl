@@ -141,3 +141,32 @@ test("current-target content cannot be projected as a different entry/card or bo
  expect(connected.service.supabase.rpc).not.toHaveBeenCalled();
  expect(c.service.supabase.rpc).not.toHaveBeenCalled();
 });
+
+test("Library main query forwards its cancellation signal to the database HTTP request",async()=>{
+ const c=context(); const signal=new AbortController().signal;
+ const result={data:{items:[],page:{totalGroups:0,selectedTierComplete:true,nextGroupCursor:null}},error:null};
+ const abortSignal=vi.fn().mockResolvedValue(result);
+ vi.mocked(c.service.supabase.rpc).mockReturnValue({abortSignal,then:(resolve:(value:unknown)=>unknown)=>Promise.resolve(result).then(resolve)} as never);
+ expect((await performPlatformV2Lookup({...c,signal},request,{dictionaryIds:null,filters:{parts:[],article:null}})).status).toBe(200);
+ expect(abortSignal).toHaveBeenCalledWith(signal);
+});
+
+test("count previews retain exact authoritative scope but bound article projection to one group",async()=>{
+ const c=context();
+ vi.mocked(c.service.supabase.rpc).mockResolvedValue({data:{items:[{id:"entry",headword:"goed",part_of_speech:"bn"}],page:{totalGroups:100,selectedTierComplete:true,nextGroupCursor:"unused-next"}},error:null} as never);
+ const result=await performPlatformV2Lookup({...c,libraryCountOnly:true},request,{dictionaryIds:null,filters:{parts:[],article:null}});
+ expect(result.status).toBe(200);
+ expect(result.payload).toMatchObject({groups:[],page:{nextGroupCursor:null},librarySearch:{totalGroups:100,matchingEntryIds:[]}});
+ expect(c.service.supabase.rpc).toHaveBeenCalledWith('lookup_platform_v2_library_filtered_entries',expect.objectContaining({p_group_limit:1,p_group_entry_bound:50,p_user_id:'actual-owner'}));
+ expect(c.service.supabase.rpc).toHaveBeenCalledTimes(1);
+});
+
+test("dictionary-only count previews normalize empty filters before their single RPC",async()=>{
+ const c=context();
+ vi.mocked(c.service.supabase.rpc).mockResolvedValue({data:{items:[{id:"entry",headword:"goed",part_of_speech:"bn"}],page:{totalGroups:100,selectedTierComplete:true,nextGroupCursor:"unused-next"}},error:null} as never);
+ const result=await performPlatformV2Lookup({...c,libraryCountOnly:true},request,{dictionaryIds:[]});
+ expect(result.status).toBe(200);
+ expect(result.payload).toMatchObject({groups:[],librarySearch:{totalGroups:100,matchingEntryIds:[]}});
+ expect(c.service.supabase.rpc).toHaveBeenCalledWith('lookup_platform_v2_library_filtered_entries',expect.objectContaining({p_dictionary_ids:[],p_filters:{parts:[],article:null},p_group_limit:1}));
+ expect(c.service.supabase.rpc).toHaveBeenCalledTimes(1);
+});
