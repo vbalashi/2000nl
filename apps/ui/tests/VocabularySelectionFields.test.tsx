@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { beforeEach, expect, test, vi } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { VocabularySelectionFields } from "@/components/practice/vocabulary/VocabularySelectionFields";
 import { MaterialKindSelection } from "@/components/practice/vocabulary/MaterialKindSelection";
 import type { VocabularyMaterialKind } from "@/lib/vocabulary/selection";
@@ -110,7 +110,10 @@ test("entry types offer only confirmed groups, independently of parts of speech"
  expect(screen.getByRole("button",{name:"Слова"})).toHaveAttribute("aria-pressed","false");
  expect(screen.queryByRole("button",{name:"Предложения"})).not.toBeInTheDocument();
  fireEvent.click(screen.getByRole("button",{name:"Слова"}));
- expect(screen.getByRole("button",{name:"Всё"})).toHaveAttribute("aria-pressed","true");
+ expect(screen.getByRole("button",{name:"Слова"})).toHaveAttribute("aria-pressed","true");
+ fireEvent.click(screen.getByRole("button",{name:"Другое"}));
+ expect(screen.getByRole("button",{name:"Другое"})).toHaveAttribute("aria-pressed","true");
+ expect(screen.getByRole("button",{name:"Всё"})).toHaveAttribute("aria-pressed","false");
 });
 test("buttons and typing share the exact draft and selected step",()=>{
  render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
@@ -158,4 +161,13 @@ test("wheel drag and tapping nearby values use the selected step",()=>{
  fireEvent.pointerDown(wheel,{clientY:16,button:0});fireEvent.pointerUp(wheel,{clientY:16,button:0});
  expect(wheel).toHaveAttribute("aria-valuenow","1");
  view.unmount();vi.unstubAllGlobals();
+});
+
+test("batched native wheel events retain every increment",()=>{
+ render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
+ const dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ fireEvent.click(within(dialog).getByRole("button",{name:"Колёсики"}));
+ const wheel=within(dialog).getByRole("spinbutton",{name:"От"});
+ act(()=>{for(let n=0;n<3;n++)wheel.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));});
+ expect(wheel).toHaveAttribute("aria-valuenow","4");
 });

@@ -16,7 +16,10 @@ export function NumberWheel({value,min,max,step,label,language,onChange,describe
    remainder.current+=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?160:1);
    const ticks=Math.trunc(remainder.current/32);if(!ticks)return;
    remainder.current-=ticks*32;
-   const current=update.current;current.onChange(current.clamp(current.value+ticks*current.step));
+   const current=update.current;
+   // Native wheel events may arrive in a batch before React renders the new value.
+   const next=current.clamp(current.value+ticks*current.step);
+   current.value=next;current.onChange(next);
   };
   const reset=()=>{remainder.current=0;};
   node.addEventListener("wheel",wheel,{passive:false});node.addEventListener("pointerleave",reset);

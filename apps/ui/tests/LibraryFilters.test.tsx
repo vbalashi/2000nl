@@ -128,3 +128,17 @@ test("other entry review hides parts while ordinary Library retains them",()=>{
  view.rerender(<LibraryPresentationContext.Provider value={{showPartsFilter:true}}><LibraryFilters {...props} onClose={()=>{}} onApply={()=>{}}/></LibraryPresentationContext.Provider>);
  expect(screen.getByRole("button",{name:"Nouns"})).toBeInTheDocument();
 });
+
+test("hidden parts are absent from count and Apply, and return as a draft for Words",()=>{
+ const apply=vi.fn(),preview=vi.fn();const draft:LibraryFilterDraft={...value,parts:["noun"],article:"het"};
+ const panel=(visible:boolean)=><LibraryPresentationContext.Provider value={{showPartsFilter:visible}}><LibraryFilters {...props} value={draft} onDraftChange={preview} onClose={()=>{}} onApply={apply}/></LibraryPresentationContext.Provider>;
+ const view=render(panel(true));
+ expect(preview).toHaveBeenLastCalledWith(draft);
+ view.rerender(panel(false));
+ expect(preview).toHaveBeenLastCalledWith({...draft,parts:[],article:null});
+ fireEvent.click(screen.getByRole("button",{name:"Show results"}));
+ expect(apply).toHaveBeenLastCalledWith({...draft,parts:[],article:null});
+ view.rerender(panel(true));
+ expect(screen.getByRole("button",{name:/^Nouns/})).toHaveAttribute("aria-pressed","true");
+ expect(preview).toHaveBeenLastCalledWith(draft);
+});

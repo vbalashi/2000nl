@@ -76,7 +76,10 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
   };
   const sourceName = draft.labelId ? labelOptions.find(option => option.id === draft.labelId)?.label ?? copy.noSources : draft.applyListFilter && draft.collectionId ? collectionOptions.find(option=>option.id===draft.collectionId)?.label ?? copy.noSources : draft.dictionaryId ? sourceOptions.find(option => option.id === draft.dictionaryId)?.label ?? copy.noSources : copy.allSources;
   const visibleOptions = options.filter(option => `${option.id ?? ""} ${option.label}`.toLowerCase().includes(query.trim().toLowerCase()));
-  useEffect(() => { onDraftChange?.(draft); }, [draft, onDraftChange]);
+  // Keep word choices as a draft for returning to Words, but never submit hidden restrictions.
+  const effectiveDraft = React.useMemo<LibraryFilterDraft>(() => presentation?.showPartsFilter === false
+    ? { ...draft, parts: [], article: null } : draft, [draft, presentation?.showPartsFilter]);
+  useEffect(() => { onDraftChange?.(effectiveDraft); }, [effectiveDraft, onDraftChange]);
   const content = <>
     <header className={f.header}>
       {page !== "main" && <button type="button" ref={backRef} className={f.icon} aria-label={copy.backFilters} onClick={back}><ArrowLeft size={19}/></button>}
@@ -136,7 +139,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
     <footer className={f.footer}>
       {page === "main" ? <>
         <p className={f.count} role="status">{countContent}</p>
-        <div className={f.actions}><button type="button" className={f.reset} onClick={() => { setDraft({ languageCode: draft.languageCode, dictionaryId: null, parts: [], article: null }); presentation?.onResetAdditionalFilters?.(); }}>{copy.resetFilters}</button><button type="button" className={f.action} onClick={close}>{builder.cancel}</button><button type="button" className={`${f.action} ${f.primary}`} disabled={!canApply} onClick={() => { presentation?.onApplyAdditionalFilters?.(); onApply(draft); }}>{copy.showResults}</button></div>
+        <div className={f.actions}><button type="button" className={f.reset} onClick={() => { setDraft({ languageCode: draft.languageCode, dictionaryId: null, parts: [], article: null }); presentation?.onResetAdditionalFilters?.(); }}>{copy.resetFilters}</button><button type="button" className={f.action} onClick={close}>{builder.cancel}</button><button type="button" className={`${f.action} ${f.primary}`} disabled={!canApply} onClick={() => { presentation?.onApplyAdditionalFilters?.(); onApply(effectiveDraft); }}>{copy.showResults}</button></div>
       </> : <div className={f.actions}><button type="button" className={`${f.action} ${f.primary}`} onClick={back}>{copy.ok}</button></div>}
     </footer>
     {nounAnchor && <NounFilterPopover locale={locale} anchor={nounAnchor} article={draft.article} onChange={article => update({ article })} onClose={() => setNounAnchor(null)}/>}

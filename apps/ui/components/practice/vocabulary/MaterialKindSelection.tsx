@@ -15,7 +15,7 @@ export function MaterialKindSelection({value,onChange,language}:{value:readonly 
  const t=copy[language],kinds:VocabularyMaterialKind[]=["word","other"];
  return <><SegmentedControl standard label={t.title}>
   <BuilderChoice active={!value.length} onClick={()=>onChange([])}>{t.all}</BuilderChoice>
-  {kinds.map(kind=><BuilderChoice key={kind} active={value.includes(kind)} onClick={()=>{const next=value.includes(kind)?value.filter(item=>item!==kind):[...value,kind];onChange(next.length===kinds.length?[]:next);}}>{t[kind]}</BuilderChoice>)}
+  {kinds.map(kind=><BuilderChoice key={kind} active={value.includes(kind)} onClick={()=>onChange([kind])}>{t[kind]}</BuilderChoice>)}
  </SegmentedControl></>;
 }
 
