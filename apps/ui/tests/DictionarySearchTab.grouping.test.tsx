@@ -464,28 +464,49 @@ test("approved chips panel excludes disabled sources, cancels drafts and applies
  fetchGroupPage.mockReset().mockResolvedValue({groups:[group],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:1,matchingEntryIds:["entry-b"]}});
  const repository=materialRepository();render(<AccountMaterialProvider userId="user-1" repository={repository}><Harness initial={{query:""}}/></AccountMaterialProvider>);
  await screen.findByTestId("library-headword-group-enabled-b");
+ const pageReads=()=>fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]);
+ expect(pageReads()).toHaveLength(1);
  fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));
- fireEvent.click(screen.getByRole("button",{name:new RegExp(`^${copy.builder.source}`)}));
- await screen.findByRole("button",{name:"Enabled B"});expect(screen.queryByRole("button",{name:"Disabled A"})).not.toBeInTheDocument();
- fireEvent.click(screen.getByRole("button",{name:"Enabled B"}));
- fireEvent.click(screen.getByRole("button",{name:copy.builder.cancel}));
- expect(fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]).at(-1)?.[0].libraryScope.dictionaryIds).toBeNull();
- fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));fireEvent.click(screen.getByRole("button",{name:copy.builder.parts.Nouns}));
- await waitFor(()=>expect(screen.getByRole("button",{name:copy.library.showResults})).toBeEnabled());
- fireEvent.click(screen.getByRole("button",{name:copy.library.showResults}));
+ let panel=within(screen.getByRole("dialog"));
+ fireEvent.click(panel.getByRole("button",{name:new RegExp(`^${copy.builder.source}`)}));
+ await panel.findByRole("button",{name:"Enabled B"});expect(panel.queryByRole("button",{name:"Disabled A"})).not.toBeInTheDocument();
+ fireEvent.click(panel.getByRole("button",{name:"Enabled B"}));
+ fireEvent.click(panel.getByRole("button",{name:copy.builder.cancel}));
+ expect(pageReads()).toHaveLength(1); // Cancel must not submit the selected draft source.
+ expect(pageReads()[0][0].libraryScope.dictionaryIds).toBeNull();
+ fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));
+ panel=within(screen.getByRole("dialog"));
+ fireEvent.click(panel.getByRole("button",{name:copy.builder.parts.Nouns}));
+ await waitFor(()=>expect(panel.getByRole("button",{name:copy.library.showResults})).toBeEnabled());
+ fireEvent.click(panel.getByRole("button",{name:copy.library.showResults}));
  await waitFor(()=>expect(fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]).at(-1)?.[0]).toMatchObject({cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:["noun"],article:null}}}));
+ expect(pageReads()).toHaveLength(2);
  expect(repository.save).not.toHaveBeenCalled();
- const appliedRequestCount=fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]).length;
  expect(screen.getByTestId("library-headword-group-enabled-b")).toBeInTheDocument();
 
- // Applying the already-selected filters clears the rows, so it must also
- // trigger a fresh lookup even though the serialized search scope is unchanged.
+});
+
+// This independent same-scope command regression has its own setup. Keeping it
+// separate from source selection avoids three modal lifecycles sharing one CI budget.
+test("reapplying approved filters starts a first-page read even when the scope is unchanged",async()=>{
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ const {getUiMessages}=await import("@/lib/uiMessages");const copy=getUiMessages("nl");
+ readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+ const group=goedGroup("enabled-b",scopeB,"Enabled B",[sense("entry-b","zn")]);
+ fetchGroupPage.mockReset().mockResolvedValue({groups:[group],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:1,matchingEntryIds:["entry-b"]}});
+ const repository=materialRepository();
+ render(<AccountMaterialProvider userId="user-1" repository={repository}><Harness initial={{query:"",entryFilters:{parts:["noun"],article:null}}}/></AccountMaterialProvider>);
+ await screen.findByTestId("library-headword-group-enabled-b");
+ const pageReads=()=>fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]);
+ expect(pageReads()).toHaveLength(1);
  fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));
- await waitFor(()=>expect(screen.getByRole("button",{name:copy.library.showResults})).toBeEnabled());
- fireEvent.click(screen.getByRole("button",{name:copy.library.showResults}));
- await waitFor(()=>expect(fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0])).toHaveLength(appliedRequestCount+1));
- expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:["noun"],article:null}}}));
+ const panel=within(screen.getByRole("dialog"));
+ await waitFor(()=>expect(panel.getByRole("button",{name:copy.library.showResults})).toBeEnabled());
+ fireEvent.click(panel.getByRole("button",{name:copy.library.showResults}));
+ await waitFor(()=>expect(pageReads()).toHaveLength(2));
+ expect(pageReads()[1][0]).toMatchObject({cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:["noun"],article:null}}});
  expect(await screen.findByTestId("library-headword-group-enabled-b")).toBeInTheDocument();
+ expect(repository.save).not.toHaveBeenCalled();
 });
 
 test("reapplying the same filters supersedes an in-flight lookup", async () => {
