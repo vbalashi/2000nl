@@ -46,7 +46,7 @@
     {
       "migrationId": 295,
       "file": "db/migrations/295_training_frequency_selection_scope.sql",
-      "sha256": "d27642eb1f2ae268e3639991e30c8fce0f5d4e0a4666f26eb522a714cdef9b75"
+      "sha256": "577fb19387aca88826908d128ebe2c587edb064f38422a6d0b43f3423d504fff"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-295.sql",

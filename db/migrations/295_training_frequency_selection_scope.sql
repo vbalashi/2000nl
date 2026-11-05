@@ -1,4 +1,10 @@
 BEGIN;
+-- The broad scheduler disables nested loops. Its setting must not leak into
+-- this per-entry predicate: sibling resolution uses selective indexed lookups,
+-- and a hash scan for every meaning makes first-N selection quadratic.
+ALTER FUNCTION private.vocabulary_entry_selected_v1(uuid,jsonb)
+ SET enable_nestloop TO 'on';
+
 -- Narrow frequency selections through the rank and active spelling indexes before
 -- invoking meaning-unit selection. The helper still ranks against all siblings,
 -- before learner state and session limits, so first-N never refills a later sense.
