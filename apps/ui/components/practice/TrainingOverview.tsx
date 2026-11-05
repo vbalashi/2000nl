@@ -30,6 +30,7 @@ function EditGlyph(){return <svg width="16" height="16" viewBox="0 0 24 24" fill
 function LoadGlyph(){return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18m-9 9V12m-3 3 3-3 3 3"/></svg>;}
 function SelectedGlyph(){return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>;}
 export function TrainingOverview({state:incomingState,launchPending=false,interfaceLanguage="en",onSelect,onLaunch,onResume,onEdit,onCreate,onRetry,onEarlyReview,onAvailabilityRetry}:TrainingOverviewProps){
+ const reasonId=React.useId();
  // Accepted session data must not replace the launch hero during preparation.
  const settledState=useRef(incomingState);
  React.useLayoutEffect(()=>{if(!launchPending)settledState.current=incomingState;},[incomingState,launchPending]);
@@ -65,16 +66,19 @@ export function TrainingOverview({state:incomingState,launchPending=false,interf
  const emptyMessage=!resume?((!empty||empty.canReviewAhead?guidance?.message:undefined)??empty?.message):undefined;
  const includeNew=Boolean(noReadyCards&&guidance?.includeNew&&(!empty||empty.canReviewAhead));
  const saved=state.trainings.filter(item=>item.saved!==false);
+ const noCards={ru:"Нет подходящих карточек",en:"No matching cards",nl:"Geen passende kaarten"}[interfaceLanguage];
+ const emptyAction=<button type="button" className={s.start} data-empty="true" disabled aria-describedby={emptyMessage?reasonId:undefined}>{noCards}</button>;
  return <div className={s.home} lang={interfaceLanguage} aria-busy={launchPending}>
   <h1 className={s.srOnly}>{navigation.training}</h1>
-  {main?<section className={s.hero} aria-label={resume?copy.currentTraining:copy.mainTraining}>
+  {main?<section className={s.hero} data-recipe="selected" aria-label={resume?copy.currentTraining:copy.mainTraining}>
    <div className={s.heroTop}><span className={s.eyebrow}>{main.language}{resume?` · ${copy.inProgress}`:""}</span><IconAction className={s.icon} label={formatUiMessage(copy.edit,{name:main.name})} onClick={()=>onEdit(main.id)}><EditGlyph/></IconAction></div>
-   <div><h2>{main.name}</h2><p className={s.description}>{main.description}</p></div>
+   <div className={s.heroIntro}><h2 title={main.name}>{main.name}</h2><p className={s.description} title={main.description}>{main.description}</p></div>
    <dl className={s.numbers} aria-busy={pending} style={{"--metrics-count":metrics.length} as React.CSSProperties}>{metrics.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{pending?<span className={s.pulse} aria-label={copy.loading}/>:<span key={`${main.id}:${value}`} className={s.count}>{value??"—"}</span>}</dd></div>)}</dl>
    {resume&&total!==null&&total>0&&<div className={s.progress} role="progressbar" aria-label={copy.sessionProgress} aria-valuemin={0} aria-valuemax={total} aria-valuenow={completed}><span style={{width:`${completed/total*100}%`}}/></div>}
    {!resume&&availability?.status==="error"&&<p className={s.emptyMessage} role="status">{availability.message??copy.availabilityFailed}{onAvailabilityRetry&&<button className={s.retry} onClick={onAvailabilityRetry}>{copy.retry}</button>}</p>}
-   <div className={s.heroActions}>{includeNew?<button type="button" className={s.start} disabled={launchPending} onClick={()=>onEdit(main.id,"session")}>{copy.adjustMix}</button>:readyEarly?<button type="button" className={s.start} disabled={launchPending||!main.canLaunch} onClick={()=>onEarlyReview?.(main.id)}><Play size={16} fill="currentColor"/>{copy.earlyReview}</button>:readyEdit?<button type="button" className={s.start} onClick={()=>onEdit(main.id)}>{copy.editTraining}</button>:empty&&!known?onEarlyReview&&empty.canReviewAhead&&<button type="button" className={s.start} disabled={launchPending||!main.canLaunch} onClick={()=>onEarlyReview(main.id)}><Play size={16} fill="currentColor"/>{copy.earlyReview}</button>:<button type="button" className={s.start} disabled={launchPending||!main.canLaunch} data-onboarding="launch" onClick={()=>resume?onResume(resume.sessionId):onLaunch(main.id)}><Play size={16} fill="currentColor"/>{resume?copy.continue:copy.start}</button>}
-    {emptyMessage&&<div className={s.actionNote}><p role="status">{emptyMessage}</p>{includeNew&&readyEarly&&<button type="button" className={s.retry} disabled={launchPending||!main.canLaunch} onClick={()=>onEarlyReview?.(main.id)}><Play size={16} fill="currentColor"/>{copy.earlyReview}</button>}</div>}
+   <div className={s.heroActions} title={emptyMessage}>{includeNew?<button type="button" className={s.start} disabled={launchPending} onClick={()=>onEdit(main.id,"session")}>{copy.adjustMix}</button>:readyEarly?<button type="button" className={s.start} disabled={launchPending||!main.canLaunch} onClick={()=>onEarlyReview?.(main.id)}><Play size={16} fill="currentColor"/>{copy.earlyReview}</button>:readyEdit?emptyAction:empty&&!known?onEarlyReview&&empty.canReviewAhead?<button type="button" className={s.start} disabled={launchPending||!main.canLaunch} onClick={()=>onEarlyReview(main.id)}><Play size={16} fill="currentColor"/>{copy.earlyReview}</button>:emptyAction:<button type="button" className={s.start} disabled={launchPending||!main.canLaunch} data-onboarding="launch" onClick={()=>resume?onResume(resume.sessionId):onLaunch(main.id)}><Play size={16} fill="currentColor"/>{resume?copy.continue:copy.start}</button>}
+    {emptyMessage&&<p id={reasonId} className={s.srOnly} role="status">{emptyMessage}</p>}
+    {includeNew&&readyEarly&&<button type="button" className={s.retry} disabled={launchPending||!main.canLaunch} onClick={()=>onEarlyReview?.(main.id)}><Play size={16} fill="currentColor"/>{copy.earlyReview}</button>}
    </div>
    {main.notice&&<p className={s.description} role="status">{main.notice}</p>}
    {!main.canLaunch&&main.unavailableReason&&<p className={s.description} role="status">{main.unavailableReason}</p>}

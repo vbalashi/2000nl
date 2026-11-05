@@ -141,14 +141,14 @@ test('zero material does not suggest including unavailable new cards',()=>{
  setup({status:'ready',trainings:[{...items[0],cardFilter:'both'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:0,stillNew:0}});
  expect(screen.getByRole('status')).toHaveTextContent('No cards match this training.');
  expect(screen.queryByRole('button',{name:'Change mix'})).toBeNull();
- expect(screen.getByRole('button',{name:'Edit training'})).toBeEnabled();
+ expect(screen.getByRole('button',{name:'No matching cards'})).toBeDisabled();
 });
 
 
 test('an empty launch result stays visible even after positive counts settle',()=>{
  setup({status:'ready',trainings:[{...items[0],cardFilter:'both'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:2,totalReviews:12,stillNew:3},emptyTraining:{trainingId:'a',message:'No cards match this training.',canReviewAhead:false}});
  expect(screen.getByRole('status')).toHaveTextContent('No cards match this training.');
- expect(screen.getByRole('button',{name:'Edit training'})).toBeEnabled();
+ expect(screen.getByRole('button',{name:'No matching cards'})).toBeDisabled();
 });
 test('an empty result for the old draft cannot block a saved correction',()=>{
  setup({status:'ready',trainings:[{...items[0],cardFilter:'both',draftKey:'corrected'}],mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:0,stillNew:109},emptyTraining:{trainingId:'a',draftKey:'old',message:'Old empty result',canReviewAhead:true}});
@@ -160,7 +160,15 @@ test('an empty result for the old draft cannot block a saved correction',()=>{
 test('failed availability cannot hide authoritative empty guidance or its edit action',()=>{
  const c=setup({status:'ready',trainings:items,mainId:'a',availability:{trainingId:'a',status:'error',dueToday:null,totalReviews:null,stillNew:null},emptyTraining:{trainingId:'a',message:'No matching cards after start.',canReviewAhead:false}});
  expect(screen.getByText('No matching cards after start.')).toBeVisible();
- fireEvent.click(screen.getByRole('button',{name:'Edit training'}));
+ expect(screen.getByRole('button',{name:'No matching cards'})).toBeDisabled();
+ fireEvent.click(screen.getAllByRole('button',{name:'Edit Words'})[0]);
  expect(c.onEdit).toHaveBeenCalledWith('a');
  expect(c.onLaunch).not.toHaveBeenCalled();
+});
+
+test('an empty routine keeps its primary slot disabled and editing stays in the corner',()=>{
+ const edit=vi.fn();
+ render(<TrainingOverview state={{status:'ready',trainings:items,mainId:'a',availability:{trainingId:'a',status:'ready',dueToday:0,totalReviews:0,stillNew:0}}} onLaunch={vi.fn()} onResume={vi.fn()} onEdit={edit} onCreate={vi.fn()} onRetry={vi.fn()}/>);
+ expect(screen.getByRole('button',{name:'No matching cards'})).toBeDisabled();
+ fireEvent.click(screen.getAllByRole('button',{name:'Edit Words'})[0]);expect(edit).toHaveBeenCalledWith('a');
 });

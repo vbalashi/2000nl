@@ -60,3 +60,19 @@ The [baseline audit](interface-exceptions-audit.md) classifies the initial 65 en
 The ordinary text scale remains 11/12/13/14/16/18/20/24px and larger named display roles. Special presentation sizes live with the theme, not as local exceptions: `--practice-brand-size` (26px), compact brand cap (22px), headword article proportion (.55em), literal translation proportion (.85em), recall-target size (title ×1.5), and face-context size (title ×1.2). The startup logo keeps 52px through `--practice-startup-logo-size` in the root startup appearance contract, available before account theme hydration. Moving these values into roles preserves their existing visual purpose; they are not ordinary catalog/control text.
 
 Sign out uses caption12 at desktop, body14 at narrow widths, semantic danger/focus colors, and a 44px narrow-screen target. Its scoped selector must override the general Settings button font reset.
+
+## Training overview stability
+
+The selected training card keeps the same responsive height while another saved
+training or availability result loads. Its name occupies one line, with the full
+name available as a native tooltip and accessible heading; its description reserves
+two lines. An empty training keeps a disabled primary action in the same slot.
+Editing remains available in the corner, while existing mix and early-review
+shortcuts remain available when applicable. Empty-state guidance is exposed through
+the action tooltip and a live description without adding another visible row.
+
+Opening the editor is reported to its parent startup gate. Changing language keeps
+the editor visible while catalog-dependent controls wait for their new material;
+failures offer Retry inside the editor. The full startup surface remains for initial
+loading and the overview. The All session-size option remains an ordinary-word
+selection of currently available cards, not a continuously growing queue.

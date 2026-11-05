@@ -2249,6 +2249,7 @@ function TrainingScreenContent({
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
           <TrainingTodaySetup
             onStartupReady={handleHomeStartupReady}
+            onEditorVisibilityChange={setOpenTrainingEditor}
             startupPresentationManaged
             initialView={openTrainingEditor ? "setup" : "today"}
             materialIntent={statisticsMaterialIntent}

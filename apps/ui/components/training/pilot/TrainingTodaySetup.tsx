@@ -5,7 +5,7 @@ import {useAccountMaterial} from "@/components/practice/material/AccountMaterial
 import {useTrainingAvailability} from "@/lib/training/availability/useTrainingAvailability";
 import { useNewTrainingMaterial } from "@/components/practice/material/useNewTrainingMaterial";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type {
   CardFilter,
@@ -81,6 +81,7 @@ type Props = {
   startError?: string | null;
   initialDraft: TrainingSetupDraft;
   onStartupReady?: () => void;
+  onEditorVisibilityChange?: (open:boolean) => void;
   startupPresentationManaged?: boolean;
   initialView?: "today" | "setup";
   stats: DetailedStats;
@@ -192,6 +193,7 @@ export function TrainingTodaySetup({
   startError,
   initialDraft,
   initialView = "today",
+  onEditorVisibilityChange,
   onStartupReady,
   startupPresentationManaged = false,
   stats,
@@ -243,6 +245,10 @@ export function TrainingTodaySetup({
   const t = copy[interfaceLanguage];
   const [editorSection,setEditorSection]=useState<"session"|undefined>();
   const [screen, setScreen] = useState<"today" | "setup">(initialView);
+  useLayoutEffect(()=>{
+    onEditorVisibilityChange?.(screen === "setup");
+    return ()=>onEditorVisibilityChange?.(false);
+  },[screen,onEditorVisibilityChange]);
   const [failedStart, setFailedStart] = useState<{
     draft: TrainingSetupDraft;
     sessionName?: string;
@@ -510,6 +516,7 @@ export function TrainingTodaySetup({
         setSelectedIntent({id:training.id,userId,language:training.languageCode,action});
         if(training.languageCode!==trainingLanguageCode)onTrainingLanguageChange?.(training.languageCode);
       }}>
+      {status === "error" && <p role="alert">{{ru:"Не удалось загрузить данные для этого языка.",en:"Could not load the material for this language.",nl:"Het materiaal voor deze taal kon niet worden geladen."}[interfaceLanguage]} <button type="button" onClick={onRetry}>{{ru:"Повторить",en:"Retry",nl:"Opnieuw proberen"}[interfaceLanguage]}</button></p>}
       {sourceReferenceNotice}
       {materialNotice}
       {presetMessage&&<p role="status">{presetMessage}</p>}
@@ -583,6 +590,7 @@ export function TrainingTodaySetup({
     startDisabled={Boolean(queuedLanguageStart)||!canSaveAccount||account.status!=="ready"||account.pending||isTrainingSetupPaused(draft)||startPending||scenarioLoading||startBlocked||!material.currentLanguageAllowed||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
     saveLabel={editingPresetId?({en:"Save changes",nl:"Wijzigingen opslaan",ru:"Сохранить изменения"})[interfaceLanguage]:accountCopy.save} startLabel={material.status==="loading"||scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable&&!sourceReferenceBlocked?t.materialUnavailable:({en:"Start training",nl:"Training starten",ru:"Начать тренировку"})[interfaceLanguage]}
     saveNotice={presetMessage} notice={<>
+      {status === "error" && <p role="alert">{{ru:"Не удалось загрузить данные для этого языка.",en:"Could not load the material for this language.",nl:"Het materiaal voor deze taal kon niet worden geladen."}[interfaceLanguage]} <button type="button" onClick={onRetry}>{{ru:"Повторить",en:"Retry",nl:"Opnieuw proberen"}[interfaceLanguage]}</button></p>}
       {sourceReferenceNotice}
       {materialNotice}
       {presetMessage&&<p role="status">{presetMessage}</p>}

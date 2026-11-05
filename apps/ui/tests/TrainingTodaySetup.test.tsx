@@ -846,3 +846,13 @@ test.each([0,8])("builder starts its draft directly without implicitly saving (%
  expect(accounts.get("direct-draft")).toBeUndefined();
  expect(availabilityRequests.mock.calls.at(-1)?.[0]).toMatchObject({enabled:true,recipe:{draft:{sessionSize:40}}});
 });
+
+test('an editor catalog failure keeps its retry inside the visible editor',async()=>{
+ const visible=vi.fn(),retry=vi.fn();
+ render(<TrainingTodaySetup {...baseProps} userId="editor-language-failure" initialView="setup" status="error" onEditorVisibilityChange={visible} onRetry={retry}/>);
+ expect(visible).toHaveBeenLastCalledWith(true);
+ const message=screen.getByText('Could not load the material for this language.');
+ fireEvent.click(within(message).getByRole('button',{name:'Retry'}));expect(retry).toHaveBeenCalledOnce();
+ fireEvent.click(screen.getByRole('button',{name:'Back to Training'}));
+ await waitFor(()=>expect(visible).toHaveBeenLastCalledWith(false));
+});
