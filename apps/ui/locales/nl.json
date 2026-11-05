@@ -211,6 +211,22 @@
     "zn": "zelfstandig naamwoord"
   },
   "ui": {
+    "librarySearch": {
+      "labels": {
+        "headwords": "Woorden",
+        "examples": "Voorbeelden",
+        "definitions": "Definities",
+        "alphabetical": "A–Z"
+      },
+      "group": "Zoeken in",
+      "empty": "Geen resultaten",
+      "prompt": "Typ een woord of een deel van een zin.",
+      "busy": "Zoeken…",
+      "error": "Niet alle resultaten konden worden geladen.",
+      "retry": "Opnieuw",
+      "loadingAll": "Alle resultaten laden…",
+      "foundCount": "Gevonden: {count}"
+    },
     "activeTrainingCard": {
       "title": "Nu aan het oefenen",
       "hint": "Beoordeel in de training",

@@ -633,6 +633,13 @@ async function setupAuthenticatedTrainingPage(page: Page) {
     });
   });
 
+  await page.route("**/api/library/category-search", async route => {
+    const body = route.request().postDataJSON();
+    const query = String(body.query).toLowerCase();
+    const items = entries.filter(entry=>entry.headword.toLowerCase().includes(query)).map(entry=>({entry:{id:entry.id,headword:entry.headword},dictionary:{id:"dictionary-example",name:"ExampleDictionary Dutch"}}));
+    await route.fulfill({json:{groups:[{id:body.group,items,total:items.length,page:{hasMore:false,nextCursor:null}}]}});
+  });
+
   await page.route(
     /\/api\/(?:platform\/v2\/lookup|library\/search)$/,
     async (route: Route) => {
@@ -775,7 +782,8 @@ test("the Library dictionary search surface renders @pilot", async ({ page }) =>
   );
   await expect(headwordResult).toBeVisible();
   await expect(headwordResult).toContainText("huis");
-  await expect(headwordResult).toContainText("ExampleDictionary Dutch");
+  await expect(page.getByText("Dutch · All dictionaries")).toBeVisible();
+  await expect(page.getByText("Found: 1",{exact:true})).toBeVisible();
   await expect(headwordResult).toContainText("1 meaning");
   await headwordResult.click();
   await expect(page.getByText("Een gebouw waar mensen wonen.").first()).toBeVisible();

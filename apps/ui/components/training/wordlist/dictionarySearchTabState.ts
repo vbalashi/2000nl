@@ -4,6 +4,7 @@ import type { LibraryHeadwordGroupResult } from "./libraryHeadwordGroupResults";
 
 export type DictionarySearchTabState = {
   query: string;
+  searchCategory?: import("@/lib/platform/dictionaryCategorySearch").DictionarySearchCategory;
   applyListFilter: boolean;
   collectionId?: string | null;
   labelId?: string | null;
@@ -22,6 +23,7 @@ export type DictionarySearchTabState = {
   languageCode: string | null;
   dictionaryId: string | null;
   detailSelection: {
+    searchResultKey?: string;
     entryId: string;
     headword: string;
     contentLanguageCode: string;

@@ -12,6 +12,7 @@ import type { LibraryHeadwordGroupResult } from "./libraryHeadwordGroupResults";
 
 type Props = {
   interfaceLanguage?: OnboardingLanguage;
+  appearance?: "plain" | "framed";
   results: LibraryHeadwordGroupResult[];
   selectedHeadwordGroupId: string | null;
   onSelect: (result: LibraryHeadwordGroupResult) => void;
@@ -29,6 +30,7 @@ function coreVocabularyLabel(
 
 export function LibraryHeadwordGroupResultsList({
   results,
+  appearance,
   interfaceLanguage = "nl",
   selectedHeadwordGroupId,
   onSelect,
@@ -37,6 +39,7 @@ export function LibraryHeadwordGroupResultsList({
       <div className={theme.theme} data-colour-mode="app">
         <LibraryResultList
           language={interfaceLanguage}
+          appearance={appearance}
           hasDetail={Boolean(selectedHeadwordGroupId)}
           showSource={
             new Set(

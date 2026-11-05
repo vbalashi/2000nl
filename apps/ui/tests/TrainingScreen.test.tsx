@@ -417,6 +417,22 @@ const fetchWordsForList = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
 });
+const categoryFixtureGroups = new Map<string, PlatformHeadwordGroupV2>();
+vi.mock("@/lib/platform/dictionaryCategorySearch", async importOriginal => ({
+  ...await importOriginal<typeof import("@/lib/platform/dictionaryCategorySearch")>(),
+  // Keep the screen, category controller and hydration real; adapt the existing
+  // server fixture to the new category transport rather than making network calls.
+  readDictionaryCategory: async (scope: {query:string;languageCode:string;signal:AbortSignal}, category: string, onPage: (page:unknown,complete:boolean)=>void) => {
+    const source = await fetchPlatformV2LibraryGroupPage({query:scope.query,contentLanguageCode:scope.languageCode});
+    scope.signal.throwIfAborted();
+    const groups = source.groups as PlatformHeadwordGroupV2[];
+    for (const group of groups) for (const entry of group.entries) {
+      categoryFixtureGroups.set(entry.kind === "sense-card" ? entry.entryId : entry.crossReferenceId,group);
+    }
+    const page = {id:category,items:groups.flatMap(group=>group.entries.map(entry=>({entry:{id:entry.kind === "sense-card"?entry.entryId:entry.crossReferenceId,headword:group.header.text}}))),total:groups.length,page:{hasMore:false,nextCursor:null}};
+    onPage(page,true);return page;
+  },
+}));
 const fetchPlatformV2LibraryGroup = vi.fn(
   async ({
     query,
@@ -427,6 +443,8 @@ const fetchPlatformV2LibraryGroup = vi.fn(
     entryId: string;
     contentLanguageCode: string;
   }): Promise<PlatformHeadwordGroupV2 | null> => {
+    const cached = categoryFixtureGroups.get(entryId);
+    if (cached && query === undefined) return {...cached,entries:cached.entries.map(entry=>entry.kind === "sense-card" ? {...entry,...libraryState(entry.entryId)} : entry)} as PlatformHeadwordGroupV2;
     const page = await fetchPlatformV2LibraryGroupPage({
       query,
       contentLanguageCode,
@@ -870,6 +888,7 @@ class DeterministicBrowserLocks {
 }
 
 beforeEach(() => {
+  categoryFixtureGroups.clear();
   savedSetupAccounts.clear();
   vi.clearAllMocks();
   libraryLearning.clear();
@@ -3205,7 +3224,7 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
 });
 
 test("dictionary lookup preserves server Headword Group order", async () => {
-  searchDictionaryGroups.mockResolvedValueOnce({
+  searchDictionaryGroups.mockResolvedValue({
     items: [
       {
         ...dictionaryHuis,
@@ -3239,6 +3258,7 @@ test("dictionary lookup preserves server Headword Group order", async () => {
   expect(
     exact.compareDocumentPosition(compound) & Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
+  restoreDefaultSearchResults();
 });
 
 test("dictionary lookup empty state names the dictionary source search", async () => {
@@ -3257,10 +3277,10 @@ test("dictionary lookup empty state names the dictionary source search", async (
     );
 
     expect(
-      await screen.findByText("No matching words"),
+      await screen.findByText("No matches", {exact:true}),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("No matches in All dictionaries."),
+      screen.getByRole("button", {name:"Words",pressed:true}),
     ).toBeInTheDocument();
   } finally {
     restoreDefaultSearchResults();

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-289",
+  "contractId": "2000nl-db-291",
   "baseline": {
     "migrationId": 287,
     "file": "db/migrations/287_initial_schema.sql",
@@ -17,11 +17,21 @@
       "migrationId": 289,
       "file": "db/migrations/289_training_card_count_preference.sql",
       "sha256": "0f23d01a0c213b8929404237d69f09bd3c35c84b3747339fc788405ab210b5e9"
+    },
+    {
+      "migrationId": 290,
+      "file": "db/migrations/290_grouped_word_search_fuzzy.sql",
+      "sha256": "477481cdce7ef1a822c14c45df6b6a380ec04c10ec347a9465a410d1a9e67e6f"
+    },
+    {
+      "migrationId": 291,
+      "file": "db/migrations/291_library_category_search_scope.sql",
+      "sha256": "c680056ba061d89dc9f3f0f720a2382e4e597af9be43b40ce17a0a24f4b3ca2f"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-289.sql",
+  "postflightProbe": "db/deploy-contract/postflight-291.sql",
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-289.sql",
-    "sha256": "4f699cf5f5b2011aaaff46c1784426357890cadb5879727993ce5ce96561e193"
+    "file": "db/deploy-contract/read-only-postflight-291.sql",
+    "sha256": "f470826e670616dff1e7e8d8260a4d403dfd03433ae3db6f4f4be009adec3236"
   }
 }

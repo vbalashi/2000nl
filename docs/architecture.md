@@ -128,3 +128,10 @@ operator changes follow the private managed release process.
 ## Interface consistency
 
 The [interface standard](ui/interface-standard.md) maps typography and control roles to shared presentation components and records remaining gaps in component coverage. New screens should reuse those components and semantic theme roles.
+
+## Library category search
+
+The normal Library searches words, examples and definitions within the same
+server-owned dictionary/material selection. Alphabetical navigation shares its
+word presentation. The [Library search contract](ui/library-search.md) records
+filter, count, cursor and presentation behavior.
