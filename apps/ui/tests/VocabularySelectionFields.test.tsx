@@ -19,13 +19,13 @@ test("the meaning slider runs from one to all",()=>{
 });
 test("exact bounds reject zero and reversed ranges; cancelling restores the opener",()=>{
  render(<Fields/>);const open=screen.getByRole("button",{name:"Изменить диапазон: 1–100"});open.focus();fireEvent.click(open);
- const dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ const dialog=screen.getByRole("dialog",{name:"Как часто встречаются слова"});
  for(const value of ["0","101","1.5",""]){fireEvent.change(within(dialog).getByRole("spinbutton",{name:"От"}),{target:{value}});expect(within(dialog).getByRole("button",{name:"Готово"})).toBeDisabled();}
  fireEvent.click(within(dialog).getByRole("button",{name:"Отмена"}));
  expect(screen.getByRole("button",{name:"Изменить диапазон: 1–100"})).toHaveFocus();
 });
 test("custom bounds remain exact and can select a single rank",()=>{
- render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));const dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));const dialog=screen.getByRole("dialog",{name:"Как часто встречаются слова"});
  for(const label of ["От","До"])fireEvent.change(within(dialog).getByRole("spinbutton",{name:label}),{target:{value:"73"}});
  fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
  expect(screen.getByRole("button",{name:"Изменить диапазон: 73–73"})).toBeInTheDocument();
@@ -60,7 +60,7 @@ test("meaning guidance uses paragraphs and is not permanently repeated below the
 });
 test("button adjustment changes exact values without typing and applies only on Done",()=>{
  render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
- const dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ const dialog=screen.getByRole("dialog",{name:"Как часто встречаются слова"});
  expect(within(dialog).getAllByRole("spinbutton")).toHaveLength(2);
  fireEvent.click(within(dialog).getByRole("button",{name:"10"}));
  fireEvent.click(within(dialog).getByRole("button",{name:"Увеличить начало"}));
@@ -84,7 +84,7 @@ test("entry types offer only confirmed groups, independently of parts of speech"
 });
 test("buttons and typing share the exact draft and selected step",()=>{
  render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
- const dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ const dialog=screen.getByRole("dialog",{name:"Как часто встречаются слова"});
  fireEvent.change(within(dialog).getByRole("spinbutton",{name:"От"}),{target:{value:"20"}});
  fireEvent.change(within(dialog).getByRole("spinbutton",{name:"До"}),{target:{value:"200"}});
  fireEvent.click(within(dialog).getByRole("button",{name:"100"}));
@@ -99,7 +99,7 @@ test("range edits notify the parent only on confirmation",()=>{
  const change=vi.fn();
  render(<VocabularySelectionFields value={{...DEFAULT_VOCABULARY_SELECTION,mode:"frequency"}} onChange={change} language="ru"/>);
  fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
- let dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ let dialog=screen.getByRole("dialog",{name:"Как часто встречаются слова"});
  expect(within(dialog).queryByText("Способ настройки")).not.toBeInTheDocument();
  fireEvent.click(within(dialog).getByRole("button",{name:"Увеличить конец"}));
  fireEvent.change(within(dialog).getByRole("spinbutton",{name:"От"}),{target:{value:"20"}});
@@ -107,7 +107,7 @@ test("range edits notify the parent only on confirmation",()=>{
  fireEvent.click(within(dialog).getByRole("button",{name:"Отмена"}));
  expect(change).not.toHaveBeenCalled();
  fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
- dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ dialog=screen.getByRole("dialog",{name:"Как часто встречаются слова"});
  fireEvent.change(within(dialog).getByRole("spinbutton",{name:"От"}),{target:{value:"20"}});
  expect(change).not.toHaveBeenCalled();
  fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
