@@ -493,7 +493,13 @@ test("reapplying the same filters supersedes an in-flight lookup", async () => {
   const oldRead = deferred<unknown>();
   const refreshedRead = deferred<unknown>();
   readableSources.mockReset().mockResolvedValue([source(scopeB, "Enabled B")]);
-  fetchGroupPage.mockReset().mockReturnValueOnce(oldRead.promise).mockReturnValueOnce(refreshedRead.promise);
+  let pageReadCount = 0;
+  fetchGroupPage.mockReset().mockImplementation(request => {
+    // The filter dialog also reads a count preview, independently of list pages.
+    if (!("cursor" in request)) return Promise.resolve({groups:[],librarySearch:{totalGroups:0}});
+    return ++pageReadCount === 1 ? oldRead.promise : refreshedRead.promise;
+  });
+  const pageReads = () => fetchGroupPage.mock.calls.filter(([request]) => "cursor" in request);
   const state = {
     ...createDictionarySearchTabState(),
     query: "",
@@ -506,13 +512,14 @@ test("reapplying the same filters supersedes an in-flight lookup", async () => {
       <Harness initial={state} />
     </AccountMaterialProvider>,
   );
-  await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(1));
-  const initialSignal = fetchGroupPage.mock.calls[0][0].signal as AbortSignal;
+  await waitFor(() => expect(pageReads()).toHaveLength(1));
+  const initialSignal = pageReads()[0][0].signal as AbortSignal;
 
   fireEvent.click(screen.getByRole("button", { name: copy.library.filters }));
+  await waitFor(() => expect(fetchGroupPage.mock.calls.some(([request]) => !("cursor" in request))).toBe(true));
   await waitFor(() => expect(screen.getByRole("button", { name: copy.library.showResults })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: copy.library.showResults }));
-  await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(pageReads()).toHaveLength(2));
   expect(initialSignal.aborted).toBe(true);
 
   await act(async () => {
