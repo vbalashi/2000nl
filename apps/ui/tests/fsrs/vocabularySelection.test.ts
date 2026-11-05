@@ -198,4 +198,33 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
   await expect(c.query("select read_training_recipe_availability_v1($1,ARRAY['definition-to-word'],null,'curated',$2,'meaning')",[user,{...filter,presentationMode:'word-in-context',sourceWordStatus:'known'}])).rejects.toThrow('invalid_training_filter');
  }));
 
+ test.each([{jit:"off",profile:"spoken"},{jit:"on",profile:"spoken"},{jit:"off",profile:"written"},{jit:"on",profile:"written"}])("frequency availability narrows before meaning checks ($profile, jit $jit)",({jit,profile})=>withTransaction(pool,async c=>{
+  const {user,dictionary,filter}=await fixture(c);
+  // A call budget catches full-dictionary scans without flaky timing assertions.
+  await c.query(`insert into word_entries(dictionary_id,language_code,headword,meaning_id,part_of_speech,raw)
+   select $1,'nl','unranked-scale-'||n,1,'zn','{"meanings":[{"definition":"Scale fixture"}]}'::jsonb
+   from generate_series(1,1000) n`,[dictionary]);
+  await c.query(`insert into user_card_status(user_id,entry_id,card_type_id,fsrs_enabled,in_learning,fsrs_reps,last_reviewed_at,next_review_at)
+   select $1,id,'word-to-definition',true,true,2,now()-interval '2 days',now()-interval '1 day'
+   from word_entries where dictionary_id=$2 and headword not like 'unranked-scale-%'`,[user,dictionary]);
+  await c.query(`set local jit=${jit}`);
+  await c.query("create sequence private.vocabulary_selection_test_calls");
+  await c.query("alter function private.vocabulary_entry_selected_v1(uuid,jsonb) rename to vocabulary_entry_selected_test_original");
+  await c.query(`create function private.vocabulary_entry_selected_v1(p_entry_id uuid,p_value jsonb) returns boolean
+   language plpgsql stable security definer set search_path=pg_catalog,public,private,pg_temp as $$
+   begin
+    perform nextval('private.vocabulary_selection_test_calls');
+    return private.vocabulary_entry_selected_test_original(p_entry_id,p_value);
+   end; $$`);
+  const selection={...options,profile,from:profile==="spoken"?1:2,to:profile==="spoken"?2:3};
+  const expected=new Map<string|number,number>([["all",9],[1,3],[2,6],[3,8]]);
+  for(const [meanings,count] of expected){
+   await c.query("alter sequence private.vocabulary_selection_test_calls restart with 1");
+   const result=(await c.query("select read_training_recipe_availability_v1($1,ARRAY['word-to-definition'],null,'curated',$2,'meaning') r",[user,{...filter,vocabulary:{...selection,meanings}}])).rows[0].r;
+   expect(result.totalReviews).toBe(count);
+   const calls=Number((await c.query("select last_value from private.vocabulary_selection_test_calls")).rows[0].last_value);
+   expect(calls).toBeLessThanOrEqual(20);
+  }
+ }));
+
 });
