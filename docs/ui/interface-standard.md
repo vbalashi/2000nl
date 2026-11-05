@@ -76,3 +76,13 @@ the editor visible while catalog-dependent controls wait for their new material;
 failures offer Retry inside the editor. The full startup surface remains for initial
 loading and the overview. The All session-size option remains an ordinary-word
 selection of currently available cards, not a continuously growing queue.
+
+## Dictionary notes and translations
+
+A usage note and its translations share the same reading size: caption for a
+standalone note, small for a nested note. Both follow the account reading scale
+in Library and Training. Translation color and spacing still distinguish the
+pair. Definitions, examples and idioms retain their own reading hierarchy.
+
+Original/translation paragraph spacing uses the shared article-pair token: 4 px
+in balanced spacing and 6 px in airy spacing before account spacing scaling.
