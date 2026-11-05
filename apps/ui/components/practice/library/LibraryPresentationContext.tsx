@@ -40,6 +40,7 @@ export const LibraryPresentationContext = createContext<{
   filterButtonSide?: "left" | "right";
   renderSearchActions?: (language: OnboardingLanguage) => ReactNode;
   showPartsFilter?: boolean;
+  renderEntryTypeFilter?: (language: OnboardingLanguage) => ReactNode;
   renderAdditionalFilters?: (language: OnboardingLanguage) => ReactNode;
   onApplyAdditionalFilters?: () => void;
   onDismissAdditionalFilters?: () => void;

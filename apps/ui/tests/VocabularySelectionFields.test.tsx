@@ -29,11 +29,11 @@ test("custom bounds remain exact and can select a single rank",()=>{
  for(const label of ["От","До"])fireEvent.change(within(dialog).getByRole("spinbutton",{name:label}),{target:{value:"73"}});
  fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
  expect(screen.getByRole("button",{name:"Изменить диапазон: 73–73"})).toBeInTheDocument();
- for(const name of ["Первая граница диапазона","Последняя граница диапазона"])expect(screen.getByRole("slider",{name})).toHaveAttribute("aria-valuetext","73");
+ for(const name of ["От","До"])expect(screen.getByRole("spinbutton",{name})).toHaveAttribute("aria-valuenow","73");
 });
 test("all words hides frequency controls and preserves the meaning limit",()=>{
  render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Все слова"}));
- expect(screen.queryByRole("slider",{name:"Первая граница диапазона"})).not.toBeInTheDocument();
+ expect(screen.queryByRole("spinbutton",{name:"От"})).not.toBeInTheDocument();
  expect(screen.getByRole("slider",{name:"Значений на статью"})).toHaveAttribute("aria-valuetext","Первые 2 значения");
 });
 test("the icon sort trigger names its selection and restores focus",()=>{
@@ -43,28 +43,31 @@ test("the icon sort trigger names its selection and restores focus",()=>{
  expect(screen.getByRole("button",{name:"Сортировка: По частоте в разговоре"})).toHaveFocus();expect(screen.queryByRole("menu")).not.toBeInTheDocument();
 });
 
-test("either coincident boundary can be separated by a pointer drag",()=>{
- class Pointer extends MouseEvent {readonly pointerId=1;readonly isPrimary=true;}
- vi.stubGlobal("PointerEvent",Pointer);
- Object.defineProperty(HTMLElement.prototype,"setPointerCapture",{configurable:true,value:vi.fn()});
- Object.defineProperty(HTMLElement.prototype,"hasPointerCapture",{configurable:true,value:()=>false});
- const view=render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
- const dialog=screen.getByRole("dialog",{name:"Места в списке"});for(const label of ["От","До"])fireEvent.change(within(dialog).getByRole("spinbutton",{name:label}),{target:{value:"73"}});
+test("inline wheels replace the rail and can separate equal boundaries in either direction",()=>{
+ render(<Fields/>);const edit=screen.getByRole("button",{name:"Изменить диапазон: 1–100"});
+ expect(edit).toHaveTextContent("");
+ expect(screen.getAllByRole("slider")).toHaveLength(1);
+ fireEvent.click(edit);const dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ for(const label of ["От","До"])fireEvent.change(within(dialog).getByRole("spinbutton",{name:label}),{target:{value:"73"}});
  fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
- const surface=screen.getByRole("slider",{name:"Первая граница диапазона"}).parentElement!;
- vi.spyOn(surface,"getBoundingClientRect").mockReturnValue({left:0,width:916,right:916,top:0,bottom:44,height:44,x:0,y:0,toJSON:()=>({})});
- fireEvent.pointerDown(surface,{clientX:208,button:0});fireEvent.pointerMove(surface,{clientX:108,button:0});fireEvent.pointerUp(surface,{clientX:108,button:0});
- expect(screen.getByRole("slider",{name:"Первая граница диапазона"})).toHaveAttribute("aria-valuetext","50");
- expect(screen.getByRole("slider",{name:"Последняя граница диапазона"})).toHaveAttribute("aria-valuetext","73");
- // Recreate the coincident state and move the other way.
- fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 50–73"}));
- fireEvent.change(screen.getByRole("dialog",{name:"Места в списке"}).querySelector("input")!,{target:{value:"73"}});
- fireEvent.click(screen.getByRole("button",{name:"Готово"}));
- fireEvent.pointerDown(surface,{clientX:208,button:0});fireEvent.pointerMove(surface,{clientX:308,button:0});fireEvent.pointerUp(surface,{clientX:308,button:0});
- expect(screen.getByRole("slider",{name:"Первая граница диапазона"})).toHaveAttribute("aria-valuetext","73");
- expect(screen.getByRole("slider",{name:"Последняя граница диапазона"})).toHaveAttribute("aria-valuetext","100");
- expect(screen.getByRole("slider",{name:"Последняя граница диапазона"})).toHaveAttribute("min","2");
- view.unmount();vi.unstubAllGlobals();
+ const from=screen.getByRole("spinbutton",{name:"От"}),to=screen.getByRole("spinbutton",{name:"До"});
+ fireEvent.keyDown(from,{key:"ArrowDown"});
+ expect(from).toHaveAttribute("aria-valuenow","72");expect(to).toHaveAttribute("aria-valuenow","73");
+ fireEvent.keyDown(from,{key:"ArrowUp"});fireEvent.keyDown(to,{key:"ArrowUp"});
+ expect(from).toHaveAttribute("aria-valuenow","73");expect(to).toHaveAttribute("aria-valuenow","74");
+});
+
+test("inline wheels keep the selected step, clamp bounds and cancel exact edits",()=>{
+ render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"100"}));
+ const from=screen.getByRole("spinbutton",{name:"От"}),to=screen.getByRole("spinbutton",{name:"До"});
+ fireEvent.keyDown(from,{key:"ArrowUp"});expect(from).toHaveAttribute("aria-valuenow","100");
+ fireEvent.keyDown(to,{key:"ArrowUp"});expect(to).toHaveAttribute("aria-valuenow","200");
+ fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 100–200"}));
+ const dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ fireEvent.change(within(dialog).getByRole("spinbutton",{name:"От"}),{target:{value:"150"}});
+ fireEvent.click(within(dialog).getByRole("button",{name:"Отмена"}));
+ expect(from).toHaveAttribute("aria-valuenow","100");
+ expect(screen.getByRole("button",{name:"100"})).toHaveAttribute("aria-pressed","true");
 });
 
 test("the sort review limitation is available before opening the menu",()=>{
@@ -104,7 +107,7 @@ test("two sliders can be refined by one without opening a numeric field",()=>{
 });
 test("entry types offer only confirmed groups, independently of parts of speech",()=>{
  function Kinds(){const [value,setValue]=useState<VocabularyMaterialKind[]>([]);return <MaterialKindSelection value={value} onChange={setValue} language="ru"/>;}
- render(<Kinds/>);expect(screen.getByRole("button",{name:"Всё"})).toHaveAttribute("aria-pressed","true");
+ render(<Kinds/>);expect(screen.getByRole("button",{name:"Любые"})).toHaveAttribute("aria-pressed","true");
  fireEvent.click(screen.getByRole("button",{name:"Другое"}));
  expect(screen.getByRole("button",{name:"Другое"})).toHaveAttribute("aria-pressed","true");
  expect(screen.getByRole("button",{name:"Слова"})).toHaveAttribute("aria-pressed","false");
@@ -113,7 +116,7 @@ test("entry types offer only confirmed groups, independently of parts of speech"
  expect(screen.getByRole("button",{name:"Слова"})).toHaveAttribute("aria-pressed","true");
  fireEvent.click(screen.getByRole("button",{name:"Другое"}));
  expect(screen.getByRole("button",{name:"Другое"})).toHaveAttribute("aria-pressed","true");
- expect(screen.getByRole("button",{name:"Всё"})).toHaveAttribute("aria-pressed","false");
+ expect(screen.getByRole("button",{name:"Любые"})).toHaveAttribute("aria-pressed","false");
 });
 test("buttons and typing share the exact draft and selected step",()=>{
  render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
@@ -160,6 +163,11 @@ test("wheel drag and tapping nearby values use the selected step",()=>{
  expect(wheel).toHaveAttribute("aria-valuenow","21");
  fireEvent.pointerDown(wheel,{clientY:16,button:0});fireEvent.pointerUp(wheel,{clientY:16,button:0});
  expect(wheel).toHaveAttribute("aria-valuenow","1");
+ fireEvent.click(within(dialog).getByRole("button",{name:"Отмена"}));
+ const compact=screen.getByRole("spinbutton",{name:"От"});
+ vi.spyOn(compact,"getBoundingClientRect").mockReturnValue({left:0,width:100,right:100,top:0,bottom:96,height:96,x:0,y:0,toJSON:()=>({})});
+ fireEvent.pointerDown(compact,{clientY:80,button:0});fireEvent.pointerUp(compact,{clientY:80,button:0});
+ expect(compact).toHaveAttribute("aria-valuenow","2");
  view.unmount();vi.unstubAllGlobals();
 });
 

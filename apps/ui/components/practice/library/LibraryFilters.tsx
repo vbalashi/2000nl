@@ -109,6 +109,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
             {presentation?.renderSourceActions?.()}
           </BuilderSection>
           {presentation?.renderAdditionalFilters?.(locale)}
+          {presentation?.renderEntryTypeFilter?.(locale)}
           {presentation?.showPartsFilter!==false&&<BuilderSection title={builder.partOfSpeech} summary={draft.parts.length ? draft.parts.map(part => builder.parts[LIBRARY_PART_LABELS[part]]).join(" · ") : builder.allParts} open={partsOpen} onToggle={() => setPartsOpen(open => !open)}>
           {layout === "chips" ? <div className={f.parts}>{LIBRARY_PARTS.map(part => <div className={`${f.part} ${draft.parts.includes(part) ? f.selected : ""}`} key={part}>
             <button type="button" aria-pressed={draft.parts.includes(part)} onClick={() => togglePart(part)}>{builder.parts[LIBRARY_PART_LABELS[part]]}{part === "noun" && draft.article && <span className={f.dot} role="img" aria-label={formatUiMessage(copy.articleFilter,{article:draft.article??""})}/>}</button>

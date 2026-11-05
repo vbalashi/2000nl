@@ -3,7 +3,8 @@ import React, { useEffect, useRef } from "react";
 import s from "./vocabularySelection.module.css";
 
 /** Comparison-only wheel: bounded arithmetic, not a DOM list of thousands of ranks. */
-export function NumberWheel({value,min,max,step,label,language,onChange,describedBy}:{value:number;min:number;max:number;step:number;label:string;language:string;onChange:(value:number)=>void;describedBy:string}){
+export function NumberWheel({value,min,max,step,label,language,onChange,describedBy,visibleRows=5}:{value:number;min:number;max:number;step:number;label:string;language:string;onChange:(value:number)=>void;describedBy?:string;visibleRows?:3|5}){
+ const radius=(visibleRows-1)/2;
  const ref=useRef<HTMLDivElement>(null),remainder=useRef(0);
  const gesture=useRef<{id:number;y:number;value:number;moved:boolean}|null>(null);
  const clamp=(next:number)=>Math.max(min,Math.min(max,next));
@@ -25,7 +26,7 @@ export function NumberWheel({value,min,max,step,label,language,onChange,describe
   node.addEventListener("wheel",wheel,{passive:false});node.addEventListener("pointerleave",reset);
   return()=>{node.removeEventListener("wheel",wheel);node.removeEventListener("pointerleave",reset);};
  },[]);
- return <div ref={ref} className={s.wheel} role="spinbutton" tabIndex={0} aria-label={label} aria-valuenow={value} aria-valuemin={min} aria-valuemax={max} aria-describedby={describedBy}
+ return <div ref={ref} className={s.wheel} style={{"--wheel-rows":visibleRows} as React.CSSProperties} role="spinbutton" tabIndex={0} aria-label={label} aria-valuenow={value} aria-valuemin={min} aria-valuemax={max} aria-describedby={describedBy}
   onKeyDown={event=>{
    const delta=event.key==="ArrowUp"?step:event.key==="ArrowDown"?-step:event.key==="PageUp"?step*10:event.key==="PageDown"?-step*10:null;
    if(delta!==null){event.preventDefault();onChange(clamp(value+delta));}
@@ -35,10 +36,10 @@ export function NumberWheel({value,min,max,step,label,language,onChange,describe
   onPointerMove={event=>{const start=gesture.current;if(!start||start.id!==event.pointerId)return;const distance=start.y-event.clientY;if(Math.abs(distance)>6)start.moved=true;if(start.moved)onChange(clamp(start.value+Math.trunc(distance/32)*step));}}
   onPointerUp={event=>{
    const start=gesture.current;if(!start||start.id!==event.pointerId)return;
-   if(!start.moved){const box=event.currentTarget.getBoundingClientRect();const offset=Math.max(-2,Math.min(2,Math.floor((event.clientY-box.top)/32)-2));onChange(clamp(start.value+offset*step));}
+   if(!start.moved){const box=event.currentTarget.getBoundingClientRect();const offset=Math.max(-radius,Math.min(radius,Math.floor((event.clientY-box.top)/32)-radius));onChange(clamp(start.value+offset*step));}
    gesture.current=null;
    if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
   }} onPointerCancel={()=>{gesture.current=null;}} onLostPointerCapture={()=>{gesture.current=null;}}>
-  {[-2,-1,0,1,2].map(offset=>{const number=value+offset*step;return <span aria-hidden="true" key={offset} className={offset===0?s.wheelCurrent:undefined}>{number>=min&&number<=max?number.toLocaleString(language):"\u00a0"}</span>;})}
+  {Array.from({length:visibleRows},(_,index)=>index-radius).map(offset=>{const number=value+offset*step;return <span aria-hidden="true" key={offset} className={offset===0?s.wheelCurrent:undefined}>{number>=min&&number<=max?number.toLocaleString(language):"\u00a0"}</span>;})}
  </div>;
 }

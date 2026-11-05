@@ -3,11 +3,6 @@
 .frequencyDetails{display:grid;gap:24px;padding-left:12px}
 .rangeValue.rangeValue{justify-self:end;align-items:center;display:inline-flex;gap:6px;border:0;padding:0;background:transparent;color:var(--practice-selected-text);font-family:var(--practice-font-ui);font-weight:500;cursor:pointer}
 .rangeValue svg{flex:none;align-self:center;color:var(--practice-text-muted)}
-.dualRange{position:relative;height:44px;margin-top:6px;touch-action:none;cursor:pointer}
-.rail{position:absolute;left:8px;right:8px;top:19px;height:6px;border-radius:99px;background:linear-gradient(to right,var(--practice-border) 0 var(--range-start),var(--practice-accent) var(--range-start) var(--range-end),var(--practice-border) var(--range-end) 100%);pointer-events:none}
-.rangeInput{position:absolute;inset:0;width:100%;height:44px;opacity:0;pointer-events:none}
-.thumb{position:absolute;top:14px;width:16px;height:16px;border-radius:50%;background:var(--practice-accent);transform:translateX(-50%);pointer-events:none}
-.rangeInput:focus-visible+.thumb{outline:2px solid var(--practice-focus);outline-offset:3px}
 .rangeDialog{width:min(360px,calc(100vw - 32px));padding:20px;border:1px solid var(--practice-border);border-radius:var(--practice-radius-dialog);background:var(--practice-surface);color:var(--practice-text);font-family:var(--practice-font-ui)}
 .rangeDialog::backdrop{background:var(--practice-backdrop)}
 .rangeDialog h2{font-size:var(--practice-text-body);font-weight:500;margin:0 0 20px}
@@ -16,7 +11,6 @@
 
 .ticks>span:first-child{transform:none}
 .ticks>span:last-child{transform:translateX(-100%)}
-@media(max-width:600px){.frequencyTicks>span:not(:first-child):not(:last-child){display:none}}
 
 .rangeDialog{max-height:calc(100dvh - 24px);overflow:auto}
 .rangeInputs{margin-top:20px}
@@ -30,10 +24,13 @@
 .stepValue.stepValue{width:100%;min-width:0;text-align:center;padding-inline:4px;font-variant-numeric:tabular-nums;appearance:textfield}
 .stepValue::-webkit-inner-spin-button,.stepValue::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .wheelColumns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:20px}
-.wheel{display:grid;grid-template-rows:repeat(5,32px);margin-top:8px;text-align:center;touch-action:none;user-select:none;cursor:ns-resize;font-size:var(--practice-text-small);font-variant-numeric:tabular-nums;color:var(--practice-text-muted)}
+.wheel{display:grid;grid-template-rows:repeat(var(--wheel-rows,5),32px);margin-top:8px;text-align:center;touch-action:none;user-select:none;cursor:ns-resize;font-size:var(--practice-text-small);font-variant-numeric:tabular-nums;color:var(--practice-text-muted)}
 .wheel>span{display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden}
 .wheelCurrent{font-weight:500;color:var(--practice-selected-text);border-block:1px solid var(--practice-control-border);background:var(--practice-selected);border-radius:var(--practice-radius-control)}
 .wheel:focus-visible{outline:none}
 .wheel:focus-visible .wheelCurrent{outline:2px solid var(--practice-focus);outline-offset:2px}
 
 :global(html[data-input-modality=pointer]) .wheel .wheelCurrent{outline:none}
+.rangeValue.rangeValue{min-width:28px;min-height:28px;justify-content:center}
+.inlineRange .stepChoice{margin-top:8px}
+.inlineRange .wheelColumns{margin-top:12px}

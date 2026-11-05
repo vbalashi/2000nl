@@ -142,3 +142,10 @@ test("hidden parts are absent from count and Apply, and return as a draft for Wo
  expect(screen.getByRole("button",{name:/^Nouns/})).toHaveAttribute("aria-pressed","true");
  expect(preview).toHaveBeenLastCalledWith(draft);
 });
+
+test("word selection precedes entry type, which immediately precedes parts of speech",()=>{
+ render(<LibraryPresentationContext.Provider value={{renderAdditionalFilters:()=><section aria-label="Word selection"/>,renderEntryTypeFilter:()=><section aria-label="Entry type"/>}}><LibraryFilters {...props} onClose={()=>{}} onApply={()=>{}}/></LibraryPresentationContext.Provider>);
+ const words=screen.getByRole("region",{name:"Word selection"}),type=screen.getByRole("region",{name:"Entry type"}),parts=screen.getByRole("button",{name:/^Part of speech/});
+ expect(words.compareDocumentPosition(type)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+ expect(type.compareDocumentPosition(parts)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});

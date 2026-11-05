@@ -3,6 +3,7 @@ import React, { useId, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { frequencyRangeSteps, validFrequencyRange } from "@/lib/vocabulary/selection";
+import { RangeStepControl } from "./RangeStepControl";
 import { NumberWheel } from "./NumberWheel";
 import { DialogSurface } from "../ui/DialogSurface";
 import { SegmentedControl } from "../ui/SegmentedControl";
@@ -40,7 +41,7 @@ export function RangeEditor({initialFrom,initialTo,language,title,onCancel,onApp
    <h2 id={`${id}-title`}>{title}</h2>
    <SegmentedControl standard label={t.mode}>{(["buttons","sliders","wheel"] as const).map(option=><BuilderChoice key={option} active={mode===option} onClick={()=>setMode(option)}>{t[option]}</BuilderChoice>)}</SegmentedControl>
    <>
-    <div className={s.stepChoice}><span className={controls.label}>{t.step}</span><SegmentedControl standard label={t.step}>{[1,10,100].map(amount=><BuilderChoice key={amount} active={step===amount} onClick={()=>setStep(amount)}>{amount}</BuilderChoice>)}</SegmentedControl></div>
+    <RangeStepControl value={step} onChange={setStep} label={t.step}/>
     <div className={mode==="wheel"&&valid?s.wheelColumns:s.boundaries}>{(["from","to"] as const).map(boundary=><div key={boundary} className={controls.rangeGroup} role="group" aria-label={labels[boundary]}>
      {mode==="buttons"||!valid?<label htmlFor={`${id}-${boundary}`} className={controls.label}>{labels[boundary]}</label>:<span className={controls.label}>{labels[boundary]}</span>}
      {mode==="wheel"&&valid?<NumberWheel value={numbers[boundary]} min={boundary==="from"?1:from} max={boundary==="from"?to:Number.MAX_SAFE_INTEGER} step={step} label={labels[boundary]} language={language} describedBy={`${id}-wheel-help`} onChange={next=>setDraft(current=>({...current,[boundary]:String(next)}))}/>:<div className={s.stepper}>
