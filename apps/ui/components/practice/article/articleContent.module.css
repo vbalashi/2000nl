@@ -166,8 +166,8 @@
 .detail .contentNode>.contentPair>p:not([data-content-translation]){line-height:var(--practice-source-leading)}
 .detail .translation{line-height:var(--practice-translation-leading)}
 
-.languageLabel { display: inline-block; margin-inline-end: 8px; font-family: var(--font-sense-sans, sans-serif); font-size: 10px; font-weight: 600; letter-spacing: .06em; opacity: .65; vertical-align: middle; }
+.languageLabel { display: inline-block; margin-inline-end: 8px; font-family: var(--practice-font-ui); font-size: var(--practice-text-label); font-weight: 600; letter-spacing: .06em; opacity: .65; vertical-align: middle; }
 
 .noteMaterialText{white-space:pre-wrap;overflow-wrap:anywhere}
 
-.literalTranslation{font-size:.85em;font-style:italic}
+.literalTranslation{font-size:var(--practice-literal-translation-size);font-style:italic}

@@ -44,6 +44,7 @@ type Props = {
   activeList: WordListSummary | null;
   onReloadLists: () => Promise<void>;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
+  onTrainSelection?:(selection:import("@/lib/vocabulary/libraryTrainingHandoff").LibraryTrainingHandoff)=>void;
   onTrainWord?: (wordId: string) => void;
 };
 
@@ -63,7 +64,7 @@ function LibraryDestinationSession({
   activeList,
   onReloadLists,
   onOpenListMembership,
-  onTrainWord,
+  onTrainWord,onTrainSelection,
   meaningIntent,
   onboardingSearch,
 }: Props) {
@@ -156,7 +157,7 @@ function LibraryDestinationSession({
               reloadLists={onReloadLists}
               notifyListsUpdated={() => {}}
               onOpenListMembership={onOpenListMembership}
-              onTrainWord={onTrainWord}
+              onTrainWord={onTrainWord} onTrainSelection={onTrainSelection}
               autoFocusQuery={open}
               searchState={searchState}
               onSearchStateChange={setSearchState}

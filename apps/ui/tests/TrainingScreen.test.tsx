@@ -18,6 +18,7 @@ import type {
   ActiveTrainingScope,
   DictionaryEntry,
   TrainingScenario,
+  WordListSummary,
 } from "@/lib/types";
 import type { TrainingSessionSnapshot } from "@/lib/trainingService";
 import type { AppDestination } from "@/components/navigation/appDestination";
@@ -417,6 +418,22 @@ const fetchWordsForList = vi.fn().mockResolvedValue({
   items: [dictionaryHuis],
   total: 1,
 });
+const categoryFixtureGroups = new Map<string, PlatformHeadwordGroupV2>();
+vi.mock("@/lib/platform/dictionaryCategorySearch", async importOriginal => ({
+  ...await importOriginal<typeof import("@/lib/platform/dictionaryCategorySearch")>(),
+  // Keep the screen, category controller and hydration real; adapt the existing
+  // server fixture to the new category transport rather than making network calls.
+  readDictionaryCategory: async (scope: {query:string;languageCode:string;signal:AbortSignal}, category: string, onPage: (page:unknown,complete:boolean)=>void) => {
+    const source = await fetchPlatformV2LibraryGroupPage({query:scope.query,contentLanguageCode:scope.languageCode});
+    scope.signal.throwIfAborted();
+    const groups = source.groups as PlatformHeadwordGroupV2[];
+    for (const group of groups) for (const entry of group.entries) {
+      categoryFixtureGroups.set(entry.kind === "sense-card" ? entry.entryId : entry.crossReferenceId,group);
+    }
+    const page = {id:category,items:groups.flatMap(group=>group.entries.map(entry=>({entry:{id:entry.kind === "sense-card"?entry.entryId:entry.crossReferenceId,headword:group.header.text}}))),total:groups.length,page:{hasMore:false,nextCursor:null}};
+    onPage(page,true);return page;
+  },
+}));
 const fetchPlatformV2LibraryGroup = vi.fn(
   async ({
     query,
@@ -427,6 +444,8 @@ const fetchPlatformV2LibraryGroup = vi.fn(
     entryId: string;
     contentLanguageCode: string;
   }): Promise<PlatformHeadwordGroupV2 | null> => {
+    const cached = categoryFixtureGroups.get(entryId);
+    if (cached && query === undefined) return {...cached,entries:cached.entries.map(entry=>entry.kind === "sense-card" ? {...entry,...libraryState(entry.entryId)} : entry)} as PlatformHeadwordGroupV2;
     const page = await fetchPlatformV2LibraryGroupPage({
       query,
       contentLanguageCode,
@@ -870,6 +889,7 @@ class DeterministicBrowserLocks {
 }
 
 beforeEach(() => {
+  categoryFixtureGroups.clear();
   savedSetupAccounts.clear();
   vi.clearAllMocks();
   libraryLearning.clear();
@@ -2798,7 +2818,7 @@ test("superseded resume restores every still-permitted setup setting before Star
   for (const section of ["Source", "Exercises", "Filters", "Session"]) {
     fireEvent.click(await screen.findByRole("button", { name: new RegExp(section) }));
   }
-  expect(screen.getByRole("button", { name: "Words" })).toHaveAttribute(
+  expect(screen.getAllByRole("button", { name: "Words" })[0]).toHaveAttribute(
     "aria-pressed",
     "true",
   );
@@ -2865,22 +2885,58 @@ test("pilot Start persists the complete selection in one scope update", async ()
   expect(updateActiveTrainingScope).toHaveBeenCalledWith({ userId:user.id, languageCode:"nl", listId:defaultAvailableList.id, listType:defaultAvailableList.type, activeScenario:"understanding", cardFilter:"both", modesEnabled:["word-to-definition","definition-to-word"], newReviewRatio:3 });
 }, 15_000);
 
-test("pilot Setup applies source and date filters only when Start commits the draft", async () => {
+test("pilot Setup preserves saved source and date filters until Start commits the draft", async () => {
+  const savedRecipe = {
+    id: "saved-activity-scope",
+    name: "Scoped activity practice",
+    languageCode: "nl",
+    draft: {
+      family: "meaning",
+      scenarioId: "understanding",
+      modes: ["word-to-definition"],
+      cardFilter: "both",
+      listValue: "curated:list-1",
+      materialMode: "collection",
+      newReviewRatio: 2,
+      dateWindow: "today",
+      sourceValue: "source:source-youtube-1",
+      sessionSize: 5,
+    },
+  };
+  savedSetupAccounts.set(user.id, {
+    revision: 1,
+    document: { schemaVersion: 1, trainings: [savedRecipe], mainTrainingId: savedRecipe.id },
+  });
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
   await screen.findByRole("heading", { name: /^(Training|Тренировка)$/ });
   await waitFor(() => expect(fetchTrainingFilterSources).toHaveBeenCalledWith(user.id));
-  fireEvent.click(await screen.findByRole("button", { name:"Create training" }));
-  fireEvent.click(await screen.findByRole("button", { name:/^Filters / }));
-  fireEvent.click(screen.getByText(/Activity|Activiteit/));
-  fireEvent.change(screen.getByLabelText("Time window"), { target:{value:"today"} });
-  fireEvent.change(screen.getByRole("combobox",{name:"Source"}), { target:{value:"source:source-youtube-1"} });
+  fireEvent.click((await screen.findAllByRole("button", { name: "Edit Scoped activity practice" }))[0]);
+  expect(await screen.findByText(/Saved word activity filters still apply:/)).toHaveTextContent("Today");
+  fireEvent.click(await screen.findByRole("button", { name: /^Filters / }));
+  expect(screen.queryByLabelText("Time window")).not.toBeInTheDocument();
+  expect(screen.queryByRole("combobox", { name: "Source" })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Verbs" }));
+  expect(savedSetupAccounts.get(user.id)?.document).toEqual({
+    schemaVersion: 1, trainings: [savedRecipe], mainTrainingId: savedRecipe.id,
+  });
   expect(fetchNextTrainingWordByScenario).not.toHaveBeenCalled();
   expect(fetchTrainingSessionPlan).not.toHaveBeenCalled();
   expect(startTrainingSession).not.toHaveBeenCalled();
-  const start = screen.getByRole("button", { name:/Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten/ });
+  const start = screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten/ });
   await waitFor(() => expect(start).toBeEnabled());
   await clickTrainingAction(start);
-  await waitFor(() => expect(fetchNextTrainingWordByScenario.mock.calls.map(call=>call[8])).toContainEqual(expect.objectContaining({dateWindow:"today",sourceId:"source-youtube-1"})));
+  await waitFor(() => expect(startTrainingSession).toHaveBeenCalledOnce());
+  expect(startTrainingSession).toHaveBeenCalledWith(
+    user.id,
+    ["word-to-definition"],
+    expect.objectContaining({
+      trainingFilter: { dateWindow: "today", sourceId: "source-youtube-1", partOfSpeech: ["ww"] },
+    }),
+    expect.any(String),
+  );
+  await waitFor(() => expect(fetchNextTrainingWordByScenario.mock.calls.map(call => call[8])).toContainEqual(
+    expect.objectContaining({ dateWindow: "today", sourceId: "source-youtube-1", partOfSpeech: ["ww"] }),
+  ));
 });
 test("pilot Start keeps recovery visible when the replacement queue fails", async () => {
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
@@ -2907,7 +2963,6 @@ test("pilot Start keeps recovery visible when the replacement queue fails", asyn
       /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
     ),
   ).toHaveAttribute("role", "alert");
-  expect(screen.getByRole("heading", { name: /^(Training|Тренировка)$/ })).toBeInTheDocument();
   expect(
     screen.queryByRole("heading", { name: "huis" }),
   ).not.toBeInTheDocument();
@@ -3047,6 +3102,7 @@ test("dictionary search scope changes lookup language without changing training"
   const copy = getUiMessages("en").library;
   fireEvent.click(screen.getByRole("button", { name: copy.filters }));
   fireEvent.click(screen.getByRole("button", { name: "English" }));
+  await waitFor(()=>expect(screen.getByRole("button",{name:copy.showResults})).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: copy.showResults }));
 
   await waitFor(() =>
@@ -3072,7 +3128,7 @@ test("dictionary search omits the retired private entry editor", async () => {
   expect(createUserDictionaryEntry).not.toHaveBeenCalled();
 });
 
-test("dictionary lookup preserves an open entry with an explicit stale-detail label", async () => {
+test("dictionary lookup keeps an open entry without a stale-detail banner", async () => {
   searchDictionaryGroups.mockImplementation(
     async ({ query }: { query?: string }) =>
       query === "boom"
@@ -3090,16 +3146,10 @@ test("dictionary lookup preserves an open entry with an explicit stale-detail la
     fireEvent.change(queryInput, { target: { value: "huis" } });
     const huisRow = await screen.findByTestId("library-headword-group-group-word-1");
     fireEvent.click(huisRow);
-    await screen.findByText("Details");
-
     fireEvent.change(queryInput, { target: { value: "boom" } });
 
     await screen.findByText("boom");
-    expect(
-      await screen.findByText(
-        "This entry stays open while search results change.",
-      ),
-    ).toBeInTheDocument();
+    expect(screen.queryByText("This entry stays open while search results change.")).not.toBeInTheDocument();
   } finally {
     restoreDefaultSearchResults();
   }
@@ -3175,7 +3225,7 @@ test("dictionary lookup ignores stale responses from older queries", async () =>
 });
 
 test("dictionary lookup preserves server Headword Group order", async () => {
-  searchDictionaryGroups.mockResolvedValueOnce({
+  searchDictionaryGroups.mockResolvedValue({
     items: [
       {
         ...dictionaryHuis,
@@ -3209,6 +3259,7 @@ test("dictionary lookup preserves server Headword Group order", async () => {
   expect(
     exact.compareDocumentPosition(compound) & Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
+  restoreDefaultSearchResults();
 });
 
 test("dictionary lookup empty state names the dictionary source search", async () => {
@@ -3227,10 +3278,10 @@ test("dictionary lookup empty state names the dictionary source search", async (
     );
 
     expect(
-      await screen.findByText("No matching words"),
+      await screen.findByText("No matches", {exact:true}),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("No matches in All dictionaries."),
+      screen.getByRole("button", {name:"Words",pressed:true}),
     ).toBeInTheDocument();
   } finally {
     restoreDefaultSearchResults();
@@ -4767,4 +4818,20 @@ test("a retired card notification cannot clear a newly bound run",async()=>{
  await waitFor(()=>expect(start).toBeEnabled());await clickTrainingAction(start);
  const current=await screen.findByTestId("mock-training-sense-card-v2");const id=current.getAttribute("data-training-session-id");expect(id).not.toBe("retired-a");
  act(()=>old());expect(screen.getByTestId("mock-training-sense-card-v2")).toHaveAttribute("data-training-session-id",id);
+});
+
+test('changing the editor language keeps its visible surface while the catalog loads', async()=>{
+ const previous=fetchAvailableLists.getMockImplementation();
+ let release!:(rows:WordListSummary[])=>void;
+ const held=new Promise<WordListSummary[]>(resolve=>{release=resolve;});
+ fetchAvailableLists.mockImplementation((owner,language)=>language==='en'?held:previous!(owner,language));
+ render(<TrainingScreen user={user} trainingTodaySetupEnabled/>);
+ fireEvent.click(await screen.findByRole('button',{name:'Create training'}));
+ const source=await screen.findByRole('button',{name:/^Source /});
+ try {
+  fireEvent.click(screen.getByRole('button',{name:'English'}));
+  await waitFor(()=>expect(fetchAvailableLists.mock.calls.some(call=>call[1]==='en')).toBe(true));
+  expect(screen.queryByTestId('training-startup-gate')).not.toBeInTheDocument();
+  expect(source.isConnected).toBe(true);
+ } finally {await act(async()=>release([]));}
 });

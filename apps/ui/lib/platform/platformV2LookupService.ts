@@ -57,7 +57,7 @@ type PlatformV2IdentityEntry = {
   contentNodeBindings: PlatformContentNodeBindingV2Input[];
 };
 
-type PlatformV2LookupContext =
+type PlatformV2LookupContext = (
   | {
       kind: "authenticated";
       auth: AuthenticatedSupabase;
@@ -66,7 +66,7 @@ type PlatformV2LookupContext =
   | {
       kind: "catalog";
       service: ServiceSupabase;
-    };
+    }) & { signal?: AbortSignal; libraryCountOnly?: boolean };
 
 type RpcResult = {
   data: unknown;
@@ -86,6 +86,10 @@ export async function performPlatformV2Lookup(
     context.auth.principal.authKind !== "first_party" ||
     request.entryId || request.intent !== "dictionary-lookup"
   )) return { payload: { error: "library_query_required" }, status: 403 };
+  // Count previews always need the authoritative filtered-page total, including
+  // callers that select dictionaries without supplying any entry filters.
+  if (libraryScope && context.libraryCountOnly && !libraryScope.filters && !libraryScope.material)
+    libraryScope = { ...libraryScope, filters: { parts: [], article: null } };
   const timings: Array<{ name: string; durationMs: number }> = [];
   const serverTiming = () =>
     timings
@@ -113,8 +117,8 @@ export async function performPlatformV2Lookup(
       : {
         ok: true as const,
         query,
-        result: await measure<RpcResult>(timings, "lookup.db", async () =>
-          await context.service.supabase.rpc(queryRpc, {
+        result: await measure<RpcResult>(timings, "lookup.db", async () => {
+          const operation = context.service.supabase.rpc(queryRpc, {
             p_user_id:
               context.kind === "authenticated" ? context.auth.user.id : null,
             ...(libraryScope ? {p_dictionary_ids:libraryScope.dictionaryIds} : {p_catalog:context.kind === "catalog"}),
@@ -123,9 +127,11 @@ export async function performPlatformV2Lookup(
             p_query: query,
             p_language_code: request.contentLanguageCode ?? null,
             p_cursor: request.cursor ?? null,
-            p_group_limit: libraryScope ? LIBRARY_RPC_GROUP_LIMIT : LOOKUP_GROUP_PAGE_SIZE,
+            p_group_limit: libraryScope ? (context.libraryCountOnly ? 1 : LIBRARY_RPC_GROUP_LIMIT) : LOOKUP_GROUP_PAGE_SIZE,
             p_group_entry_bound: LOOKUP_GROUP_ENTRY_SAFETY_BOUND,
-          }),
+          });
+          return await (libraryScope && context.signal ? operation.abortSignal(context.signal) : operation);
+        },
         ),
       };
   if (!lookupResolution.ok) return lookupResolution.result;
@@ -213,6 +219,18 @@ export async function performPlatformV2Lookup(
     cardTypeId: request.cardTypeId,
     intent,
   };
+  // The count is authoritative in the scoped RPC page. Draft previews do not
+  // need article projection, card states, translations or continuation cursors.
+  if (libraryScope && context.libraryCountOnly && librarySearch) {
+    return {
+      payload: {
+        ...projectPlatformLookupV2({ query: responseQuery, request: responseRequest, entries: [], page: { selectedTierComplete: true, nextGroupCursor: null } }),
+        librarySearch: { ...librarySearch, matchingEntryIds: [] },
+      },
+      status: 200,
+      serverTiming: serverTiming(),
+    };
+  }
   if (entries.length === 0) {
     return {
       payload: {
@@ -230,7 +248,15 @@ export async function performPlatformV2Lookup(
     entries,
     embeddedIdentities,
   );
-  const identityPromise = embeddedIdentityComplete
+  // The current-card reader can return an older embedded identity without the
+  // report revision. Hydrate it through the authoritative identity reader rather
+  // than silently hiding Report. Explicit null is a valid unverifiable revision.
+  const currentCardReportIdentityComplete = !currentCard || entries.every(
+    entry => Object.prototype.hasOwnProperty.call(
+      asRecord(asRecord(entry).platform_v2_identity), "reportContentRevision",
+    ),
+  );
+  const identityPromise = embeddedIdentityComplete && currentCardReportIdentityComplete
     ? Promise.resolve<RpcResult>({
         data: { entries: embeddedIdentities },
         error: null,

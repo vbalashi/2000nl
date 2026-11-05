@@ -20,6 +20,8 @@
     "build:translation-worker": "node scripts/build-dictionary-translation-worker.mjs",
     "test:database": "vitest run tests/fsrs",
     "test:e2e:latency": "APP_ROLLOUT_PROFILE=pilot PLAYWRIGHT_OPTIMIZED=true playwright test --grep @latency --workers=1",
+    "check:interface-standard": "node scripts/check-interface-standard.mjs && node --test scripts/check-interface-standard.test.mjs",
+    "pretest": "npm run check:interface-standard",
     "i18n:check": "node scripts/interface-localization.mjs check && node scripts/interface-copy-audit.mjs",
     "i18n:report": "node scripts/interface-localization.mjs report",
     "i18n:sync": "node scripts/interface-localization.mjs sync",

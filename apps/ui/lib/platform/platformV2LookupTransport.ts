@@ -24,6 +24,7 @@ export async function requestPlatformV2Lookup(input: {
   timeoutMs?: number;
   transitionId?: string;
   libraryScope?: LibrarySearchScope;
+  countOnly?: boolean;
 }): Promise<PlatformV2LookupTransportResult> {
   const controller = new AbortController();
   const detach = forwardAbortSignal(input.signal, controller);
@@ -55,6 +56,7 @@ export async function requestPlatformV2Lookup(input: {
         ...input.body,
         ...(input.libraryScope ? {
           dictionaryIds: input.libraryScope.dictionaryIds,
+          ...(input.countOnly ? { countOnly: true } : {}),
           ...(input.libraryScope.material ? { material: input.libraryScope.material } : {}),
           ...(input.libraryScope.filters ? { filters: input.libraryScope.filters } : {}),
         } : {}),

@@ -1,14 +1,14 @@
 "use client";
-import {languageAutonym} from "@/lib/languages/languageDisplayName";
+import { languageAutonym } from "@/lib/languages/languageDisplayName";
+import { localizedField, localizedSection } from "@/lib/i18n/catalog";
 
-import { localizedSection, localizedField } from "@/lib/i18n/catalog";
-
+import {useTrainingEditorMaterial} from "./useTrainingEditorMaterial";
 import {useTrainingSourceReferences} from '@/components/library/sharing/useTrainingSourceReferences';
 import {useAccountMaterial} from "@/components/practice/material/AccountMaterialProvider";
 import {useTrainingAvailability} from "@/lib/training/availability/useTrainingAvailability";
 import { useNewTrainingMaterial } from "@/components/practice/material/useNewTrainingMaterial";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type {
   CardFilter,
@@ -45,7 +45,7 @@ export type TrainingMaterialIntent = {
   key: number;
   userId: string;
   languageCode: string;
-  material: Pick<TrainingSetupDraft, "materialMode"> & Partial<Pick<TrainingSetupDraft, "listValue" | "dictionaryIds">>;
+  material: Pick<TrainingSetupDraft, "materialMode"> & Partial<Pick<TrainingSetupDraft, "listValue" | "dictionaryIds" | "vocabulary" | "librarySelection" | "partOfSpeech" | "nounArticles" | "dateWindow" | "sourceValue" | "daysAgo">>;
 };
 
 export type {TrainingSetupOption} from "@/lib/training/setups/availability";
@@ -84,6 +84,7 @@ type Props = {
   startError?: string | null;
   initialDraft: TrainingSetupDraft;
   onStartupReady?: () => void;
+  onEditorVisibilityChange?: (open:boolean) => void;
   startupPresentationManaged?: boolean;
   initialView?: "today" | "setup";
   stats: DetailedStats;
@@ -124,7 +125,7 @@ const copy = localizedSection("trainingSetup") satisfies Record<OnboardingLangua
 export function TrainingTodaySetup({
   userId,
   emptyTraining,
-  trainingLanguageCode,
+  trainingLanguageCode: actualTrainingLanguage,
   trainingLanguageOptions: readableLanguageOptions = [{ value: "nl", label: languageAutonym("nl") }],
   trainingLanguageLoading = false,
   onTrainingLanguageChange,
@@ -134,6 +135,7 @@ export function TrainingTodaySetup({
   startError,
   initialDraft,
   initialView = "today",
+  onEditorVisibilityChange,
   onStartupReady,
   startupPresentationManaged = false,
   stats,
@@ -163,10 +165,16 @@ export function TrainingTodaySetup({
   onStart,
   onRetry,
 }: Props) {
-  const material = useNewTrainingMaterial({
+  const [editorLanguage,setEditorLanguage]=useState<{owner:string|undefined;code:string}|null>(null);
+  const trainingLanguageCode=editorLanguage?.owner===userId?editorLanguage?.code??actualTrainingLanguage:actualTrainingLanguage;
+  const foreignLanguage=Boolean(trainingLanguageCode&&trainingLanguageCode!==actualTrainingLanguage);
+  const [queuedLanguageStart,setQueuedLanguageStart]=useState<{owner:string|undefined;language:string;draft:TrainingSetupDraft;name?:string;options?:import("./useTrainingPilotController").TrainingStartOptions}|null>(null);
+  const editorCatalog=useTrainingEditorMaterial(userId,foreignLanguage?trainingLanguageCode??null:null);
+  const selectedMaterial = useNewTrainingMaterial({
     languageCode: trainingLanguageCode, interfaceLanguage,
-    languages: readableLanguageOptions, lists: readableLists, dictionaries: readableDictionaries,
+    languages: readableLanguageOptions, lists: foreignLanguage?editorCatalog.lists:readableLists, dictionaries:foreignLanguage?editorCatalog.dictionaries:readableDictionaries,
   });
+  const material={...selectedMaterial,reload:()=>{selectedMaterial.reload?.();if(foreignLanguage)editorCatalog.reload();},status:selectedMaterial.status!=="ready"?selectedMaterial.status:foreignLanguage?editorCatalog.status:selectedMaterial.status};
   const {languages: trainingLanguageOptions, lists, dictionaries} = material;
 
   const materialCopy = getUiMessages(interfaceLanguage).materialPreferences;
@@ -179,6 +187,10 @@ export function TrainingTodaySetup({
   const t = copy[interfaceLanguage];
   const [editorSection,setEditorSection]=useState<"session"|undefined>();
   const [screen, setScreen] = useState<"today" | "setup">(initialView);
+  useLayoutEffect(()=>{
+    onEditorVisibilityChange?.(screen === "setup");
+    return ()=>onEditorVisibilityChange?.(false);
+  },[screen,onEditorVisibilityChange]);
   const [failedStart, setFailedStart] = useState<{
     draft: TrainingSetupDraft;
     sessionName?: string;
@@ -218,11 +230,14 @@ export function TrainingTodaySetup({
   }, [failedStart, failedStartContextMatches]);
   const [pendingLanguage, setPendingLanguage] = useState<string | null>(null);
   const accountMaterial = useAccountMaterial();
-  const availabilityRecipe = selectedTraining ?? (!account.snapshot.document.trainings.length ? {languageCode:trainingLanguageCode??"nl",draft:initialDraft} : null);
+  const availabilityRecipe = screen === "setup" ? {languageCode:trainingLanguageCode??"nl",draft} : selectedTraining ?? (!account.snapshot.document.trainings.length ? {languageCode:trainingLanguageCode??"nl",draft:initialDraft} : null);
   const availabilityResult = useTrainingAvailability({ownerId:userId??null,recipe:availabilityRecipe,
-    enabled:screen === "today" && !startPending && account.status === "ready" && material.status === "ready" &&
-      Boolean(availabilityRecipe && availabilityRecipe.languageCode === trainingLanguageCode && !pendingLanguage && !isTrainingSetupPaused(availabilityRecipe.draft)),
-    refresh:JSON.stringify([account.snapshot.revision,accountMaterial?.snapshot?.revision,ownedSession?.id,ownedSession?.completed,stats.reviewCardsDone,stats.newCardsToday,translationTargetLanguageCode])});
+    enabled:!startPending && !queuedLanguageStart && !sourceReferenceBlocked && account.status === "ready" && material.status === "ready" &&
+      Boolean(availabilityRecipe && availabilityRecipe.languageCode === trainingLanguageCode && !pendingLanguage && !isTrainingSetupPaused(availabilityRecipe.draft) && isTrainingSetupMaterialAvailable(availabilityRecipe.draft,lists,dictionaries)),
+    debounceMs:screen === "setup"?250:0,
+    // Recipe identity already tracks saved setup changes; renames and main-selection
+    // writes do not change the candidate pool. Material and learning revisions do.
+    refresh:JSON.stringify([accountMaterial?.snapshot?.revision,ownedSession?.id,ownedSession?.completed,stats.reviewCardsDone,stats.newCardsToday,translationTargetLanguageCode])});
   const availability = availabilityRecipe ? {trainingId:selectedTrainingId??"current-setup",status:availabilityResult.status === "ready"?"ready" as const:availabilityResult.status === "error"?"error" as const:"loading" as const,
     dueToday:availabilityResult.status === "ready"?availabilityResult.value.dueToday:null,
     totalReviews:availabilityResult.status === "ready"?availabilityResult.value.totalReviews:null,
@@ -233,17 +248,18 @@ export function TrainingTodaySetup({
   const [presetMessage, setPresetMessage] = useState("");
   const [selectedIntent, setSelectedIntent] = useState<{id:string;userId:string|undefined;language:string;action:"edit"|"edit-session"|"load"|"launch"}|null>(null);
 
+
   const editorOwner=useRef(userId);
   useEffect(() => {
     if(editorOwner.current===userId)return;
     editorOwner.current=userId;
-    setEditingPresetId(null);setSelectedIntent(null);setTrainingName(null);setPresetMessage("");setPendingLanguage(null);
+    setEditorLanguage(null);setQueuedLanguageStart(null);setEditingPresetId(null);setSelectedIntent(null);setTrainingName(null);setPresetMessage("");setPendingLanguage(null);
     setDraft({...initialDraft,sessionSize:initialDraft.sessionSize??DEFAULT_SESSION_SIZE});setScreen("today");
   }, [userId, initialDraft]);
 
   useEffect(() => {
     if (pendingLanguage === trainingLanguageCode && !trainingLanguageLoading) {
-      setDraft({ ...initialDraft, sessionSize: initialDraft.sessionSize ?? DEFAULT_SESSION_SIZE });
+      setDraft({ ...initialDraft, sessionSize: initialDraft.sessionSize ?? DEFAULT_SESSION_SIZE,librarySelection:undefined });
       setEditingPresetId(null);
       setPresetMessage("");
       setPendingLanguage(null);
@@ -311,7 +327,7 @@ export function TrainingTodaySetup({
     setScreen("setup");
   };
 
-  const savePreset = async (copyName?: string, showCalculation = false) => {
+  const savePreset = async (copyName?: string) => {
     if (!canSaveAccount || !trainingLanguageCode || account.status !== "ready" || account.pending || !draftScenarioSupported || !draftMaterialAvailable || trainingLanguageLoading || pendingLanguage) return false;
     const preset: SavedTraining = {
       id: copyName !== undefined ? crypto.randomUUID() : editingPresetId ?? crypto.randomUUID(),
@@ -325,14 +341,7 @@ export function TrainingTodaySetup({
       setEditingPresetId(preset.id);
       setTrainingName(preset.name);
       setPresetMessage("");
-      if (showCalculation) {
-        setHighlighted({ ownerId: userId, id: preset.id });
-        writeLastSelectedTraining(userId, preset.id);
-        onLoadTraining?.(preset, { recalculate: true });
-        setFailedStart(null);
-        availabilityResult.reload();
-        setScreen("today");
-      }
+
     } else {
       setPresetMessage(result === "conflict" ? accountCopy.conflict : accountCopy.saveFailed);
     }
@@ -349,6 +358,7 @@ export function TrainingTodaySetup({
   const requestStart = useCallback(async (nextDraft: TrainingSetupDraft, sessionName?: string, options?:import("./useTrainingPilotController").TrainingStartOptions) => {
     if (isTrainingSetupPaused(nextDraft) || trainingLanguageLoading || pendingLanguage || startBlocked || !material.currentLanguageAllowed || !isTrainingSetupMaterialAvailable(nextDraft, lists, dictionaries)) return;
     if (nextDraft.family === "word-in-context" && translationTargetLanguageCode === null) return;
+    if(foreignLanguage&&trainingLanguageCode){setQueuedLanguageStart({owner:userId,language:trainingLanguageCode,draft:structuredClone(nextDraft),name:sessionName,options});onTrainingLanguageChange?.(trainingLanguageCode);return;}
     setFailedStart(null);
     const started = await (options?onStart(nextDraft,sessionName,options):sessionName?onStart(nextDraft,sessionName):onStart(nextDraft));
     if (started === false) {
@@ -361,7 +371,12 @@ export function TrainingTodaySetup({
         ownerId: userId, languageCode: trainingLanguageCode});
       setScreen("today");
     }
-  }, [trainingLanguageLoading, pendingLanguage, startBlocked, material.currentLanguageAllowed, lists, dictionaries, translationTargetLanguageCode, onStart, t, userId, trainingLanguageCode]);
+  }, [trainingLanguageLoading, pendingLanguage, startBlocked, material.currentLanguageAllowed, lists, dictionaries, translationTargetLanguageCode, onStart, t, userId, trainingLanguageCode,foreignLanguage,onTrainingLanguageChange]);
+  useEffect(()=>{
+    if(!queuedLanguageStart||queuedLanguageStart.owner!==userId||queuedLanguageStart.language!==actualTrainingLanguage||trainingLanguageLoading||dictionariesLoading||startBlocked||material.status!=="ready")return;
+    if(!material.currentLanguageAllowed||!isTrainingSetupMaterialAvailable(queuedLanguageStart.draft,lists,dictionaries)){setQueuedLanguageStart(null);setPresetMessage(t.materialUnavailable);return;}
+    setQueuedLanguageStart(null);void requestStart(queuedLanguageStart.draft,queuedLanguageStart.name,queuedLanguageStart.options);
+  },[queuedLanguageStart,userId,actualTrainingLanguage,trainingLanguageLoading,startBlocked,material.status,material.currentLanguageAllowed,dictionariesLoading,lists,dictionaries,t.materialUnavailable,requestStart]);
   const startErrorCopy = startError === "training_session_start_timeout"
     ? t.startTimeout
     : startError === "training_session_start_failed"
@@ -399,16 +414,17 @@ export function TrainingTodaySetup({
     if (materialIntent.languageCode !== trainingLanguageCode) {
       if (pendingLanguage !== materialIntent.languageCode) {
         setPendingLanguage(materialIntent.languageCode);
-        onTrainingLanguageChange?.(materialIntent.languageCode);
+        if(hasOwnedSession)setEditorLanguage({owner:userId,code:materialIntent.languageCode});else onTrainingLanguageChange?.(materialIntent.languageCode);
       }
       return;
     }
     if (trainingLanguageLoading || pendingLanguage) return;
     finish();
     setSelectedIntent(null); setTrainingName(null); setEditingPresetId(null); setPresetMessage("");
-    setDraft({ ...initialDraft, sessionSize: initialDraft.sessionSize ?? DEFAULT_SESSION_SIZE, ...materialIntent.material });
+    const base=screen==="today"?(ownedSession?.draft??selectedTraining?.draft??initialDraft):draft;
+    setDraft({ ...base, sessionSize: base.sessionSize ?? DEFAULT_SESSION_SIZE, ...materialIntent.material });
     setScreen("setup");
-  }, [materialIntent, onMaterialIntentConsumed, userId, material.status, trainingLanguageOptions, trainingLanguageCode, trainingLanguageLoading, pendingLanguage, onTrainingLanguageChange, initialDraft, t.materialUnavailable]);
+  }, [materialIntent, onMaterialIntentConsumed, userId, material.status, trainingLanguageOptions, trainingLanguageCode, trainingLanguageLoading, pendingLanguage, onTrainingLanguageChange, initialDraft, t.materialUnavailable,hasOwnedSession,screen,ownedSession?.draft,selectedTraining?.draft,draft]);
 
   if (screen === "today" && status !== "ready") {
     if (status === "empty" || status === "first-use") {
@@ -444,6 +460,7 @@ export function TrainingTodaySetup({
         setSelectedIntent({id:training.id,userId,language:training.languageCode,action});
         if(training.languageCode!==trainingLanguageCode)onTrainingLanguageChange?.(training.languageCode);
       }}>
+      {status === "error" && <p role="alert">{localizedField("trainingSetup", "languageMaterialError")[interfaceLanguage]} <button type="button" onClick={onRetry}>{localizedField("trainingSetup", "retry")[interfaceLanguage]}</button></p>}
       {sourceReferenceNotice}
       {materialNotice}
       {presetMessage&&<p role="status">{presetMessage}</p>}
@@ -502,21 +519,22 @@ export function TrainingTodaySetup({
     });
 
   return <TrainingScreenTransition screen="setup"><ApprovedTrainingBuilder
-    initialSection={editorSection}
+    initialSection={editorSection} availability={availabilityResult} onAvailabilityRetry={availabilityResult.reload}
     interfaceLanguage={interfaceLanguage} draft={draft} languageCode={trainingLanguageCode??"nl"} languageOptions={trainingLanguageOptions}
     lists={lists} dictionaries={dictionaries} sources={sources} scenarios={scenarios}
-    languagePending={trainingLanguageLoading||Boolean(pendingLanguage)||startPending} dictionariesLoading={dictionariesLoading} translationLanguage={translationTargetLanguageCode}
-    name={trainingName??selectedList??""} onNameChange={setTrainingName} onLanguageChange={language=>{if(language!==trainingLanguageCode){setPendingLanguage(language);onTrainingLanguageChange?.(language);}}}
-    onDraftChange={setDraft} onSelectFamily={selectFamily} onToggleMode={toggleMode} onMixChange={changeMix} onBack={()=>setScreen("today")}
+    languagePending={trainingLanguageLoading||Boolean(pendingLanguage)||Boolean(queuedLanguageStart)||startPending} dictionariesLoading={dictionariesLoading||foreignLanguage&&editorCatalog.status==="loading"} translationLanguage={translationTargetLanguageCode}
+    name={trainingName??selectedList??""} onNameChange={setTrainingName} onLanguageChange={language=>{if(language!==trainingLanguageCode){setPendingLanguage(language);if(editorLanguage)setEditorLanguage({owner:userId,code:language});else onTrainingLanguageChange?.(language);}}}
+    onDraftChange={setDraft} onSelectFamily={selectFamily} onToggleMode={toggleMode} onMixChange={changeMix} onBack={()=>{setQueuedLanguageStart(null);setEditorLanguage(null);setPendingLanguage(null);setScreen("today");}}
     hasUnsavedChanges={hasUnsavedTrainingChanges(editingTraining,{name:trainingName??selectedList??"",languageCode:pendingLanguage??trainingLanguageCode??"nl",draft})}
     editing={Boolean(editingPresetId)} onSave={()=>savePreset()} onSaveAs={name=>savePreset(name)}
     onDelete={editingTraining?async()=>{const removed=await accountAction(()=>account.remove(editingTraining.id));if(removed){setEditingPresetId(null);setScreen("today");}return removed;}:undefined}
     deletionChangesMain={Boolean(editingTraining && account.snapshot.document.mainTrainingId===editingTraining.id && account.snapshot.document.trainings.length>1)} deleteDisabled={account.pending||account.status!=="ready"}
-    onBeginSave={()=>setPresetMessage("")} onStart={()=>void savePreset(undefined, true)} canSave={canSaveAccount}
+    onBeginSave={()=>setPresetMessage("")} onStart={()=>void requestStart(draft,trainingName??undefined,editingTraining&&!hasUnsavedTrainingChanges(editingTraining,{name:trainingName??selectedList??"",languageCode:trainingLanguageCode??"nl",draft})?{trainingId:editingTraining.id}:undefined)} canSave={canSaveAccount}
     saveDisabled={account.status!=="ready"||account.pending||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
-    startDisabled={!canSaveAccount||account.status!=="ready"||account.pending||isTrainingSetupPaused(draft)||startPending||scenarioLoading||startBlocked||!material.currentLanguageAllowed||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
-    saveLabel={editingPresetId?(localizedField("trainingSetup", "saveChanges"))[interfaceLanguage]:accountCopy.save} startLabel={account.pending?(localizedField("trainingSetup", "calculating"))[interfaceLanguage]:scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable&&!sourceReferenceBlocked?t.materialUnavailable:(localizedField("trainingSetup", "calculate"))[interfaceLanguage]}
+    startDisabled={Boolean(queuedLanguageStart)||!canSaveAccount||account.status!=="ready"||account.pending||isTrainingSetupPaused(draft)||startPending||scenarioLoading||startBlocked||!material.currentLanguageAllowed||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
+    saveLabel={editingPresetId?(localizedField("trainingSetup", "saveChanges"))[interfaceLanguage]:accountCopy.save} startLabel={material.status==="loading"||scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable&&!sourceReferenceBlocked?t.materialUnavailable:(localizedField("trainingSetup", "start"))[interfaceLanguage]}
     saveNotice={presetMessage} notice={<>
+      {status === "error" && <p role="alert">{localizedField("trainingSetup", "languageMaterialError")[interfaceLanguage]} <button type="button" onClick={onRetry}>{localizedField("trainingSetup", "retry")[interfaceLanguage]}</button></p>}
       {sourceReferenceNotice}
       {materialNotice}
       {presetMessage&&<p role="status">{presetMessage}</p>}

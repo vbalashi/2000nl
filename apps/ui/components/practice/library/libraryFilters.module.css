@@ -69,7 +69,7 @@
 .part .chipDisclosure{border-left:0;width:28px}
 .chip{border:0;border-radius:11.2px;min-height:28px;padding:4px 10px;background:transparent;font:400 var(--practice-text-label)/1.35 var(--practice-font-ui)}
 
-.sections{border:1px solid color-mix(in srgb,var(--practice-text) 18%,transparent);border-radius:12px;overflow:hidden}
+.sections{--builder-title-width:140px;border:1px solid color-mix(in srgb,var(--practice-text) 18%,transparent);border-radius:12px;overflow:hidden}
 .languageRow{display:grid;grid-template-columns:90px minmax(0,1fr);gap:12px;align-items:center;min-height:51px;padding:10px 12px;box-sizing:border-box}
 .languageRow h3{margin:0;font:550 var(--practice-text-caption)/1.4 var(--practice-font-ui)}
 .sections .parts{padding-left:10px;gap:5px}
@@ -88,3 +88,7 @@
 .inlinePanel .footer{padding-inline:12px}
 
 .sourceName{display:flex;align-items:center;gap:8px}
+
+/* Match the inner edges of the section headings and choices. */
+.meanings { padding:24px 18px 22px; }
+@media(max-width:700px) { .meanings { padding-inline:12px; } }

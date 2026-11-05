@@ -1,4 +1,7 @@
 'use client';
+import { localizedField, localizedSection } from "@/lib/i18n/catalog";
+
+import {Check} from 'lucide-react';
 import React,{useCallback,useEffect,useRef,useState} from 'react';
 import {Joyride,type TooltipRenderProps} from 'react-joyride';
 import {tourCopy,tourFlows,topics,tourStorageKey,parseTourRecord,pausePoint,type TourTopic,type TourRecord,type TourStep} from '@/lib/onboarding/model';
@@ -6,6 +9,7 @@ import {ONBOARDING_SIGNAL,ONBOARDING_PAUSE} from '@/lib/onboarding/signals';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import {SettingsPanel} from '@/components/practice/settings/SettingsLayout';
 import s from './onboarding.module.css';
+import settings from '@/components/practice/settings/settings.module.css';
 import {tooltipBounds} from './tooltipBounds';
 export type TourPort={prepare:(topic:TourTopic,step:number)=>void;pause:()=>void;completeCore:()=>void;enter?:(topic:TourTopic,step:number)=>void};
 const TourContext=React.createContext<ReturnType<typeof useTour>|null>(null);
@@ -23,10 +27,10 @@ function useTour(userId:string,autoStart:boolean,language:OnboardingLanguage,por
  if(saved){wasCompleted.current=saved.status==='complete';setRecord(saved.status==='complete'?saved:{...saved,status:'paused',step:0});}setReady(true);
  },[userId]);
  useEffect(()=>{if(!ready||!record)return;try{localStorage.setItem(tourStorageKey(userId),JSON.stringify(record));setSaveError(false);}catch{setSaveError(true);}},[record,ready,userId]);
- const start=useCallback((topic:TourTopic,remaining:TourTopic[]=[])=>{setRecord(prev=>({version:1,topic,step:0,status:'running',remaining,coreCompleted:prev?.coreCompleted??!autoStart}));portRef.current.prepare(topic,0);},[autoStart]);
+ const start=useCallback((topic:TourTopic,remaining:TourTopic[]=[])=>{setRecord(prev=>({version:1,topic,step:0,status:'running',remaining,coreCompleted:prev?.coreCompleted??!autoStart,completedTopics:prev?.completedTopics??(prev?.status==='complete'?[prev.topic]:[])}));portRef.current.prepare(topic,0);},[autoStart]);
  useEffect(()=>{if(ready&&!record&&autoStart&&!autoStarted.current){autoStarted.current=true;start('core');}},[ready,record,autoStart,start]);
  const pause=useCallback(()=>{window.dispatchEvent(new Event(ONBOARDING_PAUSE));setRecord(prev=>prev?{...prev,status:'paused',step:pausePoint(prev)}:prev);portRef.current.pause();},[]);
- const advance=useCallback(()=>{setRecord(prev=>{if(!prev||prev.status!=='running')return prev;const last=prev.step===tourFlows[prev.topic].length-1;const selected=prev.topic==='collections'&&tourFlows[prev.topic][prev.step].id==='membership'?document.querySelector<HTMLInputElement>('[data-onboarding=member-option]:checked')?.value:undefined;return {...prev,...(selected?{collectionId:selected}:{}),step:last?prev.step:prev.step+1,status:last?'complete':'running',coreCompleted:prev.coreCompleted||last&&prev.topic==='core'};});},[]);
+ const advance=useCallback(()=>{setRecord(prev=>{if(!prev||prev.status!=='running')return prev;const last=prev.step===tourFlows[prev.topic].length-1;const selected=prev.topic==='collections'&&tourFlows[prev.topic][prev.step].id==='membership'?document.querySelector<HTMLInputElement>('[data-onboarding=member-option]:checked')?.value:undefined;return {...prev,...(selected?{collectionId:selected}:{}),step:last?prev.step:prev.step+1,status:last?'complete':'running',coreCompleted:prev.coreCompleted||last&&prev.topic==='core',completedTopics:last?Array.from(new Set([...(prev.completedTopics??[]),prev.topic])):prev.completedTopics};});},[]);
  useEffect(()=>{if(record?.status==='running')portRef.current.enter?.(record.topic,record.step);},[record]);
  useEffect(()=>{if(record?.status==='complete'&&!wasCompleted.current){wasCompleted.current=true;window.dispatchEvent(new Event(ONBOARDING_PAUSE));if(record.topic==='core')portRef.current.completeCore();if(record.remaining?.length){const [next,...rest]=record.remaining;start(next,rest);}else portRef.current.pause();}else if(record&&record.status!=='complete')wasCompleted.current=false;},[record,start]);
  const resume=()=>{if(!record)return;portRef.current.prepare(record.topic,record.step);setRecord({...record,status:'running'});};
@@ -38,10 +42,12 @@ export function OnboardingProvider({userId,autoStart,language,port,children}:{us
 export function OnboardingSettings({sharing,collections}:{sharing:boolean;collections:boolean}){
  const tour=React.useContext(TourContext);if(!tour)return null;const {copy,record}=tour;
  const available=topics.filter(topic=>(collections||topic!=='collections')&&(sharing||!['sharing','incoming'].includes(topic))&&(collections||topic!=='sharing'));
+ const statusCopy=localizedSection("onboardingTopicStatus")[tour.language];
+ const completed=new Set([...(record?.completedTopics??[]),...(record?.status==='complete'?[record.topic]:[])]);
  const labels={core:copy.tourName,collections:copy.collectionsTopic,card:copy.cardTopic,stats:copy.statsTopic,sharing:copy.sharingTopic,incoming:copy.incomingTopic,languages:copy.languagesTopic,appearance:copy.appearanceTopic};
- return <SettingsPanel title={copy.tourName}><p className={s.hint}>{copy.deviceHint}</p>{tour.saveError&&<p role="alert">{copy.storageError}</p>}
+ return <SettingsPanel title={copy.tourName} className={s.settingsPanel}><p className={settings.hint}>{copy.deviceHint}</p>{tour.saveError&&<p role="alert">{copy.storageError}</p>}
  <div className={s.actions}>{record&&record.status!=='complete'&&<button onClick={tour.resume}>{copy.resume}</button>}<button onClick={()=>tour.start('core')}>{copy.restart}</button></div>
- <h3>{copy.topicHeading}</h3><div className={s.topics}>{available.filter(topic=>topic!=='core').map(topic=><button key={topic} onClick={()=>tour.start(topic)}>{labels[topic]}</button>)}</div><div className={s.actions}><button onClick={()=>{const [first,...rest]=available.filter(topic=>topic!=='core');if(first)tour.start(first,rest);}}>{copy.allTopics}</button></div></SettingsPanel>;
+ <h3 className={settings.subheading}>{copy.topicHeading}</h3><div className={s.topics}>{available.filter(topic=>topic!=='core').map(topic=><button key={topic} onClick={()=>tour.start(topic)}><span>{labels[topic]}</span>{completed.has(topic)?<span className={s.topicStatus}><Check size={14} aria-hidden="true"/>{statusCopy.completed}</span>:record?.topic===topic&&record.status!=='complete'?<span className={s.topicStatus}>{statusCopy.inProgress}</span>:null}</button>)}</div><div className={s.actions}><button onClick={()=>{const [first,...rest]=available.filter(topic=>topic!=='core');if(first)tour.start(first,rest);}}>{copy.allTopics}</button></div></SettingsPanel>;
 }
 function Tooltip({step,tooltipProps}:TooltipRenderProps){
  const tour=React.useContext(TourContext)!;const current=tourFlows[tour.record!.topic][tour.record!.step];
@@ -54,6 +60,7 @@ function Tooltip({step,tooltipProps}:TooltipRenderProps){
 export function useOnboardingQueryLocked(){const tour=React.useContext(TourContext);return tour?.record?.status==='running'&&['collections','stats'].includes(tour.record.topic);}
 function TourOverlay(){
  const tour=React.useContext(TourContext)!;const {record,copy,advance,pause}=tour;
+ const origin=useRef<HTMLSpanElement>(null);
  const baseStep=record?tourFlows[record.topic][record.step]:null;
  const step=React.useMemo(()=>baseStep&&baseStep.id==='source-pick'&&record?.collectionId?{...baseStep,target:`[data-onboarding=source-option][data-source-value="user:${record.collectionId}"]`}:baseStep,[baseStep,record?.collectionId]);
  const [target,setTarget]=useState<HTMLElement|null>(null),[waiting,setWaiting]=useState(false),[canContinue,setCanContinue]=useState(false),[topLayer,setTopLayer]=useState<HTMLElement|null>(null);
@@ -99,10 +106,12 @@ function TourOverlay(){
   };frame=requestAnimationFrame(sample);
   return()=>{cancelled=true;cancelAnimationFrame(frame);clearTimeout(timeout);document.removeEventListener('click',click,true);window.removeEventListener(ONBOARDING_SIGNAL,signal);};
  },[running,step,advance,tour.language]);
- if(!running||!step)return null;
+ if(!running||!step)return <span ref={origin} hidden/>;
  const text=(value:string)=>value.replace('{section}',document.querySelector('[data-onboarding="appearance"]')?.getAttribute('aria-label')??'');
  const dialog=target?.closest<HTMLElement>('dialog,[popover]')??undefined;
- if(topLayer&&!topLayer.contains(target))return null;
- return <>{target&&<Joyride key={`${record!.topic}:${record!.step}:${tour.language}`} run steps={[{target:()=>target,title:text(copy[step.title]),content:text(copy[step.body]),placement:'auto',data:{ready:canContinue}}]} tooltipComponent={Tooltip} floatingOptions={floatingOptions} portalElement={dialog} onEvent={event=>{if(['finished','skipped'].includes(event.status))pause();}} options={{skipBeacon:true,hideOverlay:Boolean(dialog),blockTargetInteraction:false,disableFocusTrap:true,overlayClickAction:false,dismissKeyAction:'close',closeButtonAction:'skip',overlayColor:'rgba(24,19,34,.52)',spotlightPadding:8,spotlightRadius:15,width:340,zIndex:10000,skipScroll:true,primaryColor:'#71608d'}}/>}
+ if(topLayer&&!topLayer.contains(target))return <span ref={origin} hidden/>;
+ // Keep portal content under the account palette and text-scale owner. Body portals lose these inherited roles.
+ const themeHost=target?.closest<HTMLElement>('[data-account-palette]')??origin.current?.closest<HTMLElement>('[data-account-palette]')??undefined;
+ return <><span ref={origin} hidden/>{target&&<Joyride key={`${record!.topic}:${record!.step}:${tour.language}`} run steps={[{target:()=>target,title:text(copy[step.title]),content:text(copy[step.body]),placement:'auto',data:{ready:canContinue}}]} tooltipComponent={Tooltip} floatingOptions={floatingOptions} portalElement={dialog??themeHost} onEvent={event=>{if(['finished','skipped'].includes(event.status))pause();}} options={{arrowColor:'var(--practice-surface)',backgroundColor:'var(--practice-surface)',skipBeacon:true,hideOverlay:Boolean(dialog),blockTargetInteraction:false,disableFocusTrap:true,overlayClickAction:false,dismissKeyAction:'close',closeButtonAction:'skip',overlayColor:'var(--practice-backdrop)',spotlightPadding:8,spotlightRadius:15,width:340,zIndex:10000,skipScroll:true,primaryColor:'var(--practice-accent)'}}/>}
  {!target&&waiting&&<aside className={s.recovery} role="status"><p>{copy.waiting}</p><button onClick={pause}>{copy.pause}</button><button onClick={()=>tour.start(record!.topic)}>{copy.retryTopic}</button></aside>}</>;
 }

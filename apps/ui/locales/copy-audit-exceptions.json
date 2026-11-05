@@ -78,18 +78,6 @@
     "reason": "Dutch grammatical articles are learning-content filter identities and must not be translated into the interface language."
   },
   {
-    "file": "components/training/pilot/ApprovedTrainingBuilder.tsx",
-    "rule": "expression",
-    "text": "de",
-    "reason": "Dutch grammatical articles are learning-content filter identities and must not be translated into the interface language."
-  },
-  {
-    "file": "components/training/pilot/ApprovedTrainingBuilder.tsx",
-    "rule": "expression",
-    "text": "het",
-    "reason": "Dutch grammatical articles are learning-content filter identities and must not be translated into the interface language."
-  },
-  {
     "file": "components/training/useTrainingTurnController.ts",
     "rule": "message",
     "text": "Raw error.message is displayed; map it to a catalog message.",

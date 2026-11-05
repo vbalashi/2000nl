@@ -1,10 +1,11 @@
 /** First-party Library query scope; exact group reads never carry this selection. */
-export const LIBRARY_PARTS = [
-  "noun", "verb", "adjective", "adverb", "pronoun", "preposition",
-  "conjunction", "numeral", "article", "interjection",
-] as const;
-export type LibraryPart = (typeof LIBRARY_PARTS)[number];
+import {parseVocabularySelection,type VocabularySelection} from "@/lib/vocabulary/selection";
+import {VOCABULARY_PARTS,type VocabularyPart} from "@/lib/vocabulary/partsOfSpeech";
+export const LIBRARY_PARTS = VOCABULARY_PARTS.map(part=>part.id);
+export type LibraryPart = VocabularyPart;
 export type LibraryEntryFilters = {
+  vocabulary?:VocabularySelection;
+  sort?:"alphabetical"|"spoken"|"written";
   parts: LibraryPart[];
   article: "de" | "het" | null;
 };
@@ -29,7 +30,7 @@ export function parseLibraryEntryFilters(value: unknown): LibraryEntryFilters | 
   if (!value || typeof value !== "object" || Array.isArray(value))
     return null;
   const record = value as Record<string, unknown>;
-  if (Object.keys(record).some(key => key !== "parts" && key !== "article"))
+  if (Object.keys(record).some(key => !["parts","article","vocabulary","sort"].includes(key)))
     return null;
   const parts = record.parts === undefined ? [] : record.parts;
   const article = record.article === undefined ? null : record.article;
@@ -38,7 +39,9 @@ export function parseLibraryEntryFilters(value: unknown): LibraryEntryFilters | 
     (article !== null && article !== "de" && article !== "het") ||
     (article !== null && !parts.includes("noun")))
     return null;
-  return { parts: [...new Set(parts as LibraryPart[])].sort(), article };
+  const vocabulary=record.vocabulary===undefined?undefined:parseVocabularySelection(record.vocabulary);
+  if(vocabulary===null||(record.sort!==undefined&&(typeof record.sort!=="string"||!["alphabetical","spoken","written"].includes(record.sort))))return null;
+  return { parts: [...new Set(parts as LibraryPart[])].sort(), article,...(vocabulary?{vocabulary}:{}),...(record.sort?{sort:record.sort as LibraryEntryFilters["sort"]}:{}) };
 }
 export function parseLibrarySearchScope(value: unknown): LibrarySearchScope | null {
   if (value === undefined || value === null)
@@ -50,7 +53,7 @@ export function parseLibrarySearchScope(value: unknown): LibrarySearchScope | nu
 }
 const partAliases: Record<string, LibraryPart> = {
   zn: "noun", ww: "verb", bn: "adjective", bw: "adverb", vnw: "pronoun",
-  vz: "preposition", vw: "conjunction", tw: "numeral", lidw: "article", tsw: "interjection",
+  vz: "preposition", vw: "conjunction", tw: "numeral", lidw: "article", tsw: "interjection", afk: "abbreviation", vv: "prefix",
 };
 /** Mirrors the DB predicate only to choose a preview sense; never filters paginated groups. */
 export function libraryEntryMatchesFilters(partValue: string | null | undefined, gender: string | null | undefined, filters: LibraryEntryFilters): boolean {

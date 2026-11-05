@@ -2197,7 +2197,7 @@ function TrainingScreenContent({
       : nextCardOverrideNotice
         ? { kind: "status", message: nextCardOverrideNotice }
         : null;
-  const appRelease = useAppRelease(user.id, navigationBlocked || (hasResumableSession && v2SessionLayoutVisible) || trainingPilot.status === "preparing");
+  const appRelease = useAppRelease(user.id, navigationBlocked || (hasResumableSession && v2SessionLayoutVisible) || trainingPilot.status === "preparing", onboardingLang);
   const studyTimeEnabled = destination === "training" && !detailsOpen && !showHotkeys && !showLanguageSelection && !navigationBlocked && !loadingWord && !sessionAuthorityChecking;
   const prepareOnboarding = (topic:TourTopic,step:number) => {
     const id=tourFlows[topic][step]?.id;
@@ -2252,6 +2252,7 @@ function TrainingScreenContent({
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
           <TrainingTodaySetup
             onStartupReady={handleHomeStartupReady}
+            onEditorVisibilityChange={setOpenTrainingEditor}
             startupPresentationManaged
             initialView={openTrainingEditor ? "setup" : "today"}
             materialIntent={statisticsMaterialIntent}
@@ -2478,6 +2479,7 @@ function TrainingScreenContent({
         />
       )}
       <LibraryDestination
+        onTrainSelection={({languageCode,material})=>{trainingPilot.returnToToday();setStatisticsMaterialIntent({key:Date.now(),userId:user.id,languageCode,material});onRequestDestination("training");}}
         invitationCode={invitationCode}
         onInvitationConsumed={onInvitationConsumed}
         onboardingSearch={onboardingSearch}

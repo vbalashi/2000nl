@@ -5,7 +5,8 @@ for(const profile of [{name:'desktop',width:1280,height:900,language:'en',dark:f
  await page.emulateMedia({colorScheme:profile.dark?'dark':'light'});
  await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:profile.language},theme_preference:profile.dark?'dark':'light'}});
  const draft={family:'meaning',scenarioId:'understanding',modes:['word-to-definition'],cardFilter:'review',listValue:'curated:list-attribution',materialMode:'collection',newReviewRatio:2,dateWindow:'all',sourceValue:'all',sessionSize:5};
- const recipes=Array.from({length:100},(_,i)=>({id:`saved-${i}`,name:`Practice ${i+1}`,languageCode:'nl',draft:{...draft,sourceValue:`source:57500000-0000-4000-8000-${String(i).padStart(12,'0')}`}}));
+ const longName="A very long practice title that stays on one line without moving the saved training list";
+ const recipes=Array.from({length:100},(_,i)=>({id:`saved-${i}`,name:i===33?longName:`Practice ${i+1}`,languageCode:'nl',draft:{...draft,sourceValue:`source:57500000-0000-4000-8000-${String(i).padStart(12,'0')}`}}));
  await page.route('**/api/training/setups',route=>route.fulfill({json:{revision:1,document:{schemaVersion:1,mainTrainingId:'saved-0',trainings:recipes}}}));
  let reads=0;
  await page.route('**/api/training/availability',async route=>{reads++;if(reads>1)await new Promise(r=>setTimeout(r,600));await route.fulfill({json:{dueToday:0,totalReviews:142,newCards:286,studyDay:new Date().toISOString().slice(0,10),timezone:'Europe/Amsterdam',asOf:new Date().toISOString()}});});
@@ -14,18 +15,21 @@ for(const profile of [{name:'desktop',width:1280,height:900,language:'en',dark:f
  await expect(hero.getByText('142')).toBeVisible();
  const list=page.getByRole('region',{name:profile.language==='ru'?'Сохранённые тренировки':'Saved Trainings'}).locator('[tabindex="0"]');
  const before=await hero.boundingBox();expect(before!.height).toBeLessThanOrEqual(profile.height*.5);
- await expect(list.getByRole('button',{name:/Load Practice|Загрузить «Practice/})).toHaveCount(100);
+ await expect(list.getByRole('button',{name:/^Load |^Загрузить «/})).toHaveCount(100);
  await list.evaluate(el=>{el.scrollTop=2000;});
  await expect(page.getByRole('button',{name:profile.language==='ru'?'Ещё сохранённые тренировки':'More saved trainings'})).toBeVisible();
- const load=list.getByRole('button',{name:profile.language==='ru'?'Загрузить «Practice 34»':'Load Practice 34',exact:true});
+ const load=list.getByRole('button',{name:profile.language==='ru'?`Загрузить «${longName}»`:`Load ${longName}`,exact:true});
  await load.scrollIntoViewIfNeeded();const scrollBefore=await list.evaluate(el=>el.scrollTop);
  await load.click();
- await expect(hero.getByRole('heading',{name:'Practice 34'})).toBeVisible();
+ await expect(hero.getByRole('heading',{name:longName})).toBeVisible();
  await expect(hero.locator('dl')).toHaveAttribute('aria-busy','true');
  await page.screenshot({path:info.outputPath('loading.png'),fullPage:true});
  await expect(hero.getByText('142')).toBeVisible();
  expect(await list.evaluate(el=>el.scrollTop)).toBe(scrollBefore);
  const after=await hero.boundingBox();expect(after!.y).toBe(before!.y);expect(after!.height).toBe(before!.height);
+ const title=hero.getByRole('heading',{name:longName});
+ await expect(title).toHaveAttribute('title',longName);
+ expect(await title.evaluate(el=>el.getBoundingClientRect().height<=parseFloat(getComputedStyle(el).lineHeight)+1)).toBe(true);
  await expect(hero.getByRole('button',{name:profile.language==='ru'?'Повторить раньше срока':'Review ahead'})).toBeEnabled();
  await page.screenshot({path:info.outputPath('selected34.png'),fullPage:true});
  if(profile.width<500){

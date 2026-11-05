@@ -10,7 +10,9 @@ BEGIN
   SELECT pg_get_functiondef('private.start_training_session_latch_v1(uuid,text[],uuid,text,text,jsonb,text,integer)'::regprocedure)
     INTO latch;
   IF strpos(scheduler, 'word-in-context') = 0
-     OR strpos(scheduler, 'training_word_context_candidate_v1') = 0
+     -- Both scalar and batch implementations enforce the same context contract.
+     OR (strpos(scheduler, 'training_word_context_candidate_v1') = 0
+       AND strpos(scheduler, 'training_word_context_entry_ids_v1') = 0)
      OR strpos(scheduler, 'training_pair_exclusions') = 0
      OR strpos(latch, 'word_context_requires_reverse_mode') = 0 THEN
     RAISE EXCEPTION 'db-contract-gate: postflight-failed word-context eligibility';

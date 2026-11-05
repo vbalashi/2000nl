@@ -53,7 +53,7 @@
   min-width: max-content;
   margin: 0;
   color: var(--app-frame-ink);
-  font-size: 26px;
+  font-size: var(--practice-brand-size);
   font-weight: 400;
   line-height: 1;
   letter-spacing: -0.04em;
@@ -215,7 +215,7 @@
   }
 
   .brand {
-    font-size: min(var(--practice-text-title-sm, 20px), 22px);
+    font-size: min(var(--practice-text-title-sm), var(--practice-brand-size-compact));
   }
 }
 
@@ -253,7 +253,7 @@
   pointer-events: none;
   background: var(--app-frame-active);
   border-radius: 100px;
-  box-shadow: 0 1px 2px var(--practice-shadow, rgb(15 23 42 / 0.08));
+  box-shadow: 0 1px 2px var(--practice-shadow);
   transition:
     transform 230ms var(--practice-motion, ease),
     width 230ms var(--practice-motion, ease),
@@ -273,3 +273,6 @@
 .desktopNav .primaryNav button{min-height:28px;border-radius:11.2px;font-weight:400}
 
 .primaryNav .selection{border-radius:11.2px;box-shadow:none}
+
+/* Banner tokens must exist above the independently themed destination screens. */
+.releaseSurface{display:contents}

@@ -1,5 +1,12 @@
-.source_toolbar{display:flex;gap:8px;flex-wrap:wrap}.source_toolbar button{border:0;background:transparent;color:var(--practice-text-muted)}.source_toolbar input,.source_toolbar select{font:400 12px var(--practice-font-ui);background:var(--practice-surface);color:var(--practice-text);border:1px solid var(--practice-border);border-radius:8px;padding:6px;min-width:0;max-width:100%}
-.source_list{max-height:260px;overflow-y:auto}.source_list button{display:flex;align-items:center;gap:9px;width:100%;border:0;border-radius:8px;background:transparent;color:var(--practice-text-secondary);font:400 12px var(--practice-font-ui);text-align:left;padding:9px}.source_list button[aria-pressed=true]{background:var(--practice-surface-hover)}.source_list small{margin-left:auto;color:var(--practice-text-muted);font-size:11px}.source_list svg{flex:none}
+.source_toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.searchAction { border:0; background:transparent; color:var(--practice-text-muted); border-radius:8px; }
+.searchReveal { display:grid; grid-template-rows:0fr; visibility:hidden; transition:grid-template-rows .3s var(--practice-motion), visibility 0s .3s; }
+.searchOpen { grid-template-rows:1fr; visibility:visible; transition-delay:0s; }
+.searchReveal > div { overflow:hidden; min-height:0; }
+.searchReveal input { display:block; box-sizing:border-box; width:100%; margin:0 0 10px; padding:8px 10px; font:400 var(--practice-text-small) var(--practice-font-ui); background:var(--practice-surface); color:var(--practice-text); border:1px solid var(--practice-border); border-radius:8px; }
+.searchReveal input:focus-visible { outline:2px solid var(--practice-focus); outline-offset:-2px; }
+@media(prefers-reduced-motion:reduce) { .searchReveal { transition:none; } }
+.source_list{max-height:260px;overflow-y:auto}.source_list button{display:flex;align-items:center;gap:9px;width:100%;border:0;border-radius:8px;background:transparent;color:var(--practice-text-secondary);font:400 var(--practice-text-caption) var(--practice-font-ui);text-align:left;padding:9px}.source_list button[aria-pressed=true]{background:var(--practice-surface-hover)}.source_list small{margin-left:auto;color:var(--practice-text-muted);font-size:var(--practice-text-label)}.source_list svg{flex:none}
 .source_window{position:relative}
 .source_list{scrollbar-width:none;overscroll-behavior:contain}
 .source_list::-webkit-scrollbar{display:none}

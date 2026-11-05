@@ -246,6 +246,24 @@
     "zn": "zelfstandig naamwoord"
   },
   "ui": {
+    "librarySearch": {
+      "labels": {
+        "headwords": "Woorden",
+        "examples": "Voorbeelden",
+        "definitions": "Definities",
+        "alphabetical": "A–Z"
+      },
+      "group": "Zoeken in",
+      "empty": "Geen resultaten",
+      "prompt": "Typ een woord of een deel van een zin.",
+      "busy": "Zoeken…",
+      "error": "Resultaten laden is mislukt.",
+      "retry": "Opnieuw",
+      "more": "Nog {count}",
+      "loadingMore": "Laden…",
+      "moreError": "Meer resultaten laden is mislukt.",
+      "foundCount": "Gevonden: {count}"
+    },
     "activeTrainingCard": {
       "title": "Nu aan het oefenen",
       "hint": "Beoordeel in de training",
@@ -534,6 +552,8 @@
         "Conjunctions": "Voegwoorden",
         "Numerals": "Telwoorden",
         "Articles": "Lidwoorden",
+        "Abbreviations": "Afkortingen",
+        "Prefixes": "Voorvoegsels",
         "Interjections": "Tussenwerpsels"
       },
       "balance": [
@@ -648,7 +668,8 @@
       "entryZero": "{count} vermeldingen",
       "entryTwo": "{count} vermeldingen",
       "expressionZero": "{count} uitdrukkingen",
-      "expressionTwo": "{count} uitdrukkingen"
+      "expressionTwo": "{count} uitdrukkingen",
+      "translationAttribution": "Vertalingen worden door AI gemaakt en kunnen onjuist zijn. Zie je een fout? Gebruik Melden in de kaart om het ons te laten weten."
     },
     "languagePicker": {
       "loading": "Talen laden…",
@@ -1197,7 +1218,8 @@
       "selected": "Geselecteerd",
       "clear": "Selectie wissen",
       "meaningZero": "{count} betekenissen",
-      "meaningTwo": "{count} betekenissen"
+      "meaningTwo": "{count} betekenissen",
+      "sort": "Sorteren"
     },
     "localRecovery": {
       "retry": "Opnieuw proberen",
@@ -1308,7 +1330,7 @@
     "interactionSettings": {
       "progress": "Voortgangsanimatie",
       "off": "Uit",
-      "dots": "Stippen",
+      "dots": "Draad",
       "wave": "Golf",
       "animation": "Kaartanimatie",
       "gestures": "Gebaren",
@@ -1324,7 +1346,11 @@
         "translationSwipe": "Veeg omlaag op een niet-scrollbaar deel van de geopende kaart om de vertaling te tonen of te verbergen.",
         "syllableDoubleTap": "Dubbeltik of dubbelklik op het trefwoord om de lettergreepverdeling te tonen of te verbergen."
       },
-      "alwaysShowCardCount": "Aantal kaarten altijd tonen"
+      "alwaysShowCardCount": "Aantal kaarten altijd tonen",
+      "preview": "Voorbeeld",
+      "cards": "kaarten",
+      "progressHelp": "Toont je voortgang door een oefensessie. Draad volgt een rechte lijn; Golf volgt een gebogen lijn. In sessies met maximaal 30 kaarten staat elke stip voor één kaart. Boven 30 gebruiken beide een doorlopende lijn met een bewegende markering. Uit verbergt de animatie en toont het aantal kaarten.",
+      "countHelp": "Toont het aantal voltooide kaarten naast de voortgangsanimatie in een beperkte sessie. Het aantal is altijd zichtbaar in onbeperkte sessies of als de voortgangsanimatie uit staat."
     },
     "readingSettings": {
       "title": "Leestekst",
@@ -1397,7 +1423,8 @@
       "retry": "Opnieuw proberen",
       "saveChanges": "Wijzigingen opslaan",
       "calculating": "Berekenen…",
-      "calculate": "Training berekenen"
+      "calculate": "Training berekenen",
+      "languageMaterialError": "Het materiaal voor deze taal kon niet worden geladen."
     },
     "trainingCompletion": {
       "title": "Sessie voltooid",
@@ -1448,7 +1475,15 @@
       "built": "Gebouwd",
       "unread": "Updates beschikbaar",
       "dev": "Ontwikkelversie — releasecontrole niet beschikbaar.",
-      "updated": "App bijgewerkt"
+      "updated": "App bijgewerkt",
+      "about": "Over de app",
+      "history": "Recente updates",
+      "allUpdates": "Alle updates",
+      "olderUpdates": "Eerdere updates",
+      "back": "Terug naar de app",
+      "noHistory": "Er zijn nog geen updateberichten gepubliceerd.",
+      "historyUnavailable": "De updateberichten konden niet worden geladen. Probeer het opnieuw.",
+      "pageTitle": "2000nl · {title}"
     },
     "trainingFilter": {
       "new": "Alleen nieuwe",
@@ -1525,7 +1560,15 @@
       "delete": "Training verwijderen",
       "all": "Alle",
       "unsaved": "Niet-opgeslagen wijzigingen",
-      "availabilityHint": "De werkelijke sessiegrootte en verhouding tussen nieuwe kaarten en herhalingen hangen af van de beschikbare kaarten."
+      "availabilityHint": "De werkelijke sessiegrootte en verhouding tussen nieuwe kaarten en herhalingen hangen af van de beschikbare kaarten.",
+      "selectedLabel": "Geselecteerd label",
+      "savedSource": "Opgeslagen bron",
+      "responseModesHelp": [
+        "Tonen en zelf beoordelen is nu beschikbaar: bekijk het antwoord en beoordeel hoe goed je het wist.",
+        "Antwoord typen en andere antwoordvormen willen we later toevoegen."
+      ],
+      "clearLibrarySelection": "Bibliotheekselectie wissen",
+      "activityScopeNotice": "Opgeslagen filters voor woordactiviteit blijven gelden: {scope}. Bewerken is nog niet beschikbaar."
     },
     "startup": {
       "preparing": "Training voorbereiden"
@@ -1609,7 +1652,8 @@
       ],
       "loading": "Laden…",
       "retry": "Opnieuw proberen",
-      "more": "Meer tonen"
+      "more": "Meer tonen",
+      "type": "Brontype"
     },
     "trainingScenarios": {
       "idioms": "Uitdrukkingen",
@@ -1680,6 +1724,121 @@
     "appMetadata": {
       "title": "2000NL",
       "description": "Bouw je persoonlijke woordenbibliotheek op en oefen woorden met gespreide herhaling."
+    },
+    "libraryFilters": {
+      "chooseWords": "Woorden kiezen",
+      "entryType": "Soort artikel"
+    },
+    "rangeEditor": {
+      "mode": "Manier van instellen",
+      "buttons": "Knoppen",
+      "sliders": "Twee schuiven",
+      "wheel": "Wielen",
+      "wheelHint": "Scroll omhoog of omlaag, veeg verticaal of kies een nabijgelegen getal. De stap bepaalt hoeveel het getal verandert. Gebruik op het toetsenbord de pijlen omhoog en omlaag.",
+      "from": "Van",
+      "to": "Tot",
+      "step": "Stap",
+      "cancel": "Annuleren",
+      "apply": "Gereed",
+      "minusFrom": "Begin verlagen",
+      "plusFrom": "Begin verhogen",
+      "minusTo": "Einde verlagen",
+      "plusTo": "Einde verhogen",
+      "fromSlider": "Schuif voor begin bereik",
+      "toSlider": "Schuif voor einde bereik",
+      "hint": "Gebruik de schuiven voor een snelle, globale keuze. De min- en plusknoppen verfijnen het getal met de gekozen stap.",
+      "invalid": "Begin bij 1 of hoger. Het einde mag niet lager zijn dan het begin."
+    },
+    "sourceWordSelection": {
+      "translationHelp": [
+        "Kies welke woorden de voorbeelden leveren. Alleen in studie gebruikt woorden die je al leert. Alle woorden bevat ook nieuwe woorden.",
+        "Vertalen deelt de voortgang met de omgekeerde woordkaart. Kaarten met Ken ik al of kaarten die van training zijn uitgesloten, verschijnen hier ook niet."
+      ],
+      "title": "Bronwoorden",
+      "learning": "Alleen in studie",
+      "all": "Alle woorden",
+      "help": [
+        "Kies welke woorden het materiaal voor deze oefening leveren. Alleen in studie gebruikt woorden die je al leert. Alle woorden bevat ook nieuwe woorden en woorden met het label Ken ik al.",
+        "We gebruiken alleen materiaal dat aan de geselecteerde betekenissen gekoppeld is. De aparte instelling nieuw/herhalen bepaalt welke oefenkaarten in je sessie komen."
+      ]
+    },
+    "onboardingTopicStatus": {
+      "completed": "Voltooid",
+      "inProgress": "Bezig"
+    },
+    "trainingOverviewState": {
+      "noMatchingCards": "Geen passende kaarten"
+    },
+    "librarySorting": {
+      "title": "Sorteren",
+      "alphabetical": "Alfabetisch",
+      "spoken": "Frequentie in gesprekken",
+      "written": "Frequentie in teksten",
+      "help": "Niet van elk woord weten we hoe vaak het voorkomt. Bij sorteren op frequentie komen woorden zonder deze gegevens onderaan, op alfabet.",
+      "spokenHelp": "Woorden die vaker voorkomen in gesprekken staan bovenaan.",
+      "writtenHelp": "Woorden die vaker voorkomen in teksten staan bovenaan."
+    },
+    "frequencyRange": {
+      "from": "Van",
+      "to": "Tot",
+      "step": "Stap"
+    },
+    "materialKinds": {
+      "title": "Soort artikel",
+      "all": "Alles",
+      "word": "Woorden",
+      "other": "Overig",
+      "help": [
+        "Kies woorden of andere zelfstandige artikelen. Woordsoorten, zoals zelfstandige naamwoorden en werkwoorden, verfijnen de woordkeuze.",
+        "Overig bevat uitdrukkingen, woordgroepen en hele zinnen. Dit zijn aparte woordenboekartikelen, geen voorbeelden binnen een woord.",
+        "We willen deze keuze later uitbreiden, zodat je woordgroepen, idiomen en zinnen apart kunt kiezen."
+      ]
+    },
+    "trainingAvailability": {
+      "title": "Beschikbaar voor training",
+      "updating": "Kaartaantallen bijwerken…",
+      "helpTitle": "Over deze aantallen",
+      "help": "Dit zijn alle beschikbare kaarten bij je instellingen. De sessiegrootte en de verhouding tussen nieuwe kaarten en herhalingen bepalen hoeveel er in de training komen.",
+      "error": "De aantallen konden niet worden bijgewerkt."
+    },
+    "libraryWordSelection": {
+      "train": "Deze woorden oefenen",
+      "setup": "Training instellen met deze woorden"
+    },
+    "vocabularySelection": {
+      "selection": "Woorden kiezen",
+      "allWords": "Alle woorden",
+      "frequency": "Op frequentie",
+      "speech": "Waar ze voorkomen",
+      "spoken": "Gesproken taal",
+      "written": "Geschreven taal",
+      "range": "Plaatsen in de lijst",
+      "edit": "Bereik wijzigen",
+      "from": "Van",
+      "to": "Tot",
+      "first": "Eerste grens van het bereik",
+      "last": "Laatste grens van het bereik",
+      "meanings": "Betekenissen per artikel",
+      "all": "Alle",
+      "allMeanings": "Alle betekenissen",
+      "firstMeaning": "Eerste betekenis",
+      "cancel": "Annuleren",
+      "apply": "Gereed",
+      "invalid": "Begin bij 1 of hoger. Het einde mag niet lager zijn dan het begin.",
+      "selectionHelp": "Kies alle woorden, of woorden die vaker voorkomen in gesprekken of teksten. De frequentiekeuze bevat alleen woorden waarvoor deze gegevens beschikbaar zijn.",
+      "speechHelp": "Gesproken taal gebruikt gesprekken uit CGN. Geschreven taal gebruikt teksten uit SoNaR500. Een woord kan in gesprekken vaker voorkomen dan in teksten.",
+      "rangeHelp": "Een lager getal betekent een vaker gebruikt woord. Bijvoorbeeld: 1–100 kiest de honderd meest voorkomende woorden. We tonen de woorden uit je woordenboek die bij je andere instellingen passen. Dat kunnen er minder zijn. Veeg over de getallen omhoog of omlaag. De stap bepaalt hoeveel het getal verandert. Gebruik het potlood voor een precies bereik.",
+      "meaningHelp": [
+        "Een woord kan verschillende betekenissen hebben. Denk bij lopen aan naar huis lopen, een motor die loopt of een evenement dat goed loopt.",
+        "De betekenissen staan op volgorde in het woordenboek. Kies de eerste, de eerste twee of drie, of alle betekenissen. Zijn er minder, dan nemen we wat er is. Elk apart artikel heeft een eigen limiet.",
+        "In een training met alleen nieuwe betekenissen slaan we betekenissen over die je al leert. Leer je de eerste twee al, dan komen ze niet in die training. De derde komt niet in hun plaats."
+      ],
+      "firstMeaningsZero": "Eerste {count} betekenissen",
+      "firstMeaningsOne": "Eerste {count} betekenissen",
+      "firstMeaningsTwo": "Eerste {count} betekenissen",
+      "firstMeaningsFew": "Eerste {count} betekenissen",
+      "firstMeaningsMany": "Eerste {count} betekenissen",
+      "firstMeaningsOther": "Eerste {count} betekenissen"
     }
   },
   "tour": {

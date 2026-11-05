@@ -5,9 +5,10 @@ import type {PersonalCollection} from '@/lib/collections/sharing/personalCatalog
 
 import React, { useEffect, useState } from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { getUiMessages, formatUiCount } from "@/lib/uiMessages";
+import { getUiMessages, formatUiMessage } from "@/lib/uiMessages";
 import type { LibraryEntryFilters } from "@/lib/platform/librarySearchScope";
-import { fetchPlatformV2LibraryGroupPage } from "@/lib/platform/platformV2LibraryClient";
+import { countDictionaryCategory, readDictionaryCategory, type DictionarySearchCategory } from "@/lib/platform/dictionaryCategorySearch";
+import { countPlatformV2LibraryGroups } from "@/lib/platform/platformV2LibraryClient";
 import { useAccountMaterial } from "../material/AccountMaterialProvider";
 import { useLibraryMaterialSelection } from "../material/useLibraryMaterialSelection";
 import { LibraryFilters, type LibraryFilterDraft } from "./LibraryFilters";
@@ -21,8 +22,10 @@ type Preview = {
   key: string;
   status: "loading" | "ready" | "error";
   total?: number;
+  hasMore?: boolean;
 };
 type PreviewScope = {
+  category?: DictionarySearchCategory;
   query: string;
   languageCode: string;
   dictionaryId: string | null;
@@ -37,11 +40,12 @@ type PreviewScope = {
 };
 
 /** Draft previews read account material; only Apply changes the main search. */
-export function AccountLibraryFilters({ value, query, locale, collection, collections = [], onClose, onApply }: {
+export function AccountLibraryFilters({ value, query, locale, collection, collections = [], onClose, onApply, category }: {
   collection?: WordListSummary | null;
   collections?: WordListSummary[];
   value: LibraryFilterDraft;
   query: string;
+  category?: DictionarySearchCategory;
   locale: OnboardingLanguage;
   onClose: () => void;
   onApply: (draft: LibraryFilterDraft) => void;
@@ -66,10 +70,11 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
   );
   // Canonical identity also invalidates previews when account material changes.
   const scope: PreviewScope = {
+    category,
     query: query.trim(),
     languageCode: draft.languageCode,
     dictionaryId: draft.dictionaryId,
-    filters: { parts: [...draft.parts].sort(), article: draft.article },
+    filters: { parts: [...draft.parts].sort(), article: draft.article, vocabulary:draft.vocabulary, sort:draft.sort },
     available: ready,
     userId: account?.userId,
     revision: account?.snapshot?.revision,
@@ -86,7 +91,19 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
     const controller = new AbortController();
     setPreview({ key, status: "loading" });
     const timer = window.setTimeout(() => {
-      void fetchPlatformV2LibraryGroupPage({
+      void (async () => {
+        if (request.category && request.query) {
+          const searchScope = {query:request.query,languageCode:request.languageCode,dictionaryId:request.dictionaryId,
+            userId:request.userId,filters:request.filters,signal:controller.signal,
+            material:request.labelId ? {kind:"label" as const,id:request.labelId} : request.collectionId && request.collectionType
+              ? {kind:"collection" as const,id:request.collectionId,collectionType:request.collectionType} : undefined};
+          if (request.category === "headwords" || request.category === "alphabetical") {
+            return {total:await countDictionaryCategory(searchScope,request.category),hasMore:false};
+          }
+          const page = await readDictionaryCategory(searchScope,request.category,()=>{});
+          return {total:page.items.length,hasMore:page.page.hasMore};
+        }
+        const total = await countPlatformV2LibraryGroups({
         query: request.query,
         cardTypeId: "word-to-definition",
         contentLanguageCode: request.languageCode,
@@ -99,10 +116,10 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
           }} : {}),
           filters: request.filters,
         },
-      }).then(page => {
-        if (!controller.signal.aborted) {
-          setPreview({ key, status: "ready", total: page.librarySearch!.totalGroups });
-        }
+        });
+        return {total,hasMore:false};
+      })().then(({total,hasMore}) => {
+        if (!controller.signal.aborted) setPreview({key,status:"ready",total,hasMore});
       }).catch(() => {
         if (!controller.signal.aborted) setPreview({ key, status: "error" });
       });
@@ -132,7 +149,7 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
       countContent = material.currentLanguageAllowed ? copy.noSources : copy.noLanguages;
     }
   } else if (status === "ready") {
-    countContent = formatUiCount(locale, preview.total!, copy, "matchingGroup");
+    countContent = formatUiMessage(getUiMessages(locale).librarySearch.foundCount,{count:new Intl.NumberFormat(locale).format(preview.total!) + (preview.hasMore ? "+" : "")});
   } else if (status === "error") {
     countContent = <>
       {copy.searchError}{" "}

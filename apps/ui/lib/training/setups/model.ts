@@ -1,3 +1,5 @@
+import {parseVocabularySelection,parseLibraryTrainingSelection} from "@/lib/vocabulary/selection";
+import {VOCABULARY_PARTS} from "@/lib/vocabulary/partsOfSpeech";
 import type { TrainingSetupDraft } from "./types";
 
 export type TrainingSetupPreset = { id: string; name: string; draft: TrainingSetupDraft };
@@ -45,7 +47,7 @@ export function isTrainingSetupDraft(value: unknown): value is TrainingSetupDraf
       new Set(value.dictionaryIds).size !== value.dictionaryIds.length ||
       !value.dictionaryIds.every(id => typeof id === "string" && uuid.test(id)))) return false;
   if (value.materialMode === "selected-dictionaries" && (!Array.isArray(value.dictionaryIds) || !value.dictionaryIds.length)) return false;
-  return optionalArray(value.partOfSpeech, ["zn", "ww", "bn", "bw", "vz", "vnw", "vw", "tw", "lidw", "tsw", "afk"], 11) &&
+  return (value.sourceWordStatus === undefined || value.sourceWordStatus === "learning" || value.sourceWordStatus === "all") && (value.vocabulary===undefined||parseVocabularySelection(value.vocabulary)!==null) && (value.librarySelection===undefined||parseLibraryTrainingSelection(value.librarySelection)!==null) && optionalArray(value.partOfSpeech, VOCABULARY_PARTS.map(part=>part.code), 12) &&
     optionalArray(value.nounArticles, ["de", "het"], 2);
 }
 
@@ -56,6 +58,7 @@ export function isTrainingSetupPreset(value: unknown): value is TrainingSetupPre
 // Reconstruct fields explicitly so storage cannot become an arbitrary payload bag.
 export function canonicalDraft(value: TrainingSetupDraft): TrainingSetupDraft {
   return {
+    ...(value.sourceWordStatus !== undefined ? { sourceWordStatus: value.sourceWordStatus } : {}),
     ...(value.family !== undefined ? { family: value.family } : {}),
     scenarioId: value.scenarioId, modes: [...value.modes], cardFilter: value.cardFilter,
     listValue: value.listValue, newReviewRatio: value.newReviewRatio,
@@ -63,6 +66,8 @@ export function canonicalDraft(value: TrainingSetupDraft): TrainingSetupDraft {
     ...(value.daysAgo !== undefined ? { daysAgo: value.daysAgo } : {}),
     ...(value.materialMode !== undefined ? { materialMode: value.materialMode } : {}),
     ...(value.dictionaryIds !== undefined ? { dictionaryIds: [...value.dictionaryIds] } : {}),
+    ...(value.vocabulary!==undefined?{vocabulary:parseVocabularySelection(value.vocabulary)!}:{}),
+    ...(value.librarySelection!==undefined?{librarySelection:parseLibraryTrainingSelection(value.librarySelection)!}:{}),
     ...(value.partOfSpeech !== undefined ? { partOfSpeech: [...value.partOfSpeech] } : {}),
     ...(value.nounArticles !== undefined ? { nounArticles: [...value.nounArticles] } : {}),
   };

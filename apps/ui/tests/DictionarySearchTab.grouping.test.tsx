@@ -10,11 +10,13 @@ import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/pla
 import type { DictionaryEntry } from "@/lib/types";
 
 const fetchGroupPage = vi.fn();
+const countLibraryGroups = vi.fn().mockResolvedValue(0);
 const readableSources = vi.fn();
 vi.mock("@/lib/training/listService",()=>({fetchAvailableDictionarySourcesStrict:(...args:unknown[])=>readableSources(...args),fetchAvailableLearningLanguages:vi.fn()}));
 afterEach(()=>{vi.unstubAllEnvs();});
 
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
+  countPlatformV2LibraryGroups: (...args: unknown[]) => countLibraryGroups(...args),
   fetchPlatformV2LibraryGroupPage: (...args: unknown[]) =>
     fetchGroupPage(...args),
 }));
@@ -388,7 +390,7 @@ test("search filters exclude disabled material and changing source starts at the
  readableSources.mockReset().mockResolvedValue([source(scopeA,"Disabled A"),source(scopeB,"Enabled B")]);
  const group=goedGroup("enabled-b",scopeB,"Enabled B",[sense("entry-b","zn")]);
  fetchGroupPage.mockReset().mockResolvedValue({groups:[group],selectedTierComplete:true,nextGroupCursor:"next-scoped"});
- render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness/></AccountMaterialProvider>);
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness initial={{query:""}}/></AccountMaterialProvider>);
  await screen.findByTestId("library-headword-group-enabled-b");
  const {getUiMessages}=await import("@/lib/uiMessages");const labels=getUiMessages("nl");
  fireEvent.click(screen.getByRole("button",{name:labels.library.filters}));
@@ -419,7 +421,7 @@ test("a server cursor invalidated by another device restarts scoped search once"
  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
  readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
  fetchGroupPage.mockReset().mockRejectedValueOnce(Object.assign(new Error("invalid-cursor"),{name:"PlatformV2LibraryLookupError",kind:"invalid-cursor"})).mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null});
- render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness initial={{page:2,groupPageCursors:[null,"stale"],groupScopeKey:JSON.stringify(["user-1",1,"nl",null,"goed",null,{parts:[],article:null}])}}/></AccountMaterialProvider>);
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness initial={{query:"",page:2,groupPageCursors:[null,"stale"],groupScopeKey:JSON.stringify(["user-1",1,"nl",null,"",null,{parts:[],article:null}])}}/></AccountMaterialProvider>);
  await screen.findByTestId("library-headword-group-group-goed-main");
  expect(fetchGroupPage.mock.calls[0][0].cursor).toBe("stale");
  expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({cursor:null}));
@@ -431,7 +433,7 @@ test("Library picks an active local search language without changing the trainin
  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
  readableSources.mockReset().mockResolvedValue([]);
  fetchGroupPage.mockReset().mockResolvedValue({groups:[],selectedTierComplete:true,nextGroupCursor:null});
- render(<AccountMaterialProvider userId="user-1" repository={materialRepository(true)}><Harness/></AccountMaterialProvider>);
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository(true)}><Harness initial={{query:""}}/></AccountMaterialProvider>);
  await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalled());
  const {getUiMessages}=await import("@/lib/uiMessages");
  fireEvent.click(screen.getByRole("button",{name:getUiMessages("nl").library.filters}));
@@ -460,7 +462,7 @@ test("approved chips panel excludes disabled sources, cancels drafts and applies
  readableSources.mockReset().mockResolvedValue([source(scopeA,"Disabled A"),source(scopeB,"Enabled B")]);
  const group=goedGroup("enabled-b",scopeB,"Enabled B",[sense("entry-b","zn")]);
  fetchGroupPage.mockReset().mockResolvedValue({groups:[group],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:1,matchingEntryIds:["entry-b"]}});
- const repository=materialRepository();render(<AccountMaterialProvider userId="user-1" repository={repository}><Harness/></AccountMaterialProvider>);
+ const repository=materialRepository();render(<AccountMaterialProvider userId="user-1" repository={repository}><Harness initial={{query:""}}/></AccountMaterialProvider>);
  await screen.findByTestId("library-headword-group-enabled-b");
  fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));
  fireEvent.click(screen.getByRole("button",{name:new RegExp(`^${copy.builder.source}`)}));
@@ -493,10 +495,14 @@ test("reapplying the same filters supersedes an in-flight lookup", async () => {
   const oldRead = deferred<unknown>();
   const refreshedRead = deferred<unknown>();
   readableSources.mockReset().mockResolvedValue([source(scopeB, "Enabled B")]);
-  fetchGroupPage.mockReset().mockReturnValueOnce(oldRead.promise).mockReturnValueOnce(refreshedRead.promise);
+  let pageReadCount = 0;
+  fetchGroupPage.mockReset().mockImplementation(request => {
+    return ++pageReadCount === 1 ? oldRead.promise : refreshedRead.promise;
+  });
+  const pageReads = () => fetchGroupPage.mock.calls.filter(([request]) => "cursor" in request);
   const state = {
     ...createDictionarySearchTabState(),
-    query: "goed",
+    query: "",
     languageCode: "nl",
     entryFilters: { parts: ["noun" as const], article: null },
   };
@@ -506,13 +512,19 @@ test("reapplying the same filters supersedes an in-flight lookup", async () => {
       <Harness initial={state} />
     </AccountMaterialProvider>,
   );
-  await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(1));
-  const initialSignal = fetchGroupPage.mock.calls[0][0].signal as AbortSignal;
+  await waitFor(() => expect(pageReads()).toHaveLength(1));
+  const initialSignal = pageReads()[0][0].signal as AbortSignal;
 
   fireEvent.click(screen.getByRole("button", { name: copy.library.filters }));
+  await waitFor(() => expect(countLibraryGroups).toHaveBeenCalledOnce());
+  expect(countLibraryGroups.mock.calls[0][0]).toMatchObject({
+    query: "", libraryScope: { dictionaryIds: null, filters: { parts: ["noun"], article: null } },
+  });
+  expect(pageReads()).toHaveLength(1);
+  expect(initialSignal.aborted).toBe(false);
   await waitFor(() => expect(screen.getByRole("button", { name: copy.library.showResults })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: copy.library.showResults }));
-  await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(pageReads()).toHaveLength(2));
   expect(initialSignal.aborted).toBe(true);
 
   await act(async () => {
@@ -536,6 +548,7 @@ test("reapplying the same filters supersedes an in-flight lookup", async () => {
 });
 
 beforeEach(()=>{
+  countLibraryGroups.mockReset().mockResolvedValue(0);
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", {configurable:true,value:function(this:HTMLDialogElement){this.setAttribute("open","");}});
   Object.defineProperty(HTMLDialogElement.prototype, "close", {configurable:true,value:function(this:HTMLDialogElement){this.removeAttribute("open");}});
 });
@@ -760,7 +773,7 @@ test("approved Library browses immediately with server totals and cursor paging"
   render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:""}}/></AccountMaterialProvider>);
   await screen.findByTestId("library-headword-group-group-goed-homograph");
   expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({query:"",cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}}}));
-  expect(screen.getByText("42 matching articles")).toBeInTheDocument();
+  expect(screen.getByText("Found: 42")).toBeInTheDocument();
   expect(screen.getByText("1 / 1")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button",{name:"Next"}));
   await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({query:"",cursor:"browse-next"})));
@@ -774,12 +787,12 @@ test("initial browse loading does not show an empty result and failure can retry
   render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:""}}/></AccountMaterialProvider>);
   await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalled());
   expect(screen.queryByText("No words found")).not.toBeInTheDocument();
-  expect(screen.queryByText("0 matching articles")).not.toBeInTheDocument();
+  expect(screen.queryByText("Found: 0")).not.toBeInTheDocument();
   expect(screen.queryByTestId("library-group-pagination")).not.toBeInTheDocument();
   expect(screen.queryByTestId("library-headword-group-group-goed-homograph")).not.toBeInTheDocument();
   await act(async()=>{pending.reject(new Error("lookup_http_503"));});
   expect(await screen.findByRole("alert")).toBeInTheDocument();
-  expect(screen.queryByText("0 matching articles")).not.toBeInTheDocument();
+  expect(screen.queryByText("Found: 0")).not.toBeInTheDocument();
   expect(screen.queryByTestId("library-group-pagination")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button",{name:"Try again"}));
   await screen.findByTestId("library-headword-group-group-goed-homograph");
@@ -854,7 +867,7 @@ test.each([
     filterPlacement:placement,
     filterButtonSide:side,
     renderColumns:({defaultColumns,filters})=><>{defaultColumns}{filters}</>,
-  }}><AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en"/></AccountMaterialProvider></LibraryPresentationContext.Provider>);
+  }}><AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:""}}/></AccountMaterialProvider></LibraryPresentationContext.Provider>);
   await screen.findByTestId("library-headword-group-unified-filter");
   expect(screen.getAllByRole("button",{name:copy.library.filters})).toHaveLength(1);
   expect(screen.queryByRole("button",{name:/^Material$|^Материал$/})).not.toBeInTheDocument();
@@ -876,7 +889,7 @@ test("a vanished explicit collection keeps its scope and reports unavailable ins
  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
  readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
  fetchGroupPage.mockReset().mockRejectedValue(Object.assign(new Error("material-unavailable"),{name:"PlatformV2LibraryLookupError",kind:"material-unavailable"}));
- render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{applyListFilter:true,collectionId:"vanished"}}/></AccountMaterialProvider>);
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:"",applyListFilter:true,collectionId:"vanished"}}/></AccountMaterialProvider>);
  await screen.findByText("This collection or label is no longer available.");
  expect(fetchGroupPage.mock.calls.every(call=>call[0].libraryScope?.material?.id==="vanished")).toBe(true);
 });
@@ -900,3 +913,25 @@ test("a label with unavailable sources shows its own scope and an availability w
    await waitFor(()=>expect(screen.queryByTestId("library-detail-desktop")).not.toBeInTheDocument());
    expect(reloadLists).toHaveBeenCalled();expect(notify).toHaveBeenCalled();
  });
+
+test("ordinary Library reads retain frequency, entry type, meaning limit and sort after a response",async()=>{
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+ const filters={parts:[] as const,article:null,vocabulary:{mode:"frequency" as const,materialKinds:["word" as const],profile:"written" as const,from:101,to:500,meanings:2 as const},sort:"written" as const};
+ fetchGroupPage.mockReset().mockResolvedValue({groups:[homographGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:1,matchingEntryIds:["entry-goed-zn"]}});
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:"",entryFilters:{...filters,parts:[]}}}/></AccountMaterialProvider>);
+ await screen.findByTestId("library-headword-group-group-goed-homograph");
+ expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:null,filters:{...filters,parts:[]}},cursor:null}));
+ fireEvent.click(screen.getByRole("button",{name:"Search filters"}));
+ await screen.findByRole("dialog",{name:"Library filters"});
+ expect(screen.getByRole("button",{name:"By frequency"})).toHaveAttribute("aria-pressed","true");
+ expect(screen.getByRole("button",{name:"Written language"})).toHaveAttribute("aria-pressed","true");
+ expect(screen.getByRole("slider",{name:"Meanings per entry"})).toHaveValue("1");
+});
+
+test("the default Words search category keeps the sorting action visible",async()=>{
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:"bank",searchCategory:undefined}}/></AccountMaterialProvider>);
+ expect(await screen.findByRole("button",{name:"Sort: Alphabetical"})).toBeInTheDocument();
+});

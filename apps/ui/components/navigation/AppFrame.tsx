@@ -1,13 +1,14 @@
 "use client";
 
 import React from "react";
-import {getUiMessages,formatUiMessage} from "@/lib/uiMessages";
+import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
 import { ReleaseBanner } from "@/components/releases/ReleaseUpdates";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AppDestinationNav, appDestinationLabel } from "./AppDestinationNav";
 import { AppUtilityNav, type AppUtilityNavProps } from "./AppUtilityNav";
 import type { AppDestination } from "./appDestination";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import { getUiMessages, formatUiMessage } from "@/lib/uiMessages";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
 import styles from "./AppFrame.module.css";
 
@@ -103,7 +104,9 @@ export function AppFrame({
         {...headerProps}
         onNavigate={onNavigate}
       />
-      <ReleaseBanner language={headerProps.interfaceLanguage} />
+      <div className={`${practiceTheme.theme} ${styles.releaseSurface}`} data-colour-mode="app">
+        <ReleaseBanner language={headerProps.interfaceLanguage} />
+      </div>
       <main className={styles.content}>{children}</main>
       <div className={styles.tabBar} data-app-mobile-navigation="tabs">
         <AppDestinationNav

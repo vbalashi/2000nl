@@ -15,6 +15,11 @@ The [localization guide](docs/interface-localization.md) includes the complete
 workflow and a settings-note example. Operator/admin localization is a separate
 scope; learning content and user-authored names are not interface translations.
 
+Selection/counting changes also require the scale, request-failure recovery and
+managed staging checks in [availability validation](docs/vocabulary-selection.md#availability-validation-before-release).
+
+For interface changes, read the [interface standard](docs/ui/interface-standard.md) first. Reuse its shared components and semantic roles, and run `npm run check:interface-standard` from `apps/ui`. Review any reported deviation rather than adding an exception merely to pass the check.
+
 Use synthetic fixtures. Do not submit production dictionary content, third-party
 corpora, personal learning records, credentials or proprietary prompts. Generic
 parsers may support external formats without bundling those external datasets.

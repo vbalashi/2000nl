@@ -41,14 +41,15 @@ Existing languages have explicit fallback wording in unused forms. New languages
 must supply appropriate wording for their own categories. `formatUiCount` and
 `formatPluralMessage` use the interface locale, not the dictionary language.
 
-## Adding a new message: AI translation note
+## Adding a new message
 
-For a new explanation under the translation-language setting, use the existing
+The existing AI translation note uses `ui.settings.translationAttribution`.
+For an additional explanation under the translation-language setting, use the existing
 mechanism; no new language switch or per-screen translation system is needed.
 Run this from `apps/ui`:
 
 ```sh
-npm run i18n:add -- --key ui.settings.translationAttribution --text "Translations are provided by an AI service."
+npm run i18n:add -- --key ui.settings.translationDetails --text "Learn more about AI translations."
 ```
 
 The command adds the English source and scaffolds the same key in every active
@@ -59,19 +60,19 @@ Existing keys and invalid parent paths are rejected before any catalog is change
 Translate the RU/NL entries (and future enabled languages), then acknowledge each:
 
 ```sh
-npm run i18n:review -- --locale ru --key ui.settings.translationAttribution
-npm run i18n:review -- --locale nl --key ui.settings.translationAttribution
+npm run i18n:review -- --locale ru --key ui.settings.translationDetails
+npm run i18n:review -- --locale nl --key ui.settings.translationDetails
 npm run i18n:check
 ```
 
 In the language settings component, where `copy` already comes from
-`getUiMessages(interfaceLanguage).settings`, render `{copy.translationAttribution}`
+`getUiMessages(interfaceLanguage).settings`, render `{copy.translationDetails}`
 in the explanatory paragraph. Adding a catalog key alone does not create a new
 control or place text on the screen. Conversely, adding the sentence directly to
 JSX, a local variable or a tooltip is rejected by the source audit. Editing the
 English wording later makes the corresponding target translations outdated.
-The integration tests exercise this example in temporary fixture catalogs; this
-example has not added an AI note to the product itself.
+The integration tests exercise adding an AI note in temporary fixture catalogs.
+The product’s existing AI note is also read from the central catalog.
 
 ## Changing an existing message
 

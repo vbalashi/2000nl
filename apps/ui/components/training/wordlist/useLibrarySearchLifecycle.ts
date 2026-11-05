@@ -102,6 +102,8 @@ export function useLibrarySearchLifecycle({
     ? JSON.stringify({
         parts: [...new Set(currentFilters.parts)].sort(),
         article: currentFilters.article,
+        vocabulary:currentFilters.vocabulary,
+        sort:currentFilters.sort,
       })
     : null;
   const filters = useMemo(

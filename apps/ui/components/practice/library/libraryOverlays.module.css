@@ -58,3 +58,5 @@
 .menu:has(.menuDescription) button>svg{flex-shrink:0;margin-top:3px}
 .menuCopy{min-width:0}
 .menuDescription{display:block;margin-top:4px;color:var(--practice-text-muted);font-size:var(--practice-text-label);line-height:1.5}
+
+.menuNotice{margin:0;padding:8px 12px;font-size:var(--practice-text-caption);line-height:1.5;color:var(--practice-text-muted)}

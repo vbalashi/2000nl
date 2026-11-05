@@ -35,3 +35,9 @@ test("accepts all canonical families and rejects unbounded/account-shaped data",
   expect(canonicalDraft({ ...draft, userId: "other", schedulingState: "fake" } as typeof draft)).toEqual(draft);
   expect(parseTrainingSetupsDocument({ ...document, userId: "other" })).toEqual(document);
 });
+
+ test('source-word choice round-trips through a saved recipe, while legacy absence is preserved',()=>{
+  expect(canonicalDraft({...draft,sourceWordStatus:'all'})).toHaveProperty('sourceWordStatus','all');
+  expect(canonicalDraft(draft)).not.toHaveProperty('sourceWordStatus');
+  expect(parseTrainingSetupsDocument({...document,trainings:[{...training,draft:{...draft,sourceWordStatus:'other'}}]})).toBeNull();
+ });

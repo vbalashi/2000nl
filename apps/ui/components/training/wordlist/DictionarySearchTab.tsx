@@ -1,6 +1,11 @@
 "use client";
-import {languageAutonym} from "@/lib/languages/languageDisplayName";
+import { languageAutonym } from "@/lib/languages/languageDisplayName";
+import { localizedField } from "@/lib/i18n/catalog";
 
+import {IconAction} from "@/components/practice/ui/IconAction";
+import {LibrarySortControl} from "@/components/practice/library/LibrarySortControl";
+import {librarySelectionToTraining,type LibraryTrainingHandoff} from "@/lib/vocabulary/libraryTrainingHandoff";
+import {vocabularySelectionActive} from "@/lib/vocabulary/selection";
 import {useOnboardingQueryLocked} from "@/components/onboarding/Onboarding";
 import { dictionarySourceProfile } from "@/lib/dictionary/sourceProfile";
 import { useLibraryMaterialSelection } from "@/components/practice/material/useLibraryMaterialSelection";
@@ -12,9 +17,11 @@ import {
 } from "@/lib/uiMessages";
 
 import React from "react";
+import { LibraryCategoryResults } from "./LibraryCategoryResults";
+import type { LibraryMaterialScope } from "@/lib/platform/librarySearchScope";
 import { LibraryPresentationContext } from "@/components/practice/library/LibraryPresentationContext";
 import { LIBRARY_PAGE_SIZE } from "@/lib/platform/libraryPagination";
-import { SlidersHorizontal, ChevronLeft, ChevronRight, FileText, Folder } from "lucide-react";
+import { SlidersHorizontal, ChevronLeft, ChevronRight, FileText, Folder, Play } from "lucide-react";
 import { LibraryResultList, LibraryResultRow } from "@/components/practice/library/LibraryResultList";
 import { AccountLibraryFilters } from "@/components/practice/library/AccountLibraryFilters";
 import {SelectedCollectionSourceStatus,collectionSourceMessage,type CollectionSourceRead} from '@/components/library/sharing/SelectedCollectionSourceStatus';
@@ -72,6 +79,7 @@ type Props = {
   reloadLists: () => Promise<void>;
   notifyListsUpdated: () => void;
   onOpenListMembership?: (membership: EntryLearningListMembership) => void;
+  onTrainSelection?:(selection:LibraryTrainingHandoff)=>void;
   onTrainWord?: (wordId: string) => void;
   autoFocusQuery?: boolean;
   searchState: DictionarySearchTabState;
@@ -139,12 +147,16 @@ export function DictionarySearchTab({
   reloadLists,
   notifyListsUpdated,
   onOpenListMembership,
-  onTrainWord,
+  onTrainWord,onTrainSelection,
   autoFocusQuery,
   searchState,
   onSearchStateChange,
 }: Props) {
 
+  const [categoryTabsHost, setCategoryTabsHost] = useState<HTMLDivElement | null>(null);
+  const [categoryCountHost, setCategoryCountHost] = useState<HTMLSpanElement | null>(null);
+  const categoryAppearance = "plain" as const;
+  const [categoryRevision, setCategoryRevision] = useState(0);
   const presentation = React.useContext(LibraryPresentationContext);
   const {
     query,
@@ -193,6 +205,7 @@ export function DictionarySearchTab({
     interfaceLanguage,
   );
   const materialEnabled = Boolean(material);
+  const categorySearchActive = materialEnabled && Boolean(query.trim());
   const materialCopy = getUiMessages(interfaceLanguage).materialPreferences;
   const copy = getUiMessages(interfaceLanguage).library;
   const number = (value: number) =>
@@ -259,14 +272,14 @@ export function DictionarySearchTab({
     error: searchError,
     hasCurrentResults,
     runSearch,
-    refresh: refreshSearch,
+    refresh: refreshLegacySearch,
     invalidateFreshness,
   } = useLibrarySearchLifecycle({
     state: searchState,
     setState: onSearchStateChange,
     open,
     readiness: {
-      active: searchEnabled,
+      active: searchEnabled && !categorySearchActive,
       ready: searchMaterialReady,
       materialEnabled,
       defaultFilters: materialEnabled ? EMPTY_LIBRARY_ENTRY_FILTERS : undefined,
@@ -285,6 +298,17 @@ export function DictionarySearchTab({
     copy,
     projectGroupSelection,
   });
+  const applyCategoryWordResults = useCallback((results: LibraryHeadwordGroupResult[]) => {
+    onSearchStateChange(current => ({...current,groupResults:results,...projectGroupSelection(current,results)}));
+  }, [onSearchStateChange,projectGroupSelection]);
+  const refreshSearch = useCallback(() => {
+    refreshLegacySearch();
+    setCategoryRevision(current => current + 1);
+  }, [refreshLegacySearch]);
+  const categoryMaterial = useMemo<LibraryMaterialScope | undefined>(() => searchState.labelId
+    ? { kind: "label", id: searchState.labelId }
+    : useViewedListFilter && viewedListId ? { kind: "collection", id: viewedListId, collectionType: viewedList?.type === "user" || selectedSourceRead?.type === "user" ? "user" : "curated" }
+    : undefined, [searchState.labelId, useViewedListFilter, viewedListId, viewedList?.type, selectedSourceRead?.type]);
   const openGroupDetail = useCallback(
     (result: LibraryHeadwordGroupResult) => {
       updateSearchState({
@@ -300,19 +324,6 @@ export function DictionarySearchTab({
     },
     [updateSearchState, presentation?.filterPlacement],
   );
-  const detailEntryInCurrentResults = useMemo(
-    () =>
-      Boolean(
-        detailSelection &&
-        (!materialEnabled && useViewedListFilter
-          ? wordResults.some(
-              (resultEntry) => resultEntry.id === detailSelection.entryId,
-            )
-          : selectedGroupResult),
-      ),
-    [detailSelection, selectedGroupResult, useViewedListFilter, wordResults, materialEnabled],
-  );
-
   const openEntryDetail = useCallback(
     async (entry: DictionaryEntry) => {
       const requestId = latestDetailRequestRef.current + 1;
@@ -496,16 +507,16 @@ export function DictionarySearchTab({
   const filterButton = (
     materialEnabled && <button type="button" className={workspace.filterButton}
           aria-label={copy.filters} aria-haspopup={presentation?.filterPlacement === "panel" ? undefined : "dialog"} aria-expanded={presentation ? filtersOpen : undefined} disabled={!searchMaterialReady}
-          data-active={Boolean(searchState.entryFilters?.parts.length || dictionaryId)} onClick={()=>setFiltersOpen(current=>presentation?.filterPlacement === "panel" ? !current : true)}>
+          data-active={Boolean(searchState.entryFilters?.parts.length || vocabularySelectionActive(searchState.entryFilters?.vocabulary) || dictionaryId)} onClick={()=>setFiltersOpen(current=>presentation?.filterPlacement === "panel" ? !current : true)}>
           <SlidersHorizontal size={18}/>
         </button>
   );
   const filters = (
-    filtersOpen && <AccountLibraryFilters locale={interfaceLanguage} query={query} collection={viewedList} collections={filterCollections}
+    filtersOpen && <AccountLibraryFilters category={categorySearchActive ? searchState.searchCategory ?? "headwords" : undefined} locale={interfaceLanguage} query={query} collection={viewedList} collections={filterCollections}
           value={{languageCode:searchLanguage,dictionaryId,applyListFilter,labelId:searchState.labelId,labelName:searchState.labelName,collectionId:applyListFilter ? viewedListId : null,...(searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS)}}
           onClose={()=>setFiltersOpen(false)} onApply={draft=>{
             updateSearchState({labelId:draft.labelId ?? null,labelName:draft.labelName ?? null,languageCode:draft.languageCode,dictionaryId:draft.dictionaryId,applyListFilter:Boolean(draft.applyListFilter),collectionId:draft.collectionId ?? null,
-              entryFilters:{parts:[...draft.parts].sort(),article:draft.article},page:1,groupPageCursors:[null],groupHasMore:false,
+              entryFilters:{parts:[...draft.parts].sort(),article:draft.article,vocabulary:draft.vocabulary,sort:draft.sort},page:1,groupPageCursors:[null],groupHasMore:false,
               groupTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});
             refreshSearch();
             setFiltersOpen(false);
@@ -571,25 +582,41 @@ export function DictionarySearchTab({
           ) : null}
         </div>
         {presentation?.filterButtonSide !== "left" && filterButton}
+        {(!categorySearchActive||(searchState.searchCategory??"headwords")==="headwords")&&<LibrarySortControl language={interfaceLanguage} value={searchState.entryFilters?.sort??"alphabetical"} onChange={sort=>{updateSearchState({entryFilters:{...(searchState.entryFilters??EMPTY_LIBRARY_ENTRY_FILTERS),sort},page:1,groupPageCursors:[null],groupHasMore:false});refreshSearch();}}/>}
+        {presentation?.renderSearchActions?.(interfaceLanguage)}
         </div>
 
 
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div
-            className={
-              workspace.scope
-            }
-          >
-            {languageDisplayName(interfaceLanguage, searchLanguage)} ·{" "}
-            {searchState.labelId ? <Folder size={14} aria-hidden="true" className="inline align-text-bottom"/> : useViewedListFilter ? <FileText size={14} aria-hidden="true" className="inline align-text-bottom"/> : null}{" "}{resultScopeLabel}
-            {searchState.entryFilters?.parts.map(part=>
-              <React.Fragment key={part}> · {getUiMessages(interfaceLanguage).builder.parts[LIBRARY_PART_LABELS[part]]}
-                {part === "noun" && searchState.entryFilters?.article ? ` (${searchState.entryFilters.article})` : ""}
-              </React.Fragment>)}
+        <div className={workspace.scopeRow}>
+          <div className={workspace.scopeSummary}>
+            <div className={workspace.scope}>
+              {languageDisplayName(interfaceLanguage, searchLanguage)} ·{" "}
+              {searchState.labelId ? <Folder size={14} aria-hidden="true" className="inline align-text-bottom"/> : useViewedListFilter ? <FileText size={14} aria-hidden="true" className="inline align-text-bottom"/> : null}{" "}{resultScopeLabel}
+              {searchState.entryFilters?.parts.map(part=>
+                <React.Fragment key={part}> · {getUiMessages(interfaceLanguage).builder.parts[LIBRARY_PART_LABELS[part]]}
+                  {part === "noun" && searchState.entryFilters?.article ? ` (${searchState.entryFilters.article})` : ""}
+                </React.Fragment>)}
+            </div>
+            {onTrainSelection && searchMaterialReady && (
+              <IconAction
+                className={workspace.trainSelection}
+                label={localizedField("libraryWordSelection", "train")[interfaceLanguage]}
+                title={localizedField("libraryWordSelection", "setup")[interfaceLanguage]}
+                onClick={() => onTrainSelection(librarySelectionToTraining({
+                  languageCode: searchLanguage,
+                  filters: searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS,
+                  dictionaryId, labelId: searchState.labelId, labelName: searchState.labelName,
+                  collection: useViewedListFilter && viewedList ? {id:viewedList.id,type:viewedList.type} : undefined,
+                  query, category: categorySearchActive ? searchState.searchCategory ?? "headwords" : undefined,
+                }))}
+              ><Play size={14} aria-hidden="true"/></IconAction>
+            )}
           </div>
-          {hasCurrentResults && <span className={workspace.scope}>{formatUiCount(interfaceLanguage,
-            !groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length),copy,"matchingGroup")}</span>}
+          {categorySearchActive && <span ref={setCategoryCountHost} className={workspace.scope}/> }
+          {!categorySearchActive && hasCurrentResults && <span className={workspace.scope}>{formatUiMessage(getUiMessages(interfaceLanguage).librarySearch.foundCount,{count:number(!groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length))})}</span>}
         </div>
+
+        {categorySearchActive && <div ref={setCategoryTabsHost}/> }
 
         {useViewedListFilter&&selectedSourceRead&&<SelectedCollectionSourceStatus read={selectedSourceRead} locale={interfaceLanguage}/>}
 
@@ -712,6 +739,12 @@ export function DictionarySearchTab({
           workspace.results
         }
       >
+        {categorySearchActive ? <LibraryCategoryResults onWordResults={applyCategoryWordResults} appearance={categoryAppearance} userId={userId} onSelectGroup={openGroupDetail} tabsHost={categoryTabsHost} countHost={categoryCountHost}
+          interfaceLanguage={interfaceLanguage} query={query} languageCode={searchLanguage} dictionaryId={dictionaryId}
+          filters={searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS} material={categoryMaterial}
+          materialRevision={material?.revision} refreshRevision={categoryRevision} enabled={searchEnabled && searchMaterialReady && !unresolvedSource}
+          category={searchState.searchCategory ?? "headwords"} onCategoryChange={searchCategory => updateSearchState({searchCategory})}
+          selectedResultKey={detailSelection?.searchResultKey} selectedId={detailSelection?.entryId} onSelect={item => updateSearchState({ selectedHeadwordGroupId:null, detailSelection:{searchResultKey:item.resultKey,entryId:item.entry.id,headword:item.entry.headword,contentLanguageCode:item.entry.languageCode ?? searchLanguage},mobileDetailOpen:true })}/> : <>
         {searchError ? (
           <div
             role="alert"
@@ -737,14 +770,14 @@ export function DictionarySearchTab({
             ))}
           </div>
         ) : groupedSearchActive && groupResults.length ? (
-          <LibraryHeadwordGroupResultsList
+          <LibraryHeadwordGroupResultsList appearance={categoryAppearance}
             results={groupResults}
             interfaceLanguage={interfaceLanguage}
             selectedHeadwordGroupId={selectedHeadwordGroupId}
             onSelect={openGroupDetail}
           />
         ) : wordResults.length ? (
-          <LibraryResultList language={interfaceLanguage} listing="preview" entrySelection hasDetail={Boolean(detailSelection)}
+          <LibraryResultList appearance={categoryAppearance} language={interfaceLanguage} listing="preview" entrySelection hasDetail={Boolean(detailSelection)}
             showSource={new Set(wordResults.map(entry => entry.dictionary_id)).size > 1}>
             {wordResults.map(entry => <LibraryResultRow
               key={entry.id}
@@ -780,9 +813,10 @@ export function DictionarySearchTab({
             ) : null}
           </div>
         )}
+        </>}
       </div>
 
-      {hasCurrentResults && <div
+      {!categorySearchActive && hasCurrentResults && <div
         data-testid={
           groupedSearchActive ? "library-group-pagination" : undefined
         }
@@ -862,12 +896,6 @@ export function DictionarySearchTab({
         >
           {detailSelection ? (
             <div className="flex h-full min-h-0 flex-col">
-              {(
-                <div className={detailEntryInCurrentResults ? workspace.srOnly : workspace.detailNotice}>
-                  <h2>{copy.details}</h2>
-                  {!detailEntryInCurrentResults ? <p>{copy.retainedEntry}</p> : null}
-                </div>
-              )}
               <div className="flex min-h-0 flex-1 flex-col">
                 <WordDetailsCloseProvider onClose={() => updateSearchState({detailSelection:null,selectedHeadwordGroupId:null,mobileDetailOpen:false})} interfaceLanguage={interfaceLanguage}>
                 <LibraryWordDetail

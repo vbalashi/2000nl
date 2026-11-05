@@ -1,5 +1,6 @@
 "use client";
 import { interfaceLanguages } from "@/lib/i18n/registry";
+
 import React from "react";
 import { useReleaseUpdates } from "@/components/releases/AppReleaseContext";
 import { ReleaseDot, ReleaseUpdatesSection } from "@/components/releases/ReleaseUpdates";
@@ -23,6 +24,7 @@ import type { SettingsDestinationProps } from "./SettingsDestination";
 import { ActionMenu } from "@/components/practice/ui/ActionMenu";
 import {SegmentedControl} from "@/components/practice/ui/SegmentedControl";
 import s from "@/components/practice/settings/settings.module.css";
+import {SettingsHelp} from "@/components/practice/settings/SettingsHelp";
 const TranslationLanguagePicker = React.lazy(() =>
   import("@/components/practice/settings/LanguagePicker").then((module) => ({
     default: module.LanguagePicker,
@@ -38,7 +40,7 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
     { id: "dictionaries", label: copy.dictionaries, Icon: Library },
     { id: "appearance", label: copy.appearance, Icon: Palette },
     { id: "shortcuts", label: copy.shortcuts, Icon: Keyboard },
-    { id: "updates", label: releaseCopy(props.interfaceLanguage).updates, Icon: RefreshCw, badge: updates?.attention ? <ReleaseDot /> : undefined },
+    { id: "updates", label: releaseCopy(props.interfaceLanguage).about, Icon: RefreshCw, badge: updates?.attention ? <ReleaseDot /> : undefined },
     { id: "billing", label: copy.billing, Icon: CreditCard },
     { id: "account", label: copy.account, Icon: UserRound },
   ] as const;
@@ -89,7 +91,7 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
                     }))}/>}
                 </SettingsRow>
                 <SettingsRow
-                  title={copy.translationLanguage}
+                  title={<span className={s.helpLabel}>{copy.translationLanguage}<SettingsHelp label={copy.translationLanguage} text={copy.translationAttribution} /></span>}
                 >
                   <div data-onboarding="translation"><SegmentedControl standard label={copy.translationLanguage}>
                     <button type="button" aria-pressed={translationOff} onClick={()=>props.onTranslationLanguageChange(null)}>{copy.off}</button>
@@ -175,10 +177,10 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
           );
         return (
           <SettingsPanel title={copy.account}>
-            <SettingsRow title={copy.profile}>
+            <SettingsRow title={copy.profile} className={s.accountRow}>
               <p className={s.email}>{props.userEmail}</p>
             </SettingsRow>
-            <SettingsRow title={copy.signOut}>
+            <SettingsRow title={copy.signOut} className={s.accountRow}>
               <button
                 type="button"
                 className={s.signOut}

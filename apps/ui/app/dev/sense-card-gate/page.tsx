@@ -2,6 +2,7 @@ import { TranslationFeedbackGate } from "./TranslationFeedbackGate";
 import { TranslationTabSyncGate } from "./TranslationTabSyncGate";
 import {RelatedWordGate} from "./RelatedWordGate";
 import {ReleaseReviewGate} from "./ReleaseReviewGate";
+import {ProgressDensityGate} from "./ProgressDensityGate";
 import { TrainingSessionStateGate } from "./TrainingSessionStateGate";
 import { ExerciseCardGate } from "./ExerciseCardGate";
 import { SenseCardGateHarness } from "./SenseCardGateHarness";
@@ -34,6 +35,7 @@ export default async function SenseCardGatePage({
   }
   if (searchParams?.prototype === "translation-feedback") return <TranslationFeedbackGate/>;
   if (searchParams?.prototype === "release-review") return <ReleaseReviewGate/>;
+  if (searchParams?.prototype === "progress-density") return <ProgressDensityGate/>;
   if (searchParams?.prototype === "translation-tab-sync") return <TranslationTabSyncGate/>;
   if (searchParams?.prototype === "session-states") return <TrainingSessionStateGate
     language={searchParams.language === "ru" || searchParams.language === "nl" ? searchParams.language : "en"}

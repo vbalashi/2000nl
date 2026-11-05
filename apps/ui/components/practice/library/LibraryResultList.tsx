@@ -18,6 +18,7 @@ export function LibraryResultList({
   hasDetail = false,
   showSource = false,
   entrySelection = false,
+  appearance = "framed",
 }: {
   children: React.ReactNode;
   language: OnboardingLanguage;
@@ -28,12 +29,14 @@ export function LibraryResultList({
   showSource?: boolean;
   /** Individual collection entries need their definition to distinguish sibling senses. */
   entrySelection?: boolean;
+  appearance?: "plain" | "framed";
 }) {
   return (
     <div
       className={s.list}
       aria-label={getUiMessages(language).library.entries}
       tabIndex={0}
+      data-appearance={appearance}
       data-density={density}
       data-listing={listing}
       data-count-position={countPosition}
@@ -117,4 +120,15 @@ export function LibraryResultRow({
       )}
     </button>
   );
+}
+
+
+/** A field hit is a selectable result, with the excerpt as its reading target. */
+export function LibraryContextResultRow({text,headword,source,contentLanguage,selected,onSelect}:{
+  text:React.ReactNode;headword:string;source?:string;contentLanguage:string;selected:boolean;onSelect:()=>void;
+}) {
+  return <button type="button" className={s.row} aria-pressed={selected} onClick={onSelect}>
+    <span className={s.context} lang={contentLanguage}>{text}</span>
+    <span className={s.metadata}><span lang={contentLanguage}>{headword}</span>{source && <span className={s.source}>· {source}</span>}</span>
+  </button>;
 }

@@ -50,3 +50,17 @@ test('reloading a completed guide does not navigate or save completion again',as
  await waitFor(()=>expect(screen.queryByRole('button',{name:'Продолжить знакомство'})).toBeNull());
  expect(port.prepare).not.toHaveBeenCalled();expect(port.pause).not.toHaveBeenCalled();expect(port.completeCore).not.toHaveBeenCalled();
 });
+
+test('completed topics survive opening another topic and reloading',async()=>{
+ localStorage.setItem(tourStorageKey('one'),JSON.stringify({...record,topic:'stats',status:'complete'}));
+ const view=renderGuide();
+ expect(await screen.findByRole('button',{name:new RegExp(tourCopy.ru.statsTopic+'.*Пройдено')})).toBeTruthy();
+ fireEvent.click(screen.getByRole('button',{name:tourCopy.ru.languagesTopic}));
+ await waitFor(()=>expect(parseTourRecord(localStorage.getItem(tourStorageKey('one')))?.completedTopics).toContain('stats'));
+ view.unmount();renderGuide();
+ expect(await screen.findByRole('button',{name:new RegExp(tourCopy.ru.statsTopic+'.*Пройдено')})).toBeTruthy();
+ expect(screen.getByRole('button',{name:new RegExp(tourCopy.ru.languagesTopic+'.*В процессе')})).toBeTruthy();
+});
+test('checkpoint validation rejects unknown completed topics',()=>{
+ expect(parseTourRecord(JSON.stringify({...record,completedTopics:['bogus']}))).toBeNull();
+});

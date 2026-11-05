@@ -51,7 +51,7 @@ test("first-party principal owns search; caller IDs are ignored and empty source
   expect(response.status).toBe(200);
   expect(response.headers.get("cache-control")).toBe("no-store");
   expect(operation).toHaveBeenCalledWith(
-    { kind: "authenticated", auth: owner, service: client },
+    expect.objectContaining({ kind: "authenticated", auth: owner, service: client }),
     expect.objectContaining({ query: "goed", intent: "dictionary-lookup" }),
     { dictionaryIds: [] },
   );
@@ -112,7 +112,7 @@ test("filters canonicalize before lookup; invalid filters stop before the servic
  await POST(request({...base,filters:{parts:["verb","noun","noun"],article:"de"}}));
  expect(operation.mock.calls[0][2]).toEqual({dictionaryIds:null,filters:{parts:["noun","verb"],article:"de"}});
  service.mockClear(); operation.mockClear();
- for(const filters of [null,[],{parts:["unknown"]},{article:"de"},{parts:Array(11).fill("noun")},{extra:true}]){
+ for(const filters of [null,[],{parts:["unknown"]},{article:"de"},{parts:Array(13).fill("noun")},{extra:true}]){
   const response=await POST(request({...base,filters}));expect(response.status).toBe(400);
   expect(await response.json()).toEqual({error:"invalid_library_filters"});
  }
@@ -123,7 +123,7 @@ test("explicit empty query permits first-party Library browsing with filters and
   const response = await POST(request({...base, query:"  ", cursor:"browse-next", filters:{parts:["noun"],article:"het"}}));
   expect(response.status).toBe(200);
   expect(operation).toHaveBeenCalledWith(
-    {kind:"authenticated",auth:owner,service:client},
+    expect.objectContaining({kind:"authenticated",auth:owner,service:client}),
     expect.objectContaining({query:"",cursor:"browse-next",intent:"dictionary-lookup"}),
     {dictionaryIds:null,filters:{parts:["noun"],article:"het"}},
   );
@@ -157,4 +157,25 @@ test("material identity is canonical and cannot be combined with dictionary scop
   }
   expect((await POST(request({ ...base, dictionaryIds: [], material: { kind: "label", id } }))).status).toBe(400);
   expect(service).not.toHaveBeenCalled(); expect(operation).not.toHaveBeenCalled();
+});
+
+test("forwards browser cancellation into the Library lookup operation",async()=>{
+ const req=request(base);
+ await POST(req);
+ expect(operation.mock.calls[0][0].signal).toBe(req.signal);
+});
+
+test("count previews use the same canonical scope and reject cursors or malformed flags",async()=>{
+ await POST(request({...base,countOnly:true,filters:{parts:[],article:null}}));
+ expect(operation.mock.calls[0][0]).toMatchObject({libraryCountOnly:true,auth:owner});
+ expect(operation.mock.calls[0][2]).toEqual({dictionaryIds:null,filters:{parts:[],article:null}});
+ operation.mockClear();
+ for(const extra of [{countOnly:'true'},{countOnly:null},{countOnly:true,cursor:'next'},{countOnly:true,cursor:''}]) expect((await POST(request({...base,...extra}))).status).toBe(400);
+ expect(operation).not.toHaveBeenCalled();
+});
+
+test("direct dictionary-only count previews normalize empty filters server-side",async()=>{
+ expect((await POST(request({...base,countOnly:true,dictionaryIds:[]}))).status).toBe(200);
+ expect(operation.mock.calls[0][0]).toMatchObject({libraryCountOnly:true});
+ expect(operation.mock.calls[0][2]).toEqual({dictionaryIds:[],filters:{parts:[],article:null}});
 });

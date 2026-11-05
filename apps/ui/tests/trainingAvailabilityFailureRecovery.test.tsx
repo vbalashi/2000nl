@@ -1,0 +1,23 @@
+import {act,renderHook,waitFor} from '@testing-library/react';
+import {beforeEach,expect,test,vi} from 'vitest';
+const {request}=vi.hoisted(()=>({request:vi.fn()}));
+vi.mock('@/lib/preferences/accountRequest',()=>({authenticatedAccountRequest:request}));
+import {useTrainingAvailability,clearTrainingAvailabilityCache} from '@/lib/training/availability/useTrainingAvailability';
+import {currentAvailabilityStudyDay} from '@/lib/training/availability/model';
+import type {TrainingAvailabilityRecipe} from '@/lib/training/availability/model';
+const recipe={languageCode:'nl',draft:{family:'meaning',scenarioId:'understanding',modes:['word-to-definition'],cardFilter:'both',listValue:'',materialMode:'all-dictionaries',newReviewRatio:2,dateWindow:'all',sourceValue:'all',sessionSize:10,vocabulary:{mode:'frequency',profile:'spoken',from:1,to:100,meanings:2,materialKinds:[]}}} as TrainingAvailabilityRecipe;
+beforeEach(()=>{request.mockReset();clearTrainingAvailabilityCache();});
+test('changing from all meanings to a failed limited recipe exits loading and manual retry recovers',async()=>{
+ const value={dueToday:2,totalReviews:4,newCards:6,studyDay:currentAvailabilityStudyDay('Europe/Amsterdam'),timezone:'Europe/Amsterdam',asOf:new Date().toISOString()};
+ request.mockResolvedValueOnce(Response.json(value)).mockResolvedValueOnce(Response.json({error:'training_availability_unavailable'},{status:503})).mockResolvedValueOnce(Response.json(value));
+ const all={...recipe,draft:{...recipe.draft,vocabulary:{...recipe.draft.vocabulary!,meanings:'all' as const}}};
+ const {result,rerender}=renderHook(({r})=>useTrainingAvailability({ownerId:'owner',recipe:r}),{initialProps:{r:all as TrainingAvailabilityRecipe}});
+ await waitFor(()=>expect(result.current.status).toBe('ready'));
+ rerender({r:recipe});
+ expect(result.current.status).toBe('loading');
+ await waitFor(()=>expect(result.current.status).toBe('error'));
+ expect(request).toHaveBeenCalledTimes(2);
+ act(()=>result.current.reload());
+ await waitFor(()=>expect(result.current.status).toBe('ready'));
+ expect(request).toHaveBeenCalledTimes(3);
+});
