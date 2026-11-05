@@ -169,6 +169,9 @@ export function TrainingSenseCardV2Session({
   onProgressActionPendingChange,
   onTrainingSessionSuperseded,
 }: Props) {
+  // UI wording can change without refetching or replacing the owned learning card.
+  const interfaceLanguageRef = React.useRef(interfaceLanguage);
+  interfaceLanguageRef.current = interfaceLanguage;
   const lookupInput = React.useMemo(
     () => ({
       entryId: word.id,
@@ -330,7 +333,7 @@ export function TrainingSenseCardV2Session({
     }).catch(cause => {
       if (controller.signal.aborted) return;
       setLookup({ state: "lookup-http-error", status: 0 });
-      setError(cause instanceof Error ? cause.message : "lookup_failed");
+      setError(platformV2Message(interfaceLanguageRef.current,"senseCard.training.loadFailed"));
       setSynchronizedContextScope(contextScope);
     });
     return () => controller.abort();
@@ -342,7 +345,7 @@ export function TrainingSenseCardV2Session({
     void load(controller.signal).catch((cause) => {
       if (controller.signal.aborted) return;
       setLookup({ state: "lookup-http-error", status: 0 });
-      setError(cause instanceof Error ? cause.message : "lookup_failed");
+      setError(platformV2Message(interfaceLanguageRef.current,"senseCard.training.loadFailed"));
     });
     return () => {
       controller.abort();
@@ -602,11 +605,7 @@ export function TrainingSenseCardV2Session({
         } catch (cause) {
           if (!actionIsCurrent()) return "rejected";
           setAcceptedActionRecoveryPending(true);
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : temporaryFailureMessage(interfaceLanguage),
-          );
+          setError(temporaryFailureMessage(interfaceLanguage));
           // The platform action has already returned an accepted receipt. A
           // failure while presenting the next card must never make the
           // mutation retryable: preserve the accepted grade and expose only
@@ -651,7 +650,7 @@ export function TrainingSenseCardV2Session({
           code === "platform_request_timeout" ||
           code === "action_receipt_not_found"
             ? temporaryFailureMessage(interfaceLanguage)
-            : code,
+            : platformV2Message(interfaceLanguage,"senseCard.training.actionFailed"),
         );
       }
       return "rejected";
@@ -692,7 +691,7 @@ export function TrainingSenseCardV2Session({
       });
       if(isCurrent())onPlayResolvedAudio(url, result.group.header.text);
     } catch (cause) {
-      if(isCurrent())setError(cause instanceof Error ? cause.message : "audio_failed");
+      if(isCurrent())setError(platformV2Message(interfaceLanguageRef.current,"senseCard.audio.failed"));
     } finally {
       if(audioRequestRef.current===controller){
         audioRequestRef.current=null;
@@ -736,11 +735,7 @@ export function TrainingSenseCardV2Session({
         await onProgressActionAccepted({ actionId: mode === "word-to-definition" || mode === "definition-to-word" ? "exclude-headword" : "exclude-pair" });
       } catch (cause) {
         setAcceptedActionRecoveryPending(true);
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : temporaryFailureMessage(interfaceLanguage),
-        );
+        setError(temporaryFailureMessage(interfaceLanguage));
       }
     },
   });
@@ -834,7 +829,7 @@ export function TrainingSenseCardV2Session({
             }
             void load(undefined, { usePrefetch: false }).catch((cause) => {
               setLookup({ state: "lookup-http-error", status: 0 });
-              setError(cause instanceof Error ? cause.message : "lookup_failed");
+              setError(platformV2Message(interfaceLanguageRef.current,"senseCard.training.loadFailed"));
             });
           }}
         />,

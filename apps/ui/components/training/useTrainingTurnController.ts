@@ -1,4 +1,6 @@
 "use client";
+import {localizedSection,formatMessage} from "@/lib/i18n/catalog";
+import type {InterfaceLanguage} from "@/lib/i18n/registry";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTrainingOperationScope } from "./useTrainingOperationScope";
@@ -80,6 +82,7 @@ type AcceptedCardTransition = {
 };
 
 type Inputs = {
+  interfaceLanguage?: InterfaceLanguage;
   userId: string;
   currentWord: TrainingWord | null;
   setCurrentWord: (word: TrainingWord | null) => void;
@@ -129,6 +132,7 @@ const trainingWarmFailure = (result: TrainingWarmResult): string =>
 export function useTrainingTurnController(input: Inputs) {
   const {
     userId,
+    interfaceLanguage = "en",
     currentWord,
     setCurrentWord,
     enabledModes,
@@ -159,9 +163,12 @@ export function useTrainingTurnController(input: Inputs) {
   } | null>(null);
   const [usableCandidatesExhausted, setUsableCandidatesExhausted] =
     useState(false);
-  const [nextCardOverrideNotice, setNextCardOverrideNotice] = useState<
-    string | null
+  const [overrideNotice, setNextCardOverrideNotice] = useState<
+    {key: "failed"|"loaded"|"unavailable"|"queued"; word?: string} | null
   >(null);
+  const nextCardOverrideNotice = overrideNotice
+    ? formatMessage(localizedSection("overrideNotices")[interfaceLanguage][overrideNotice.key], {word:overrideNotice.word??""})
+    : null;
   const [queueTurn, setQueueTurn] = useState<QueueTurn>("new");
   const [reviewCounter, setReviewCounter] = useState(0);
   const [currentPresentationId, setCurrentPresentationId] = useState<
@@ -459,7 +466,7 @@ export function useTrainingTurnController(input: Inputs) {
               }
               nextCardOverrideActiveKeyRef.current = null;
               setNextCardOverrideNotice(
-                "Kon dit woord niet laden; probeer het opnieuw.",
+                {key:"failed"},
               );
               setLoadError("platform_v2_lookup_failed");
               finishTrainingUserTransition(
@@ -470,12 +477,12 @@ export function useTrainingTurnController(input: Inputs) {
             }
             presentWord(preparedOverrideWord, transitionId);
             setNextCardOverrideNotice(
-              `${overrideWord.headword} is nu de volgende kaart. Daarna gaat normale training verder.`,
+              {key:"loaded",word:overrideWord.headword},
             );
             return "loaded";
           }
           setNextCardOverrideNotice(
-            "Kon dit woord niet laden; normale training gaat verder.",
+            {key:"unavailable"},
           );
         }
 
@@ -692,7 +699,7 @@ export function useTrainingTurnController(input: Inputs) {
     (wordId: string, announce = true) => {
       nextCardOverrideWordIdRef.current = wordId;
       if (announce) {
-        setNextCardOverrideNotice("Dit woord wordt als volgende kaart geladen.");
+        setNextCardOverrideNotice({key:"queued"});
       }
     },
     [],

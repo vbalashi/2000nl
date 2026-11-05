@@ -41,8 +41,8 @@ test("secondary panel keeps modality during exit and restores focus afterwards",
  const {PracticePanel}=await import("@/components/practice/ui/PracticePanel");
  vi.useFakeTimers();
  const close=vi.fn();
- const view=render(<PracticePanel title="Recent activity" onClose={close}>Recent actions</PracticePanel>);
- fireEvent.click(screen.getByRole("button",{name:"Close recent activity"}));
+ const view=render(<PracticePanel language="en" title="Recent activity" onClose={close}>Recent actions</PracticePanel>);
+ fireEvent.click(screen.getByRole("button",{name:/^Close /}));
  expect(close).not.toHaveBeenCalled();expect(screen.getByRole("dialog").getAttribute("data-closing")).toBe("true");
  expect(document.documentElement.style.overflow).toBe("hidden");
  vi.advanceTimersByTime(340);expect(close).toHaveBeenCalledOnce();view.unmount();vi.useRealTimers();
@@ -52,6 +52,6 @@ test("secondary panel honours reduced motion on dismissal",async()=>{
  const {PracticePanel}=await import("@/components/practice/ui/PracticePanel");
  const original=window.matchMedia;
  window.matchMedia=vi.fn().mockReturnValue({matches:true});
- try{const close=vi.fn();render(<PracticePanel title="Recent activity" onClose={close}>Actions</PracticePanel>);fireEvent.click(screen.getByRole("button",{name:"Close recent activity"}));expect(close).toHaveBeenCalledOnce();}
+ try{const close=vi.fn();render(<PracticePanel language="en" title="Recent activity" onClose={close}>Actions</PracticePanel>);fireEvent.click(screen.getByRole("button",{name:/^Close /}));expect(close).toHaveBeenCalledOnce();}
  finally{window.matchMedia=original;}
 });

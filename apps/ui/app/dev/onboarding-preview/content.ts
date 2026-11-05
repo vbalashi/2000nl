@@ -1,12 +1,12 @@
+import { mapInterfaceCatalogs } from "@/lib/i18n/catalog";
+import { interfaceLanguages } from "@/lib/i18n/registry";
 import en from "./locales/en.json";
 import nl from "./locales/nl.json";
 import ru from "./locales/ru.json";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 
-export const previewLocales = { en, nl, ru } satisfies Record<OnboardingLanguage, typeof en>;
-const nativeLanguageNames = { en: "English", nl: "Nederlands", ru: "Русский" } satisfies Record<OnboardingLanguage, string>;
-export const previewLanguageOptions = (Object.keys(previewLocales) as OnboardingLanguage[])
-  .map(code => ({ code, name: nativeLanguageNames[code] }));
+export const previewLocales = { ...mapInterfaceCatalogs(() => en), en, nl, ru } satisfies Record<OnboardingLanguage, typeof en>;
+export const previewLanguageOptions = interfaceLanguages;
 export type PreviewCopy = typeof en;
 // Stable IDs and translation keys stay independent of translated labels.
 export const previewSteps = [

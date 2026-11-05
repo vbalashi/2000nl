@@ -1,4 +1,5 @@
 "use client";
+import { matchInterfaceLanguage } from "@/lib/i18n/registry";
 
 import React from "react";
 import type {PlatformEntryNoteMaterialV2} from "../../../../../packages/shared/types/platformV2";
@@ -50,9 +51,8 @@ export function ArticleTranslation({text,literalText,visible,pending=false,faile
  const secondaryLiteral=literalText !== undefined ? additionalTranslationText(additional,translationKey,sourceTextFingerprint,true) : undefined;
  const row=(value:string|null|undefined,literal:string|null|undefined,code:string|undefined,loading:boolean,error:boolean,retry:(()=>void)|undefined,label:boolean)=>{
   if(!value&&!loading&&!error)return null;
-  const literalLanguage=code?.split("-")[0] ?? interfaceLanguage;
-  const literalLabel=literalLanguage === "ru" || literalLanguage === "nl" || literalLanguage === "en"
-   ? getUiMessages(literalLanguage).article.literally : getUiMessages(interfaceLanguage).article.literally;
+  const literalLanguage = matchInterfaceLanguage(code) ?? interfaceLanguage;
+  const literalLabel = getUiMessages(literalLanguage).article.literally;
   return <SenseCardReveal open={visible}>
    {value ? <p
     lang={code}

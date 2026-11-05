@@ -1,3 +1,4 @@
+import {formatUiMessage} from "@/lib/uiMessages";
 import Link from "next/link";
 import { appVersionInfo } from "@/lib/appVersion";
 import {
@@ -10,7 +11,7 @@ import { ReleaseHistory } from "@/components/releases/ReleaseUpdates";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
 import s from "@/components/releases/ReleaseUpdates.module.css";
 export const dynamic = "force-dynamic";
-export const metadata = { title: "2000nl · Updates" };
+export const metadata = { title: formatUiMessage(releaseCopy("en").pageTitle,{title:releaseCopy("en").updates}) };
 export default async function UpdatesPage({
   searchParams,
 }: {
@@ -39,7 +40,7 @@ export default async function UpdatesPage({
         <Link className={s.link} href="/">
           ← {c.back}
         </Link>
-        <h1>2000nl · {c.allUpdates}</h1>
+        <h1>{formatUiMessage(c.pageTitle,{title:c.allUpdates})}</h1>
         {!catalog ? (
           <p role="status">{c.historyUnavailable}</p>
         ) : !catalog.items.length ? (

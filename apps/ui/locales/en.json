@@ -73,26 +73,27 @@
       "easy": "Easy"
     },
     "audio": {
-      "play": "Play audio"
+      "play": "Play audio",
+      "failed": "Could not play audio. Please try again."
     },
     "hint": {
       "show": "Show hint",
       "hide": "Hide hint",
       "example": "Hint · example"
     },
-  "answer": {
+    "answer": {
       "show": "Show answer",
       "prompt": "What does this word mean?",
       "reversePrompt": "Which word matches this meaning?",
       "revealed": "Answer shown",
-    "hidden": "Answer hidden"
-  },
-  "listening": {
-    "label": "Listen",
-    "prompt": "Do you recognize this word?",
-    "fail": "Not recognized",
-    "success": "Recognized"
-  },
+      "hidden": "Answer hidden"
+    },
+    "listening": {
+      "label": "Listen",
+      "prompt": "Do you recognize this word?",
+      "fail": "Not recognized",
+      "success": "Recognized"
+    },
     "sections": {
       "meaning": "Meaning",
       "meanings": "Meanings",
@@ -131,13 +132,46 @@
     "dismiss": "Dismiss notification",
     "reportUnavailable": "Reporting is not available yet.",
     "reportSheet": {
-      "title": "What is wrong?", "subtitle": "Choose the closest category", "close": "Close", "back": "Back", "send": "Send", "sending": "Sending…", "tryAgain": "Try again",
-      "retry": "The report could not be saved. Try again.", "commentLabel": "Comment", "optional": "optional", "commentPlaceholder": "Optional comment (not required)",
+      "title": "What is wrong?",
+      "subtitle": "Choose the closest category",
+      "close": "Close",
+      "back": "Back",
+      "send": "Send",
+      "sending": "Sending…",
+      "tryAgain": "Try again",
+      "retry": "The report could not be saved. Try again.",
+      "commentLabel": "Comment",
+      "optional": "optional",
+      "commentPlaceholder": "Optional comment (not required)",
       "context": "Current card context and session information are attached automatically.",
       "operationContext": "Exact details of this training action are also attached.",
       "privacy": "Do not include passwords, tokens, contact details, or private links.",
-      "categories": { "translation-quality": "Translation", "content-quality": "Meaning or example", "rendering": "Display", "loading": "Loading or waiting", "training-action": "Training action", "other": "Something else" },
-      "states": { "sent": { "title": "Sent", "body": "Thanks. Your report has been received." }, "queued": { "title": "Saved for later", "body": "It will be sent automatically when you are online again." }, "scheduled": { "title": "Retry scheduled", "body": "It will be sent again automatically." }, "rejected": { "title": "Could not send", "body": "This report is not supported by the current app version or you are not signed in." } }
+      "categories": {
+        "translation-quality": "Translation",
+        "content-quality": "Meaning or example",
+        "rendering": "Display",
+        "loading": "Loading or waiting",
+        "training-action": "Training action",
+        "other": "Something else"
+      },
+      "states": {
+        "sent": {
+          "title": "Sent",
+          "body": "Thanks. Your report has been received."
+        },
+        "queued": {
+          "title": "Saved for later",
+          "body": "It will be sent automatically when you are online again."
+        },
+        "scheduled": {
+          "title": "Retry scheduled",
+          "body": "It will be sent again automatically."
+        },
+        "rejected": {
+          "title": "Could not send",
+          "body": "This report is not supported by the current app version or you are not signed in."
+        }
+      }
     },
     "collections": {
       "inCurrent": "In collection",
@@ -173,7 +207,8 @@
       "stateRefreshed": "The card changed elsewhere. Its latest state is now shown.",
       "temporaryFailure": "The connection was interrupted. Please try again.",
       "exit": "Back to Today",
-      "retry": "Try again"
+      "retry": "Try again",
+      "actionFailed": "Could not complete this action. Please try again."
     },
     "wordDetails": {
       "open": "Word details"
@@ -374,7 +409,8 @@
       "library": "Library",
       "statistics": "Statistics",
       "settings": "Settings",
-      "history": "History"
+      "history": "History",
+      "appLabel": "2000nl: {destination}"
     },
     "trainingOverview": {
       "nothingDue": "Nothing to review right now.",
@@ -427,9 +463,22 @@
       "exerciseMany": "{count} exercises",
       "exerciseOther": "{count} exercises",
       "illustrativeActivity": "Illustrative activity · saved for this preview only.",
-      "exerciseType": {"Words": "Words", "Idioms": "Idioms", "Translation": "Translation"},
-      "direction": {"Direct": "Direct", "Reverse": "Reverse"},
-      "learningLanguage": {"Dutch": "Dutch", "English": "English", "German": "German"}
+      "exerciseType": {
+        "Words": "Words",
+        "Idioms": "Idioms",
+        "Translation": "Translation"
+      },
+      "direction": {
+        "Direct": "Direct",
+        "Reverse": "Reverse"
+      },
+      "learningLanguage": {
+        "Dutch": "Dutch",
+        "English": "English",
+        "German": "German"
+      },
+      "exerciseZero": "{count} exercises",
+      "exerciseTwo": "{count} exercises"
     },
     "builder": {
       "ratioOne": "1 new : {count} review",
@@ -521,11 +570,18 @@
         "Light": "Light",
         "Dark": "Dark",
         "System": "System"
-      }
+      },
+      "ratioZero": "1 new : {count} reviews",
+      "ratioTwo": "1 new : {count} reviews",
+      "meaningZero": "{count} meanings available",
+      "meaningTwo": "{count} meanings available"
     },
     "settings": {
       "cardSpacing": "Card spacing",
-      "cardSpacings": {"balanced": "Balanced", "airy": "Airy"},
+      "cardSpacings": {
+        "balanced": "Balanced",
+        "airy": "Airy"
+      },
       "title": "Settings",
       "languages": "Languages",
       "dictionaries": "Dictionaries",
@@ -608,7 +664,12 @@
         "larger": "Larger",
         "large": "Large",
         "extra": "Extra large"
-      }
+      },
+      "entryZero": "{count} entries",
+      "entryTwo": "{count} entries",
+      "expressionZero": "{count} expressions",
+      "expressionTwo": "{count} expressions",
+      "translationAttribution": "Translations are generated by AI and may be inaccurate. If you notice a mistake, use Report in the card to let us know."
     },
     "languagePicker": {
       "loading": "Loading languages…",
@@ -622,7 +683,9 @@
       "languageOne": "{count} language",
       "languageFew": "{count} languages",
       "languageMany": "{count} languages",
-      "languageOther": "{count} languages"
+      "languageOther": "{count} languages",
+      "languageZero": "{count} languages",
+      "languageTwo": "{count} languages"
     },
     "trainingHotkeys": {
       "answer": "Show or hide the answer",
@@ -707,7 +770,9 @@
       "historyScope": "Across your training · demo activity",
       "emptyHistory": "No activity yet. Completed exercises will appear here.",
       "knownResult": "Known",
-      "excludedResult": "Excluded"
+      "excludedResult": "Excluded",
+      "completedZero": "{count} exercises completed",
+      "completedTwo": "{count} exercises completed"
     },
     "cardActions": {
       "knownHelp": "Only this direction",
@@ -851,7 +916,19 @@
       "referenceOne": "{count} reference",
       "referenceFew": "{count} references",
       "referenceMany": "{count} references",
-      "referenceOther": "{count} references"
+      "referenceOther": "{count} references",
+      "entryZero": "{count} entries",
+      "entryTwo": "{count} entries",
+      "meaningZero": "{count} meanings",
+      "meaningTwo": "{count} meanings",
+      "matchingZero": "{count} matching entries",
+      "matchingTwo": "{count} matching entries",
+      "groupZero": "{count} headword groups",
+      "groupTwo": "{count} headword groups",
+      "matchingGroupZero": "{count} matching articles",
+      "matchingGroupTwo": "{count} matching articles",
+      "referenceZero": "{count} references",
+      "referenceTwo": "{count} references"
     },
     "collections": {
       "title": "Collections",
@@ -868,7 +945,9 @@
       "cardOne": "{count} card",
       "cardFew": "{count} cards",
       "cardMany": "{count} cards",
-      "cardOther": "{count} cards"
+      "cardOther": "{count} cards",
+      "cardZero": "{count} cards",
+      "cardTwo": "{count} cards"
     },
     "wordDetails": {
       "formsOf": "Forms of {word}",
@@ -908,7 +987,10 @@
       "all": "All",
       "dictionaries": "Dictionaries",
       "collections": "Collections",
-      "noMatches": {"language": "No matching languages.", "source": "No matching sources."}
+      "noMatches": {
+        "language": "No matching languages.",
+        "source": "No matching sources."
+      }
     },
     "statistics": {
       "learningLanguage": "Learning language",
@@ -999,7 +1081,13 @@
         "Today": "Today",
         "Week": "Week",
         "Month": "Month"
-      }
+      },
+      "cardZero": "{count} cards",
+      "cardTwo": "{count} cards",
+      "dayZero": "{count} days",
+      "dayTwo": "{count} days",
+      "readyZero": "{count} cards ready to review",
+      "readyTwo": "{count} cards ready to review"
     },
     "materialPreferences": {
       "loading": "Loading material…",
@@ -1012,6 +1100,17 @@
       "catalogError": "Dictionaries could not be loaded.",
       "useDictionary": "Use {name}",
       "selectionHint": "Changes apply to new training. You can continue an already-started session."
+    },
+    "interfaceSelection": {
+      "title": "Choose your language",
+      "subtitle": "Select the language for onboarding instructions"
+    },
+    "system": {
+      "offline": "You're offline. Please connect to continue"
+    },
+    "common": {
+      "closePanel": "Close {title}",
+      "unknownLanguage": "Unknown language"
     }
   },
   "wordDetails": {
@@ -1037,5 +1136,834 @@
       "headword": "Related headword",
       "table": "Reference"
     }
+  },
+  "features": {
+    "admission": {
+      "pending": "Your access request is awaiting approval",
+      "unconfirmed": "Confirm your email",
+      "revoked": "Access has been revoked",
+      "rejected": "Access request declined",
+      "body": "You are signed in. Access to 2000NL requires approval for your confirmed email address.",
+      "retry": "Check access",
+      "out": "Sign out"
+    },
+    "personalNote": {
+      "title": "My note",
+      "conflict": "Your note changed elsewhere. Compare before saving.",
+      "current": "Current saved note",
+      "mine": "Your draft",
+      "overwrite": "Save my version",
+      "uncertain": "Could not confirm the save. Check the current note.",
+      "check": "Check result",
+      "discard": "Discard unsaved changes?",
+      "discardYes": "Discard",
+      "keep": "Keep editing",
+      "invalid": "The note is too long or contains invalid characters."
+    },
+    "receivedCollectionLabels": {
+      "check": "Check saved labels",
+      "missing": "This collection is no longer available."
+    },
+    "libraryOrganization": {
+      "meaningOne": "{count} meaning",
+      "meaningFew": "{count} meanings",
+      "meaningMany": "{count} meanings",
+      "meaningOther": "{count} meanings",
+      "words": "Words",
+      "collections": "Collections",
+      "labels": "Labels",
+      "all": "All collections",
+      "unlabelled": "Unlabelled",
+      "searchLabels": "Search labels",
+      "search": "Search collections",
+      "recent": "Recent",
+      "alphabetic": "Name",
+      "count": "Meanings",
+      "newCollection": "New collection",
+      "newLabel": "New label",
+      "editLabel": "Edit label",
+      "editCollection": "Edit collection",
+      "name": "Name",
+      "parent": "Parent label",
+      "noParent": "No parent",
+      "save": "Save",
+      "cancel": "Cancel",
+      "close": "Close",
+      "more": "More actions",
+      "open": "View words",
+      "rename": "Rename",
+      "remove": "Delete",
+      "assign": "Choose labels",
+      "addLabels": "Add labels",
+      "private": "Personal",
+      "shared": "Shared",
+      "sharingStatusError": "Could not load sharing status.",
+      "empty": "No collections yet",
+      "noResults": "No matching collections",
+      "noLabels": "No labels yet",
+      "moreResults": "Show more",
+      "loading": "Loading…",
+      "retry": "Refresh",
+      "error": "Could not load labels. Refresh to try again.",
+      "conflict": "The library changed elsewhere. Your draft is kept. Review the current data before saving again.",
+      "uncertain": "Could not confirm the change. Refresh and check the result before trying again.",
+      "failed": "Could not save. Your draft is kept.",
+      "unavailable": "Collection organization is not available yet.",
+      "deleteLabel": "Delete this label? Collections and meanings are kept. Child labels move one level up.",
+      "deleteCollection": "Delete this collection? The words and your learning progress are kept.",
+      "chooseScope": "Choose a label",
+      "manage": "Manage labels",
+      "back": "Back",
+      "saving": "Saving…",
+      "selected": "Selected",
+      "clear": "Clear selection",
+      "meaningZero": "{count} meanings",
+      "meaningTwo": "{count} meanings",
+      "sort": "Sort"
+    },
+    "localRecovery": {
+      "retry": "Retry",
+      "failed": "Could not check the current state. Local data has not changed.",
+      "title": "Local recovery",
+      "checking": "Local recovery data in this tab is damaged. Checking the current saved state. An earlier request may have completed.",
+      "ready": "The current saved state has been checked. Only the damaged local record will be cleared. Your articles, collections and progress are kept. No request will be resent.",
+      "clear": "Clear local record"
+    },
+    "invitationInput": {
+      "title": "Add by link / code",
+      "hint": "Paste an invitation link or code",
+      "check": "Check invitation",
+      "error": "Enter a valid invitation link or code."
+    },
+    "invitationPreview": {
+      "view": "View only",
+      "description": "You can view meanings and practise. Changes made by the owner appear in this collection.",
+      "add": "Add to library",
+      "check": "Check result",
+      "retry": "Retry same request",
+      "uncertain": "Could not confirm the result. Check before retrying.",
+      "unavailable": "This invitation is unavailable.",
+      "accepted": "Collection added",
+      "revoked": "The action was confirmed, but this collection is no longer available.",
+      "already": "Already in your library",
+      "count": "meanings",
+      "loadError": "Could not load invitation. Try again."
+    },
+    "collectionSharing": {
+      "title": "Share collection",
+      "open": "Create view-only link",
+      "rotate": "Replace link",
+      "close": "Close shared access",
+      "rotateNotice": "The previous invitation stops working. Existing subscribers keep access.",
+      "closeNotice": "Subscribers lose this shared access. Your collection and their learning progress are kept.",
+      "openNotice": "People with the link or code can add this collection and forward the invitation.",
+      "confirm": "Confirm",
+      "check": "Check result",
+      "retry": "Retry same request",
+      "uncertain": "Could not confirm the change. Check before retrying.",
+      "readError": "Could not load sharing settings.",
+      "copyLink": "Copy link",
+      "copyCode": "Copy code",
+      "copied": "Copied",
+      "copyFailed": "Could not copy. Select and copy the text.",
+      "subscribers": "Subscribers",
+      "view": "View only",
+      "rejected": "Request rejected. Review current settings before confirming again."
+    },
+    "ownedSharedCollections": {
+      "title": "Shared by me",
+      "empty": "No collections shared yet",
+      "error": "Could not load your shared collections.",
+      "active": "Link active",
+      "subscribers": "Subscribers",
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "copyFailed": "Open Link and code to copy this invitation.",
+      "manage": "Link and code",
+      "stop": "Stop sharing",
+      "sort": "Sort",
+      "owned": "yours"
+    },
+    "receivedCollectionActions": {
+      "leave": "Remove from my library",
+      "confirm": "The owner’s collection and your learning progress are kept.",
+      "check": "Check result",
+      "retry": "Retry same request",
+      "uncertain": "Could not confirm the result. Check before retrying.",
+      "forward": "Share collection",
+      "link": "Invitation link",
+      "code": "Invitation code",
+      "copyLink": "Copy link",
+      "copyCode": "Copy code",
+      "copied": "Copied",
+      "copyError": "Could not copy. Select and copy the text.",
+      "unavailable": "This invitation can no longer be forwarded. Ask the owner for a new link."
+    },
+    "receivedCollections": {
+      "added": "Added by me",
+      "add": "Add by link / code",
+      "empty": "No shared collections added",
+      "error": "Could not load shared collections.",
+      "shared": "Shared · view only",
+      "sort": "Sort"
+    },
+    "collectionSourceStatus": {
+      "loading": "Loading collection…",
+      "ready": "",
+      "error": "Could not load collection details.",
+      "unavailable": "This collection is no longer available.",
+      "retry": "Retry"
+    },
+    "sharedWorkspace": {
+      "owned": "Shared by me",
+      "received": "Added by me",
+      "add": "Add by link / code",
+      "label": "Shared sections"
+    },
+    "utilityNavigation": {
+      "theme": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System",
+      "settings": "Settings"
+    },
+    "interactionSettings": {
+      "progress": "Progress animation",
+      "off": "Off",
+      "dots": "Thread",
+      "wave": "Wave",
+      "animation": "Card animation",
+      "gestures": "Gestures",
+      "gradeSwipe": "Swipe to rate",
+      "translationSwipe": "Swipe for translation",
+      "audioSwipe": "Swipe for audio",
+      "syllableDoubleTap": "Double-tap for syllables",
+      "error": "Could not save. Your previous settings are still active.",
+      "help": {
+        "audioSwipe": "Swipe up in a non-scrolling area of either side of the card to hear the word.",
+        "animation": "A short shift when revealing the answer. Turn off for an instant change.",
+        "gradeSwipe": "Swipe left or right to rate the answer.",
+        "translationSwipe": "Swipe down in a non-scrolling area of the revealed card to show or hide translation.",
+        "syllableDoubleTap": "Double-tap or double-click the headword to show or hide syllable breaks."
+      },
+      "alwaysShowCardCount": "Always show card count",
+      "preview": "Preview",
+      "cards": "cards",
+      "progressHelp": "Shows your progress through a training session. Thread follows a straight line; Wave follows a curved line. In sessions of up to 30 cards, each dot represents one card. Above 30, both use a continuous line with a moving marker. Off hides the animation and shows the card count.",
+      "countHelp": "Adds the number of completed cards next to the progress animation in a limited session. The count is always visible in unlimited sessions or when progress animation is Off."
+    },
+    "readingSettings": {
+      "title": "Reading text",
+      "description": "Separate sizes for phone and computer. Buttons and navigation stay the same size.",
+      "phone": "Phone text size",
+      "desktop": "Computer / tablet text size",
+      "normal": "Normal",
+      "large": "Large",
+      "largest": "Largest",
+      "extra": "Extra large",
+      "device": "Profile for this browser",
+      "phoneDevice": "Phone",
+      "desktopDevice": "Computer / tablet",
+      "deviceHint": "Resizing the window does not switch profiles. This choice stays in this browser; the two text sizes are saved to your account.",
+      "temporary": "This browser cannot store the device choice. It applies until you leave this page.",
+      "loading": "Loading reading settings…",
+      "loadError": "Reading settings could not be loaded.",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "saveError": "Not saved. The preview is temporary; retry to keep this size.",
+      "retry": "Retry",
+      "preview": "Preview for this device"
+    },
+    "hotkeyDialog": {
+      "title": "Keyboard shortcuts",
+      "close": "Close"
+    },
+    "sessionFooter": {
+      "new": "New",
+      "review": "Review",
+      "total": "Total",
+      "loading": "loading",
+      "unavailable": "unavailable"
+    },
+    "startupRecovery": {
+      "bootstrap": "Your session could not be checked",
+      "training": "Training could not be loaded",
+      "bootstrapBody": "We could not check your session. Try again.",
+      "body": "Try again; your current session and setup stay intact.",
+      "retry": "Try again"
+    },
+    "trainingSetupEmpty": {
+      "empty": "No cards match this setup",
+      "emptyBody": "Adjust the selection without losing your current session.",
+      "firstUse": "Create your first training",
+      "firstUseBody": "Start with a safe default and adjust only what you need.",
+      "adjustFilters": "Adjust filters",
+      "setUp": "Set up training"
+    },
+    "trainingSetup": {
+      "contextLanguageNeeded": "Choose a translation language in Settings to use this exercise.",
+      "allDictionaries": "All accessible dictionaries",
+      "partialDictionaryAccess": "Some selected dictionaries are unavailable; this session will use only those you can access.",
+      "loadingDictionaries": "Loading dictionaries…",
+      "start": "Start training",
+      "starting": "Starting…",
+      "loading": "Loading Training",
+      "materialUnavailable": "Selected material is unavailable. Choose another before starting.",
+      "chooseGoal": "Choose a training goal",
+      "resumePending": "Checking your saved session…",
+      "resumeError": "Your saved session could not be checked.",
+      "retryResume": "Retry session check",
+      "cardError": "The next card could not be prepared. You can retry or adjust the setup.",
+      "retryCard": "Retry card preparation",
+      "startTimeout": "The selected training did not start because the server took too long. Your selection is saved here; you can retry it.",
+      "startFailed": "The selected training could not be started. Your selection is saved here; you can retry it.",
+      "retryStart": "Retry starting this training",
+      "selectedMaterial": "Selected material",
+      "collectionError": "Could not load collection details.",
+      "retry": "Retry",
+      "saveChanges": "Save changes",
+      "calculating": "Calculating…",
+      "calculate": "Calculate training",
+      "languageMaterialError": "Could not load the material for this language."
+    },
+    "trainingCompletion": {
+      "title": "Session complete",
+      "cards": "cards",
+      "edit": "Modify training",
+      "home": "Back to home",
+      "min": "min",
+      "sec": "sec",
+      "empty": {
+        "title": "No cards available",
+        "detail": "No cards available for this training right now"
+      },
+      "restartError": "Could not start the next batch. Try again or modify training.",
+      "unlimited": "Start another session",
+      "nextZero": "Another {count} cards",
+      "nextOne": "Another {count} card",
+      "nextTwo": "Another {count} cards",
+      "nextFew": "Another {count} cards",
+      "nextMany": "Another {count} cards",
+      "nextOther": "Another {count} cards"
+    },
+    "sessionChrome": {
+      "close": "Close session",
+      "history": "History"
+    },
+    "releases": {
+      "updates": "Updates",
+      "whatsNew": "What’s new",
+      "updateHint": "Reload 2000nl to apply the latest improvements. Your progress and settings will be kept.",
+      "currentHint": "2000nl checks for updates automatically.",
+      "version": "Version",
+      "available": "An update is available",
+      "summary": "Update the app to get the latest improvements.",
+      "update": "Update app",
+      "later": "Later",
+      "more": "Read more",
+      "check": "Check for updates",
+      "checking": "Checking for updates…",
+      "updating": "Updating…",
+      "current": "Your app is up to date",
+      "unknown": "Could not check for updates. Check your connection and try again.",
+      "failed": "The update did not complete. Please try again.",
+      "worker": "An older offline installation was detected. Close and reopen the app, then try again.",
+      "deferred": "Finish your training session before updating.",
+      "installed": "Installed version",
+      "latest": "Available version",
+      "released": "Released",
+      "built": "Built",
+      "unread": "Updates available",
+      "dev": "Development build — release checks are unavailable.",
+      "updated": "App updated successfully",
+      "about": "About the app",
+      "history": "Recent updates",
+      "allUpdates": "All updates",
+      "olderUpdates": "Older updates",
+      "back": "Back to the app",
+      "noHistory": "No update notes have been published yet.",
+      "historyUnavailable": "Update notes could not be loaded. Please try again.",
+      "pageTitle": "2000nl · {title}"
+    },
+    "trainingFilter": {
+      "new": "New only",
+      "review": "Reviews only",
+      "both": "New + reviews"
+    },
+    "authorEntryArchive": {
+      "action": "Archive entry",
+      "confirm": "Archive",
+      "title": "Archive entry “{word}”?",
+      "notice": "The entry will disappear from the dictionary, collections and new training sessions.",
+      "history": "Your learning history will be kept. You can finish a card that is already displayed.",
+      "cancel": "Cancel",
+      "pending": "Archiving…",
+      "success": "Entry archived",
+      "failed": "The entry could not be archived. Please try again.",
+      "uncertain": "We could not confirm whether the entry was archived. Check your connection and try again; repeating this action is safe."
+    },
+    "independentEntryCopy": {
+      "action": "Copy to my dictionary",
+      "title": "Copy “{word}”?",
+      "destination": "My dictionary",
+      "notice": "An independent copy will include the meanings, examples and available notes. Learning progress will not be copied.",
+      "confirm": "Copy",
+      "cancel": "Cancel",
+      "loading": "Loading…",
+      "pending": "Copying…",
+      "success": "Copy created",
+      "open": "Open copy",
+      "close": "Close",
+      "failed": "The copy could not be created. The source may be unavailable or contain unsupported content.",
+      "changed": "The source changed. Review the current version before copying.",
+      "refresh": "Review current version",
+      "uncertain": "The result could not be confirmed. Check again before creating another copy.",
+      "check": "Check result"
+    },
+    "trainingExhausted": {
+      "completed": "Session complete",
+      "count": "{completedCount} cards completed",
+      "next": "Start next session",
+      "edit": "Edit training"
+    },
+    "auth": {
+      "title": "Log in to start building your vocabulary.",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "your@email.com",
+      "submitButton": "Send Login Code",
+      "submitLoading": "Sending...",
+      "googleButton": "Continue with Google",
+      "googleError": "Unable to start Google sign-in. Please try again.",
+      "successMessage": "Check your inbox! We've sent you a login code.",
+      "infoText": "No password needed! We'll send a secure code to your email.",
+      "orDivider": "or",
+      "otpLabel": "Enter your code",
+      "verifyButton": "Verify Code",
+      "verifyLoading": "Verifying...",
+      "resendButton": "Resend code",
+      "changeEmail": "Use different email",
+      "haveCodeToggle": "Already have a code?",
+      "hideCodeToggle": "Hide code entry",
+      "otpHelp": "If the email link doesn't work (for example it opens in the wrong browser), copy the code from the email and paste it here.",
+      "loginSuccess": "Signed in successfully!",
+      "sendError": "Could not send a login code. Please try again.",
+      "verifyError": "Could not verify the code. Check it and try again."
+    },
+    "trainingScreen": {
+      "noMatchingReviews": "No review cards match this training.",
+      "noDueReviews": "No cards are due for review now.",
+      "noMatchingCards": "No cards match this training.",
+      "idiomTraining": "Idiom training"
+    },
+    "trainingBuilderActions": {
+      "saveAs": "Save as…",
+      "delete": "Delete training",
+      "all": "All",
+      "unsaved": "Unsaved changes",
+      "availabilityHint": "Actual session size and new/review balance depend on available cards.",
+      "selectedLabel": "Selected label",
+      "savedSource": "Saved source",
+      "responseModesHelp": [
+        "Reveal & self-rate is available now: reveal the answer and rate how well you knew it.",
+        "Type the answer and other response modes are planned for later."
+      ],
+      "clearLibrarySelection": "Clear Library selection",
+      "activityScopeNotice": "Saved word activity filters still apply: {scope}. Editing them is not yet available."
+    },
+    "startup": {
+      "preparing": "Preparing training"
+    },
+    "idiomSession": {
+      "noDue": "No idioms are due now. Include new cards in training settings to start learning more."
+    },
+    "sensePrompt": {
+      "wordFor": "Recall the word for",
+      "wordInSentence": "Recall the word in this sentence",
+      "wordFromMeaning": "Recall the word from its meaning",
+      "context": "In this sentence"
+    },
+    "sessionProgress": {
+      "label": "Session progress"
+    },
+    "sessionLabels": {
+      "scenario": {
+        "understanding": "Understanding",
+        "listening": "Listening",
+        "conjugation": "Conjugation"
+      },
+      "mode": {
+        "word-to-definition": null,
+        "definition-to-word": "Definition → word",
+        "listen-recognize": "Listen → recognize",
+        "listen-type": "Listen → type"
+      },
+      "filter": {
+        "new": "New",
+        "review": "Review",
+        "both": "New + review"
+      }
+    },
+    "sharedTrainingSelection": {
+      "error": "Could not load collection details.",
+      "unavailable": "This collection is no longer available."
+    },
+    "idiomPrompt": {
+      "meaning": "Recall the meaning of this idiom",
+      "expression": "Recall the idiom",
+      "headword": "Headword"
+    },
+    "sentencePrompt": {
+      "translate": "Translate into the learning language"
+    },
+    "translationPending": {
+      "label": "Translation is being prepared…"
+    },
+    "personalCollections": {
+      "received": "Shared · added by you",
+      "share": "Share"
+    },
+    "libraryNavigation": {
+      "shared": "Shared"
+    },
+    "statisticsActivity": {
+      "views": [
+        "Daily",
+        "Weekly"
+      ]
+    },
+    "legacyFooter": {
+      "loading": "loading",
+      "unavailable": "unavailable"
+    },
+    "meaningActions": {
+      "personalNote": "My note"
+    },
+    "sourcePicker": {
+      "labels": [
+        "All",
+        "Dictionaries",
+        "Collections",
+        "Search sources",
+        "No matches"
+      ],
+      "scroll": [
+        "Previous sources",
+        "More sources"
+      ],
+      "loading": "Loading…",
+      "retry": "Retry",
+      "more": "Show more",
+      "type": "Source type"
+    },
+    "trainingScenarios": {
+      "idioms": "Idioms",
+      "sentences": "Example sentences"
+    },
+    "trainingScope": {
+      "title": "Training",
+      "noList": "No active list",
+      "noModes": "No card types configured",
+      "restrictedDefault": "Default {scenario}; restricted to {modes}",
+      "restricted": "Restricted to {modes}",
+      "preferredDefault": "Default {scenario}; prefer {modes}",
+      "preferred": "Prefer {modes}",
+      "defaultScenario": "Default scenario: {scenario}",
+      "noDefault": "No list default",
+      "current": "Current training: {summary}",
+      "footerHint": "The list selector in the footer changes ordinary training.",
+      "change": "Change",
+      "learningLanguage": "Learning language",
+      "list": "Training list",
+      "cards": "Cards",
+      "changeList": "Change list in Settings",
+      "changeScenario": "Change scenario in Settings",
+      "selected": "selected"
+    },
+    "authPages": {
+      "signingIn": "Signing in…",
+      "title": "Reset password",
+      "description": "Enter your new password.",
+      "password": "New password",
+      "confirmPassword": "Confirm password",
+      "update": "Update password",
+      "authError": "Could not verify the reset link. Please request a new one.",
+      "invalidLink": "Invalid or expired reset link. Please request a new one.",
+      "mismatch": "Passwords do not match.",
+      "tooShort": "Password must be at least 6 characters long.",
+      "updated": "Password updated successfully. Redirecting…",
+      "updateError": "Could not update your password. Please try again."
+    },
+    "connect": {
+      "brand": "2000NL Connect",
+      "title": "Connect {name}",
+      "request": "{name} wants access to your 2000NL account.",
+      "loading": "Loading…",
+      "cancel": "Cancel",
+      "approve": "Connect",
+      "connecting": "Connecting…",
+      "unknownScope": "Additional permission",
+      "errors": {
+        "responseType": "Unsupported response type.",
+        "incomplete": "The connect request is incomplete.",
+        "redirect": "This connected app is not registered for this redirect URL.",
+        "unavailable": "This connected app cannot be authorized.",
+        "failed": "Could not complete the connection request."
+      },
+      "scopes": {
+        "platform:read": "Read your 2000NL dictionary and learning state",
+        "platform:write": "Update your 2000NL learning progress",
+        "offline_access": "Stay connected after closing the browser"
+      }
+    },
+    "overrideNotices": {
+      "failed": "Could not load this word. Please try again.",
+      "loaded": "{word} is now the next card. Normal training continues afterwards.",
+      "unavailable": "Could not load this word. Normal training continues.",
+      "queued": "This word will be loaded as the next card."
+    },
+    "appMetadata": {
+      "title": "2000NL",
+      "description": "Build your personal vocabulary library and practise words with spaced repetition."
+    },
+    "libraryFilters": {
+      "chooseWords": "Choose words",
+      "entryType": "Entry type"
+    },
+    "rangeEditor": {
+      "mode": "Adjustment method",
+      "buttons": "Buttons",
+      "sliders": "Two sliders",
+      "wheel": "Wheels",
+      "wheelHint": "Scroll up or down, swipe vertically, or select a nearby number. The step sets how far each change moves. With a keyboard, use the up and down arrows.",
+      "from": "From",
+      "to": "To",
+      "step": "Step",
+      "cancel": "Cancel",
+      "apply": "Done",
+      "minusFrom": "Decrease start",
+      "plusFrom": "Increase start",
+      "minusTo": "Decrease end",
+      "plusTo": "Increase end",
+      "fromSlider": "Range start slider",
+      "toSlider": "Range end slider",
+      "hint": "Use the sliders for a quick approximate choice. The minus and plus buttons refine it by the selected step.",
+      "invalid": "Start at 1 or higher. The end must be at least the start."
+    },
+    "sourceWordSelection": {
+      "translationHelp": [
+        "Choose which words supply examples. Learning only uses words you are already studying. All words also includes new words.",
+        "Translation shares progress with the word’s reverse card. Cards marked Already know or excluded from training are also left out here."
+      ],
+      "title": "Source words",
+      "learning": "Learning only",
+      "all": "All words",
+      "help": [
+        "Choose which words supply material for this exercise. Learning only uses words you are already studying. All words also includes new words and those marked Already know.",
+        "Only material linked to the selected meanings is included. The separate new/review setting selects the exercise cards for your session."
+      ]
+    },
+    "onboardingTopicStatus": {
+      "completed": "Completed",
+      "inProgress": "In progress"
+    },
+    "trainingOverviewState": {
+      "noMatchingCards": "No matching cards"
+    },
+    "librarySorting": {
+      "title": "Sort",
+      "alphabetical": "Alphabetical",
+      "spoken": "Spoken frequency",
+      "written": "Written frequency",
+      "help": "We do not know how often every word is used. When sorting by frequency, words without this information come last, in alphabetical order.",
+      "spokenHelp": "Words used more often in conversations come first.",
+      "writtenHelp": "Words used more often in texts come first."
+    },
+    "frequencyRange": {
+      "from": "From",
+      "to": "To",
+      "step": "Step"
+    },
+    "materialKinds": {
+      "title": "Entry type",
+      "all": "All",
+      "word": "Words",
+      "other": "Other",
+      "help": [
+        "Choose words or other standalone entries. Parts of speech, such as nouns and verbs, narrow the word selection.",
+        "Other includes expressions, phrases and whole sentences. These are separate dictionary entries, not examples within a word.",
+        "We plan to expand this choice so phrases, idioms and sentences can be selected separately."
+      ]
+    },
+    "trainingAvailability": {
+      "title": "Available for training",
+      "updating": "Updating card counts…",
+      "helpTitle": "About these counts",
+      "help": "These are all available cards matching your settings. Session size and the balance of new cards and reviews determine how many enter the training.",
+      "error": "Could not update the card counts."
+    },
+    "libraryWordSelection": {
+      "train": "Train these words",
+      "setup": "Set up training with these words"
+    },
+    "vocabularySelection": {
+      "selection": "Choose words",
+      "allWords": "All words",
+      "frequency": "By frequency",
+      "speech": "Where they occur",
+      "spoken": "Spoken language",
+      "written": "Written language",
+      "range": "Places in the list",
+      "edit": "Edit range",
+      "from": "From",
+      "to": "To",
+      "first": "First range boundary",
+      "last": "Last range boundary",
+      "meanings": "Meanings per entry",
+      "all": "All",
+      "allMeanings": "All meanings",
+      "firstMeaning": "First meaning",
+      "cancel": "Cancel",
+      "apply": "Done",
+      "invalid": "Start at 1 or higher. The end must be at least the start.",
+      "selectionHelp": "Choose all words, or words used more often in speech or writing. Frequency selection includes only words for which these figures are available.",
+      "speechHelp": "Spoken language uses conversations from CGN. Written language uses texts from SoNaR500. A word can be common in speech and less common in writing.",
+      "rangeHelp": "A lower number means a more common word. For example, 1–100 selects the hundred most common words. We show those found in your dictionary that match your other settings, so there may be fewer. Swipe the numbers up or down. The step sets how far each change moves. Select the pencil to type an exact range.",
+      "meaningHelp": [
+        "A word can have several meanings. For example, lopen can describe walking, a motor running, or an event taking place.",
+        "Meanings follow dictionary order. Choose the first one, two or three, or keep them all. If there are fewer, take those available. Each separate dictionary entry has its own limit.",
+        "In a new-only session, meanings already being learned are left out. If the first two are already being learned, they will not appear in that session. We do not replace them with the third."
+      ],
+      "firstMeaningsZero": "First {count} meanings",
+      "firstMeaningsOne": "First {count} meanings",
+      "firstMeaningsTwo": "First {count} meanings",
+      "firstMeaningsFew": "First {count} meanings",
+      "firstMeaningsMany": "First {count} meanings",
+      "firstMeaningsOther": "First {count} meanings"
+    }
+  },
+  "tour": {
+    "progress": "INTRODUCTION · {step} OF {total}",
+    "close": "Close introduction",
+    "continue": "Continue",
+    "clickHint": "Click the highlighted button.",
+    "interfaceTitle": "Choose your interface language",
+    "interfaceBody": "Which language would you like for the app and this introduction? Choose another language or keep the current one.",
+    "translationTitle": "Choose your translation language",
+    "translationBody": "Choose a translation language for meanings and examples. It can differ from the interface language. You can also turn translations off.",
+    "secondaryMention": "You can add a second translation language later in Settings → Languages.",
+    "startTitle": "Start with your ready training",
+    "startBody": "Start or continue an available word training to explore its real cards. If there are no cards yet, configure the training or return to the Library topic.",
+    "revealTitle": "Meet the word card",
+    "revealBody": "Select Show answer to turn the card over and see its definition and examples.",
+    "exitTitle": "Return to the app",
+    "exitBody": "Your learning action is saved. Close the session to finish the introduction and choose further topics.",
+    "libraryTitle": "Open Library",
+    "libraryBody": "Library lets you find words and choose the meanings you want to practise.",
+    "openWordTitle": "Open the dictionary entry",
+    "meaningTitle": "Choose a meaning",
+    "meaningBody": "This word can have several meanings. Choose the one you need: only that meaning is added to a collection.",
+    "collectionsTitle": "Organise the selected meaning",
+    "collectionsBody": "Open Collections for this meaning. Collections group selected meanings; they do not copy or reset learning progress.",
+    "membershipTitle": "The meaning is in your collection",
+    "membershipBody": "The checked collection contains this meaning. Choose Done to continue; the meaning keeps its learning progress.",
+    "goTrainingTitle": "Make a training for the collection",
+    "goTrainingBody": "Return to Training. A collection selects material; a saved training also remembers how you practise it.",
+    "createTrainingTitle": "Create a separate training",
+    "createTrainingBody": "Create a separate training for your collection. Your existing trainings remain available.",
+    "sourceTitle": "Choose the training material",
+    "sourceBody": "Open Source to choose your collection instead of the whole dictionary.",
+    "sourcePickTitle": "Select your collection",
+    "exercisesTitle": "Choose how to practise",
+    "exercisesBody": "Open Exercises. For this first collection training, keep Words and choose Direct.",
+    "directionTitle": "Word first, meaning after",
+    "directionBody": "Choose Direct. You see the word first and recall its meaning. Reverse starts with the meaning.",
+    "saveTrainingTitle": "Save these choices",
+    "saveTrainingBody": "Save the training so you can return to the collection and these exercise settings.",
+    "nameTrainingTitle": "Name and save your training",
+    "nameTrainingBody": "Enter a recognisable name and save. This creates a separate saved training, not a new copy of learning progress.",
+    "done": "Done",
+    "audioTitle": "Listen to the word",
+    "audioBody": "Click the speaker to hear the word. Then explore its other meanings.",
+    "detailsTitle": "Open all meanings",
+    "detailsBody": "This card shows one meaning. Click the three dots to open the dictionary entry with all available meanings.",
+    "returnTitle": "Return to the card",
+    "returnBody": "Expand the meanings you want to read. Close this panel to return to the training card.",
+    "knownTitle": "If you already know the meaning",
+    "knownBody": "“Mark as known” is an alternative to “Learn” for a meaning you already know. It applies to this meaning, not every meaning of the word.",
+    "reportTitle": "If you notice a problem",
+    "reportBody": "The flag button (Report) opens a problem report for translations, card content or application behaviour. Open it to explore the form.",
+    "extrasDoneTitle": "Topic complete",
+    "pause": "Pause tour",
+    "paused": "Tour paused. Resume in Settings → Getting started.",
+    "pauseIntro": "You can pause the introduction and find it again in Settings → Getting started. After reloading, it resumes from the beginning of the current topic.",
+    "tourName": "Getting started",
+    "resume": "Resume introduction",
+    "restart": "Start again",
+    "topicHeading": "What else to explore",
+    "allTopics": "Explore all topics in order",
+    "collectionsTopic": "Library, collection and your own training",
+    "cardTopic": "More card actions",
+    "statsTopic": "Meaning statistics",
+    "sharingTopic": "Share cards",
+    "languagesTopic": "Languages",
+    "appearanceTopic": "Appearance",
+    "basicDoneTitle": "You have tried a card",
+    "basicDoneBody": "You have chosen your languages and tried a card. Explore more topics now, or return later in Settings → Getting started.",
+    "statsViewTitle": "Progress for this meaning",
+    "statsViewBody": "This panel shows learning directions, card presentations and reviews. Close it with the cross to continue.",
+    "appearanceChoiceTitle": "Switch the theme",
+    "appearanceChoiceBody": "This is where you change the application’s appearance. Choose light, dark or system theme.",
+    "sharingTabTitle": "Open your collections",
+    "sharingTabBody": "In Library, select the Collections tab.",
+    "sharingMoreTitle": "Open the collection menu",
+    "sharingMoreBody": "Select the three dots to the right of your collection.",
+    "sharingMenuTitle": "Choose Share",
+    "sharingMenuBody": "This opens sharing settings for the selected collection.",
+    "sharingCreateTitle": "Create a view-only link",
+    "sharingConfirmTitle": "Review and confirm",
+    "sharingConfirmBody": "Read the invitation link/code warning and confirm.",
+    "incomingTopic": "Add shared cards",
+    "sharingCopyLinkTitle": "Copy the link",
+    "sharingCopyLinkBody": "Cards are shared through a collection. Select Copy link to send it to another person.",
+    "sharingCopyCodeTitle": "You can share a code too",
+    "sharingCopyCodeBody": "An invitation code is an alternative to a link. Select Copy code.",
+    "sharingSentTitle": "The invitation is ready to send",
+    "sharingSentBody": "Send the link or code however you prefer. The collection remains available until you close shared access. Close this panel.",
+    "incomingSharedTitle": "Open Shared",
+    "incomingSharedBody": "Select the Shared tab in Library.",
+    "incomingReceivedTitle": "Open Added by me",
+    "incomingReceivedBody": "This is where shared collections you have added appear. Select Added by me.",
+    "incomingAddTitle": "Add an invitation",
+    "incomingAddBody": "Select Add by link / code to connect cards shared with you.",
+    "incomingInputTitle": "Check the invitation",
+    "incomingPreviewTitle": "Review the offered cards",
+    "incomingPreviewBody": "Check the name and card samples. View only means the owner manages the collection while you can view and practise. Select Add to library.",
+    "incomingAcceptedTitle": "Shared collection added",
+    "incomingAcceptedBody": "The collection is now in your library. Click “View words” to open its cards.",
+    "themeShortcutTitle": "Theme is always within reach",
+    "themeShortcutBody": "This button on the main screens cycles through light, dark and system themes. Select it to try.",
+    "themeShortcutDoneTitle": "The quick switch works",
+    "themeShortcutDoneBody": "Keep selecting it to explore all three modes. System theme follows your device. You do not need to open Appearance each time.",
+    "wordTitle": "Look at the card",
+    "wordBody": "This is the current word or question. Try to recall its meaning before revealing the answer.",
+    "answerTitle": "Read the meaning",
+    "answerBody": "The back of the card shows the meaning and examples. Each meaning is learned separately.",
+    "liveLearnTitle": "Save your learning action",
+    "liveLearnBody": "For a new card, click Learn. If you have studied it before, rate how well you recalled the answer. This updates your actual learning progress.",
+    "liveOpenWordBody": "The search is already prepared. Open a word and expand the meaning you want to study.",
+    "liveMembershipBody": "Select an existing collection, or create a named collection here. Wait until the meaning is added, then continue.",
+    "liveSourceBody": "Choose your collection as the training material. Then continue to configure the exercises.",
+    "liveSharingCreateBody": "Create a view-only invitation for this collection. Review the confirmation: people with the link or code can subscribe and forward it.",
+    "liveInvitationBody": "Paste a real invitation link or code you received, then check it. Adding a collection happens only after you confirm its preview.",
+    "liveReportBody": "This is the normal error report form. You can fill and submit a report if needed, or close it. Continue when you have finished looking.",
+    "liveStatsTitle": "Open the meaning’s learning status",
+    "liveStatsBody": "Click New or Learning above this meaning. Progress is tracked separately for each meaning and direction.",
+    "topicDoneBody": "You have finished this topic. You can return to the introduction and other topics in Settings → Getting started.",
+    "waiting": "This action is not available on the current screen yet. Finish the open dialog or wait for loading. You can pause and return from Settings → Getting started.",
+    "retryTopic": "Start this topic again",
+    "storageError": "Could not save your place on this device. The guide can continue, but may not resume after reloading.",
+    "deviceHint": "Your place in the guide is saved on this device. Closing tips keeps your collections and learning progress.",
+    "returnTrainingTitle": "Open Training",
+    "returnTrainingBody": "Return to Training using the highlighted navigation button."
   }
 }

@@ -1,3 +1,4 @@
+import { localizedField } from "@/lib/i18n/catalog";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import {
   localizePlatformSemanticTerm,
@@ -38,8 +39,8 @@ export function buildIdiomCardPresentation({
   return {
     promptTarget: { contentNodeId: direction === "direct" ? content.expression.contentNodeId : content.explanation.contentNodeId, kind: "text" },
     label: direction === "direct"
-      ? { en: "Recall the meaning of this idiom", nl: "Herinner je de betekenis van deze uitdrukking", ru: "Вспомните значение этой идиомы" }[interfaceLanguage]
-      : { en: "Recall the Dutch idiom", nl: "Herinner je de Nederlandse uitdrukking", ru: "Вспомните нидерландскую идиому" }[interfaceLanguage],
+      ? localizedField("idiomPrompt", "meaning")[interfaceLanguage]
+      : localizedField("idiomPrompt", "expression")[interfaceLanguage],
     prompt:
       direction === "direct"
         ? { kind: "expression", text: content.expression.text }
@@ -47,7 +48,7 @@ export function buildIdiomCardPresentation({
     hint: content.headword.trim()
       ? {
           text: content.headword,
-          label: { en: "Headword", nl: "Trefwoord", ru: "Словарная статья" }[
+          label: localizedField("idiomPrompt", "headword")[
             interfaceLanguage
           ],
         }

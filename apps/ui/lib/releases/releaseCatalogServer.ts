@@ -1,4 +1,5 @@
 import "server-only";
+import {matchInterfaceLanguage} from "@/lib/i18n/registry";
 import { createHealthSupabaseClient } from "@/lib/server/healthSupabase";
 import {
   parseReleaseCatalog,
@@ -37,4 +38,4 @@ export async function readReleaseCatalog(
 }
 export const releaseLanguage = (
   value: string | null | undefined,
-): OnboardingLanguage => (value === "ru" || value === "nl" ? value : "en");
+): OnboardingLanguage => (matchInterfaceLanguage(value) ?? "en");

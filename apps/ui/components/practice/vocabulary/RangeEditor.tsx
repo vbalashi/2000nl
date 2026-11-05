@@ -1,4 +1,6 @@
 "use client";
+import { localizedField, localizedSection } from "@/lib/i18n/catalog";
+
 import React, { useId, useRef, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -15,11 +17,7 @@ import s from "./vocabularySelection.module.css";
 
 type Boundary="from"|"to";
 type Mode="buttons"|"sliders"|"wheel";
-const copy={
- ru:{mode:"Способ настройки",buttons:"Кнопки",sliders:"Две шкалы",wheel:"Колёсики",wheelHint:"Прокрутите число вверх или вниз, проведите по нему пальцем или нажмите соседнее число. Шаг задаёт, насколько меняется число. С клавиатуры — стрелки вверх и вниз.",from:"От",to:"До",step:"Шаг",cancel:"Отмена",apply:"Готово",minusFrom:"Уменьшить начало",plusFrom:"Увеличить начало",minusTo:"Уменьшить конец",plusTo:"Увеличить конец",fromSlider:"Шкала начала диапазона",toSlider:"Шкала конца диапазона",hint:"Шкалы помогают быстро выбрать примерное число. Кнопки «−» и «+» уточняют его на выбранный шаг.",invalid:"Начните с 1 или больше. Конец диапазона должен быть не меньше начала."},
- en:{mode:"Adjustment method",buttons:"Buttons",sliders:"Two sliders",wheel:"Wheels",wheelHint:"Scroll up or down, swipe vertically, or select a nearby number. The step sets how far each change moves. With a keyboard, use the up and down arrows.",from:"From",to:"To",step:"Step",cancel:"Cancel",apply:"Done",minusFrom:"Decrease start",plusFrom:"Increase start",minusTo:"Decrease end",plusTo:"Increase end",fromSlider:"Range start slider",toSlider:"Range end slider",hint:"Use the sliders for a quick approximate choice. The minus and plus buttons refine it by the selected step.",invalid:"Start at 1 or higher. The end must be at least the start."},
- nl:{mode:"Manier van instellen",buttons:"Knoppen",sliders:"Twee schuiven",wheel:"Wielen",wheelHint:"Scroll omhoog of omlaag, veeg verticaal of kies een nabijgelegen getal. De stap bepaalt hoeveel het getal verandert. Gebruik op het toetsenbord de pijlen omhoog en omlaag.",from:"Van",to:"Tot",step:"Stap",cancel:"Annuleren",apply:"Gereed",minusFrom:"Begin verlagen",plusFrom:"Begin verhogen",minusTo:"Einde verlagen",plusTo:"Einde verhogen",fromSlider:"Schuif voor begin bereik",toSlider:"Schuif voor einde bereik",hint:"Gebruik de schuiven voor een snelle, globale keuze. De min- en plusknoppen verfijnen het getal met de gekozen stap.",invalid:"Begin bij 1 of hoger. Het einde mag niet lager zijn dan het begin."},
-};
+const copy=localizedSection("rangeEditor");
 export function RangeEditor({initialFrom,initialTo,language,title,onCancel,onApply}:{initialFrom:number;initialTo:number;language:OnboardingLanguage;title:string;onCancel:()=>void;onApply:(from:number,to:number)=>void}){
  const id=useId(),t=copy[language];
  const [mode,setMode]=useState<Mode>("buttons"),[step,setStep]=useState(1);

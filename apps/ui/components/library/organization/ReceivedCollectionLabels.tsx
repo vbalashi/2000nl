@@ -1,4 +1,6 @@
 'use client';
+import { localizedSection } from "@/lib/i18n/catalog";
+
 import React,{useEffect} from 'react';
 import {Folder,X} from 'lucide-react';
 import {DialogSurface} from '@/components/practice/ui/DialogSurface';
@@ -8,7 +10,7 @@ import {organizationCopy} from './copy';
 import {useReceivedLabelEditor} from './useReceivedLabelEditor';
 import overlays from '@/components/practice/library/libraryOverlays.module.css';
 import s from './organization.module.css';
-const copy={en:{check:'Check saved labels',missing:'This collection is no longer available.'},ru:{check:'Проверить сохранённые метки',missing:'Эта коллекция больше недоступна.'},nl:{check:'Opgeslagen labels controleren',missing:'Deze collectie is niet meer beschikbaar.'}};
+const copy=localizedSection("receivedCollectionLabels");
 export function ReceivedCollectionLabels({userId,collectionId,name,locale,onClose,onSaved}:{userId:string;collectionId:string;name:string;locale:OnboardingLanguage;onClose:()=>void;onSaved:()=>void}){
  const editor=useReceivedLabelEditor(userId,collectionId),t=organizationCopy(locale),extra=copy[locale];
  useEffect(()=>{if(editor.status==='saved')onSaved();},[editor.status,onSaved]);

@@ -1,4 +1,6 @@
 "use client";
+import { localizedField } from "@/lib/i18n/catalog";
+
 import React, {useEffect, useRef, useState} from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { ProgressAnimation } from "@/lib/preferences/trainingInteractions";
@@ -7,7 +9,7 @@ import styles from "./TrainingSessionLayout.module.css";
 
 export const MAX_EXACT_SESSION_DOTS = 30;
 
-const labels = { en: "Session progress", nl: "Sessievoortgang", ru: "Прогресс сессии" };
+const labels = localizedField("sessionProgress", "label");
 const waveY = (x: number) => 10 + 6 * Math.sin(x / 314 * Math.PI * 2);
 const wave = Array.from({length: 101}, (_, i) => `${i ? "L" : "M"}${i * 3.14},${waveY(i * 3.14)}`).join(" ");
 

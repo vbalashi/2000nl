@@ -21,7 +21,15 @@
     "test:database": "vitest run tests/fsrs",
     "test:e2e:latency": "APP_ROLLOUT_PROFILE=pilot PLAYWRIGHT_OPTIMIZED=true playwright test --grep @latency --workers=1",
     "check:interface-standard": "node scripts/check-interface-standard.mjs && node --test scripts/check-interface-standard.test.mjs",
-    "pretest": "npm run check:interface-standard"
+    "pretest": "npm run check:interface-standard",
+    "i18n:check": "node scripts/interface-localization.mjs check && node scripts/interface-copy-audit.mjs",
+    "i18n:report": "node scripts/interface-localization.mjs report",
+    "i18n:sync": "node scripts/interface-localization.mjs sync",
+    "i18n:prepare": "node scripts/interface-localization.mjs prepare",
+    "i18n:review": "node scripts/interface-localization.mjs review",
+    "i18n:audit": "node scripts/interface-copy-audit.mjs",
+    "i18n:check-registration": "node scripts/check-interface-registration.mjs",
+    "i18n:add": "node scripts/interface-localization.mjs add"
   },
   "dependencies": {
     "@google-cloud/text-to-speech": "^6.4.0",

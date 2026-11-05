@@ -1,4 +1,6 @@
 'use client';
+import { localizedField } from "@/lib/i18n/catalog";
+
 import React,{useCallback,useState} from 'react';
 import {Check,ChevronDown} from 'lucide-react';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
@@ -10,7 +12,7 @@ type Sort='recent'|'name'|'count';
 export function CollectionSortControl({value,onChange,locale}:{value:Sort;onChange:(value:Sort)=>void;locale:OnboardingLanguage}){
  const [anchor,setAnchor]=useState<HTMLButtonElement|null>(null);
  const close=useCallback(()=>{if(anchor?.isConnected)anchor.focus({preventScroll:true});setAnchor(null);},[anchor]);
- const t=organizationCopy(locale),title={en:'Sort',ru:'Сортировка',nl:'Sorteren'}[locale];
+ const t=organizationCopy(locale),title=localizedField("libraryOrganization", "sort")[locale];
  const options=[{id:'recent' as const,label:t.recent},{id:'name' as const,label:t.alphabetic},{id:'count' as const,label:t.count}];
  return <><button type="button" className={s.sortControl} aria-label={`${title}: ${options.find(item=>item.id===value)?.label}`} aria-haspopup="menu" aria-expanded={Boolean(anchor)} onClick={event=>setAnchor(event.currentTarget)}>
   <span className={s.sortText}>{options.map(item=><span key={item.id} aria-hidden={item.id!==value} style={{visibility:item.id===value?'visible':'hidden'}}>{item.label}</span>)}</span><ChevronDown size={16} aria-hidden="true"/>

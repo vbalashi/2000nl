@@ -1,4 +1,5 @@
 "use client";
+import { localizedField } from "@/lib/i18n/catalog";
 
 import React from "react";
 import { RatingControls, type Rating } from "@/components/practice/RatingControls";
@@ -53,7 +54,7 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
     onSelect:()=>{if(activeTraining)return;close();onAction(meaning.markKnown!);}});
   if (onReport) items.push({id:"report",label:t("senseCard.report"),icon:<Flag size={15} aria-hidden="true"/>,disabled:busy,
     onSelect:()=>{close();onReport();}});
-  if(onEditNote)items.push({id:'own-note',label:language==='ru'?'Личная заметка':language==='nl'?'Mijn notitie':'My note',icon:<StickyNote size={15} aria-hidden="true"/>,disabled:busy,onSelect:()=>{close();onEditNote();}});
+  if(onEditNote)items.push({id:'own-note',label:localizedField("meaningActions", "personalNote")[language],icon:<StickyNote size={15} aria-hidden="true"/>,disabled:busy,onSelect:()=>{close();onEditNote();}});
   if (onCopy) items.push({id:"copy",label:independentEntryCopyText(language).action,icon:<Copy size={15} aria-hidden="true"/>,disabled:busy,onSelect:()=>{close();onCopy();}});
   if (onArchive && meaning.canArchive) items.push({id:"archive",label:authorEntryArchiveCopy(language).action,icon:<Archive size={15} aria-hidden="true"/>,disabled:busy,onSelect:()=>{close();onArchive();}});
   const collectionItems: ActionMenuItem[] = [];
@@ -89,7 +90,6 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
     {anchor ? <ActionMenu anchor={anchor} title={getUiMessages(language).cardActions.title} language={language} items={items} onClose={close}/> : null}
   </div>;
 }
-
 
 const reviewRating = { fail: "Again", hard: "Hard", success: "Good", easy: "Easy" } as const;
 /** Only authoritative direct capabilities are projected by the Library model. */

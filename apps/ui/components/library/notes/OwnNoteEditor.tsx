@@ -1,4 +1,6 @@
 'use client';
+import { localizedSection } from "@/lib/i18n/catalog";
+
 import {localRecordSnapshotStore} from '@/lib/collections/sharing/corruptLocalRecord';
 import {CorruptLocalRecovery} from '../sharing/CorruptLocalRecovery';
 import {readOwnNoteDraft} from '@/lib/collections/sharing/ownNoteDraft';
@@ -10,7 +12,7 @@ import {organizationCopy} from '../organization/copy';
 import {useOwnNoteEditor} from './useOwnNoteEditor';
 import s from '@/components/training/library-v2/AuthorEntryArchiveDialog.module.css';
 import n from './ownNoteEditor.module.css';
-const copy={en:{title:'My note',conflict:'Your note changed elsewhere. Compare before saving.',current:'Current saved note',mine:'Your draft',overwrite:'Save my version',uncertain:'Could not confirm the save. Check the current note.',check:'Check result',discard:'Discard unsaved changes?',discardYes:'Discard',keep:'Keep editing',invalid:'The note is too long or contains invalid characters.'},ru:{title:'Личная заметка',conflict:'Заметка изменилась в другом окне. Сравните перед сохранением.',current:'Сейчас сохранено',mine:'Ваш черновик',overwrite:'Сохранить мой вариант',uncertain:'Не удалось подтвердить сохранение. Проверьте текущую заметку.',check:'Проверить результат',discard:'Не сохранять изменения?',discardYes:'Не сохранять',keep:'Продолжить редактирование',invalid:'Заметка слишком длинная или содержит недопустимые символы.'},nl:{title:'Mijn notitie',conflict:'Je notitie is elders gewijzigd. Vergelijk voordat je opslaat.',current:'Huidige opgeslagen notitie',mine:'Jouw concept',overwrite:'Mijn versie opslaan',uncertain:'Opslaan kon niet worden bevestigd. Controleer de huidige notitie.',check:'Resultaat controleren',discard:'Wijzigingen niet opslaan?',discardYes:'Niet opslaan',keep:'Verder bewerken',invalid:'De notitie is te lang of bevat ongeldige tekens.'}};
+const copy=localizedSection("personalNote");
 export const ownNoteEditorLabel=(locale:OnboardingLanguage)=>copy[locale].title;
 export function OwnNoteEditor({userId,entryId,locale,onClose,onSaved}:{userId:string;entryId:string;locale:OnboardingLanguage;onClose:()=>void;onSaved:()=>void}){
  const {state,setDraft,save,check,reload,valid,dirty,discard:discardDraft,repairLocal}=useOwnNoteEditor(userId,entryId);const t=copy[locale],common=organizationCopy(locale),title=useId();
