@@ -56,7 +56,7 @@
     {
       "migrationId": 297,
       "file": "db/migrations/297_library_batch_selection.sql",
-      "sha256": "d3de9f322b89b8a3bcbafd5480cab28c1a92ebc50ac38ab724a875d6b301b474"
+      "sha256": "2553c846ea7a91d9fffbddb1c43ab94fe4c8eb9cb38ac5f2fdc9b323fa19d3e8"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-297.sql",

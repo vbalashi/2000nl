@@ -1,3 +1,4 @@
+BEGIN;
 -- Batch Library membership and sort ranks before grouping; reuse the body-search scope.
 -- Load pg_trgm USERSET parameters before replacing its configured headword helper.
 SELECT public.similarity('', '');
@@ -2896,3 +2897,6 @@ BEGIN
 END;
 $_$;
 
+
+NOTIFY pgrst, 'reload schema';
+COMMIT;
