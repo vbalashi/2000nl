@@ -106,7 +106,8 @@ function raceWithAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> 
 function validLibrarySearchSummary(payload: PlatformLookupV2Response, material = false): payload is PlatformLookupV2Response & { librarySearch: LibrarySearchSummary } {
   const summary = (payload as PlatformLookupV2Response & { librarySearch?: unknown }).librarySearch;
   if (!summary || typeof summary !== "object") return false;
-  const { totalGroups, matchingEntryIds, unavailableEntryCount } = summary as Record<string, unknown>;
+  const { totalGroups, totalMeanings, matchingEntryIds, unavailableEntryCount } = summary as Record<string, unknown>;
+  if (totalMeanings !== undefined && (!Number.isSafeInteger(totalMeanings) || Number(totalMeanings) < Number(totalGroups) || (Number(totalGroups) === 0 && Number(totalMeanings) !== 0))) return false;
   if (material && (!Number.isSafeInteger(unavailableEntryCount) || Number(unavailableEntryCount) < 0)) return false;
   if (!Number.isSafeInteger(totalGroups) || Number(totalGroups) < payload.groups.length ||
     !Array.isArray(matchingEntryIds) ||

@@ -16,7 +16,7 @@ vi.mock("@/lib/training/listService",()=>({fetchAvailableDictionarySourcesStrict
 afterEach(()=>{vi.unstubAllEnvs();});
 
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
-  countPlatformV2LibraryGroups: (...args: unknown[]) => countLibraryGroups(...args),
+  readPlatformV2LibraryCounts: async (...args: unknown[]) => ({totalGroups:await countLibraryGroups(...args)}),
   fetchPlatformV2LibraryGroupPage: (...args: unknown[]) =>
     fetchGroupPage(...args),
 }));
@@ -934,4 +934,20 @@ test("the default Words search category keeps the sorting action visible",async(
  readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
  render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:"bank",searchCategory:undefined}}/></AccountMaterialProvider>);
  expect(await screen.findByRole("button",{name:"Sort: Alphabetical"})).toBeInTheDocument();
+});
+
+test('applied counter uses selected meaning totals and discards old-scope late totals',async()=>{
+ const oldRead=deferred<unknown>();
+ fetchGroupPage.mockReset().mockResolvedValueOnce({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:73,totalMeanings:191,matchingEntryIds:[]}}).mockReturnValueOnce(oldRead.promise).mockResolvedValueOnce({groups:[nextPageGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:73,totalMeanings:115,matchingEntryIds:[]}});
+ const view=render(<Harness locale="en" initial={{query:'goed'}}/>);
+ await screen.findByText('73 articles · 191 meanings');
+ fireEvent.change(screen.getByRole('textbox',{name:'Search words'}),{target:{value:'old'}});
+ await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalledTimes(2));
+ fireEvent.change(screen.getByRole('textbox',{name:'Search words'}),{target:{value:'new'}});
+ await screen.findByText('73 articles · 115 meanings');
+ expect(fetchGroupPage.mock.calls[1][0].signal.aborted).toBe(true);
+ await act(async()=>{oldRead.resolve({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:73,totalMeanings:191,matchingEntryIds:[]}});});
+ expect(screen.queryByText('73 articles · 191 meanings')).toBeNull();
+ expect(screen.getByText('73 articles · 115 meanings')).toBeInTheDocument();
+ view.unmount();
 });

@@ -16,6 +16,7 @@ export type DictionarySearchTabState = {
   groupScopeKey?: string | null;
   entryFilters?: LibraryEntryFilters;
   groupTotal?: number | null;
+  meaningTotal?: number | null;
   unavailableEntryCount?: number;
   selectedHeadwordGroupId: string | null;
   wordTotal: number;

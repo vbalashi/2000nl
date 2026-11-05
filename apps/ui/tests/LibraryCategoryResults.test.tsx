@@ -99,3 +99,16 @@ test('an invalidated continuation restarts from the first page instead of retryi
  await screen.findByRole('button',{name:'First bank bank'});
  expect(readMoreDictionaryContext).toHaveBeenCalledTimes(1);
 });
+
+test.each(['headwords','alphabetical'] as const)('word category %s uses exact selected totals without more reads',async category=>{
+ vi.mocked(readDictionaryCategory).mockImplementation(async(_scope,id,onPage)=>{
+  const page={id,total:115,wordGroupCount:73,items:[{entry:{id:'one',headword:'bank'}}],page:{hasMore:false,nextCursor:null}};onPage(page,true);return page;
+ });
+ const host=document.createElement('span');document.body.appendChild(host);
+ try{
+  render(<LibraryCategoryResults {...props} category={category} countHost={host}/>);
+  await screen.findByTestId('library-headword-group-group-bank');
+  expect(host).toHaveTextContent('73 articles · 115 meanings');
+  expect(readDictionaryCategory).toHaveBeenCalledTimes(1);expect(hydrateDictionaryWordResults).toHaveBeenCalledTimes(1);
+ }finally{host.remove();}
+});

@@ -110,18 +110,25 @@ export class PlatformV2LibraryLookupError extends Error {
 }
 
 /** Draft previews need the first page's exact total, never hydrated continuation pages. */
-export async function countPlatformV2LibraryGroups(input: {
+export async function readPlatformV2LibraryCounts(input: {
   query: string;
   cardTypeId: CardTypeId;
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   signal?: AbortSignal;
   libraryScope: LibrarySearchScope;
-}): Promise<number> {
+}): Promise<{totalGroups:number;totalMeanings?:number}> {
   const payload = await fetchPlatformV2LibraryLookup({...input, cursor: null, countOnly: true});
   if (!payload.librarySearch || !Number.isSafeInteger(payload.librarySearch.totalGroups) || payload.librarySearch.totalGroups < 0)
     throw new Error("library_count_unavailable");
-  return payload.librarySearch.totalGroups;
+  if (payload.librarySearch.totalMeanings !== undefined && (!Number.isSafeInteger(payload.librarySearch.totalMeanings) || payload.librarySearch.totalMeanings < payload.librarySearch.totalGroups || (payload.librarySearch.totalGroups === 0 && payload.librarySearch.totalMeanings !== 0)))
+    throw new Error("library_count_unavailable");
+  return {totalGroups:payload.librarySearch.totalGroups,...(payload.librarySearch.totalMeanings !== undefined?{totalMeanings:payload.librarySearch.totalMeanings}:{})};
+}
+
+/** Compatibility wrapper for consumers that only need article totals. */
+export async function countPlatformV2LibraryGroups(input: Parameters<typeof readPlatformV2LibraryCounts>[0]):Promise<number> {
+  return (await readPlatformV2LibraryCounts(input)).totalGroups;
 }
 
 export async function fetchPlatformV2LibraryGroupPage(input: {

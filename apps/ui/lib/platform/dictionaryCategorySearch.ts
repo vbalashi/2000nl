@@ -51,6 +51,10 @@ export async function fetchDictionaryCategoryPage(scope: DictionaryCategoryScope
   const page = payload?.groups?.[0];
   if (!response.ok || page?.id !== category || !Array.isArray(page.items) || !page.page ||
     page.items.some((item: DictionaryCategoryHit) => !item?.entry?.id || typeof item.entry.headword !== "string")) throw new Error("dictionary_search_failed");
+  if ((category === "headwords" || category === "alphabetical") &&
+      ((page.total !== undefined && page.total !== null && (!Number.isSafeInteger(page.total) || page.total < 0 || (page.wordGroupCount !== undefined && (page.total < page.wordGroupCount || (page.wordGroupCount === 0 && page.total !== 0))))) ||
+       (page.wordGroupCount !== undefined && (!Number.isSafeInteger(page.wordGroupCount) || page.wordGroupCount < 0))))
+    throw new Error("dictionary_search_failed");
   return { ...page, unavailableEntryCount: payload.unavailableEntryCount ?? 0 };
 }
 
@@ -133,4 +137,12 @@ export async function countDictionaryCategory(scope:DictionaryCategoryScope,cate
   return page.wordGroupCount!;
  }
  return (await readDictionaryCategory(scope,category,()=>{})).items.length;
+}
+
+/** Word categories already return exact article and selected-meaning metadata. */
+export async function readDictionaryCategoryCounts(scope:DictionaryCategoryScope,category:DictionarySearchCategory){
+ const page=await fetchDictionaryCategoryPage(scope,category);
+ if(!Number.isSafeInteger(page.wordGroupCount)||page.wordGroupCount!<0)throw new Error("library_count_unavailable");
+ if(page.total!==null&&page.total!==undefined&&(!Number.isSafeInteger(page.total)||page.total<0))throw new Error("library_count_unavailable");
+ return {totalGroups:page.wordGroupCount!,...(page.total!=null?{totalMeanings:page.total}:{})};
 }

@@ -24,7 +24,7 @@ vi.mock("@/components/practice/material/useLibraryMaterialSelection", () => ({
   useLibraryMaterialSelection: () => mocked.material,
 }));
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
-  countPlatformV2LibraryGroups: async (input: unknown) => (await mocked.fetchPage(input)).librarySearch.totalGroups,
+  readPlatformV2LibraryCounts: async (input: unknown) => (await mocked.fetchPage(input)).librarySearch,
 }));
 vi.mock("@/lib/platform/dictionaryCategorySearch",async importOriginal=>({
  ...await importOriginal<typeof import("@/lib/platform/dictionaryCategorySearch")>(),readDictionaryCategory:mocked.categoryRead,
@@ -153,4 +153,14 @@ test('context draft shows a lower-bound count from one page without article hydr
  expect(mocked.categoryRead).toHaveBeenCalledTimes(1);
  expect(mocked.categoryRead.mock.calls[0][1]).toBe('examples');
  expect(mocked.fetchPage).not.toHaveBeenCalled();
+});
+
+test('draft preview shows exact selected meanings independently of article totals',async()=>{
+ mocked.fetchPage.mockResolvedValueOnce({librarySearch:{totalGroups:73,totalMeanings:191}}).mockResolvedValueOnce({librarySearch:{totalGroups:73,totalMeanings:115}});
+ render(<AccountLibraryFilters {...props} query=""/>);
+ await screen.findByText('73 articles · 191 meanings');
+ fireEvent.change(screen.getByRole('slider',{name:'Meanings per entry'}),{target:{value:'1'}});
+ await screen.findByText('73 articles · 115 meanings');
+ expect(mocked.fetchPage).toHaveBeenCalledTimes(2);
+ expect(mocked.fetchPage.mock.calls[1][0].libraryScope.filters.vocabulary.meanings).toBe(2);
 });
