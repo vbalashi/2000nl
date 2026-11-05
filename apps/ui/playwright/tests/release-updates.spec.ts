@@ -51,7 +51,7 @@ for (const profile of [
     await page
       .getByRole("button", { name: "Create training", exact: true })
       .click();
-    const start = page.getByRole("button", {
+    const start = page.locator(".session-builder-standard").getByRole("button", {
       name: "Start training",
       exact: true,
     });
