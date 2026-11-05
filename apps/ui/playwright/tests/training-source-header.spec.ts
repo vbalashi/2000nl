@@ -27,7 +27,8 @@ for(const profile of [
     const arrow=await header.locator(':scope > svg').boundingBox();
     const otherArrow=await page.locator('[data-builder-section="exercises"] > svg').boundingBox();
     expect(arrow).not.toBeNull();expect(otherArrow).not.toBeNull();
-    expect(Math.abs(arrow!.x-otherArrow!.x)).toBeLessThan(1);
+    // Rotation changes the bounding-box edges, but not the chevron column center.
+    expect(Math.abs((arrow!.x+arrow!.width/2)-(otherArrow!.x+otherArrow!.width/2))).toBeLessThan(1);
     const bounds=await header.boundingBox();expect(bounds).not.toBeNull();
     if(open){
      await expect(choices).toBeVisible();
