@@ -2479,6 +2479,7 @@ function TrainingScreenContent({
         />
       )}
       <LibraryDestination
+        onTrainSelection={({languageCode,material})=>{trainingPilot.returnToToday();setStatisticsMaterialIntent({key:Date.now(),userId:user.id,languageCode,material});onRequestDestination("training");}}
         invitationCode={invitationCode}
         onInvitationConsumed={onInvitationConsumed}
         onboardingSearch={onboardingSearch}

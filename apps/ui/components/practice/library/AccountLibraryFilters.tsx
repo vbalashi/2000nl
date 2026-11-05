@@ -7,7 +7,7 @@ import React, { useEffect, useState } from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { getUiMessages, formatUiMessage } from "@/lib/uiMessages";
 import type { LibraryEntryFilters } from "@/lib/platform/librarySearchScope";
-import { readDictionaryCategory, hydrateDictionaryWordResults, type DictionarySearchCategory } from "@/lib/platform/dictionaryCategorySearch";
+import { countDictionaryCategory, type DictionarySearchCategory } from "@/lib/platform/dictionaryCategorySearch";
 import { fetchPlatformV2LibraryGroupPage } from "@/lib/platform/platformV2LibraryClient";
 import { useAccountMaterial } from "../material/AccountMaterialProvider";
 import { useLibraryMaterialSelection } from "../material/useLibraryMaterialSelection";
@@ -73,7 +73,7 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
     query: query.trim(),
     languageCode: draft.languageCode,
     dictionaryId: draft.dictionaryId,
-    filters: { parts: [...draft.parts].sort(), article: draft.article },
+    filters: { parts: [...draft.parts].sort(), article: draft.article, vocabulary:draft.vocabulary, sort:draft.sort },
     available: ready,
     userId: account?.userId,
     revision: account?.snapshot?.revision,
@@ -96,9 +96,7 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
             userId:request.userId,filters:request.filters,signal:controller.signal,
             material:request.labelId ? {kind:"label" as const,id:request.labelId} : request.collectionId && request.collectionType
               ? {kind:"collection" as const,id:request.collectionId,collectionType:request.collectionType} : undefined};
-          const page = await readDictionaryCategory(searchScope,request.category,()=>{});
-          return request.category === "headwords" || request.category === "alphabetical"
-            ? (await hydrateDictionaryWordResults(searchScope,page.items)).length : page.items.length;
+          return countDictionaryCategory(searchScope,request.category);
         }
         const page = await fetchPlatformV2LibraryGroupPage({
         query: request.query,

@@ -6,3 +6,4 @@
 \i db/migrations/290_grouped_word_search_fuzzy.sql
 \i db/migrations/291_library_category_search_scope.sql
 \i db/migrations/292_library_abbreviation_prefix_filters.sql
+\i db/migrations/293_vocabulary_selection.sql

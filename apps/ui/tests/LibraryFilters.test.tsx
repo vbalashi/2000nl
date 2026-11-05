@@ -122,30 +122,22 @@ test("abbreviations and prefixes use the normal filter draft",()=>{
  fireEvent.click(screen.getByRole("button",{name:"Show results"}));
  expect(apply).toHaveBeenCalledWith({...value,parts:["abbreviation","prefix"]});
 });
-test("other entry review hides parts while ordinary Library retains them",()=>{
- const view=render(<LibraryPresentationContext.Provider value={{showPartsFilter:false}}><LibraryFilters {...props} onClose={()=>{}} onApply={()=>{}}/></LibraryPresentationContext.Provider>);
+test("Other hides POS, count and Apply omit hidden restrictions, Words restores the draft",()=>{
+ const apply=vi.fn(),preview=vi.fn();render(<LibraryFilters {...props} value={{...value,parts:["noun"],article:"het"}} onDraftChange={preview} onClose={()=>{}} onApply={apply}/>);
+ fireEvent.click(screen.getByRole("button",{name:"Other"}));
  expect(screen.queryByRole("button",{name:"Nouns"})).not.toBeInTheDocument();
- view.rerender(<LibraryPresentationContext.Provider value={{showPartsFilter:true}}><LibraryFilters {...props} onClose={()=>{}} onApply={()=>{}}/></LibraryPresentationContext.Provider>);
- expect(screen.getByRole("button",{name:"Nouns"})).toBeInTheDocument();
+ expect(preview).toHaveBeenLastCalledWith(expect.objectContaining({parts:[],article:null,vocabulary:expect.objectContaining({materialKinds:["other"]})}));
+ fireEvent.click(screen.getByRole("button",{name:"Show results"}));expect(apply).toHaveBeenLastCalledWith(expect.objectContaining({parts:[],article:null}));
+ fireEvent.click(screen.getByRole("button",{name:"Words"}));expect(screen.getByRole("button",{name:/^Nouns/})).toHaveAttribute("aria-pressed","true");
+ expect(preview).toHaveBeenLastCalledWith(expect.objectContaining({parts:["noun"],article:"het"}));
+});
+test("selection, type, POS and meanings follow the common order",()=>{
+ render(<LibraryFilters {...props} onClose={()=>{}} onApply={()=>{}}/>);
+ const words=screen.getByRole("button",{name:/^Choose words/}),type=screen.getByRole("button",{name:/^Entry type/}),parts=screen.getByRole("button",{name:/^Part of speech/}),meanings=screen.getByRole("slider",{name:"Meanings per entry"});
+ expect(words.compareDocumentPosition(type)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();expect(type.compareDocumentPosition(parts)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();expect(parts.compareDocumentPosition(meanings)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
 
-test("hidden parts are absent from count and Apply, and return as a draft for Words",()=>{
- const apply=vi.fn(),preview=vi.fn();const draft:LibraryFilterDraft={...value,parts:["noun"],article:"het"};
- const panel=(visible:boolean)=><LibraryPresentationContext.Provider value={{showPartsFilter:visible}}><LibraryFilters {...props} value={draft} onDraftChange={preview} onClose={()=>{}} onApply={apply}/></LibraryPresentationContext.Provider>;
- const view=render(panel(true));
- expect(preview).toHaveBeenLastCalledWith(draft);
- view.rerender(panel(false));
- expect(preview).toHaveBeenLastCalledWith({...draft,parts:[],article:null});
- fireEvent.click(screen.getByRole("button",{name:"Show results"}));
- expect(apply).toHaveBeenLastCalledWith({...draft,parts:[],article:null});
- view.rerender(panel(true));
- expect(screen.getByRole("button",{name:/^Nouns/})).toHaveAttribute("aria-pressed","true");
- expect(preview).toHaveBeenLastCalledWith(draft);
-});
-
-test("word selection precedes entry type, which immediately precedes parts of speech",()=>{
- render(<LibraryPresentationContext.Provider value={{renderAdditionalFilters:()=><section aria-label="Word selection"/>,renderEntryTypeFilter:()=><section aria-label="Entry type"/>}}><LibraryFilters {...props} onClose={()=>{}} onApply={()=>{}}/></LibraryPresentationContext.Provider>);
- const words=screen.getByRole("region",{name:"Word selection"}),type=screen.getByRole("region",{name:"Entry type"}),parts=screen.getByRole("button",{name:/^Part of speech/});
- expect(words.compareDocumentPosition(type)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
- expect(type.compareDocumentPosition(parts)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+test("reset clears selection while preserving independent list sorting",()=>{
+ const apply=vi.fn();render(<LibraryFilters {...props} value={{...value,sort:"spoken",parts:["noun"]}} onClose={()=>{}} onApply={apply}/>);
+ fireEvent.click(screen.getByRole("button",{name:"Reset filters"}));fireEvent.click(screen.getByRole("button",{name:"Show results"}));expect(apply).toHaveBeenCalledWith({...value,sort:"spoken"});
 });

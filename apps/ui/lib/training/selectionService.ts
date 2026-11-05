@@ -1,3 +1,4 @@
+import {libraryTrainingCriteria} from "@/lib/vocabulary/selection";
 import { dictionarySourceReference } from "@/lib/dictionary/sourceProfile";
 import { singleNounArticle } from "./nounArticles";
 import { supabase } from "../supabaseClient";
@@ -159,7 +160,7 @@ export const isTrainingFocusFilterActive = (
     Boolean(filter.externalId) ||
     Boolean(filter.partOfSpeech?.length) ||
     Boolean(singleNounArticle(filter.nounArticles ?? [])) ||
-    Boolean(filter.dictionaryScope);
+    Boolean(filter.dictionaryScope) || Boolean(filter.vocabulary) || Boolean(filter.librarySelection);
 };
 
 const isNonNegativeInteger = (value: unknown): value is number =>
@@ -955,6 +956,8 @@ function normalizeTrainingFocusFilter(
     ...(filter.sourceKind ? { sourceKind: filter.sourceKind } : {}),
     ...(filter.sourceId ? { sourceId: filter.sourceId } : {}),
     ...(filter.externalId ? { externalId: filter.externalId } : {}),
+    ...(filter.vocabulary?{vocabulary:filter.vocabulary}:{}),
+    ...(filter.librarySelection?{librarySelection:libraryTrainingCriteria(filter.librarySelection)}:{}),
     ...(filter.partOfSpeech?.length
       ? { partOfSpeech: [...new Set(filter.partOfSpeech)].sort() }
       : {}),

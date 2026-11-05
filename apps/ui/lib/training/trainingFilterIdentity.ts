@@ -1,7 +1,10 @@
+import {libraryTrainingCriteria} from "@/lib/vocabulary/selection";
 import type {TrainingFocusFilter} from "@/lib/types";
 
 export const trainingFilterKey = (filter: TrainingFocusFilter) =>
   JSON.stringify({
+    vocabulary:filter.vocabulary??null,
+    librarySelection:libraryTrainingCriteria(filter.librarySelection)??null,
     reviewTiming: filter.reviewTiming ?? null,
     presentationMode: filter.presentationMode ?? null,
     dateWindow: filter.dateWindow,

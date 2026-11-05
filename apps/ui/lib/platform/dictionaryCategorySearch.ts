@@ -18,6 +18,7 @@ export type DictionaryCategoryHit = {
 export type DictionaryCategoryPage = {
   id: DictionarySearchCategory;
   total: number | null;
+  wordGroupCount?:number;
   unavailableEntryCount?: number;
   count?: { value: number | null; relation: string };
   page: { hasMore: boolean; nextCursor: string | null };
@@ -104,4 +105,14 @@ export async function hydrateDictionaryWordResults(scope: DictionaryCategoryScop
     remaining = remaining.slice(batch.length).filter(item => !entryIds.has(item.entry.id));
   }
   return buildLibraryHeadwordGroupResults(groups, hits.map(item => item.entry.id));
+}
+
+/** Exact article totals are computed with existing server identities, without article hydration. */
+export async function countDictionaryCategory(scope:DictionaryCategoryScope,category:DictionarySearchCategory){
+ if(category==="headwords"||category==="alphabetical"){
+  const page=await fetchDictionaryCategoryPage(scope,category);
+  if(!Number.isSafeInteger(page.wordGroupCount)||page.wordGroupCount!<0)throw new Error("library_count_unavailable");
+  return page.wordGroupCount!;
+ }
+ return (await readDictionaryCategory(scope,category,()=>{})).items.length;
 }

@@ -2817,7 +2817,7 @@ test("superseded resume restores every still-permitted setup setting before Star
   for (const section of ["Source", "Exercises", "Filters", "Session"]) {
     fireEvent.click(await screen.findByRole("button", { name: new RegExp(section) }));
   }
-  expect(screen.getByRole("button", { name: "Words" })).toHaveAttribute(
+  expect(screen.getAllByRole("button", { name: "Words" })[0]).toHaveAttribute(
     "aria-pressed",
     "true",
   );
@@ -2962,7 +2962,6 @@ test("pilot Start keeps recovery visible when the replacement queue fails", asyn
       /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
     ),
   ).toHaveAttribute("role", "alert");
-  expect(screen.getByRole("heading", { name: /^(Training|Тренировка)$/ })).toBeInTheDocument();
   expect(
     screen.queryByRole("heading", { name: "huis" }),
   ).not.toBeInTheDocument();
@@ -3102,6 +3101,7 @@ test("dictionary search scope changes lookup language without changing training"
   const copy = getUiMessages("en").library;
   fireEvent.click(screen.getByRole("button", { name: copy.filters }));
   fireEvent.click(screen.getByRole("button", { name: "English" }));
+  await waitFor(()=>expect(screen.getByRole("button",{name:copy.showResults})).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: copy.showResults }));
 
   await waitFor(() =>

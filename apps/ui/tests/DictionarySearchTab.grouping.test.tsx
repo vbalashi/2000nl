@@ -900,3 +900,25 @@ test("a label with unavailable sources shows its own scope and an availability w
    await waitFor(()=>expect(screen.queryByTestId("library-detail-desktop")).not.toBeInTheDocument());
    expect(reloadLists).toHaveBeenCalled();expect(notify).toHaveBeenCalled();
  });
+
+test("ordinary Library reads retain frequency, entry type, meaning limit and sort after a response",async()=>{
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+ const filters={parts:[] as const,article:null,vocabulary:{mode:"frequency" as const,materialKinds:["word" as const],profile:"written" as const,from:101,to:500,meanings:2 as const},sort:"written" as const};
+ fetchGroupPage.mockReset().mockResolvedValue({groups:[homographGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:1,matchingEntryIds:["entry-goed-zn"]}});
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:"",entryFilters:{...filters,parts:[]}}}/></AccountMaterialProvider>);
+ await screen.findByTestId("library-headword-group-group-goed-homograph");
+ expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:null,filters:{...filters,parts:[]}},cursor:null}));
+ fireEvent.click(screen.getByRole("button",{name:"Search filters"}));
+ await screen.findByRole("dialog",{name:"Library filters"});
+ expect(screen.getByRole("button",{name:"By frequency"})).toHaveAttribute("aria-pressed","true");
+ expect(screen.getByRole("button",{name:"Written language"})).toHaveAttribute("aria-pressed","true");
+ expect(screen.getByRole("slider",{name:"Meanings per entry"})).toHaveValue("1");
+});
+
+test("the default Words search category keeps the sorting action visible",async()=>{
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:"bank",searchCategory:undefined}}/></AccountMaterialProvider>);
+ expect(await screen.findByRole("button",{name:"Sort: Alphabetical"})).toBeInTheDocument();
+});

@@ -70,9 +70,10 @@ test("inline wheels keep the selected step, clamp bounds and cancel exact edits"
  expect(screen.getByRole("button",{name:"100"})).toHaveAttribute("aria-pressed","true");
 });
 
-test("the sort review limitation is available before opening the menu",()=>{
- render(<LibrarySortControl value="alphabetical" onChange={()=>{}} language="ru" reviewNotice="Порядок слов пока не меняется"/>);
- expect(screen.getByRole("button",{name:"Сортировка: По алфавиту"})).toHaveAccessibleDescription("Порядок слов пока не меняется");
+test("sort help explains missing frequency once above the choices",()=>{
+ render(<LibrarySortControl value="alphabetical" onChange={()=>{}} language="ru"/>);
+ fireEvent.click(screen.getByRole("button",{name:"Сортировка: По алфавиту"}));
+ const menu=screen.getByRole("menu",{name:"Сортировка"});expect(menu).toHaveTextContent("Не у всех слов известна частота употребления.");expect(menu).not.toHaveTextContent(/CGN|SoNaR|пока не меняется/);
 });
 
 test("meaning guidance uses paragraphs and is not permanently repeated below the slider",()=>{
@@ -151,8 +152,8 @@ test("wheels support keys and scrolling, clamp bounds and preserve the draft acr
 test("wheel drag and tapping nearby values use the selected step",()=>{
  class Pointer extends MouseEvent {readonly pointerId=1;readonly isPrimary=true;}
  vi.stubGlobal("PointerEvent",Pointer);
- Object.defineProperty(HTMLElement.prototype,"setPointerCapture",{configurable:true,value:vi.fn()});
- Object.defineProperty(HTMLElement.prototype,"hasPointerCapture",{configurable:true,value:()=>false});
+ Object.defineProperty(HTMLElement.prototype,"setPointerCapture",{configurable:true,writable:true,value:vi.fn()});
+ Object.defineProperty(HTMLElement.prototype,"hasPointerCapture",{configurable:true,writable:true,value:()=>false});
  const view=render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
  const dialog=screen.getByRole("dialog",{name:"Места в списке"});
  fireEvent.click(within(dialog).getByRole("button",{name:"10"}));

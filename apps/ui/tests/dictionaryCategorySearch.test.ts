@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { readDictionaryCategory, hydrateDictionaryWordResults } from "@/lib/platform/dictionaryCategorySearch";
+import { readDictionaryCategory, hydrateDictionaryWordResults, countDictionaryCategory } from "@/lib/platform/dictionaryCategorySearch";
 import { fetchPlatformV2LibraryGroup } from "@/lib/platform/platformV2LibraryClient";
 import { multiSenseBankGroup } from "./platformV2LibraryFixture";
 vi.mock("@/lib/platform/platformV2Http", () => ({ authenticatedJsonHeaders: vi.fn().mockResolvedValue({"content-type":"application/json"}) }));
@@ -50,4 +50,9 @@ test("builds the existing Library article rows, collapsing sibling senses withou
   expect(results[0]).toMatchObject({headwordGroupId:multiSenseBankGroup.headwordGroupId,meaningCount:2,headword:'bank'});
   expect(results[0].group).toBe(multiSenseBankGroup);
   expect(fetchPlatformV2LibraryGroup).toHaveBeenCalledWith(expect.objectContaining({expectedUserId:'reader',translationTargetLanguageCode:null}));
+});
+
+test.each(["headwords","alphabetical"] as const)("%s count uses one server count without draining or hydrating articles",async(category)=>{
+ const read=vi.fn().mockResolvedValue(new Response(JSON.stringify({groups:[{id:category,items:[hit('one')],total:1000,wordGroupCount:250,page:{hasMore:true,nextCursor:'next'}}]})));vi.stubGlobal('fetch',read);
+ expect(await countDictionaryCategory(scope(),category)).toBe(250);expect(read).toHaveBeenCalledOnce();expect(fetchPlatformV2LibraryGroup).not.toHaveBeenCalled();
 });

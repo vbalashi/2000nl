@@ -91,3 +91,9 @@ test('default activity scope needs no notice and opening controls does not chang
  expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
  expect(p.onDraftChange).not.toHaveBeenCalled();
 });
+
+test('clearing a Library query keeps the selected collection language',()=>{
+ const p=props();const draft={...p.draft,materialMode:'collection' as const,librarySelection:{languageCode:'en',query:'bank',category:'headwords' as const}};render(<ApprovedTrainingBuilder {...p} draft={draft}/>);
+ fireEvent.click(screen.getByRole('button',{name:/^Filters /}));fireEvent.click(screen.getByRole('button',{name:'Clear Library selection'}));
+ const update=p.onDraftChange.mock.calls.at(-1)![0] as (current:typeof draft)=>typeof draft;expect(update(draft).librarySelection).toEqual({languageCode:'en',query:'',category:'headwords'});
+});

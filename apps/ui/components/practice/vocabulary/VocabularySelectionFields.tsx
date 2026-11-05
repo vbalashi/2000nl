@@ -18,15 +18,15 @@ const copy = {
   en: { selection:"Choose words", allWords:"All words", frequency:"By frequency", speech:"Where they occur", spoken:"Spoken language", written:"Written language", range:"Places in the list", edit:"Edit range", from:"From", to:"To", first:"First range boundary", last:"Last range boundary", meanings:"Meanings per entry", all:"All", allMeanings:"All meanings", firstMeaning:"First meaning", firstMeanings:(n:number)=>`First ${n} meanings`, cancel:"Cancel", apply:"Done", invalid:"Start at 1 or higher. The end must be at least the start.", selectionHelp:"Choose all words, or words used more often in speech or writing. Frequency selection includes only words for which these figures are available.", speechHelp:"Spoken language uses conversations from CGN. Written language uses texts from SoNaR500. A word can be common in speech and less common in writing.", rangeHelp:"A lower number means a more common word. For example, 1–100 selects the hundred most common words. We show those found in your dictionary that match your other settings, so there may be fewer. Swipe the numbers up or down. The step sets how far each change moves. Select the pencil to type an exact range.", meaningHelp:["A word can have several meanings. For example, lopen can describe walking, a motor running, or an event taking place.", "Meanings follow dictionary order. Choose the first one, two or three, or keep them all. If there are fewer, take those available. Each separate dictionary entry has its own limit.", "In a new-only session, meanings already being learned are left out. If the first two are already being learned, they will not appear in that session. We do not replace them with the third."] },
   nl: { selection:"Woorden kiezen", allWords:"Alle woorden", frequency:"Op frequentie", speech:"Waar ze voorkomen", spoken:"Gesproken taal", written:"Geschreven taal", range:"Plaatsen in de lijst", edit:"Bereik wijzigen", from:"Van", to:"Tot", first:"Eerste grens van het bereik", last:"Laatste grens van het bereik", meanings:"Betekenissen per artikel", all:"Alle", allMeanings:"Alle betekenissen", firstMeaning:"Eerste betekenis", firstMeanings:(n:number)=>`Eerste ${n} betekenissen`, cancel:"Annuleren", apply:"Gereed", invalid:"Begin bij 1 of hoger. Het einde mag niet lager zijn dan het begin.", selectionHelp:"Kies alle woorden, of woorden die vaker voorkomen in gesprekken of teksten. De frequentiekeuze bevat alleen woorden waarvoor deze gegevens beschikbaar zijn.", speechHelp:"Gesproken taal gebruikt gesprekken uit CGN. Geschreven taal gebruikt teksten uit SoNaR500. Een woord kan in gesprekken vaker voorkomen dan in teksten.", rangeHelp:"Een lager getal betekent een vaker gebruikt woord. Bijvoorbeeld: 1–100 kiest de honderd meest voorkomende woorden. We tonen de woorden uit je woordenboek die bij je andere instellingen passen. Dat kunnen er minder zijn. Veeg over de getallen omhoog of omlaag. De stap bepaalt hoeveel het getal verandert. Gebruik het potlood voor een precies bereik.", meaningHelp:["Een woord kan verschillende betekenissen hebben. Denk bij lopen aan naar huis lopen, een motor die loopt of een evenement dat goed loopt.", "De betekenissen staan op volgorde in het woordenboek. Kies de eerste, de eerste twee of drie, of alle betekenissen. Zijn er minder, dan nemen we wat er is. Elk apart artikel heeft een eigen limiet.", "In een training met alleen nieuwe betekenissen slaan we betekenissen over die je al leert. Leer je de eerste twee al, dan komen ze niet in die training. De derde komt niet in hun plaats."] },
 };
-export function VocabularySelectionFields({ value, onChange, language }: { value: VocabularySelection; onChange:(next:VocabularySelection)=>void; language:OnboardingLanguage }) {
+export function VocabularySelectionFields({ value, onChange, language, section="all", showSelectionHeading=true }: { showSelectionHeading?:boolean; section?:"all"|"selection"|"meanings"; value: VocabularySelection; onChange:(next:VocabularySelection)=>void; language:OnboardingLanguage }) {
   const id=useId(), t=copy[language];
   const [rangeEdit,setRangeEdit]=useState<{from:string;to:string}|null>(null);
   const update=(patch:Partial<VocabularySelection>)=>onChange({...value,...patch});
   const selected=value.meanings==="all"?t.allMeanings:value.meanings===1?t.firstMeaning:t.firstMeanings(value.meanings);
   const rangeLabel=`${value.from.toLocaleString(language)}–${value.to.toLocaleString(language)}`;
   return <div className={s.fields}>
-    <div className={builder.field}>
-      <h2 className={s.heading}>{t.selection}<SettingsHelp label={t.selection} text={t.selectionHelp}/></h2>
+    {section!=="meanings"&&<><div className={builder.field}>
+      {showSelectionHeading&&<h2 className={s.heading}>{t.selection}<SettingsHelp label={t.selection} text={t.selectionHelp}/></h2>}
       <SegmentedControl standard label={t.selection}><BuilderChoice active={value.mode==="all"} onClick={()=>update({mode:"all"})}>{t.allWords}</BuilderChoice><BuilderChoice active={value.mode==="frequency"} onClick={()=>update({mode:"frequency"})}>{t.frequency}</BuilderChoice></SegmentedControl>
     </div>
     {value.mode==="frequency"&&<div className={s.frequencyDetails}>
@@ -42,11 +42,14 @@ export function VocabularySelectionFields({ value, onChange, language }: { value
         <FrequencyRangeWheels from={value.from} to={value.to} language={language} onChange={(from,to)=>update({from,to})}/>
       </div>
     </div>}
-    <div className={controls.rangeGroup}>
+    </>}
+    {section!=="selection"&&<div className={controls.rangeGroup}>
       <div className={controls.labelRow}><div className={s.heading}><label htmlFor={`${id}-meanings`} className={controls.label}>{t.meanings}</label><SettingsHelp label={t.meanings} text={t.meaningHelp}/></div><span className={controls.selection}>{selected}</span></div>
       <input id={`${id}-meanings`} className={controls.range} type="range" min={0} max={MEANING_LIMIT_STEPS.length-1} step={1} value={MEANING_LIMIT_STEPS.indexOf(value.meanings)} aria-valuetext={selected} onChange={event=>update({meanings:MEANING_LIMIT_STEPS[Number(event.target.value)]})}/>
       <div className={`${controls.sizeTicks} ${s.ticks}`} aria-hidden="true">{MEANING_LIMIT_STEPS.map((limit,index)=><span key={limit} style={{left:`${index/(MEANING_LIMIT_STEPS.length-1)*100}%`}}>{limit==="all"?t.all:limit}</span>)}</div>
-    </div>
+    </div>}
     {rangeEdit&&<RangeEditor initialFrom={Number(rangeEdit.from)} initialTo={Number(rangeEdit.to)} language={language} title={t.range} onCancel={()=>setRangeEdit(null)} onApply={(from,to)=>{update({from,to});setRangeEdit(null);}}/>}
   </div>;
 }
+
+export function VocabularySelectionHelp({language}:{language:OnboardingLanguage}){return <SettingsHelp label={copy[language].selection} text={copy[language].selectionHelp}/>;}

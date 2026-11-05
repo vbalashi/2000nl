@@ -1,4 +1,11 @@
 "use client";
+import {VocabularySelectionFields} from "@/components/practice/vocabulary/VocabularySelectionFields";
+import {PartOfSpeechSelection} from "@/components/practice/vocabulary/PartOfSpeechSelection";
+import {MaterialKindSelection,MaterialKindHelp} from "@/components/practice/vocabulary/MaterialKindSelection";
+import {DEFAULT_VOCABULARY_SELECTION} from "@/lib/vocabulary/selection";
+import {partCode,partId,VOCABULARY_PART_LABELS} from "@/lib/vocabulary/partsOfSpeech";
+import {TrainingAvailabilityStrip} from "./TrainingAvailabilityStrip";
+import type {TrainingAvailabilityState} from "@/lib/training/availability/useTrainingAvailability";
 import {signalOnboarding} from "@/lib/onboarding/signals";
 import { SegmentedControl } from "@/components/practice/ui/SegmentedControl";
 import React, { useId, useState, useRef, useLayoutEffect } from "react";
@@ -13,11 +20,9 @@ import {
 } from "lucide-react";
 import {
   singleNounArticle,
-  toggleNounArticle,
 } from "@/lib/training/nounArticles";
 import { DirectionCard } from "@/components/practice/builder/DirectionCard";
 import { directionExample } from "@/lib/training/directionExamples";
-import { TrainingBuilderPresentationContext } from "@/components/practice/builder/TrainingBuilderPresentationContext";
 import { BuilderSection } from "@/components/practice/builder/BuilderSection";
 import { BuilderChoice } from "@/components/practice/builder/BuilderChoice";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
@@ -46,6 +51,8 @@ import s from "@/components/training/pilot/approvedTrainingBuilder.module.css";
 
 type Props = {
   initialSection?: "session";
+  availability?:TrainingAvailabilityState;
+  onAvailabilityRetry?:()=>void;
   interfaceLanguage: OnboardingLanguage;
   draft: TrainingSetupDraft & { sessionSize: TrainingSessionSize };
   languageCode: string;
@@ -89,48 +96,8 @@ type Props = {
   saveNotice?: string;
   accountControls?: React.ReactNode;
 };
-const parts: DutchTrainingPartOfSpeech[] = [
-  "zn",
-  "ww",
-  "bn",
-  "bw",
-  "vnw",
-  "vz",
-  "vw",
-  "tw",
-  "lidw",
-  "tsw",
-  "afk",
-];
-const partKeys: Partial<
-  Record<
-    DutchTrainingPartOfSpeech,
-    | "Nouns"
-    | "Verbs"
-    | "Adjectives"
-    | "Adverbs"
-    | "Pronouns"
-    | "Prepositions"
-    | "Conjunctions"
-    | "Numerals"
-    | "Articles"
-    | "Interjections"
-  >
-> = {
-  zn: "Nouns",
-  ww: "Verbs",
-  bn: "Adjectives",
-  bw: "Adverbs",
-  vnw: "Pronouns",
-  vz: "Prepositions",
-  vw: "Conjunctions",
-  tw: "Numerals",
-  lidw: "Articles",
-  tsw: "Interjections",
-};
 /** Controlled presentation: the production controller retains catalog, draft and start ownership. */
 export function ApprovedTrainingBuilder(p: Props) {
-  const presentation = React.useContext(TrainingBuilderPresentationContext);
   const messages = getUiMessages(p.interfaceLanguage),
     b = messages.builder,
     o = messages.trainingOverview,
@@ -191,9 +158,7 @@ export function ApprovedTrainingBuilder(p: Props) {
     const frame=requestAnimationFrame(() => builderRef.current?.querySelector<HTMLElement>(`#${CSS.escape(uid+"-session-body")}`)?.parentElement?.scrollIntoView({block:"nearest"}));
     return () => cancelAnimationFrame(frame);
   }, [p.initialSection,uid]);
-  const [nounAnchor, setNounAnchor] = useState<React.CSSProperties>({});
-  const [nounOpen, setNounOpen] = useState(false),
-    [saveOpen, setSaveOpen] = useState(false),
+  const [saveOpen, setSaveOpen] = useState(false),
     [copyOpen, setCopyOpen] = useState(false),
     [deleteOpen, setDeleteOpen] = useState(false),
     [copyName, setCopyName] = useState(""),
@@ -204,7 +169,6 @@ export function ApprovedTrainingBuilder(p: Props) {
         ? current.filter((item) => item !== key)
         : [...current, key],
     );
-    if (key === "filters") setNounOpen(false);
   };
   const language = (code: string) =>
     new Intl.DisplayNames([p.interfaceLanguage], { type: "language" }).of(
@@ -240,7 +204,7 @@ export function ApprovedTrainingBuilder(p: Props) {
         ? c.newOnly
         : ratioLabel(p.draft.newReviewRatio);
   const materialMode = p.draft.materialMode ?? "collection";
-  const material =
+  const material = p.draft.librarySelection?.labelId ? p.draft.librarySelection.labelName??({ru:"Выбранная метка",en:"Selected label",nl:"Geselecteerd label"})[p.interfaceLanguage] :
     materialMode === "all-dictionaries"
       ? c.allDictionaries
       : materialMode === "selected-dictionaries"
@@ -252,10 +216,7 @@ export function ApprovedTrainingBuilder(p: Props) {
             .join(", ") || c.selectDictionary
         : p.lists.find((item) => item.value === p.draft.listValue)?.label ||
           c.materialUnavailable;
-  const partName = (part: DutchTrainingPartOfSpeech) =>
-    partKeys[part]
-      ? b.parts[partKeys[part]!]
-      : getPartOfSpeechLabel(p.interfaceLanguage, part);
+  const partName = (part: DutchTrainingPartOfSpeech) => {const id=partId(part);return id?b.parts[VOCABULARY_PART_LABELS[id]]:getPartOfSpeechLabel(p.interfaceLanguage,part);};
   const partSummary = [
     p.draft.partOfSpeech?.length
       ? p.draft.partOfSpeech.map(partName).join(" · ")
@@ -292,18 +253,6 @@ export function ApprovedTrainingBuilder(p: Props) {
       {children}
     </BuilderSection>
   );
-  const togglePart = (part: DutchTrainingPartOfSpeech) =>
-    p.onDraftChange((current) => {
-      const selected = current.partOfSpeech ?? [];
-      const next = selected.includes(part)
-        ? selected.filter((item) => item !== part)
-        : [...selected, part];
-      return {
-        ...current,
-        partOfSpeech: next,
-        nounArticles: next.includes("zn") ? (current.nounArticles ?? []) : [],
-      };
-    });
   const scenario = p.scenarios.find(
     (item) => item.value === p.draft.scenarioId,
   );
@@ -370,7 +319,7 @@ export function ApprovedTrainingBuilder(p: Props) {
               lists={p.lists}
               dictionaries={p.dictionaries}
               draft={p.draft}
-              onChange={p.onDraftChange}
+              onChange={next=>p.onDraftChange(current=>{const updated=typeof next==="function"?next(current):next;return current.librarySelection?.labelId?{...updated,librarySelection:current.librarySelection.query||current.librarySelection.languageCode?{query:current.librarySelection.query,category:current.librarySelection.category,...(current.librarySelection.languageCode?{languageCode:current.librarySelection.languageCode}:{})}:undefined}:updated;})}
               disabled={p.languagePending || p.dictionariesLoading}
               expanded={open.includes("source")}
               onSearchOpen={() => setOpen(current =>
@@ -544,65 +493,11 @@ export function ApprovedTrainingBuilder(p: Props) {
               b.filters,
               partSummary,
               <>
-                <div className={s.field}>
-                  <h2>{b.partOfSpeech}</h2>
-                  {p.languageCode !== "nl" ? (
-                    <p className={s.help}>{b.lexicalUnavailable}</p>
-                  ) : (
-                    <div className={s.choices}>
-                      {parts.map((part) =>
-                        part === "zn" ? (
-                          <div className={s.nounChoice} key={part}>
-                            <BuilderChoice
-                              active={Boolean(
-                                p.draft.partOfSpeech?.includes(part),
-                              )}
-                              onClick={() => togglePart(part)}
-                            >
-                              {partName(part)}
-                              {Boolean(
-                                singleNounArticle(p.draft.nounArticles ?? []),
-                              ) && (
-                                <span
-                                  className={s.dot}
-                                  aria-hidden="true"
-                                  title={b.subfiltersActive}
-                                />
-                              )}
-                            </BuilderChoice>
-                            <button
-                              type="button"
-                              aria-label={b.nounSubfilters}
-                              aria-expanded={nounOpen}
-                              onClick={(event) => {
-                                const rect =
-                                  event.currentTarget.getBoundingClientRect();
-                                setNounAnchor({
-                                  "--noun-left": `${rect.left}px`,
-                                  "--noun-top": `${rect.bottom + 8}px`,
-                                } as React.CSSProperties);
-                                setNounOpen(true);
-                              }}
-                            >
-                              <ChevronDown size={12} />
-                            </button>
-                          </div>
-                        ) : (
-                          <BuilderChoice
-                            key={part}
-                            active={Boolean(
-                              p.draft.partOfSpeech?.includes(part),
-                            )}
-                            onClick={() => togglePart(part)}
-                          >
-                            {partName(part)}
-                          </BuilderChoice>
-                        ),
-                      )}
-                    </div>
-                  )}
-                </div>
-                {presentation?.renderAdditionalFilters(p.interfaceLanguage)}
+                <VocabularySelectionFields section="selection" value={p.draft.vocabulary??DEFAULT_VOCABULARY_SELECTION} language={p.interfaceLanguage} onChange={vocabulary=>p.onDraftChange(current=>({...current,vocabulary}))}/>
+                <div className={s.field}><h2>{{ru:"Тип статьи",en:"Entry type",nl:"Soort artikel"}[p.interfaceLanguage]}<MaterialKindHelp language={p.interfaceLanguage}/></h2><MaterialKindSelection language={p.interfaceLanguage} value={p.draft.vocabulary?.materialKinds??[]} onChange={materialKinds=>p.onDraftChange(current=>({...current,vocabulary:{...(current.vocabulary??DEFAULT_VOCABULARY_SELECTION),materialKinds}}))}/></div>
+                {!p.draft.vocabulary?.materialKinds.includes("other")&&<div className={s.field}><h2>{b.partOfSpeech}</h2><PartOfSpeechSelection value={{parts:(p.draft.partOfSpeech??[]).map(partId).filter((id):id is NonNullable<typeof id>=>Boolean(id)),article:singleNounArticle(p.draft.nounArticles??[])}} language={p.interfaceLanguage} languageCode={p.languageCode} onChange={next=>p.onDraftChange(current=>({...current,partOfSpeech:next.parts.map(partCode),nounArticles:next.article?[next.article]:[]}))}/></div>}
+                <VocabularySelectionFields section="meanings" value={p.draft.vocabulary??DEFAULT_VOCABULARY_SELECTION} language={p.interfaceLanguage} onChange={vocabulary=>p.onDraftChange(current=>({...current,vocabulary}))}/>
+                {p.draft.librarySelection&&(p.draft.librarySelection.query||p.draft.librarySelection.labelId)&&<p className={s.help}>{[p.draft.librarySelection.labelName,p.draft.librarySelection.query?`${messages.librarySearch.labels[p.draft.librarySelection.category]}: «${p.draft.librarySelection.query}»`:null].filter(Boolean).join(" · ")} <button type="button" onClick={()=>p.onDraftChange(current=>({...current,librarySelection:(!current.materialMode||current.materialMode==="collection")&&current.librarySelection?.languageCode?{languageCode:current.librarySelection.languageCode,query:"",category:"headwords"}:undefined}))}>{{ru:"Убрать отбор из библиотеки",en:"Clear Library selection",nl:"Bibliotheekselectie wissen"}[p.interfaceLanguage]}</button></p>}
               </>,
             )}
             {section(
@@ -657,6 +552,7 @@ export function ApprovedTrainingBuilder(p: Props) {
         </div>
       </div>
       <footer className={s.footer}>
+        {p.availability&&<TrainingAvailabilityStrip state={p.availability} language={p.interfaceLanguage} onRetry={p.onAvailabilityRetry}/>}
         <div>
           <button
             type="button"
@@ -745,49 +641,6 @@ export function ApprovedTrainingBuilder(p: Props) {
 
         </div>
       </footer>
-      {nounOpen && (
-        <DialogSurface
-          className={`${s.dialog} ${s.nounDialog}`}
-          style={nounAnchor}
-          aria-labelledby={`${uid}-noun-title`}
-          onDismiss={() => setNounOpen(false)}
-        >
-          <header>
-            <h2 id={`${uid}-noun-title`}>{b.nounArticle}</h2>
-            <button
-              type="button"
-              aria-label={b.closeNounSubfilters}
-              onClick={() => setNounOpen(false)}
-            >
-              <X size={18} />
-            </button>
-          </header>
-          <div className={s.choices}>
-            {(["de", "het"] as const).map((article) => (
-              <BuilderChoice
-                key={article}
-                active={Boolean(p.draft.nounArticles?.includes(article))}
-                onClick={() =>
-                  p.onDraftChange((current) => ({
-                    ...current,
-                    partOfSpeech: current.partOfSpeech?.length
-                      ? Array.from(
-                          new Set([...current.partOfSpeech, "zn" as const]),
-                        )
-                      : current.partOfSpeech,
-                    nounArticles: toggleNounArticle(
-                      current.nounArticles ?? [],
-                      article,
-                    ),
-                  }))
-                }
-              >
-                {article}
-              </BuilderChoice>
-            ))}
-          </div>
-        </DialogSurface>
-      )}
       {deleteOpen && (
         <DialogSurface
           className={s.dialog}

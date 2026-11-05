@@ -1,3 +1,4 @@
+import type {VocabularySelection,LibraryTrainingSelection} from "@/lib/vocabulary/selection";
 export type TrainingMode =
   | "word-to-definition"
   | "definition-to-word"
@@ -27,6 +28,8 @@ export type TrainingFocusFilter = {
   sourceId?: string;
   externalId?: string;
   /** Dutch dictionary POS codes selected for ordinary Training. Empty means all. */
+  vocabulary?:VocabularySelection;
+  librarySelection?:LibraryTrainingSelection;
   partOfSpeech?: DutchTrainingPartOfSpeech[];
   /** Restrict noun candidates by their de/het article; non-noun POS remain unaffected. */
   nounArticles?: DutchNounArticle[];
@@ -49,7 +52,8 @@ export type DutchTrainingPartOfSpeech =
   | "tw"
   | "lidw"
   | "tsw"
-  | "afk";
+  | "afk"
+  | "vv";
 
 export type DutchNounArticle = "de" | "het";
 
