@@ -10,6 +10,7 @@ for(const profile of [
   test.use({viewport:{width:profile.width,height:profile.height}});
   test('Source retains the standard header geometry and independent controls',async({page})=>{
    await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{theme_preference:profile.theme,reading_size_phone:profile.size,reading_size_desktop:profile.size,preferences:{onboardingLanguage:profile.locale}}});
+   if(profile.size==='extra')await expect(page.locator('[data-text-size="extra"]')).toHaveCount(1);
    await page.getByRole('button',{name:profile.locale==='ru'?'Создать тренировку':'Create training',exact:true}).click();
    const source=page.locator('[data-builder-section="source"]');
    const header=source.locator('../..');
