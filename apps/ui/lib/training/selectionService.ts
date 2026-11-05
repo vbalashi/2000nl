@@ -160,7 +160,7 @@ export const isTrainingFocusFilterActive = (
     Boolean(filter.externalId) ||
     Boolean(filter.partOfSpeech?.length) ||
     Boolean(singleNounArticle(filter.nounArticles ?? [])) ||
-    Boolean(filter.dictionaryScope) || Boolean(filter.vocabulary) || Boolean(filter.librarySelection);
+    Boolean(filter.sourceWordStatus) || Boolean(filter.dictionaryScope) || Boolean(filter.vocabulary) || Boolean(filter.librarySelection);
 };
 
 const isNonNegativeInteger = (value: unknown): value is number =>
@@ -956,6 +956,7 @@ function normalizeTrainingFocusFilter(
     ...(filter.sourceKind ? { sourceKind: filter.sourceKind } : {}),
     ...(filter.sourceId ? { sourceId: filter.sourceId } : {}),
     ...(filter.externalId ? { externalId: filter.externalId } : {}),
+    ...(filter.sourceWordStatus ? { sourceWordStatus: filter.sourceWordStatus } : {}),
     ...(filter.vocabulary?{vocabulary:filter.vocabulary}:{}),
     ...(filter.librarySelection?{librarySelection:libraryTrainingCriteria(filter.librarySelection)}:{}),
     ...(filter.partOfSpeech?.length

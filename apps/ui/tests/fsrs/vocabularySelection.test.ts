@@ -164,4 +164,38 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
   expect((await c.query("select entry_id from training_session_members where session_id=$1",[plan.sessionId])).rows.map(r=>r.entry_id)).toEqual([english]);
  }));
 
+ test.each(['idiom','word-in-context'] as const)('source selection for %s separates learning, new and Already Know without changing card state',family=>withTransaction(pool,async c=>{
+  const {user,entries,filter}=await fixture(c);const nouns=entries['vocabfiets:zn'];
+  // Exact parent meanings: studying the first does not make its sibling studied.
+  await c.query("insert into user_card_status(user_id,entry_id,card_type_id,in_learning,fsrs_enabled) values($1,$2,'word-to-definition',true,true)",[user,nouns[0]]);
+  const event=(await c.query("insert into user_card_action_events(user_id,entry_id,card_type_id,action,client_event_id,action_payload_hash) values($1,$2,'word-to-definition','mark-known',$3,'source-known') returning id",[user,nouns[1],randomUUID()])).rows[0].id;
+  await c.query("insert into user_card_known_marks(user_id,entry_id,card_type_id,mark_event_id) values($1,$2,'word-to-definition',$3)",[user,nouns[1],event]);
+  for(const entry of nouns){const node=randomUUID();await c.query(`insert into private.platform_v2_content_nodes(id,entry_id,parent_content_node_id,kind,binding_state,first_source_revision,last_source_revision,source_text_fingerprint,diagnostic_locator) values($1,$2,null,'idiom','active','v1','v1',$3,'test.idiom'),($4,$2,$1,'idiom-explanation','active','v1','v1',$5,'test.explanation')`,[node,entry,`idiom-${node}`,randomUUID(),`explanation-${node}`]);}
+  await c.query("insert into user_card_status(user_id,entry_id,card_type_id,in_learning,fsrs_enabled,fsrs_reps,last_reviewed_at) values($1,$2,'word-to-definition',false,false,2,now()-interval '5 days')",[user,nouns[3]]);
+  expect((await c.query("select private.training_source_word_selected_v1($1,$2,'learning') ok",[user,nouns[3]])).rows[0].ok).toBe(false);
+  const context=family==='word-in-context';const modes=context?['definition-to-word']:['idiom:direct'];
+  const scope={...filter,partOfSpeech:['zn'],vocabulary:{...options,meanings:3},...(context?{presentationMode:'word-in-context'}:{})};
+  const count=async(sourceWordStatus:string)=>(await c.query("select read_training_recipe_availability_v1($1,$2,null,'curated',$3,$4) r",[user,modes,{...scope,sourceWordStatus},context?'meaning':'idiom'])).rows[0].r;
+  expect((await c.query("select private.training_source_word_selected_v1($1,$2,'all') ok",[user,nouns[1]])).rows[0].ok).toBe(true);
+  const before=(await c.query("select count(*)::int n from user_card_status where user_id=$1",[user])).rows[0].n;
+  expect((await count('learning')).newCards).toBe(1);
+  expect((await count('all')).newCards).toBe(context ? 2 : 3);
+  expect((await c.query("select count(*)::int n from user_card_status where user_id=$1",[user])).rows[0].n).toBe(before);
+  if(context){
+   const plan=(await c.query("select start_training_session($1,$2,null,'curated','new',$3,'5',$4,2) r",[user,modes,{...scope,sourceWordStatus:'all'},randomUUID()])).rows[0].r;
+   expect(plan.plannedTotal).toBe(2);
+   const selected=(await c.query("select entry_id from training_session_members where session_id=$1",[plan.sessionId])).rows.map(r=>r.entry_id);
+   expect(selected.sort()).toEqual([nouns[0],nouns[2]].sort());
+   // New source meanings can be rendered through their actual stored example.
+   expect((await c.query("select read_training_word_context_member($1,$2,$3) r",[user,plan.sessionId,nouns[2]])).rows[0].r).toMatchObject({entryId:nouns[2]});
+  } else {
+   const selected=(await c.query("select entry_id from private.training_idiom_source_nodes_v1($1,'direct',null,'curated',$2)",[user,{...scope,sourceWordStatus:'learning'}])).rows.map(r=>r.entry_id);
+   expect(selected).toEqual([nouns[0]]);
+  }
+ }));
+ test('invalid source status is rejected instead of silently broadening the selection',()=>withTransaction(pool,async c=>{
+  const {user,filter}=await fixture(c);
+  await expect(c.query("select read_training_recipe_availability_v1($1,ARRAY['definition-to-word'],null,'curated',$2,'meaning')",[user,{...filter,presentationMode:'word-in-context',sourceWordStatus:'known'}])).rejects.toThrow('invalid_training_filter');
+ }));
+
 });

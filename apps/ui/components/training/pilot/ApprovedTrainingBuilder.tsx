@@ -4,6 +4,8 @@ import {PartOfSpeechSelection} from "@/components/practice/vocabulary/PartOfSpee
 import {MaterialKindSelection,MaterialKindHelp} from "@/components/practice/vocabulary/MaterialKindSelection";
 import {DEFAULT_VOCABULARY_SELECTION} from "@/lib/vocabulary/selection";
 import {partCode,partId,VOCABULARY_PART_LABELS} from "@/lib/vocabulary/partsOfSpeech";
+import {SourceWordSelection} from "./SourceWordSelection";
+import {usesSourceWordSelection} from "@/lib/training/sourceWordSelection";
 import {TrainingAvailabilityStrip} from "./TrainingAvailabilityStrip";
 import type {TrainingAvailabilityState} from "@/lib/training/availability/useTrainingAvailability";
 import {signalOnboarding} from "@/lib/onboarding/signals";
@@ -496,6 +498,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                 <VocabularySelectionFields section="selection" value={p.draft.vocabulary??DEFAULT_VOCABULARY_SELECTION} language={p.interfaceLanguage} onChange={vocabulary=>p.onDraftChange(current=>({...current,vocabulary}))}/>
                 <div className={s.field}><h2>{{ru:"Тип статьи",en:"Entry type",nl:"Soort artikel"}[p.interfaceLanguage]}<MaterialKindHelp language={p.interfaceLanguage}/></h2><MaterialKindSelection language={p.interfaceLanguage} value={p.draft.vocabulary?.materialKinds??[]} onChange={materialKinds=>p.onDraftChange(current=>({...current,vocabulary:{...(current.vocabulary??DEFAULT_VOCABULARY_SELECTION),materialKinds}}))}/></div>
                 {!p.draft.vocabulary?.materialKinds.includes("other")&&<div className={s.field}><h2>{b.partOfSpeech}</h2><PartOfSpeechSelection value={{parts:(p.draft.partOfSpeech??[]).map(partId).filter((id):id is NonNullable<typeof id>=>Boolean(id)),article:singleNounArticle(p.draft.nounArticles??[])}} language={p.interfaceLanguage} languageCode={p.languageCode} onChange={next=>p.onDraftChange(current=>({...current,partOfSpeech:next.parts.map(partCode),nounArticles:next.article?[next.article]:[]}))}/></div>}
+                {usesSourceWordSelection(family) && <SourceWordSelection translation={family === "word-in-context"} language={p.interfaceLanguage} value={p.draft.sourceWordStatus ?? "learning"} onChange={sourceWordStatus=>p.onDraftChange(current=>({...current,sourceWordStatus}))}/>}
                 <VocabularySelectionFields section="meanings" value={p.draft.vocabulary??DEFAULT_VOCABULARY_SELECTION} language={p.interfaceLanguage} onChange={vocabulary=>p.onDraftChange(current=>({...current,vocabulary}))}/>
                 {p.draft.librarySelection&&(p.draft.librarySelection.query||p.draft.librarySelection.labelId)&&<p className={s.help}>{[p.draft.librarySelection.labelName,p.draft.librarySelection.query?`${messages.librarySearch.labels[p.draft.librarySelection.category]}: «${p.draft.librarySelection.query}»`:null].filter(Boolean).join(" · ")} <button type="button" onClick={()=>p.onDraftChange(current=>({...current,librarySelection:(!current.materialMode||current.materialMode==="collection")&&current.librarySelection?.languageCode?{languageCode:current.librarySelection.languageCode,query:"",category:"headwords"}:undefined}))}>{{ru:"Убрать отбор из библиотеки",en:"Clear Library selection",nl:"Bibliotheekselectie wissen"}[p.interfaceLanguage]}</button></p>}
               </>,

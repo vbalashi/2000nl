@@ -1,3 +1,4 @@
+import type { SourceWordStatus } from "@/lib/training/sourceWordSelection";
 import type {VocabularySelection,LibraryTrainingSelection} from "@/lib/vocabulary/selection";
 import type {
   CardFilter, DutchNounArticle, DutchTrainingPartOfSpeech, TrainingDateWindow,
@@ -23,6 +24,7 @@ export type TrainingSetupDraft = {
   /** Empty means all supported Dutch parts of speech. */
   vocabulary?:VocabularySelection;
   librarySelection?:LibraryTrainingSelection;
+  sourceWordStatus?: SourceWordStatus;
   partOfSpeech?: DutchTrainingPartOfSpeech[];
   /** Article selection narrows noun candidates; selected non-noun POS remain eligible. */
   nounArticles?: DutchNounArticle[];

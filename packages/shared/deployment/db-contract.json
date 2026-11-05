@@ -36,7 +36,7 @@
     {
       "migrationId": 293,
       "file": "db/migrations/293_vocabulary_selection.sql",
-      "sha256": "d49beaff21590d963f117f4fe67bc9de579d0aa64b467d54e9427b691638489a"
+      "sha256": "aef1612669522e875f25d883273bb83599a96bcb1eca589ec2ab13872b3a72ec"
     },
     {
       "migrationId": 294,

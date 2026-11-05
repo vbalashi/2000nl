@@ -3588,6 +3588,42 @@ END;
 $$;
 REVOKE ALL ON FUNCTION private.valid_training_library_selection_v1(jsonb) FROM PUBLIC,anon,authenticated,service_role;
 
+-- Source-word status is separate from the new/review state of an exercise card.
+-- Missing fields preserve the eligibility of legacy owned runs.
+CREATE OR REPLACE FUNCTION private.valid_source_word_status_v1(p_filter jsonb)
+RETURNS boolean LANGUAGE sql IMMUTABLE SET search_path TO 'pg_catalog' AS $$
+ SELECT NOT (p_filter ? 'sourceWordStatus') OR p_filter->'sourceWordStatus' IN ('"learning"'::jsonb,'"all"'::jsonb);
+$$;
+CREATE OR REPLACE FUNCTION private.training_source_word_selected_v1(p_user uuid,p_entry uuid,p_status text)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path TO 'pg_catalog','public','private','pg_temp' AS $$
+ SELECT p_status='all' OR (p_status='learning' AND EXISTS(
+  SELECT 1 FROM public.user_card_status s
+  WHERE s.user_id=p_user AND s.entry_id=p_entry
+   AND s.card_type_id IN ('word-to-definition','definition-to-word')
+   AND (COALESCE(s.in_learning,false) OR COALESCE(s.fsrs_enabled,false))
+   AND NOT EXISTS(SELECT 1 FROM public.user_card_known_marks k
+    WHERE k.user_id=s.user_id AND k.entry_id=s.entry_id
+     AND k.card_type_id IN ('word-to-definition','definition-to-word') AND k.cleared_at IS NULL)
+ ));
+$$;
+CREATE OR REPLACE FUNCTION private.training_word_context_candidate_v1(p_user_id uuid,p_entry_id uuid,p_card_type_id text,p_filter jsonb)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path TO 'pg_catalog','public','private','pg_temp' AS $$
+ SELECT CASE WHEN p_filter ? 'sourceWordStatus' THEN
+  p_card_type_id='definition-to-word'
+  AND private.training_source_word_selected_v1(p_user_id,p_entry_id,p_filter->>'sourceWordStatus')
+  AND EXISTS(SELECT 1 FROM private.platform_v2_content_nodes example WHERE example.entry_id=p_entry_id
+   AND example.kind='example' AND example.binding_state='active'
+   AND NULLIF(btrim(example.diagnostic_locator),'') IS NOT NULL
+   AND example.diagnostic_locator ~ '^raw\.meanings\[[0-9]+\]\.examples\[[0-9]+\]$')
+ ELSE private.training_word_context_candidate_v1(p_user_id,p_entry_id,p_card_type_id) END;
+$$;
+REVOKE ALL ON FUNCTION private.valid_source_word_status_v1(jsonb),
+ private.training_source_word_selected_v1(uuid,uuid,text),
+ private.training_word_context_candidate_v1(uuid,uuid,text,jsonb)
+ FROM PUBLIC,anon,authenticated,service_role;
+
 CREATE OR REPLACE FUNCTION private.resolve_training_material_selection_v1(p_user_id uuid, p_list_id uuid, p_list_type text, p_filter jsonb) RETURNS jsonb
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO 'pg_catalog', 'public', 'private', 'pg_temp'
@@ -3603,7 +3639,7 @@ BEGIN
     RAISE EXCEPTION 'unauthorized: user_id does not match authenticated user';
   END IF;
   IF jsonb_typeof(v_filter) <> 'object' THEN RAISE EXCEPTION 'invalid_training_filter'; END IF;
-  IF NOT private.valid_vocabulary_selection_v1(v_filter->'vocabulary') OR NOT private.valid_training_library_selection_v1(v_filter->'librarySelection') THEN RAISE EXCEPTION 'invalid_training_filter'; END IF;
+  IF NOT private.valid_source_word_status_v1(v_filter) OR NOT private.valid_vocabulary_selection_v1(v_filter->'vocabulary') OR NOT private.valid_training_library_selection_v1(v_filter->'librarySelection') THEN RAISE EXCEPTION 'invalid_training_filter'; END IF;
   SELECT settings.material_preferences, settings.language_code
     INTO v_preferences, v_language FROM public.user_settings settings
     WHERE settings.user_id = p_user_id;
@@ -4050,7 +4086,7 @@ WITH library_selection AS MATERIALIZED (SELECT entry_id FROM private.training_li
       WHEN (SELECT filter_data->>'presentationMode' FROM filter_values)
         = 'word-in-context'
       THEN private.training_word_context_candidate_v1(
-        p_user_id, cards.entry_id, cards.card_type_id)
+        p_user_id, cards.entry_id, cards.card_type_id, p_training_filter)
       ELSE true
     END
     AND (
@@ -4428,7 +4464,7 @@ WITH library_selection AS MATERIALIZED (SELECT entry_id FROM private.training_li
       WHEN (SELECT filter_data->>'presentationMode' FROM filter_values)
         = 'word-in-context'
       THEN private.training_word_context_candidate_v1(
-        p_user_id, cards.entry_id, cards.card_type_id)
+        p_user_id, cards.entry_id, cards.card_type_id, p_training_filter)
       ELSE true
     END
     AND (
@@ -4650,10 +4686,11 @@ CREATE OR REPLACE FUNCTION private.training_idiom_source_nodes_v1(p_user_id uuid
                    SELECT 1 FROM source_entries AS source_entry
                    WHERE source_entry.entry_id = node.entry_id
                )
-               AND (
-                   eligible_group.id IS NOT NULL
+               AND CASE WHEN p_training_filter ? 'sourceWordStatus' THEN
+                   private.training_source_word_selected_v1(p_user_id,node.entry_id,p_training_filter->>'sourceWordStatus')
+                 ELSE eligible_group.id IS NOT NULL
                    OR (source_group.id IS NULL AND direct_seed.entry_id IS NOT NULL)
-               )
+                 END
                AND (
                    SELECT count(*)
                      FROM private.platform_v2_content_nodes AS explanation
@@ -4698,7 +4735,7 @@ BEGIN
  IF (select auth.uid()) IS NULL OR p_user_id IS DISTINCT FROM (select auth.uid()) THEN
   RAISE EXCEPTION 'unauthorized: user_id does not match authenticated user';
  END IF;
- IF NOT private.valid_vocabulary_selection_v1(v_filter->'vocabulary') OR NOT private.valid_training_library_selection_v1(v_filter->'librarySelection') THEN RAISE EXCEPTION 'invalid_training_filter'; END IF;
+ IF NOT private.valid_source_word_status_v1(v_filter) OR NOT private.valid_vocabulary_selection_v1(v_filter->'vocabulary') OR NOT private.valid_training_library_selection_v1(v_filter->'librarySelection') THEN RAISE EXCEPTION 'invalid_training_filter'; END IF;
  IF jsonb_typeof(v_filter)<>'object' OR cardinality(v_modes)=0 OR p_exercise_family IS NULL
    OR p_exercise_family NOT IN ('meaning','idiom') OR p_list_type IS NULL OR p_list_type NOT IN ('curated','user') THEN
   RAISE EXCEPTION 'invalid_training_recipe';

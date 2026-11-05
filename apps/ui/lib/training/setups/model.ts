@@ -47,7 +47,7 @@ export function isTrainingSetupDraft(value: unknown): value is TrainingSetupDraf
       new Set(value.dictionaryIds).size !== value.dictionaryIds.length ||
       !value.dictionaryIds.every(id => typeof id === "string" && uuid.test(id)))) return false;
   if (value.materialMode === "selected-dictionaries" && (!Array.isArray(value.dictionaryIds) || !value.dictionaryIds.length)) return false;
-  return (value.vocabulary===undefined||parseVocabularySelection(value.vocabulary)!==null) && (value.librarySelection===undefined||parseLibraryTrainingSelection(value.librarySelection)!==null) && optionalArray(value.partOfSpeech, VOCABULARY_PARTS.map(part=>part.code), 12) &&
+  return (value.sourceWordStatus === undefined || value.sourceWordStatus === "learning" || value.sourceWordStatus === "all") && (value.vocabulary===undefined||parseVocabularySelection(value.vocabulary)!==null) && (value.librarySelection===undefined||parseLibraryTrainingSelection(value.librarySelection)!==null) && optionalArray(value.partOfSpeech, VOCABULARY_PARTS.map(part=>part.code), 12) &&
     optionalArray(value.nounArticles, ["de", "het"], 2);
 }
 
@@ -58,6 +58,7 @@ export function isTrainingSetupPreset(value: unknown): value is TrainingSetupPre
 // Reconstruct fields explicitly so storage cannot become an arbitrary payload bag.
 export function canonicalDraft(value: TrainingSetupDraft): TrainingSetupDraft {
   return {
+    ...(value.sourceWordStatus !== undefined ? { sourceWordStatus: value.sourceWordStatus } : {}),
     ...(value.family !== undefined ? { family: value.family } : {}),
     scenarioId: value.scenarioId, modes: [...value.modes], cardFilter: value.cardFilter,
     listValue: value.listValue, newReviewRatio: value.newReviewRatio,

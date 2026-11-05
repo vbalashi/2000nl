@@ -1,3 +1,4 @@
+import { sourceWordSelection } from "@/lib/training/sourceWordSelection";
 import {singleNounArticle} from "../nounArticles";
 import {libraryTrainingCriteria} from "@/lib/vocabulary/selection";
 import { canonicalDraft, isTrainingSetupDraft } from "../setups/model";
@@ -12,7 +13,7 @@ export type TrainingAvailability = {
 };
 const object = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v);
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const draftKeys = ["family", "scenarioId", "modes", "cardFilter", "listValue", "materialMode", "dictionaryIds", "newReviewRatio", "dateWindow", "daysAgo", "sourceValue", "sessionSize", "partOfSpeech", "nounArticles", "vocabulary", "librarySelection"];
+const draftKeys = ["family", "scenarioId", "modes", "cardFilter", "listValue", "materialMode", "dictionaryIds", "newReviewRatio", "dateWindow", "daysAgo", "sourceValue", "sessionSize", "partOfSpeech", "nounArticles", "vocabulary", "librarySelection", "sourceWordStatus"];
 
 /** The principal is never accepted in the request. Recipe fields are preferences only. */
 export function parseAvailabilityRecipe(value: unknown): TrainingAvailabilityRecipe | null {
@@ -37,6 +38,7 @@ export function availabilityRpcScope(recipe: TrainingAvailabilityRecipe) {
     dateWindow: draft.dateWindow,
     ...(draft.dateWindow === "daysAgo" ? { daysAgo: draft.daysAgo ?? 7 } : {}),
     ...(draft.sourceValue.startsWith("source:") ? { sourceId: draft.sourceValue.slice(7) } : draft.sourceValue === "kind:youtube" ? { sourceKind: "youtube" } : {}),
+    ...sourceWordSelection(draft),
     ...(draft.vocabulary?{vocabulary:draft.vocabulary}:{}),
     ...(draft.librarySelection?{librarySelection:libraryTrainingCriteria(draft.librarySelection)}:{}),
     ...(draft.partOfSpeech?.length ? { partOfSpeech: [...draft.partOfSpeech].sort() } : {}),
