@@ -21,12 +21,12 @@
     {
       "migrationId": 290,
       "file": "db/migrations/290_grouped_word_search_fuzzy.sql",
-      "sha256": "910a1134aef6e05c8649c802365a7f5c756fe7e4e7cbe338778d02557551df82"
+      "sha256": "477481cdce7ef1a822c14c45df6b6a380ec04c10ec347a9465a410d1a9e67e6f"
     },
     {
       "migrationId": 291,
       "file": "db/migrations/291_library_category_search_scope.sql",
-      "sha256": "cb181590ebbaadd52a69fba74329b3d8b7a7ebc3e3d2685fcff95edfa327816b"
+      "sha256": "c680056ba061d89dc9f3f0f720a2382e4e597af9be43b40ce17a0a24f4b3ca2f"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-291.sql",

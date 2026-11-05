@@ -1,3 +1,4 @@
+BEGIN;
 -- First-party Library category search. Scope is applied before ranking/paging.
 -- Managed forward migrations and deployment remain separately owned.
 
@@ -914,3 +915,6 @@ END;
 $_$;
 REVOKE ALL ON FUNCTION public.search_library_category_v1(uuid,text,text,uuid[],jsonb,jsonb,text,integer,text) FROM PUBLIC,anon,authenticated,authenticator;
 GRANT EXECUTE ON FUNCTION public.search_library_category_v1(uuid,text,text,uuid[],jsonb,jsonb,text,integer,text) TO service_role;
+
+NOTIFY pgrst, 'reload schema';
+COMMIT;

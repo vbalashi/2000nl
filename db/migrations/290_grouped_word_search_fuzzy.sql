@@ -1,3 +1,4 @@
+BEGIN;
 -- Indexed fuzzy headwords after exact and inflected matches.
 -- Fresh application install/upgrade; managed rollout remains separately owned.
 -- Load pg_trgm before validating its USERSET function-local GUC.
@@ -287,3 +288,6 @@ BEGIN
     );
 END;
 $$;
+
+NOTIFY pgrst, 'reload schema';
+COMMIT;
