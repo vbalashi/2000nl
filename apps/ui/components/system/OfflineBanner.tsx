@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
-const OFFLINE_MESSAGE = "You're offline. Please connect to continue";
+import { useInterfaceLanguage } from "@/lib/i18n/useInterfaceLanguage";
+import { getUiMessages } from "@/lib/uiMessages";
 
 export function OfflineBanner() {
+  const language = useInterfaceLanguage();
   const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export function OfflineBanner() {
       role="status"
       aria-live="polite"
     >
-      {OFFLINE_MESSAGE}
+      {getUiMessages(language).system.offline}
     </div>
   );
 }

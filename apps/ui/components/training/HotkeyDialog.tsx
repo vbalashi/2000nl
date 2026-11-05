@@ -1,4 +1,5 @@
 "use client";
+import { localizedSection } from "@/lib/i18n/catalog";
 
 import React, { useEffect } from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -9,11 +10,7 @@ type Props = {
   onClose: () => void;
 };
 
-const dialogCopy = {
-  nl: { title: "Sneltoetsen", close: "Sluiten" },
-  en: { title: "Keyboard shortcuts", close: "Close" },
-  ru: { title: "Горячие клавиши", close: "Закрыть" },
-} satisfies Record<OnboardingLanguage, { title: string; close: string }>;
+const dialogCopy = localizedSection("hotkeyDialog") satisfies Record<OnboardingLanguage, { title: string; close: string }>;
 
 export function HotkeyDialog({ interfaceLanguage = "nl", onClose }: Props) {
   const copy = dialogCopy[interfaceLanguage];

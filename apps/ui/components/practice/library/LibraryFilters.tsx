@@ -1,4 +1,6 @@
 "use client";
+import { localizedField } from "@/lib/i18n/catalog";
+
 import React, { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Check, ChevronDown, ChevronRight, FileText, Folder, Search, X } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -113,8 +115,8 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
             {!renderSources&&!presentation?.renderSources&&!visibleOptions.length && <p className={f.help}>{copy.noSources}</p>}
             {presentation?.renderSourceActions?.()}
           </BuilderSection>
-          <BuilderSection title={{ru:"Отбор слов",en:"Choose words",nl:"Woorden kiezen"}[locale]} summary="" headerActions={<VocabularySelectionHelp language={locale}/>} open={selectionOpen} onToggle={()=>setSelectionOpen(!selectionOpen)}><VocabularySelectionFields section="selection" showSelectionHeading={false} language={locale} value={vocabulary} onChange={vocabulary=>update({vocabulary})}/></BuilderSection>
-          <BuilderSection title={{ru:"Тип статьи",en:"Entry type",nl:"Soort artikel"}[locale]} summary={materialKindSummary(vocabulary.materialKinds,locale)} headerActions={<MaterialKindHelp language={locale}/>} open={kindOpen} onToggle={()=>setKindOpen(!kindOpen)}><MaterialKindSelection language={locale} value={vocabulary.materialKinds} onChange={materialKinds=>update({vocabulary:{...vocabulary,materialKinds}})}/></BuilderSection>
+          <BuilderSection title={localizedField("libraryFilters", "chooseWords")[locale]} summary="" headerActions={<VocabularySelectionHelp language={locale}/>} open={selectionOpen} onToggle={()=>setSelectionOpen(!selectionOpen)}><VocabularySelectionFields section="selection" showSelectionHeading={false} language={locale} value={vocabulary} onChange={vocabulary=>update({vocabulary})}/></BuilderSection>
+          <BuilderSection title={localizedField("libraryFilters", "entryType")[locale]} summary={materialKindSummary(vocabulary.materialKinds,locale)} headerActions={<MaterialKindHelp language={locale}/>} open={kindOpen} onToggle={()=>setKindOpen(!kindOpen)}><MaterialKindSelection language={locale} value={vocabulary.materialKinds} onChange={materialKinds=>update({vocabulary:{...vocabulary,materialKinds}})}/></BuilderSection>
           {showParts&&<BuilderSection title={builder.partOfSpeech} summary={draft.parts.length ? draft.parts.map(part => builder.parts[LIBRARY_PART_LABELS[part]]).join(" · ") : builder.allParts} open={partsOpen} onToggle={() => setPartsOpen(open => !open)}>
           {layout === "chips" ? <PartOfSpeechSelection value={{parts:draft.parts,article:draft.article}} onChange={update} language={locale} languageCode={draft.languageCode}/> : <div className={f.group}>{LIBRARY_PARTS.map(part => <div className={f.partRow} key={part}>
             <button type="button" className={f.partToggle} aria-pressed={draft.parts.includes(part)} onClick={() => togglePart(part)}>

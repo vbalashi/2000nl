@@ -100,7 +100,7 @@ export default function HomePage({invitationCode}:{invitationCode?:string|null}=
         const resolvedLanguage =
           accountLanguage ??
           browserLanguage ??
-          detectOnboardingLanguage(preferences.translationLang);
+          detectOnboardingLanguage();
         setOnboardingLanguage(resolvedLanguage);
         setInterfaceLanguage(resolvedLanguage);
         setInterfaceLanguageReady(true);

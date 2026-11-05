@@ -1,3 +1,5 @@
+
+import { localizedField } from "@/lib/i18n/catalog";
 import { sourceWordSelection } from "@/lib/training/sourceWordSelection";
 import {libraryTrainingCriteria} from "@/lib/vocabulary/selection";
 import { useTrainingOperationScope } from "../useTrainingOperationScope";
@@ -481,12 +483,12 @@ export function useTrainingPilotController({
     if (platformV2IdiomExercisesEnabled()) {
       options.push({
         value: "idiom",
-        label: interfaceLanguage === "nl" ? "Uitdrukkingen" : interfaceLanguage === "ru" ? "Идиомы" : "Idioms",
+        label: localizedField("trainingScenarios", "idioms")[interfaceLanguage],
         modes: ["word-to-definition", "definition-to-word"],
       });
     }
     if (platformV2TranslationExercisesEnabled() && translationTargetLanguageCode) {
-      options.push({ value: "sentences", label: interfaceLanguage === "nl" ? "Voorbeeldzinnen" : interfaceLanguage === "ru" ? "Примеры предложений" : "Example sentences", modes: ["word-to-definition"] });
+      options.push({ value: "sentences", label: localizedField("trainingScenarios", "sentences")[interfaceLanguage], modes: ["word-to-definition"] });
     }
     return options;
   }, [interfaceLanguage, scenarios, scenariosResolved, translationTargetLanguageCode]);

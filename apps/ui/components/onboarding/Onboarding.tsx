@@ -1,4 +1,6 @@
 'use client';
+import { localizedField, localizedSection } from "@/lib/i18n/catalog";
+
 import {Check} from 'lucide-react';
 import React,{useCallback,useEffect,useRef,useState} from 'react';
 import {Joyride,type TooltipRenderProps} from 'react-joyride';
@@ -40,7 +42,7 @@ export function OnboardingProvider({userId,autoStart,language,port,children}:{us
 export function OnboardingSettings({sharing,collections}:{sharing:boolean;collections:boolean}){
  const tour=React.useContext(TourContext);if(!tour)return null;const {copy,record}=tour;
  const available=topics.filter(topic=>(collections||topic!=='collections')&&(sharing||!['sharing','incoming'].includes(topic))&&(collections||topic!=='sharing'));
- const statusCopy={en:{completed:'Completed',inProgress:'In progress'},ru:{completed:'Пройдено',inProgress:'В процессе'},nl:{completed:'Voltooid',inProgress:'Bezig'}}[tour.language];
+ const statusCopy=localizedSection("onboardingTopicStatus")[tour.language];
  const completed=new Set([...(record?.completedTopics??[]),...(record?.status==='complete'?[record.topic]:[])]);
  const labels={core:copy.tourName,collections:copy.collectionsTopic,card:copy.cardTopic,stats:copy.statsTopic,sharing:copy.sharingTopic,incoming:copy.incomingTopic,languages:copy.languagesTopic,appearance:copy.appearanceTopic};
  return <SettingsPanel title={copy.tourName} className={s.settingsPanel}><p className={settings.hint}>{copy.deviceHint}</p>{tour.saveError&&<p role="alert">{copy.storageError}</p>}

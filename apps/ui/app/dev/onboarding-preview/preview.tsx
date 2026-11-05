@@ -23,6 +23,7 @@ import { buildLibrarySenseCardGroupModel } from "@/components/training/library-v
 import { TrainingSenseCardStage } from "@/components/training/v2/TrainingSenseCardStage";
 import { buildTrainingSenseCardModel, type TrainingSenseCardContent } from "@/components/training/v2/trainingSenseCardModel";
 import { gateBankGroup, gateFurnitureEntry } from "@/lib/platform/fixtures/senseCardV1GateFixture";
+import { localizedSection } from "@/lib/i18n/catalog";
 import { getStoredOnboardingLanguage, type OnboardingLanguage } from "@/lib/onboardingI18n";
 import { getUiMessages } from "@/lib/uiMessages";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -178,14 +179,16 @@ export function OnboardingPreview() {
   const spec = previewSteps.find(step => step.id === stage)!;
   const getTarget = useCallback(() => {
     const b = ui.builder;
+    const organization = localizedSection("libraryOrganization")[language];
+    const sharing = localizedSection("collectionSharing")[language];
     const entrySelector = `#preview-meaning [data-entry-id="${selectedEntryId}"]`;
-    if (stage === "incoming-received") return buttonWithText("#preview-incoming", language === "ru" ? "Добавленные мной" : language === "nl" ? "Door mij toegevoegd" : "Added by me", true);
-    if (stage === "incoming-add") return buttonWithText("#preview-incoming", language === "ru" ? "Добавить по ссылке / коду" : language === "nl" ? "Toevoegen via link / code" : "Add by link / code");
-    if (stage === "incoming-input") return buttonWithText("#preview-incoming", language === "ru" ? "Проверить приглашение" : language === "nl" ? "Uitnodiging controleren" : "Check invitation");
-    if (stage === "incoming-preview") return buttonWithText("#preview-incoming", language === "ru" ? "Добавить в библиотеку" : language === "nl" ? "Toevoegen aan bibliotheek" : "Add to library");
-    if (stage === "incoming-accepted") return buttonWithText("#preview-incoming", language === "ru" ? "Посмотреть слова" : language === "nl" ? "Woorden bekijken" : "View words");
+    if (stage === "incoming-received") return buttonWithText("#preview-incoming", localizedSection("receivedCollections")[language].added, true);
+    if (stage === "incoming-add") return buttonWithText("#preview-incoming", localizedSection("invitationInput")[language].title);
+    if (stage === "incoming-input") return buttonWithText("#preview-incoming", localizedSection("invitationInput")[language].check);
+    if (stage === "incoming-preview") return buttonWithText("#preview-incoming", localizedSection("invitationPreview")[language].add);
+    if (stage === "incoming-accepted") return buttonWithText("#preview-incoming", organization.open);
     if (stage === "incoming-list") return buttonWithText("#preview-incoming", journey.collections.find(collection=>collection.id===incomingId)?.name??incomingName(language));
-    if (stage === "extra-incoming") return buttonWithText("#preview-library-tabs", language === "ru" ? "Общий доступ" : language === "nl" ? "Gedeeld" : "Shared");
+    if (stage === "extra-incoming") return buttonWithText("#preview-library-tabs", localizedSection("libraryNavigation")[language].shared);
     if (stage === "go-incoming-library") return buttonWithText("nav[aria-label]", ui.navigation.library);
     if (stage === "extra-stats") return Array.from(document.querySelectorAll<HTMLElement>(`#preview-meaning [data-entry-id="${selectedEntryId}"] [data-testid=meaning-learning-progress-trigger]`)).find(button => button.getClientRects().length > 0) ?? null;
     if (stage === "extra-stats-view") return document.querySelector<HTMLElement>(`#preview-progress dialog button[aria-label="${ui.learningProgress.close}"]`);
@@ -196,10 +199,10 @@ export function OnboardingPreview() {
     if (stage === "appearance-choice" || stage === "appearance-done") return document.querySelector<HTMLElement>(`#preview-settings [role=group][aria-label="${ui.settings.colourMode}"]`);
     if (stage === "go-settings" || stage === "go-settings-languages") return document.querySelector<HTMLElement>(`header button[aria-label="${ui.settings.title}"]`);
     if (stage === "go-sharing-library") return buttonWithText("nav[aria-label]", ui.navigation.library);
-    if (stage === "extra-sharing") return buttonWithText("#preview-library-tabs", language === "ru" ? "Коллекции" : language === "nl" ? "Collecties" : "Collections");
-    if (stage === "sharing-menu") return buttonWithText("[role=menu]", language === "ru" ? "Общий доступ" : language === "nl" ? "Delen" : "Share");
+    if (stage === "extra-sharing") return buttonWithText("#preview-library-tabs", organization.collections);
+    if (stage === "sharing-menu") return buttonWithText("[role=menu]", localizedSection("personalCollections")[language].share);
     if (stage.startsWith("sharing-") && stage !== "sharing-more") {
-      const labels = {ru:{create:"Создать ссылку просмотра",copyLink:"Копировать ссылку",copyCode:"Копировать код",confirm:"Подтвердить",close:"Закрыть общий доступ",done:"Закрыть"},en:{create:"Create view-only link",copyLink:"Copy link",copyCode:"Copy code",confirm:"Confirm",close:"Close shared access",done:"Close"},nl:{create:"Alleen-lezenlink maken",copyLink:"Link kopiëren",copyCode:"Code kopiëren",confirm:"Bevestigen",close:"Gedeelde toegang sluiten",done:"Sluiten"}}[language];
+      const labels = {create:sharing.open,copyLink:sharing.copyLink,copyCode:sharing.copyCode,confirm:sharing.confirm,close:sharing.close,done:organization.close};
       return buttonWithText("#preview-sharing-dialog", stage === "sharing-copy-link" ? labels.copyLink : stage === "sharing-copy-code" ? labels.copyCode : stage === "sharing-create" ? labels.create : stage === "sharing-link" ? labels.close : (stage === "sharing-done" || stage === "sharing-sent") ? labels.done : labels.confirm);
     }
     if (stage === "basic-complete") return buttonWithText("#preview-overview", ui.trainingOverview.create);

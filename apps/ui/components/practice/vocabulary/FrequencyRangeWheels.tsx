@@ -1,11 +1,13 @@
 "use client";
+import { localizedField, localizedSection } from "@/lib/i18n/catalog";
+
 import React, { useRef, useState } from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { NumberWheel } from "./NumberWheel";
 import { RangeStepControl } from "./RangeStepControl";
 import controls from "../builder/builderControls.module.css";
 import s from "./vocabularySelection.module.css";
-const copy={ru:{from:"От",to:"До",step:"Шаг"},en:{from:"From",to:"To",step:"Step"},nl:{from:"Van",to:"Tot",step:"Stap"}};
+const copy=localizedSection("frequencyRange");
 export function FrequencyRangeWheels({from,to,language,onChange}:{from:number;to:number;language:OnboardingLanguage;onChange:(from:number,to:number)=>void}){
  const [step,setStep]=useState(1),t=copy[language];
  const pending=useRef({from,to});pending.current={from,to};

@@ -25,7 +25,7 @@ test("a disconnected Learn response reconciles without repeating the mutation", 
     })
     .click();
   const learn = page.getByRole("button", {
-    name: /Begin met leren|Учить|Start learning/i,
+    name: /^(?:Begin met leren|Учить|Start learning|Learn)$/i,
   });
   await learn.click();
 

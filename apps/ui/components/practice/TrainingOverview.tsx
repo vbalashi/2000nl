@@ -1,4 +1,6 @@
 "use client";
+import { localizedField } from "@/lib/i18n/catalog";
+
 
 import { trainingEmptyState } from "@/lib/training/availability/emptyState";
 import { canContinueTrainingSession } from "@/lib/training/sessionLifecycle";
@@ -66,7 +68,7 @@ export function TrainingOverview({state:incomingState,launchPending=false,interf
  const emptyMessage=!resume?((!empty||empty.canReviewAhead?guidance?.message:undefined)??empty?.message):undefined;
  const includeNew=Boolean(noReadyCards&&guidance?.includeNew&&(!empty||empty.canReviewAhead));
  const saved=state.trainings.filter(item=>item.saved!==false);
- const noCards={ru:"Нет подходящих карточек",en:"No matching cards",nl:"Geen passende kaarten"}[interfaceLanguage];
+ const noCards=localizedField("trainingOverviewState", "noMatchingCards")[interfaceLanguage];
  const emptyAction=<button type="button" className={s.start} data-empty="true" disabled aria-describedby={emptyMessage?reasonId:undefined}>{noCards}</button>;
  return <div className={s.home} lang={interfaceLanguage} aria-busy={launchPending}>
   <h1 className={s.srOnly}>{navigation.training}</h1>

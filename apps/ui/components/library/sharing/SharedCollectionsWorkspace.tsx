@@ -1,4 +1,6 @@
 'use client';
+import { localizedSection, localizedField } from "@/lib/i18n/catalog";
+
 import React from 'react';
 import {Plus} from 'lucide-react';
 import {SegmentedControl} from '@/components/practice/ui/SegmentedControl';
@@ -10,11 +12,7 @@ import {OwnedSharedCollections} from './OwnedSharedCollections';
 import {ReceivedCollections} from './ReceivedCollections';
 import s from '../organization/organization.module.css';
 
-const copy={
- en:{owned:'Shared by me',received:'Added by me',add:'Add by link / code'},
- ru:{owned:'Я поделился',received:'Добавленные мной',add:'Добавить по ссылке / коду'},
- nl:{owned:'Door mij gedeeld',received:'Door mij toegevoegd',add:'Toevoegen via link / code'},
-};
+const copy=localizedSection("sharedWorkspace");
 type WorkspaceProps={userId:string;active:boolean;locale:OnboardingLanguage;view:'owned'|'received';onViewChange:(view:'owned'|'received')=>void;onOpenOwned:(row:OwnedSharedCollection)=>void;onOpenReceived:(row:ReceivedCollection)=>void;onAdd:()=>void};
 export function SharedCollectionsWorkspace(props:WorkspaceProps){
  const overview=useSharingOverview(props.userId,props.active);
@@ -25,7 +23,7 @@ export function SharedCollectionsWorkspace(props:WorkspaceProps){
 export function SharedCollectionsWorkspaceView({locale,view,onViewChange,onAdd,counts,owned,received}:WorkspaceProps&{counts?:{sharedByMe:number;addedByMe:number};owned:React.ReactNode;received:React.ReactNode}){
  const t=copy[locale];
  return <div className={s.sharedWorkspace}>
-  <div className={s.sharedTop}><div className={s.sharedSwitcher}><SegmentedControl standard label={locale==='ru'?'Разделы общего доступа':locale==='nl'?'Gedeelde onderdelen':'Shared sections'}>
+  <div className={s.sharedTop}><div className={s.sharedSwitcher}><SegmentedControl standard label={localizedField("sharedWorkspace", "label")[locale]}>
    <button type="button" aria-pressed={view==='owned'} onClick={()=>onViewChange('owned')}>{t.owned}{counts?` · ${counts.sharedByMe.toLocaleString(locale)}`:''}</button>
    <button type="button" data-onboarding="shared-received" aria-pressed={view==='received'} onClick={()=>onViewChange('received')}>{t.received}{counts?` · ${counts.addedByMe.toLocaleString(locale)}`:''}</button>
   </SegmentedControl></div><button type="button" data-onboarding="invitation-add" onClick={onAdd}><Plus size={16}/>{t.add}</button></div>

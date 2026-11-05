@@ -16,7 +16,7 @@ export function PartOfSpeechSelection({value,onChange,language,languageCode}:{va
  const toggle=(part:VocabularyPart)=>{const next=value.parts.includes(part)?value.parts.filter(item=>item!==part):[...value.parts,part];onChange({parts:next,article:next.includes("noun")?value.article:null});};
  return <><SegmentedControl standard label={b.partOfSpeech}>
   {VOCABULARY_PARTS.map(part=><div className={s.choice} key={part.id}>
-   <BuilderChoice active={value.parts.includes(part.id)} onClick={()=>toggle(part.id)}>{b.parts[part.label]}{part.id==="noun"&&value.article&&<span className={s.dot} role="img" aria-label={b.subfiltersActive}/>}</BuilderChoice>
+   <BuilderChoice active={value.parts.includes(part.id)} onClick={()=>toggle(part.id)}>{b.parts[part.labelKey]}{part.id==="noun"&&value.article&&<span className={s.dot} role="img" aria-label={b.subfiltersActive}/>}</BuilderChoice>
    {part.id==="noun"&&languageCode==="nl"&&<IconAction label={b.nounSubfilters} aria-haspopup="dialog" aria-expanded={Boolean(anchor)} className={s.disclosure} onClick={event=>{if(!value.parts.includes("noun"))onChange({...value,parts:[...value.parts,"noun"]});setAnchor(event.currentTarget);}}><ChevronDown size={15}/></IconAction>}
   </div>)}
  </SegmentedControl>

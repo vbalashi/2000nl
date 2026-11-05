@@ -1,4 +1,5 @@
 "use client";
+import { localizedSection } from "@/lib/i18n/catalog";
 
 import React from "react";
 import { History, X } from "lucide-react";
@@ -10,11 +11,7 @@ import styles from "./TrainingSessionLayout.module.css";
 import { TrainingSessionProgress } from "./TrainingSessionProgress";
 import { useTrainingInteractions } from "@/components/practice/ui/TrainingInteractionPreferences";
 
-const copy = {
-  nl: { close: "Sessie sluiten", history: "Geschiedenis" },
-  en: { close: "Close session", history: "History" },
-  ru: { close: "Закрыть сессию", history: "История" },
-} satisfies Record<OnboardingLanguage, { close: string; history: string }>;
+const copy = localizedSection("sessionChrome") satisfies Record<OnboardingLanguage, { close: string; history: string }>;
 
 export type TrainingSessionChromeProps = {
   interfaceLanguage: OnboardingLanguage;

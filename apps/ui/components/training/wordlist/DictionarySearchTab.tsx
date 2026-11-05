@@ -1,5 +1,8 @@
 "use client";
 import {formatLibraryCounts} from "@/lib/platform/libraryCountLabel";
+import { languageAutonym } from "@/lib/languages/languageDisplayName";
+import { localizedField } from "@/lib/i18n/catalog";
+
 import {IconAction} from "@/components/practice/ui/IconAction";
 import {LibrarySortControl} from "@/components/practice/library/LibrarySortControl";
 import {librarySelectionToTraining,type LibraryTrainingHandoff} from "@/lib/vocabulary/libraryTrainingHandoff";
@@ -86,16 +89,10 @@ type Props = {
   >;
 };
 
-const languageLabel = (code: string) => {
-  if (code === "nl") return "Nederlands";
-  if (code === "en") return "English";
-  if (code === "de") return "Deutsch";
-  if (code === "fr") return "Français";
-  return code;
-};
+const languageLabel = languageAutonym;
 
 const firstDefinition = (entry: DictionaryEntry, fallback: string) => {
-  const meaning = getAllMeanings(entry.raw)[0] as
+  const meaning = getAllMeanings(entry.raw, fallback)[0] as
     { definition?: string; context?: string; examples?: unknown } | undefined;
   const definition = (
     hidePerfectParticiple(meaning?.definition ?? "") ?? ""
@@ -605,8 +602,8 @@ export function DictionarySearchTab({
             {onTrainSelection && searchMaterialReady && (
               <IconAction
                 className={workspace.trainSelection}
-                label={{ru:"Тренировать эти слова",en:"Train these words",nl:"Deze woorden oefenen"}[interfaceLanguage]}
-                title={{ru:"Настроить тренировку по этим словам",en:"Set up training with these words",nl:"Training instellen met deze woorden"}[interfaceLanguage]}
+                label={localizedField("libraryWordSelection", "train")[interfaceLanguage]}
+                title={localizedField("libraryWordSelection", "setup")[interfaceLanguage]}
                 onClick={() => onTrainSelection(librarySelectionToTraining({
                   languageCode: searchLanguage,
                   filters: searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS,

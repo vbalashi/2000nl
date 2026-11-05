@@ -47,7 +47,7 @@ async function acceptCurrentCard(page: Page) {
   });
   await reveal.click();
   const learn = page.getByRole("button", {
-    name: /Begin met leren|Учить|Start learning/i,
+    name: /Begin met leren|Учить|Start learning|Learn/i,
   });
   if (await learn.isVisible().catch(() => false)) {
     await learn.click();
@@ -183,7 +183,7 @@ test("@latency prepared card lease survives immediate and delayed answers", asyn
     capture = await readTrainingAttributionCapture(page);
     const delayedStart = capture.timings.length;
     const learn = page.getByRole("button", {
-      name: /Begin met leren|Учить|Start learning/i,
+      name: /Begin met leren|Учить|Start learning|Learn/i,
     });
     if (await learn.isVisible().catch(() => false)) {
       await learn.click();

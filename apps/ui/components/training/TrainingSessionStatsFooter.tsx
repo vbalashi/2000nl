@@ -1,14 +1,12 @@
 "use client";
+import { localizedSection, localizedField } from "@/lib/i18n/catalog";
+
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { PlatformTrainingExerciseStatsV1 } from "../../../../packages/shared/types/platformV2";
 import sessionStyles from "./v2/TrainingSessionLayout.module.css";
 
-export const trainingFooterCopy = {
-  nl: { new: "Nieuw", review: "Herhaling", total: "Totaal" },
-  en: { new: "New", review: "Review", total: "Total" },
-  ru: { new: "Новые", review: "Повторение", total: "Всего" },
-} satisfies Record<
+export const trainingFooterCopy = localizedSection("sessionFooter") satisfies Record<
   OnboardingLanguage,
   { new: string; review: string; total: string }
 >;
@@ -54,7 +52,6 @@ function CompactProgressStat({
   );
 }
 
-
 /** Shared presentation; each scenario supplies counts from its own read model. */
 export function TrainingSessionStatsFooter({
   stats, status, interfaceLanguage, initialReviewDue,
@@ -67,8 +64,8 @@ export function TrainingSessionStatsFooter({
   const text = trainingFooterCopy[interfaceLanguage];
   const ready = status === "ready" && stats !== null;
   const unknownLabel = status === "pending"
-    ? { en: "loading", nl: "wordt geladen", ru: "загружается" }[interfaceLanguage]
-    : { en: "unavailable", nl: "niet beschikbaar", ru: "недоступно" }[interfaceLanguage];
+    ? localizedField("sessionFooter", "loading")[interfaceLanguage]
+    : localizedField("sessionFooter", "unavailable")[interfaceLanguage];
   return (
     <footer data-compact="true" data-visual-spec="training-height-b"
       className={`${sessionStyles.footer} font-sense-sans`}>

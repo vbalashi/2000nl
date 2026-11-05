@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { AuthScreen } from "@/components/auth/AuthScreen";
 import { BrandLogo } from "@/components/BrandLogo";
 import { supabase } from "@/lib/supabaseClient";
+
+import { useInterfaceLanguage } from "@/lib/i18n/useInterfaceLanguage";
+import { localizedSection, formatMessage, type MessageCatalog } from "@/lib/i18n/catalog";
+type ConnectErrorKey = keyof MessageCatalog["features"]["connect"]["errors"];
 
 type ClientMetadata = {
   clientId: string;
@@ -19,7 +23,7 @@ type PageState =
   | { status: "loading" }
   | { status: "login_required" }
   | { status: "ready"; user: User; metadata: ClientMetadata }
-  | { status: "error"; message: string };
+  | { status: "error"; errorKey: ConnectErrorKey };
 
 function queryValue(params: URLSearchParams, key: string) {
   const value = params.get(key);
@@ -34,9 +38,11 @@ function declineRedirect(redirectUri: string, state: string) {
 }
 
 export default function ConnectAuthorizePage() {
+  const language = useInterfaceLanguage();
+  const copy = localizedSection("connect")[language];
   const [pageState, setPageState] = useState<PageState>({ status: "loading" });
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState(false);
 
   const params = useMemo(() => {
     if (typeof window === "undefined") return new URLSearchParams();
@@ -56,11 +62,11 @@ export default function ConnectAuthorizePage() {
 
     async function load() {
       if (responseType !== "code") {
-        setPageState({ status: "error", message: "Unsupported response type." });
+        setPageState({ status: "error", errorKey: "responseType" });
         return;
       }
       if (!clientId || !redirectUri || !scope || !codeChallenge) {
-        setPageState({ status: "error", message: "The connect request is incomplete." });
+        setPageState({ status: "error", errorKey: "incomplete" });
         return;
       }
 
@@ -81,10 +87,7 @@ export default function ConnectAuthorizePage() {
         if (!cancelled) {
           setPageState({
             status: "error",
-            message:
-              payload?.error === "redirect_uri_not_allowed"
-                ? "This connected app is not registered for this redirect URL."
-                : "This connected app cannot be authorized.",
+            errorKey: payload?.error === "redirect_uri_not_allowed" ? "redirect" : "unavailable",
           });
         }
         return;
@@ -109,7 +112,7 @@ export default function ConnectAuthorizePage() {
   async function approve() {
     if (pageState.status !== "ready") return;
     setSubmitting(true);
-    setSubmitError(null);
+    setSubmitError(false);
 
     const { data } = await supabase.auth.getSession();
     const accessToken = data.session?.access_token;
@@ -136,7 +139,7 @@ export default function ConnectAuthorizePage() {
     });
     const payload = await response.json().catch(() => null);
     if (!response.ok || !payload?.redirectTo) {
-      setSubmitError("Could not complete the connection request.");
+      setSubmitError(true);
       setSubmitting(false);
       return;
     }
@@ -151,7 +154,7 @@ export default function ConnectAuthorizePage() {
   if (pageState.status === "loading") {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background-light px-4 text-slate-900 dark:bg-background-dark dark:text-white">
-        <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">Laden...</p>
+        <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">{copy.loading}</p>
       </main>
     );
   }
@@ -161,7 +164,7 @@ export default function ConnectAuthorizePage() {
       <main className="flex min-h-screen items-center justify-center bg-background-light px-4 text-slate-900 dark:bg-background-dark dark:text-white">
         <div className="w-full max-w-md rounded-lg border border-red-200 bg-white p-6 text-center shadow-sm dark:border-red-900/60 dark:bg-slate-950">
           <p className="text-sm font-semibold text-red-700 dark:text-red-300">
-            {pageState.message}
+            {copy.errors[pageState.errorKey]}
           </p>
         </div>
       </main>
@@ -182,13 +185,13 @@ export default function ConnectAuthorizePage() {
 
         <div className="space-y-3">
           <p className="text-sm font-semibold uppercase text-primary">
-            2000NL Connect
+            {copy.brand}
           </p>
           <h1 className="text-2xl font-bold text-slate-950 dark:text-white">
-            Connect {metadata.displayName}
+            {formatMessage(copy.title,{name:metadata.displayName})}
           </h1>
           <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
-            {metadata.displayName} wants access to your 2000NL account.
+            {formatMessage(copy.request,{name:metadata.displayName})}
           </p>
         </div>
 
@@ -198,7 +201,7 @@ export default function ConnectAuthorizePage() {
               key={item.id}
               className="border-b border-slate-200 px-4 py-3 text-sm last:border-b-0 dark:border-slate-800"
             >
-              <div className="font-semibold text-slate-900 dark:text-white">{item.label}</div>
+              <div className="font-semibold text-slate-900 dark:text-white">{copy.scopes[item.id as keyof typeof copy.scopes] ?? copy.unknownScope}</div>
               <div className="mt-1 font-mono text-xs text-slate-500 dark:text-slate-400">
                 {item.id}
               </div>
@@ -208,7 +211,7 @@ export default function ConnectAuthorizePage() {
 
         {submitError ? (
           <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
-            {submitError}
+            {copy.errors.failed}
           </p>
         ) : null}
 
@@ -218,7 +221,7 @@ export default function ConnectAuthorizePage() {
             onClick={() => declineRedirect(metadata.redirectUri, state)}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-900"
           >
-            Cancel
+            {copy.cancel}
           </button>
           <button
             type="button"
@@ -226,7 +229,7 @@ export default function ConnectAuthorizePage() {
             disabled={submitting}
             className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {submitting ? "Connecting..." : "Connect"}
+            {submitting ? copy.connecting : copy.approve}
           </button>
         </div>
       </section>

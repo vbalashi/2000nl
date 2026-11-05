@@ -1,12 +1,13 @@
 "use client";
+import { localizedSection, type MessageCatalog } from "@/lib/i18n/catalog";
 
+import { useInterfaceLanguage } from "@/lib/i18n/useInterfaceLanguage";
 import React, { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { BrandLogo } from "@/components/BrandLogo";
 
 type AuthMode = "signin";
-type Language = "nl" | "en";
 
 const PENDING_OTP_STORAGE_KEY = "auth:pendingOtpEmail";
 
@@ -26,54 +27,7 @@ const OTP_PLACEHOLDER = Array.from({ length: OTP_LENGTH }, (_, i) =>
   String((i + 1) % 10)
 ).join("");
 
-const translations = {
-  nl: {
-    title: "Log in om te beginnen met het leren van de 2000 meest voorkomende Nederlandse woorden.",
-    emailLabel: "E-mailadres",
-    emailPlaceholder: "jouw@email.nl",
-    submitButton: "Stuur Inlogcode",
-    submitLoading: "Versturen...",
-    googleButton: "Doorgaan met Google",
-    googleError: "Kon Google-aanmelding niet starten. Probeer opnieuw.",
-    successMessage: "Check je inbox! We hebben een inlogcode naar je verstuurd.",
-    infoText: "Geen wachtwoord nodig! We sturen een beveiligde code naar je e-mail.",
-    orDivider: "of",
-    otpLabel: "Voer je code in",
-    otpPlaceholder: OTP_PLACEHOLDER,
-    verifyButton: "Verifieer Code",
-    verifyLoading: "Verifiëren...",
-    resendButton: "Code opnieuw versturen",
-    changeEmail: "Ander e-mailadres gebruiken",
-    haveCodeToggle: "Heb je al een code?",
-    hideCodeToggle: "Code invoer verbergen",
-    otpHelp:
-      "Werkt de e-mail link niet (bijv. opent hij in de verkeerde browser)? Kopieer de code uit de e-mail en plak hem hier.",
-    loginSuccess: "Inloggen succesvol!",
-  },
-  en: {
-    title: "Log in to start learning the 2000 most common Dutch words.",
-    emailLabel: "Email address",
-    emailPlaceholder: "your@email.com",
-    submitButton: "Send Login Code",
-    submitLoading: "Sending...",
-    googleButton: "Continue with Google",
-    googleError: "Unable to start Google sign-in. Please try again.",
-    successMessage: "Check your inbox! We've sent you a login code.",
-    infoText: "No password needed! We'll send a secure code to your email.",
-    orDivider: "or",
-    otpLabel: "Enter your code",
-    otpPlaceholder: OTP_PLACEHOLDER,
-    verifyButton: "Verify Code",
-    verifyLoading: "Verifying...",
-    resendButton: "Resend code",
-    changeEmail: "Use different email",
-    haveCodeToggle: "Already have a code?",
-    hideCodeToggle: "Hide code entry",
-    otpHelp:
-      "If the email link doesn't work (for example it opens in the wrong browser), copy the code from the email and paste it here.",
-    loginSuccess: "Signed in successfully!",
-  },
-};
+const translations = localizedSection("auth");
 
 export function AuthScreen() {
   const cardRef = useRef<HTMLDivElement | null>(null);
@@ -82,19 +36,12 @@ export function AuthScreen() {
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [showOtpEntry, setShowOtpEntry] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<keyof MessageCatalog["features"]["auth"] | null>(null);
   const [messageType, setMessageType] = useState<"error" | "success">("error");
   const [loading, setLoading] = useState(false);
-  const [lang, setLang] = useState<Language>("nl");
+  const lang = useInterfaceLanguage();
 
   useEffect(() => {
-    // Detect user's system language
-    const browserLang = navigator.language || navigator.languages?.[0] || "nl";
-    const detectedLang = browserLang.toLowerCase().startsWith("nl") ? "nl" : "en";
-    setLang(detectedLang);
-
-
-
     // Restore OTP flow state after refresh or when returning from mail app.
     try {
       const storedEmail = window.localStorage.getItem(PENDING_OTP_STORAGE_KEY);
@@ -123,10 +70,10 @@ export function AuthScreen() {
 
     if (error) {
       setMessageType("error");
-      setMessage(error.message);
+      setMessage("sendError");
     } else {
       setMessageType("success");
-      setMessage(translations[lang].successMessage);
+      setMessage("successMessage");
       setOtpSent(true);
       try {
         window.localStorage.setItem(PENDING_OTP_STORAGE_KEY, email);
@@ -151,10 +98,10 @@ export function AuthScreen() {
 
     if (error) {
       setMessageType("error");
-      setMessage(error.message);
+      setMessage("verifyError");
     } else {
       setMessageType("success");
-      setMessage(translations[lang].loginSuccess);
+      setMessage("loginSuccess");
       try {
         window.localStorage.removeItem(PENDING_OTP_STORAGE_KEY);
       } catch {
@@ -181,10 +128,10 @@ export function AuthScreen() {
 
     if (error) {
       setMessageType("error");
-      setMessage(error.message);
+      setMessage("sendError");
     } else {
       setMessageType("success");
-      setMessage(translations[lang].successMessage);
+      setMessage("successMessage");
     }
 
     setLoading(false);
@@ -214,7 +161,7 @@ export function AuthScreen() {
 
     if (error) {
       setMessageType("error");
-      setMessage(error.message);
+      setMessage("googleError");
       setLoading(false);
       return;
     }
@@ -225,7 +172,7 @@ export function AuthScreen() {
     }
 
     setMessageType("error");
-    setMessage(t.googleError);
+    setMessage("googleError");
     setLoading(false);
   };
 
@@ -283,7 +230,7 @@ export function AuthScreen() {
                       : "text-red-600 dark:text-red-400"
                   }`}
                 >
-                  {message}
+                  {t[message]}
                 </p>
               )}
               <button
@@ -320,7 +267,7 @@ export function AuthScreen() {
                       value={otp}
                       onChange={handleOtpChange}
                       className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 text-center tracking-widest font-mono text-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                      placeholder={t.otpPlaceholder}
+                      placeholder={OTP_PLACEHOLDER}
                       maxLength={OTP_LENGTH}
                       inputMode="numeric"
                       autoComplete="one-time-code"
@@ -372,7 +319,7 @@ export function AuthScreen() {
                   value={otp}
                   onChange={handleOtpChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 text-center tracking-widest font-mono text-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                  placeholder={t.otpPlaceholder}
+                  placeholder={OTP_PLACEHOLDER}
                   maxLength={OTP_LENGTH}
                   inputMode="numeric"
                   autoComplete="one-time-code"
@@ -387,7 +334,7 @@ export function AuthScreen() {
                       : "text-red-600 dark:text-red-400"
                   }`}
                 >
-                  {message}
+                  {t[message]}
                 </p>
               )}
               <button

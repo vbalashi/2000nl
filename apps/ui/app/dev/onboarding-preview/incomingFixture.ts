@@ -5,7 +5,9 @@ import type {OnboardingLanguage} from "@/lib/onboardingI18n";
 import type {Journey} from "./journeyState";
 export const incomingCode="11111111111111111111111111";
 export const incomingId="00000000-0000-4000-8000-000000000020";
-export const incomingName=(language:OnboardingLanguage)=>({ru:"Карточки для прогулки по городу",en:"Cards for a walk around town",nl:"Kaarten voor een wandeling door de stad"}[language]);
+const incomingNames: Record<string, string> = {ru:"Карточки для прогулки по городу",en:"Cards for a walk around town",nl:"Kaarten voor een wandeling door de stad"};
+// Demonstration collection names are content, with English for other interface locales.
+export const incomingName=(language:OnboardingLanguage)=>incomingNames[language]??incomingNames.en;
 export function incomingPreview(language:OnboardingLanguage,name=incomingName(language)):SharePreview {
  return {collectionId:incomingId,name,entryCount:2,offeredRole:"viewer",role:null,alreadyAdded:false,
   samples:[{headword:"de bank",definition:"een zitmeubel voor meerdere mensen"},{headword:"de bank",definition:"een bedrijf dat geld bewaart, leent en betalingen regelt"}]};

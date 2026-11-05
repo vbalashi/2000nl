@@ -1,16 +1,13 @@
 "use client";
 import React from "react";
+import { mapInterfaceCatalogs } from "@/lib/i18n/catalog";
 import { getUiMessages } from "@/lib/uiMessages";
 import { Check, ChevronDown, ChevronUp, EyeOff } from "lucide-react";
 import { ActionMenu } from "@/components/practice/ui/ActionMenu";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { senseCardQuietAction } from "../SenseCardChrome";
 /** Compatibility adapter; exclusion and undo copy has one catalog owner. */
-export const trainingExclusionCopy = {
-  en: getUiMessages("en").trainingSession.exclusion,
-  nl: getUiMessages("nl").trainingSession.exclusion,
-  ru: getUiMessages("ru").trainingSession.exclusion,
-};
+export const trainingExclusionCopy = mapInterfaceCatalogs(catalog => catalog.ui.trainingSession.exclusion);
 export function TrainingExcludeAction({
   language,
   disabled,
