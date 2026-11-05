@@ -10,11 +10,13 @@ import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/pla
 import type { DictionaryEntry } from "@/lib/types";
 
 const fetchGroupPage = vi.fn();
+const countLibraryGroups = vi.fn().mockResolvedValue(0);
 const readableSources = vi.fn();
 vi.mock("@/lib/training/listService",()=>({fetchAvailableDictionarySourcesStrict:(...args:unknown[])=>readableSources(...args),fetchAvailableLearningLanguages:vi.fn()}));
 afterEach(()=>{vi.unstubAllEnvs();});
 
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
+  countPlatformV2LibraryGroups: (...args: unknown[]) => countLibraryGroups(...args),
   fetchPlatformV2LibraryGroupPage: (...args: unknown[]) =>
     fetchGroupPage(...args),
 }));
@@ -495,8 +497,6 @@ test("reapplying the same filters supersedes an in-flight lookup", async () => {
   readableSources.mockReset().mockResolvedValue([source(scopeB, "Enabled B")]);
   let pageReadCount = 0;
   fetchGroupPage.mockReset().mockImplementation(request => {
-    // The filter dialog also reads a count preview, independently of list pages.
-    if (!("cursor" in request)) return Promise.resolve({groups:[],librarySearch:{totalGroups:0}});
     return ++pageReadCount === 1 ? oldRead.promise : refreshedRead.promise;
   });
   const pageReads = () => fetchGroupPage.mock.calls.filter(([request]) => "cursor" in request);
@@ -516,7 +516,12 @@ test("reapplying the same filters supersedes an in-flight lookup", async () => {
   const initialSignal = pageReads()[0][0].signal as AbortSignal;
 
   fireEvent.click(screen.getByRole("button", { name: copy.library.filters }));
-  await waitFor(() => expect(fetchGroupPage.mock.calls.some(([request]) => !("cursor" in request))).toBe(true));
+  await waitFor(() => expect(countLibraryGroups).toHaveBeenCalledOnce());
+  expect(countLibraryGroups.mock.calls[0][0]).toMatchObject({
+    query: "", libraryScope: { dictionaryIds: null, filters: { parts: ["noun"], article: null } },
+  });
+  expect(pageReads()).toHaveLength(1);
+  expect(initialSignal.aborted).toBe(false);
   await waitFor(() => expect(screen.getByRole("button", { name: copy.library.showResults })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: copy.library.showResults }));
   await waitFor(() => expect(pageReads()).toHaveLength(2));
@@ -543,6 +548,7 @@ test("reapplying the same filters supersedes an in-flight lookup", async () => {
 });
 
 beforeEach(()=>{
+  countLibraryGroups.mockReset().mockResolvedValue(0);
   Object.defineProperty(HTMLDialogElement.prototype, "showModal", {configurable:true,value:function(this:HTMLDialogElement){this.setAttribute("open","");}});
   Object.defineProperty(HTMLDialogElement.prototype, "close", {configurable:true,value:function(this:HTMLDialogElement){this.removeAttribute("open");}});
 });
