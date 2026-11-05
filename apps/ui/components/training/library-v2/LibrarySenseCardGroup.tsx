@@ -344,7 +344,7 @@ export function LibrarySenseCardGroup({
                     <TranslateIcon />
                   </SenseCardHeaderAction>
                 )}
-                {closeDetails && <span className={surfaces.closeAction}><SenseCardHeaderAction
+                {closeDetails && <span data-onboarding="details-close" className={surfaces.closeAction}><SenseCardHeaderAction
                   label={platformV2Message(interfaceLanguage,"common.close")} onClick={closeDetails}>
                   <X size={18} aria-hidden="true" />
                 </SenseCardHeaderAction></span>}
