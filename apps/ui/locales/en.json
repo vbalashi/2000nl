@@ -211,6 +211,22 @@
     "zn": "noun"
   },
   "ui": {
+    "librarySearch": {
+      "labels": {
+        "headwords": "Words",
+        "examples": "Examples",
+        "definitions": "Definitions",
+        "alphabetical": "A–Z"
+      },
+      "group": "Search in",
+      "empty": "No matches",
+      "prompt": "Enter a word or part of a sentence.",
+      "busy": "Searching…",
+      "error": "Could not load all results.",
+      "retry": "Retry",
+      "loadingAll": "Loading all matches…",
+      "foundCount": "Found: {count}"
+    },
     "activeTrainingCard": {
       "title": "Currently practising",
       "hint": "Rate on the training screen",

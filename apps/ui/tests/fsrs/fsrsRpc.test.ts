@@ -844,7 +844,7 @@ describeIfDb("FSRS RPC integration", () => {
 
       const { rows: emptyRows } = await client.query(
         `select search_dictionary_groups_v1($1, 'aa', NULL, NULL, 2, NULL) as result`,
-        [`zz-empty-${suffix}`],
+        ["zzqxjvkw"],
       );
       const emptyGroups = emptyRows[0].result.groups as SearchGroupResult[];
       expect(emptyGroups.find((group) => group.id === "headwords")?.items).toEqual([]);
