@@ -4,7 +4,7 @@ import {Pool,type PoolClient} from "pg";
 import {ensureUserWithSettings,getDbUrl,runMigrations,withTransaction} from "./dbTestUtils";
 const url=getDbUrl();
 const options={mode:"frequency",materialKinds:[],profile:"spoken",from:1,to:2,meanings:2};
-async function fixture(c:PoolClient){
+async function fixture(c:PoolClient,archivedFirst=false){
  const user=randomUUID();await ensureUserWithSettings(c,user);
  await c.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.role','service_role',true)",[user]);
  const dictionary=(await c.query(`insert into dictionaries(language_code,slug,name,kind,visibility,schema_key,schema_version)
@@ -17,7 +17,7 @@ async function fixture(c:PoolClient){
   const key=`${word}:${part}`;entries[key]=[];
   for(let n=1;n<=count;n++){
    const raw={headword:word,part_of_speech:part,meanings:Array.from({length:count},(_,i)=>({definition:`Een ${word} betekenis ${i+1}.`,examples:[`Ik gebruik ${word}.`]}))};
-   const entry=(await c.query(`insert into word_entries(dictionary_id,language_code,headword,meaning_id,part_of_speech,gender,raw) values($1,'nl',$2,$3,$4,'de/het',$5) returning id`,[dictionary,word,n,part,raw])).rows[0].id;
+   const entry=(await c.query(`insert into word_entries(dictionary_id,language_code,headword,meaning_id,part_of_speech,gender,raw,archived_at) values($1,'nl',$2,$3,$4,'de/het',$5,CASE WHEN $6 THEN now() END) returning id`,[dictionary,word,n,part,raw,archivedFirst&&word==='vocabfiets'&&part==='zn'&&n===1])).rows[0].id;
    entries[key].push(entry);
    await c.query("insert into private.platform_v2_content_nodes(entry_id,kind,binding_state,first_source_revision,last_source_revision,source_text_fingerprint,diagnostic_locator) values($1,'definition','active','v1','v1',$2,'raw.meanings[0].definition')",[entry,`definition-${entry}`]);
    await c.query(`insert into private.source_entry_bindings(dictionary_id,identity_scheme_version,source_entry_key,source_group_key,sense_ordinal,word_entry_id,binding_state,first_seen_run_id,last_seen_run_id,manifest_checksum,content_fingerprint_version,content_fingerprint,identity_evidence,reconciliation_decision)
@@ -198,7 +198,7 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
   await expect(c.query("select read_training_recipe_availability_v1($1,ARRAY['definition-to-word'],null,'curated',$2,'meaning')",[user,{...filter,presentationMode:'word-in-context',sourceWordStatus:'known'}])).rejects.toThrow('invalid_training_filter');
  }));
 
- test.each([{jit:"off",profile:"spoken"},{jit:"on",profile:"spoken"},{jit:"off",profile:"written"},{jit:"on",profile:"written"}])("frequency availability narrows before meaning checks ($profile, jit $jit)",({jit,profile})=>withTransaction(pool,async c=>{
+ test.each(["all","frequency"].flatMap(mode=>[{mode,jit:"off",profile:"spoken"},{mode,jit:"on",profile:"spoken"},{mode,jit:"off",profile:"written"},{mode,jit:"on",profile:"written"}]))("frequency availability narrows before meaning checks ($mode, $profile, jit $jit)",({mode,jit,profile})=>withTransaction(pool,async c=>{
   const {user,dictionary,filter}=await fixture(c);
   // A call budget catches full-dictionary scans without flaky timing assertions.
   await c.query(`insert into word_entries(dictionary_id,language_code,headword,meaning_id,part_of_speech,raw)
@@ -216,8 +216,8 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
     perform nextval('private.vocabulary_selection_test_calls');
     return private.vocabulary_entry_selected_test_original(p_entry_id,p_value);
    end; $$`);
-  const selection={...options,profile,from:profile==="spoken"?1:2,to:profile==="spoken"?2:3};
-  const expected=new Map<string|number,number>([["all",9],[1,3],[2,6],[3,8]]);
+  const selection={...options,mode,profile,from:profile==="spoken"?1:2,to:profile==="spoken"?2:3};
+  const expected=new Map<string|number,number>(mode==="frequency"?[["all",9],[1,3],[2,6],[3,8]]:[["all",11],[1,5],[2,8],[3,10]]);
   for(const [meanings,count] of expected){
    await c.query("alter sequence private.vocabulary_selection_test_calls restart with 1");
    const result=(await c.query("select read_training_recipe_availability_v1($1,ARRAY['word-to-definition'],null,'curated',$2,'meaning') r",[user,{...filter,vocabulary:{...selection,meanings}}])).rows[0].r;
@@ -246,6 +246,100 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
   expect((await c.query('show enable_nestloop')).rows[0].enable_nestloop).toBe('off');
   expect(calls).toBeGreaterThan(0);
   expect(calls).toBeLessThanOrEqual(20);
+ }));
+ test.each(['bound-homonyms','unbound','mixed-bindings','pointer-first','archived-first','tied-source-order','tied-fallback-order'])("batch membership matches scalar selection: %s",variant=>withTransaction(pool,async c=>{
+  const {entries}=await fixture(c,variant==='archived-first');const nouns=entries['vocabfiets:zn'];
+  if(variant==='bound-homonyms')await c.query("update private.source_entry_bindings set source_group_key='second-homonym',sense_ordinal=sense_ordinal-2 where word_entry_id=any($1::uuid[])",[nouns.slice(2)]);
+  if(variant==='unbound'||variant==='mixed-bindings')await c.query("update private.source_entry_bindings set binding_state='retired' where word_entry_id=any($1::uuid[])",[variant==='unbound'?Object.values(entries).flat():nouns.slice(2)]);
+  if(variant==='pointer-first')await c.query(`update word_entries set raw='{"cross_reference":"vocabfiets","meanings":[]}' where id=$1`,[nouns[0]]);
+  if(variant==='tied-source-order')await c.query("update private.source_entry_bindings set sense_ordinal=1 where word_entry_id=any($1::uuid[])",[nouns]);
+  if(variant==='tied-fallback-order'){
+   await c.query("update private.source_entry_bindings set binding_state='retired' where word_entry_id=any($1::uuid[])",[nouns]);
+   await c.query("update word_entries set meaning_id=1 where id=any($1::uuid[])",[nouns]);
+  }
+  const ids=Object.values(entries).flat();
+  for(const mode of ['all','frequency'])for(const profile of ['spoken','written'])for(const meanings of ['all',1,2,3])for(const materialKinds of [[],['word'],['other']]){
+   const selection={...options,mode,profile,from:1,to:3,meanings,materialKinds};
+   const expected=(await c.query("select id from private.active_word_entries where id=any($1::uuid[]) and private.vocabulary_entry_selected_v1(id,$2) order by id",[ids,selection])).rows.map(r=>r.id);
+   const actual=(await c.query("select entry_id id from private.vocabulary_selected_entry_ids_v1($2,$1) where entry_id=any($1::uuid[]) order by entry_id",[ids,selection])).rows.map(r=>r.id);
+   expect(actual).toEqual(expected);
+  }
+ }));
+ test("batch selection keeps empty scopes empty and orders siblings outside a narrowed scope",()=>withTransaction(pool,async c=>{
+  const {entries}=await fixture(c);const late=entries['vocabfiets:zn'][3];
+  for(const mode of ['all','frequency']){
+   const selection={...options,mode,meanings:1};
+   expect((await c.query("select * from private.vocabulary_selected_entry_ids_v1($1,ARRAY[]::uuid[])",[selection])).rows).toEqual([]);
+   expect((await c.query("select * from private.vocabulary_selected_entry_ids_v1($1,$2)",[selection,[late]])).rows).toEqual([]);
+  }
+ }));
+ test("batch fallback matches scalar null-dictionary units and personal singletons",()=>withTransaction(pool,async c=>{
+  const {user}=await fixture(c);
+  const personal=(await c.query(`insert into dictionaries(language_code,slug,name,kind,visibility,owner_user_id,schema_key,schema_version) values('nl',$1,'Personal','user','private',$2,'user-entry-v1',1) returning id`,[`personal-${randomUUID()}`,user])).rows[0].id;
+  const ids:string[]=[];
+  for(const dictionary of [null,personal])for(let n=1;n<=3;n++){
+   const e=(await c.query(`insert into word_entries(dictionary_id,language_code,headword,meaning_id,part_of_speech,management_kind,raw) values($1,'nl','vocabfiets',$2,$3,$4,'{"meanings":[{"definition":"Personal fixture"}]}') returning id`,[dictionary,n,n===1?'NOUN':'zn',dictionary?'user':'source'])).rows[0].id;
+   ids.push(e);
+  }
+  for(const mode of ['all','frequency'])for(const meanings of ['all',1,2,3]){
+   const selection={...options,mode,meanings};
+   const expected=(await c.query("select id from private.active_word_entries where id=any($1::uuid[]) and private.vocabulary_entry_selected_v1(id,$2) order by id",[ids,selection])).rows.map(r=>r.id);
+   const actual=(await c.query("select entry_id id from private.vocabulary_selected_entry_ids_v1($2,$1) order by entry_id",[ids,selection])).rows.map(r=>r.id);
+   expect(actual).toEqual(expected);
+  }
+ }));
+ test("inactive malformed private selections stay closed",()=>withTransaction(pool,async c=>{
+  const {user,filter}=await fixture(c);const scope={...filter,vocabulary:{}};
+  expect((await c.query("select count(*)::int n from private.training_recipe_eligible_cards_v1($1,ARRAY['word-to-definition'],null,'curated','both','auto',ARRAY[]::uuid[],ARRAY[]::text[],$2,false,false)",[user,scope])).rows[0].n).toBe(0);
+  expect((await c.query("select count(*)::int n from private.training_idiom_source_nodes_v1($1,'direct',null,'curated',$2)",[user,scope])).rows[0].n).toBe(0);
+ }));
+ test("nonfrequency context and multi-idiom parents share batch membership",()=>withTransaction(pool,async c=>{
+  const {user,entries,filter}=await fixture(c);const nouns=entries['vocabfiets:zn'];
+  const scope={...filter,partOfSpeech:['zn'],sourceWordStatus:'all',vocabulary:{...options,mode:'all',meanings:2}};
+  const context=(await c.query("select read_training_recipe_availability_v1($1,ARRAY['definition-to-word'],null,'curated',$2,'meaning') r",[user,{...scope,presentationMode:'word-in-context'}])).rows[0].r;
+  expect(context.newCards).toBe(2);
+  for(const entry of nouns)for(let i=0;i<10;i++){
+   const node=randomUUID();await c.query(`insert into private.platform_v2_content_nodes(id,entry_id,parent_content_node_id,kind,binding_state,first_source_revision,last_source_revision,source_text_fingerprint,diagnostic_locator) values($1,$2,null,'idiom','active','v1','v1',$3,'test.idiom'),($4,$2,$1,'idiom-explanation','active','v1','v1',$5,'test.explanation')`,[node,entry,`idiom-${node}`,randomUUID(),`explanation-${node}`]);
+  }
+  await c.query("create sequence private.idiom_selection_test_calls");
+  await c.query("alter function private.vocabulary_entry_selected_v1(uuid,jsonb) rename to vocabulary_entry_selected_test_original");
+  await c.query(`create function private.vocabulary_entry_selected_v1(p_entry_id uuid,p_value jsonb) returns boolean
+   language plpgsql stable security definer set search_path=pg_catalog,public,private,pg_temp as $$
+   begin perform nextval('private.idiom_selection_test_calls'); return private.vocabulary_entry_selected_test_original(p_entry_id,p_value); end; $$`);
+  const idioms=(await c.query("select read_training_recipe_availability_v1($1,ARRAY['idiom:direct'],null,'curated',$2,'idiom') r",[user,scope])).rows[0].r;
+  expect(idioms.newCards).toBe(20);
+  expect(Number((await c.query("select last_value from private.idiom_selection_test_calls")).rows[0].last_value)).toBeLessThanOrEqual(4);
+ }));
+ test("batch context candidates match legacy and explicit source-word rules",()=>withTransaction(pool,async c=>{
+  const {user,entries}=await fixture(c);const nouns=entries['vocabfiets:zn'];
+  await c.query(`insert into user_card_status(user_id,entry_id,card_type_id,in_learning,fsrs_enabled,fsrs_reps,last_reviewed_at)
+   values($1,$2,'word-to-definition',true,false,0,null),($1,$3,'word-to-definition',false,true,0,null),($1,$4,'word-to-definition',false,false,2,now())`,[user,...nouns.slice(0,3)]);
+  for(const [entry,mode] of [[nouns[3],'word-to-definition'],[nouns[0],'definition-to-word']]){
+   const event=(await c.query("insert into user_card_action_events(user_id,entry_id,card_type_id,action,client_event_id,action_payload_hash) values($1,$2,$3,'mark-known',$4,'context-known') returning id",[user,entry,mode,randomUUID()])).rows[0].id;
+   await c.query("insert into user_card_known_marks(user_id,entry_id,card_type_id,mark_event_id) values($1,$2,$3,$4)",[user,entry,mode,event]);
+  }
+  await c.query("update private.platform_v2_content_nodes set diagnostic_locator='invalid.locator' where entry_id=$1 and kind='example'",[entries['vocabfiets:ww'][0]]);
+  await c.query("update private.platform_v2_content_nodes set binding_state='retired' where entry_id=$1 and kind='example'",[entries['vocabvoor:vv'][0]]);
+  const ids=Object.values(entries).flat();
+  for(const filter of [{},{sourceWordStatus:'learning'},{sourceWordStatus:'all'}]){
+   const expected=(await c.query("select id from word_entries where id=any($1::uuid[]) and private.training_word_context_candidate_v1($2,id,'definition-to-word',$3) order by id",[ids,user,filter])).rows.map(r=>r.id);
+   const actual=(await c.query("select entry_id from private.training_word_context_entry_ids_v1($1,$2,$3) order by entry_id",[user,filter,ids])).rows.map(r=>r.entry_id);
+   expect(actual).toEqual(expected);
+   expect((await c.query("select * from private.training_word_context_entry_ids_v1($1,$2,ARRAY[]::uuid[])",[user,filter])).rows).toEqual([]);
+  }
+ }));
+ test("context setup batches example checks and keeps private direct cards unavailable",()=>withTransaction(pool,async c=>{
+  const {user,dictionary,filter}=await fixture(c);
+  await c.query(`insert into word_entries(dictionary_id,language_code,headword,meaning_id,part_of_speech,raw)
+   select $1,'nl','context-unrelated-'||n,1,'zn','{}' from generate_series(1,1000) n`,[dictionary]);
+  await c.query("create sequence private.context_selection_test_calls");
+  await c.query("alter function private.training_word_context_candidate_v1(uuid,uuid,text,jsonb) rename to training_word_context_candidate_test_original");
+  await c.query(`create function private.training_word_context_candidate_v1(p_user uuid,p_entry uuid,p_mode text,p_filter jsonb) returns boolean language plpgsql stable as $$
+   begin perform nextval('private.context_selection_test_calls'); return private.training_word_context_candidate_test_original(p_user,p_entry,p_mode,p_filter); end; $$`);
+  const scope={...filter,partOfSpeech:['zn'],sourceWordStatus:'all',presentationMode:'word-in-context',vocabulary:{...options,mode:'all',meanings:2}};
+  expect((await c.query("select read_training_recipe_availability_v1($1,ARRAY['definition-to-word'],null,'curated',$2,'meaning') r",[user,scope])).rows[0].r.newCards).toBe(2);
+  expect(Number((await c.query("select last_value from private.context_selection_test_calls")).rows[0].last_value)).toBeLessThanOrEqual(4);
+  expect((await c.query("select count(*)::int n from private.training_recipe_eligible_cards_v1($1,ARRAY['word-to-definition'],null,'curated','both','auto',ARRAY[]::uuid[],ARRAY[]::text[],$2,false,false)",[user,scope])).rows[0].n).toBe(0);
  }));
 
 });
