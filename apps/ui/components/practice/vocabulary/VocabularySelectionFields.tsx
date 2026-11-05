@@ -45,8 +45,10 @@ export function VocabularySelectionFields({ value, onChange, language, section="
     </>}
     {section!=="selection"&&<div className={controls.rangeGroup}>
       <div className={s.meaningHeader}><div className={s.heading}><label htmlFor={`${id}-meanings`} className={s.meaningLabel}>{t.meanings}</label><SettingsHelp label={t.meanings} text={t.meaningHelp}/></div><span className={s.meaningSelection}>{selected}</span></div>
+      <div className={s.meaningTrack}>
       <input id={`${id}-meanings`} className={controls.range} type="range" min={0} max={MEANING_LIMIT_STEPS.length-1} step={1} value={MEANING_LIMIT_STEPS.indexOf(value.meanings)} aria-valuetext={selected} onChange={event=>update({meanings:MEANING_LIMIT_STEPS[Number(event.target.value)]})}/>
       <div className={`${controls.sizeTicks} ${s.ticks}`} aria-hidden="true">{MEANING_LIMIT_STEPS.map((limit,index)=><span key={limit} style={{left:`${index/(MEANING_LIMIT_STEPS.length-1)*100}%`}}>{limit==="all"?t.all:limit}</span>)}</div>
+      </div>
     </div>}
     {rangeEdit&&<RangeEditor initialFrom={Number(rangeEdit.from)} initialTo={Number(rangeEdit.to)} language={language} title={t.range} onCancel={()=>setRangeEdit(null)} onApply={(from,to)=>{update({from,to});setRangeEdit(null);}}/>}
   </div>;

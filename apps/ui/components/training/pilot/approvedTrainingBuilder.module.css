@@ -411,12 +411,28 @@
 :global(.session-builder-standard).builder{overflow:hidden}
 :global(.session-builder-standard) .viewport{overscroll-behavior-y:contain}
 
-.sessionSummary{display:block;line-height:1.6;min-block-size:3.2em}
+.sessionSummary{display:block;line-height:inherit}
 
-/* The full all-available label and mix occupy up to four lines on narrow phones. */
-@media (max-width: 360px) {
-  .sessionSummary { min-block-size: 6.4em; }
-}
+
 
 .filterFields { display:grid; gap:24px; }
 .filterFields > .field { margin:0; }
+
+/* Language uses the same title column, padding and left alignment as the sections. */
+.section_group { --builder-title-width:140px; }
+.inline_language {
+  display:grid;
+  grid-template-columns:var(--builder-title-width) minmax(0,1fr) 17px;
+  gap:16px;
+  padding:12.5px 18px;
+  min-height:51px;
+  box-sizing:border-box;
+}
+.inline_language h2 { width:auto; margin:0; font:550 var(--practice-text-body-lg)/normal var(--practice-font-ui); }
+.inline_language > div { min-width:0; justify-self:start; }
+.helpHeading { display:flex; align-items:center; gap:8px; }
+@media(max-width:700px) {
+  .inline_language { padding:11.5px 12px; gap:12px; }
+  .inline_language h2 { font-size:var(--practice-text-body); }
+}
+@media(max-width:430px) { .section_group { --builder-title-width:108px; } }

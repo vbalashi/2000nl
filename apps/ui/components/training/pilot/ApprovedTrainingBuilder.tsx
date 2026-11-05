@@ -6,6 +6,7 @@ import {DEFAULT_VOCABULARY_SELECTION} from "@/lib/vocabulary/selection";
 import {partCode,partId,VOCABULARY_PART_LABELS} from "@/lib/vocabulary/partsOfSpeech";
 import {SourceWordSelection} from "./SourceWordSelection";
 import {usesSourceWordSelection} from "@/lib/training/sourceWordSelection";
+import {SettingsHelp} from "@/components/practice/settings/SettingsHelp";
 import {TrainingAvailabilityStrip} from "./TrainingAvailabilityStrip";
 import type {TrainingAvailabilityState} from "@/lib/training/availability/useTrainingAvailability";
 import {signalOnboarding} from "@/lib/onboarding/signals";
@@ -324,18 +325,14 @@ export function ApprovedTrainingBuilder(p: Props) {
               onChange={next=>p.onDraftChange(current=>{const updated=typeof next==="function"?next(current):next;return current.librarySelection?.labelId?{...updated,librarySelection:current.librarySelection.query||current.librarySelection.languageCode?{query:current.librarySelection.query,category:current.librarySelection.category,...(current.librarySelection.languageCode?{languageCode:current.librarySelection.languageCode}:{})}:undefined}:updated;})}
               disabled={p.languagePending || p.dictionariesLoading}
               expanded={open.includes("source")}
-              onSearchOpen={() => setOpen(current =>
-                current.includes("source") ? current : [...current, "source"],
-              )}
-              renderSection={({ searchAction, filters, content }) => (
+              renderSection={({ toolbar, content }) => (
                 <BuilderSection
                   id={`${uid}-source`}
                   title={b.source}
                   summary={material}
                   open={open.includes("source")}
                   onToggle={() => toggle("source")}
-                  headerActions={searchAction}
-                  headerChoices={filters}
+                  headerChoices={toolbar}
                 >
                   {p.dictionariesLoading && <p role="status" className={s.help}>{c.loadingDictionaries}</p>}
                   {content}
@@ -478,7 +475,11 @@ export function ApprovedTrainingBuilder(p: Props) {
                   </div>
                 </div>
                 <div className={s.field}>
-                  <h2>{b.answerMode}</h2>
+                  <h2 className={s.helpHeading}>{b.answerMode}<SettingsHelp label={b.answerMode} text={{
+                    ru:["Сейчас доступен режим «Показать и оценить»: откройте ответ и оцените, насколько хорошо вы его знали.","«Ввести ответ» и другие способы ответа планируем добавить позже."],
+                    en:["Reveal & self-rate is available now: reveal the answer and rate how well you knew it.","Type the answer and other response modes are planned for later."],
+                    nl:["Tonen en zelf beoordelen is nu beschikbaar: bekijk het antwoord en beoordeel hoe goed je het wist.","Antwoord typen en andere antwoordvormen willen we later toevoegen."],
+                  }[p.interfaceLanguage]}/></h2>
                   <SegmentedControl standard label={b.answerMode}>
                     <BuilderChoice active onClick={() => undefined}>
                       {b.answerModes["Reveal & self-rate"]}

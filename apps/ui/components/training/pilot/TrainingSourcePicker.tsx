@@ -18,7 +18,6 @@ export function TrainingSourcePicker({
   disabled = false,
   renderSection,
   expanded = true,
-  onSearchOpen,
 }: {
   locale: OnboardingLanguage;
   lists: TrainingSetupOption[];
@@ -31,11 +30,9 @@ export function TrainingSourcePicker({
   >;
   disabled?: boolean;
   expanded?: boolean;
-  onSearchOpen?: () => void;
-  /** Keeps query, type and paging state here while the builder places header controls. */
+  /** Keeps query, type and paging state here while the builder places the toolbar. */
   renderSection?: (parts: {
-    searchAction: React.ReactNode;
-    filters: React.ReactNode;
+    toolbar: React.ReactNode;
     content: React.ReactNode;
   }) => React.ReactNode;
 }) {
@@ -106,7 +103,6 @@ export function TrainingSourcePicker({
       onClick={() => {
         if (search) closeSearch();
         else {
-          onSearchOpen?.();
           setSearch(true);
         }
       }}
@@ -220,9 +216,10 @@ export function TrainingSourcePicker({
       </div>
     </div>
   );
-  return renderSection ? renderSection({ searchAction, filters, content }) : (
+  const toolbar=<div className={s.source_toolbar}>{searchAction}{filters}</div>;
+  return renderSection ? renderSection({ toolbar, content }) : (
     <>
-      <div className={s.source_toolbar}>{searchAction}{filters}</div>
+      {toolbar}
       {content}
     </>
   );

@@ -39,3 +39,5 @@
 .meaningLabel, .meaningSelection { font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui); }
 .meaningLabel { color:var(--practice-text-muted); }
 .meaningSelection { color:var(--practice-text-secondary); margin-left:auto; text-align:right; }
+
+.meaningTrack { padding-inline:12px; }

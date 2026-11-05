@@ -31,7 +31,9 @@ Primary navigation has a 34 px visual height and a persistent group background. 
 
 ## Session builder sources
 
-Source uses the ordinary builder heading grid: the chosen source remains beside the title in both states and the chevron stays at the far right. The entire heading toggles the section except its independent search action beside the title. Source type uses the shared `SegmentedControl standard`: All, Dictionaries and Collections appear on a separate row below the expanded heading, independently of search. The header search action is a sibling of the Source disclosure, with its own expanded state and controlled search field. Opening search focuses the field; Escape or closing search clears its query and returns focus to the action. Closing Source also clears search. Type choices and selected material remain intact while search is hidden. Search and disclosure transitions respect reduced motion.
+Source uses the ordinary builder heading grid: the chosen source remains beside the title in both states and the chevron stays at the far right. Language, source, exercises, filters and session share the same title column and vertical centering. Source type uses the shared `SegmentedControl standard`: All, Dictionaries and Collections appear in a toolbar below the expanded heading, with the independent search action before All. The toolbar is hidden and inert while Source is closed. Opening search focuses the field; Escape or closing search clears its query and returns focus to the toolbar action. Closing Source also clears search. Type choices and selected material remain intact while search is hidden. Search and disclosure transitions respect reduced motion.
+
+Session slider labels and selected values share the caption UI font at weight 400. Values stay on one line when space allows and wrap naturally on narrow screens.
 
 The unfinished Word activity controls are hidden. Existing recipe source/time scopes continue to apply unchanged; a compact localized explanation names any active saved scope. Editing another recipe setting must preserve those values.
 

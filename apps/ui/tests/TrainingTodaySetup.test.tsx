@@ -599,16 +599,17 @@ test("approved reverse idiom preview names its expression answer", async () => {
   expect(screen.queryByRole("button", { name: /^Reverse Meaning Words$/ })).not.toBeInTheDocument();
 });
 
-test("Source header search and disclosure are independent and filters remain visible without search",async()=>{
+test("Source toolbar search follows disclosure visibility and preserves type selection",async()=>{
  const dictionaries=Array.from({length:12},(_,index)=>({value:`dictionary-${index}`,label:`Dictionary ${index}`}));
  render(<TrainingTodaySetup {...baseProps} userId="source-search-header" trainingLanguageCode="nl" hasOwnedSession={false} dictionaries={dictionaries}/>);
  fireEvent.click(await screen.findByRole("button",{name:"Create training"}));
  const disclosure=screen.getByRole("button",{name:/^Source /});
- const search=screen.getByRole("button",{name:"Search sources"});
- expect(disclosure.contains(search)).toBe(false);
+ expect(screen.queryByRole("button",{name:"Search sources"})).toBeNull();
  expect(disclosure).toHaveAttribute("aria-expanded","false");
  expect(screen.queryByRole("group",{name:"Source type"})).toBeNull();
  fireEvent.click(disclosure);
+ const search=screen.getByRole("button",{name:"Search sources"});
+ expect(document.getElementById(disclosure.getAttribute("aria-controls")!)).toContainElement(search);
  expect(screen.getByRole("group",{name:"Source type"})).toBeInTheDocument();
  expect(screen.queryByRole("textbox",{name:"Search sources"})).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:"Collections"}));
@@ -621,6 +622,9 @@ test("Source header search and disclosure are independent and filters remain vis
  expect(screen.queryByRole("button",{name:"Dictionary 0"})).toBeNull();
  fireEvent.click(disclosure);
  expect(search).toHaveAttribute("aria-expanded","false");
+ expect(screen.queryByRole("button",{name:"Search sources"})).toBeNull();
+ fireEvent.click(disclosure);
+ expect(screen.queryByRole("textbox",{name:"Search sources"})).toBeNull();
  fireEvent.click(search);
  expect(disclosure).toHaveAttribute("aria-expanded","true");
  expect(screen.getByRole("textbox",{name:"Search sources"})).toHaveValue("");
