@@ -11,7 +11,9 @@ BEGIN
  IF has_function_privilege('anon',helper,'EXECUTE') OR has_function_privilege('authenticated',helper,'EXECUTE')
   OR has_function_privilege('service_role',helper,'EXECUTE') OR has_function_privilege('anon',matcher,'EXECUTE')
   OR has_function_privilege('authenticated',matcher,'EXECUTE') OR has_function_privilege('service_role',matcher,'EXECUTE') THEN RAISE EXCEPTION 'Library filter helper grants'; END IF;
- IF ((length(definition)-length(replace(definition,'private.library_entry_matches_filters_v1','')))/length('private.library_entry_matches_filters_v1')<>6 AND (length(definition)-length(replace(definition,'private.library_entry_selection_matches_v1','')))/length('private.library_entry_selection_matches_v1')<>6)
+ IF ((length(definition)-length(replace(definition,'private.library_entry_matches_filters_v1','')))/length('private.library_entry_matches_filters_v1')<>6 AND (length(definition)-length(replace(definition,'private.library_entry_selection_matches_v1','')))/length('private.library_entry_selection_matches_v1')<>6
+    AND NOT (strpos(definition,'private.library_selected_entry_ids_v1(p_library_selection,ARRAY(')>0
+      AND (length(definition)-length(replace(definition,'IN (SELECT entry_id FROM selected_entries)','')))/length('IN (SELECT entry_id FROM selected_entries)')=6))
   OR strpos(definition,'p_library_selection::text')=0 OR (strpos(definition,'dictionary_entitlements')=0 AND NOT (
      strpos(definition,'public.can_browse_dictionary(p_user_id, dictionary.id)')>0
      AND strpos(definition,'dictionary.kind<>''user'' OR dictionary.owner_user_id=p_user_id')>0

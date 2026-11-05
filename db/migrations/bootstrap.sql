@@ -10,3 +10,4 @@
 \i db/migrations/294_library_search_unfiltered_scope_fast_path.sql
 \i db/migrations/295_editable_release_notes.sql
 \i db/migrations/296_training_vocabulary_batch_selection.sql
+\i db/migrations/297_library_batch_selection.sql

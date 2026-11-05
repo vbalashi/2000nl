@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-296",
+  "contractId": "2000nl-db-297",
   "baseline": {
     "migrationId": 287,
     "file": "db/migrations/287_initial_schema.sql",
@@ -52,11 +52,16 @@
       "migrationId": 296,
       "file": "db/migrations/296_training_vocabulary_batch_selection.sql",
       "sha256": "2718569a2ea11319e7c1dee947e145e8010557a306780cc2982d886c54b3acde"
+    },
+    {
+      "migrationId": 297,
+      "file": "db/migrations/297_library_batch_selection.sql",
+      "sha256": "d3de9f322b89b8a3bcbafd5480cab28c1a92ebc50ac38ab724a875d6b301b474"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-296.sql",
+  "postflightProbe": "db/deploy-contract/postflight-297.sql",
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-296.sql",
-    "sha256": "c4f459542c315b8655cc376b1a162b5b94e6d9a9c376df1e33f25043bcbaae8e"
+    "file": "db/deploy-contract/read-only-postflight-297.sql",
+    "sha256": "654d62dcfb8509e32b966781eb171ec7125bef33b4685e55b813ffa480cda2b0"
   }
 }
