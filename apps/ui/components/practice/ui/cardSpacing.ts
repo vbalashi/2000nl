@@ -10,7 +10,7 @@ export function cardSpacingStyles(
   const airy = value === "airy";
   return {
     "--account-spacing-pair": String(airy ? 5 : 4),
-    "--account-spacing-article-pair": String(airy ? 3 : 2),
+    "--account-spacing-article-pair": String(airy ? 6 : 4),
     "--account-spacing-label": String(airy ? 5 : 4),
     "--account-spacing-item": String(airy ? 16 : 12),
     "--account-spacing-section": String(airy ? 26 : 20),
