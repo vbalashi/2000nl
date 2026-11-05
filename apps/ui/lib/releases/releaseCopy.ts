@@ -1,6 +1,13 @@
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 const en = {
   updates: "Updates",
+  about: "About the app",
+  history: "Recent updates",
+  allUpdates: "All updates",
+  olderUpdates: "Older updates",
+  back: "Back to the app",
+  noHistory: "No update notes have been published yet.",
+  historyUnavailable: "Update notes could not be loaded. Please try again.",
   whatsNew: "What’s new",
   updateHint:
     "Reload 2000nl to apply the latest improvements. Your progress and settings will be kept.",
@@ -30,6 +37,13 @@ const en = {
 };
 const ru: typeof en = {
   updates: "Обновления",
+  about: "О приложении",
+  history: "Последние обновления",
+  allUpdates: "Все обновления",
+  olderUpdates: "Предыдущие обновления",
+  back: "Вернуться в приложение",
+  noHistory: "Заметок об обновлениях пока нет.",
+  historyUnavailable: "Не удалось загрузить заметки. Попробуйте ещё раз.",
   whatsNew: "Что нового",
   updateHint:
     "Перезапустите 2000nl, чтобы применить обновления. Ваш прогресс и настройки сохранятся.",
@@ -37,7 +51,7 @@ const ru: typeof en = {
   version: "Версия",
   available: "Доступна новая версия",
   summary: "Обновите приложение, чтобы получить последние улучшения.",
-  update: "Обновить приложение",
+  update: "Обновить",
   later: "Позже",
   more: "Подробнее",
   check: "Проверить обновления",
@@ -60,6 +74,13 @@ const ru: typeof en = {
 };
 const nl: typeof en = {
   updates: "Updates",
+  about: "Over de app",
+  history: "Recente updates",
+  allUpdates: "Alle updates",
+  olderUpdates: "Eerdere updates",
+  back: "Terug naar de app",
+  noHistory: "Er zijn nog geen updateberichten gepubliceerd.",
+  historyUnavailable: "De updateberichten konden niet worden geladen. Probeer het opnieuw.",
   whatsNew: "Wat is er nieuw",
   updateHint:
     "Herlaad 2000nl om de verbeteringen toe te passen. Je voortgang en instellingen blijven behouden.",

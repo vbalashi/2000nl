@@ -1,0 +1,44 @@
+/* The 44px action family shared by training launch and application updates. */
+.action.action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  min-height: var(--practice-action-height);
+  padding: 0 12px;
+  max-width: 100%;
+  border: 0;
+  border-radius: var(--practice-action-radius);
+  font: 400 var(--practice-text-small)/1.4 var(--practice-font-ui);
+  cursor: pointer;
+}
+.action.primary {
+  background: var(--practice-accent);
+  color: var(--practice-on-accent);
+}
+.action.secondary {
+  border: 1px solid var(--practice-border);
+  background: transparent;
+  color: var(--practice-text-secondary);
+}
+.action.primary:hover:not(:disabled) {
+  background: var(--practice-accent-hover);
+}
+.action.secondary:hover:not(:disabled) {
+  background: var(--practice-surface-hover);
+}
+.action:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.action:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}
+.primary {
+  composes: action;
+}
+.secondary {
+  composes: action;
+}

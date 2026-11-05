@@ -2194,7 +2194,7 @@ function TrainingScreenContent({
       : nextCardOverrideNotice
         ? { kind: "status", message: nextCardOverrideNotice }
         : null;
-  const appRelease = useAppRelease(user.id, navigationBlocked || (hasResumableSession && v2SessionLayoutVisible) || trainingPilot.status === "preparing");
+  const appRelease = useAppRelease(user.id, navigationBlocked || (hasResumableSession && v2SessionLayoutVisible) || trainingPilot.status === "preparing", onboardingLang);
   const studyTimeEnabled = destination === "training" && !detailsOpen && !showHotkeys && !showLanguageSelection && !navigationBlocked && !loadingWord && !sessionAuthorityChecking;
   const prepareOnboarding = (topic:TourTopic,step:number) => {
     const id=tourFlows[topic][step]?.id;

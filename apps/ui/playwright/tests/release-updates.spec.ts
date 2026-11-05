@@ -48,6 +48,85 @@ for (const profile of [
     await expect(
       banner.getByRole("button", { name: "Update app" }),
     ).toBeEnabled();
+    await page
+      .getByRole("button", { name: "Create training", exact: true })
+      .click();
+    const start = page.getByRole("button", {
+      name: "Start training",
+      exact: true,
+    });
+    await expect(start).toBeVisible();
+    const update = banner.getByRole("button", {
+      name: "Update app",
+      exact: true,
+    });
+    const later = banner.getByRole("button", { name: "Later", exact: true });
+    const styleOf = (locator: typeof start) =>
+      locator.evaluate((element) => {
+        const style = getComputedStyle(element),
+          box = element.getBoundingClientRect();
+        return {
+          height: box.height,
+          width: box.width,
+          font: style.fontFamily,
+          size: style.fontSize,
+          weight: style.fontWeight,
+          lineHeight: style.lineHeight,
+          radius: style.borderRadius,
+          color: style.color,
+          background: style.backgroundColor,
+        };
+      });
+    const [launchStyle, updateStyle, laterStyle] = await Promise.all([
+      styleOf(start),
+      styleOf(update),
+      styleOf(later),
+    ]);
+    for (const key of [
+      "font",
+      "size",
+      "weight",
+      "lineHeight",
+      "radius",
+    ] as const) {
+      expect(updateStyle[key]).toBe(launchStyle[key]);
+      expect(laterStyle[key]).toBe(launchStyle[key]);
+    }
+    expect(Math.abs(updateStyle.height - launchStyle.height)).toBeLessThan(1);
+    expect(Math.abs(laterStyle.height - launchStyle.height)).toBeLessThan(1);
+    expect(Math.abs(updateStyle.width - laterStyle.width)).toBeLessThan(1);
+    const contrast = (foreground: string, background: string) => {
+      const luminance = (css: string) => {
+        const channels = css
+          .match(/[\d.]+/g)!
+          .slice(0, 3)
+          .map(Number)
+          .map((value) => {
+            const c = value / 255;
+            return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+          });
+        return (
+          channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
+        );
+      };
+      const a = luminance(foreground),
+        b = luminance(background);
+      return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    };
+    expect(
+      contrast(updateStyle.color, updateStyle.background),
+    ).toBeGreaterThanOrEqual(4.5);
+    const bannerBackground = await banner.evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    );
+    expect(bannerBackground).not.toBe("rgba(0, 0, 0, 0)");
+    const summaryColor = await banner
+      .locator("p")
+      .first()
+      .evaluate((element) => getComputedStyle(element).color);
+    expect(contrast(summaryColor, bannerBackground)).toBeGreaterThanOrEqual(
+      4.5,
+    );
     await page.screenshot({
       path: info.outputPath("banner.png"),
       fullPage: true,
@@ -62,7 +141,9 @@ for (const profile of [
         profile.width < 700 ? "Mobile settings sections" : "Settings sections",
       exact: true,
     });
-    await menu.getByRole("button", { name: "Updates", exact: true }).click();
+    await menu
+      .getByRole("button", { name: "About the app", exact: true })
+      .click();
     await expect(
       page.getByRole("heading", { name: "Two languages on each card" }),
     ).toBeVisible();
@@ -119,7 +200,7 @@ test("active training defers notification and disables update in Settings", asyn
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page
     .getByRole("navigation", { name: "Settings sections", exact: true })
-    .getByRole("button", { name: "Updates", exact: true })
+    .getByRole("button", { name: "About the app", exact: true })
     .click();
   outdated = true;
   await page.getByRole("button", { name: "Check for updates" }).click();

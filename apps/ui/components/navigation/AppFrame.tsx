@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
 import { ReleaseBanner } from "@/components/releases/ReleaseUpdates";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AppDestinationNav, appDestinationLabel } from "./AppDestinationNav";
@@ -103,7 +104,9 @@ export function AppFrame({
         {...headerProps}
         onNavigate={onNavigate}
       />
-      <ReleaseBanner language={headerProps.interfaceLanguage} />
+      <div className={`${practiceTheme.theme} ${styles.releaseSurface}`} data-colour-mode="app">
+        <ReleaseBanner language={headerProps.interfaceLanguage} />
+      </div>
       <main className={styles.content}>{children}</main>
       <div className={styles.tabBar} data-app-mobile-navigation="tabs">
         <AppDestinationNav

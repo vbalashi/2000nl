@@ -29,6 +29,7 @@ import { directionExample } from "@/lib/training/directionExamples";
 import { BuilderSection } from "@/components/practice/builder/BuilderSection";
 import { BuilderChoice } from "@/components/practice/builder/BuilderChoice";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
+import actions from "@/components/practice/ui/launchAction.module.css";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
 import {
   formatExerciseCount,
@@ -560,7 +561,7 @@ export function ApprovedTrainingBuilder(p: Props) {
         <div>
           <button
             type="button"
-            className={s.primary}
+            className={`${s.primary} ${actions.primary}`}
             disabled={p.startDisabled}
             onClick={p.onStart}
           >

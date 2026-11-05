@@ -2,9 +2,11 @@
 import React, { useEffect } from "react";
 import { RefreshCw, ArrowUpRight, Check, AlertCircle } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
+import type { ReleaseHistoryEntry } from "@/lib/releases/appRelease";
 import { releaseCopy } from "@/lib/releases/releaseCopy";
 import { SettingsPanel } from "@/components/practice/settings/SettingsLayout";
 import { useReleaseUpdates } from "./AppReleaseContext";
+import actions from "@/components/practice/ui/launchAction.module.css";
 import s from "./ReleaseUpdates.module.css";
 export function ReleaseDot({ gear = false }: { gear?: boolean }) {
   return (
@@ -35,14 +37,16 @@ export function ReleaseBanner({ language }: { language: OnboardingLanguage }) {
         <RefreshCw size={21} strokeWidth={1.7} />
       </span>
       <div className={s.message}>
-        <h2>{c.available}</h2>
+        <h2>
+          {c.available} <span>{state.release?.build.version}</span>
+        </h2>
         <p lang={news?.locale}>{news ? news.summary : c.summary}</p>
       </div>
-      <div className={s.actions}>
+      <div className={`${s.actions} ${s.bannerActions}`}>
         <Details language={language} />
         <button
           type="button"
-          className={s.primary}
+          className={actions.primary}
           disabled={state.status === "updating"}
           onClick={() => void state.update()}
         >
@@ -54,7 +58,11 @@ export function ReleaseBanner({ language }: { language: OnboardingLanguage }) {
           />
           {state.status === "updating" ? c.updating : c.update}
         </button>
-        <button className={s.secondary} type="button" onClick={state.dismiss}>
+        <button
+          className={actions.secondary}
+          type="button"
+          onClick={state.dismiss}
+        >
           {c.later}
         </button>
       </div>
@@ -119,7 +127,7 @@ export function ReleaseUpdatesSection({
     ? state.release?.build.version
     : state.installed.version;
   return (
-    <SettingsPanel title={c.updates} className={s.panel}>
+    <SettingsPanel title={c.about} className={s.panel}>
       <section className={s.hero} aria-label={c.updates}>
         <span className={s.heroIcon} aria-hidden="true">
           <StatusIcon size={28} strokeWidth={1.6} />
@@ -135,7 +143,7 @@ export function ReleaseUpdatesSection({
           <div className={s.actions}>
             {state.updateAvailable ? (
               <button
-                className={s.primary}
+                className={actions.primary}
                 type="button"
                 disabled={state.unsafe || state.status === "updating"}
                 onClick={() => void state.update()}
@@ -152,7 +160,7 @@ export function ReleaseUpdatesSection({
               </button>
             ) : (
               <button
-                className={s.outline}
+                className={actions.secondary}
                 type="button"
                 disabled={
                   state.status === "checking" || state.status === "updating"
@@ -166,7 +174,13 @@ export function ReleaseUpdatesSection({
           </div>
         </div>
       </section>
-      {news && (
+      {Boolean(state.release?.history?.length) ? (
+        <ReleaseHistory items={state.release!.history!} language={language} />
+      ) : state.release?.historyStatus === "unavailable" ? (
+        <p role="status" className={s.historyNotice}>
+          {c.historyUnavailable}
+        </p>
+      ) : news ? (
         <section className={s.newsSection} aria-label={c.whatsNew}>
           <div className={s.sectionHeading}>
             <h3>{c.whatsNew}</h3>
@@ -178,7 +192,9 @@ export function ReleaseUpdatesSection({
             <Details language={language} />
           </article>
         </section>
-      )}
+      ) : state.release?.historyStatus === "ready" ? (
+        <p className={s.historyNotice}>{c.noHistory}</p>
+      ) : null}
       <footer className={s.buildInfo}>
         <span>
           {c.installed} <strong>{state.installed.version}</strong>
@@ -200,5 +216,97 @@ export function ReleaseUpdatesSection({
         )}
       </footer>
     </SettingsPanel>
+  );
+}
+
+export const releaseHistoryUrl = (
+  language: OnboardingLanguage,
+  version?: string,
+) => `/updates?language=${language}${version ? `#v${version}` : ""}`;
+export function ReleaseHistory({
+  items,
+  language,
+  full = false,
+}: {
+  items: ReleaseHistoryEntry[];
+  language: OnboardingLanguage;
+  full?: boolean;
+}) {
+  const c = releaseCopy(language);
+  const SectionHeading = full ? "h2" : "h3",
+    ArticleHeading = full ? "h3" : "h4";
+  return (
+    <section
+      className={s.newsSection}
+      aria-label={full ? c.allUpdates : c.history}
+    >
+      <div className={s.sectionHeading}>
+        <SectionHeading>{full ? c.allUpdates : c.history}</SectionHeading>
+      </div>
+      <div className={s.historyList}>
+        {items.map((item) => (
+          <article
+            key={item.version}
+            id={`v${item.version}`}
+            className={s.news}
+            lang={item.locale}
+          >
+            <div className={s.historyMeta}>
+              <strong>
+                {c.version} {item.version}
+              </strong>
+              <time dateTime={item.publishedAt}>
+                {new Date(item.publishedAt).toLocaleDateString(language, {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </time>
+            </div>
+            <ArticleHeading>{item.title}</ArticleHeading>
+            <p>{item.summary}</p>
+            {full
+              ? item.details
+                  .split(/\n\n+/)
+                  .filter(Boolean)
+                  .map((paragraph, index) => <p key={index}>{paragraph}</p>)
+              : item.details &&
+                !item.detailsUrl && (
+                  <a
+                    className={s.link}
+                    href={releaseHistoryUrl(language, item.version)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {c.more}
+                    <ArrowUpRight size={15} aria-hidden="true" />
+                  </a>
+                )}
+            {item.detailsUrl && (
+              <a
+                className={s.link}
+                href={item.detailsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {c.more}
+                <ArrowUpRight size={15} aria-hidden="true" />
+              </a>
+            )}
+          </article>
+        ))}
+      </div>
+      {!full && (
+        <a
+          className={s.link}
+          href={releaseHistoryUrl(language)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {c.allUpdates}
+          <ArrowUpRight size={15} aria-hidden="true" />
+        </a>
+      )}
+    </section>
   );
 }

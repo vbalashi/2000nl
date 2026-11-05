@@ -135,3 +135,14 @@ The normal Library searches words, examples and definitions within the same
 server-owned dictionary/material selection. Alphabetical navigation shares its
 word presentation. The [Library search contract](ui/library-search.md) records
 filter, count, cursor and presentation behavior.
+
+
+## Release information
+
+Build identity stays with the running application. Localized release notes live
+in the database and can be corrected independently. The public no-store release
+API serves the exact current version's note and a bounded recent history; the
+full `/updates` page paginates the same catalog. Only the server service role can
+read or edit it. The managed release process owns publication; editorial changes
+do not select an image or authorize deployment. A failed catalog read preserves
+update detection, while older clients retain the schema1 announcement format.
