@@ -135,7 +135,7 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
   const moreLoading = moreRequest?.scopeKey === scopeKey && moreRequest.category === active;
   const moreAvailable = !isWords && current?.complete && current.page?.page.hasMore;
   const countLabel = isWords
-    ? formatLibraryCounts(locale,current?.page?.wordGroupCount ?? wordState?.results.length ?? 0,current?.page?.total)
+    ? formatLibraryCounts(locale,current?.page?.wordGroupCount ?? wordState?.results.length ?? 0,current?.page?.wordGroupCount === undefined ? undefined : current.page.total)
     : formatUiMessage(copy.foundCount, {count:new Intl.NumberFormat(locale).format(hits?.length ?? 0) + (moreAvailable ? "+" : "")});
   return <div className={styles.results}>
     {tabsHost ? createPortal(tabs, tabsHost) : tabs}

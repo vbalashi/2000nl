@@ -112,3 +112,17 @@ test.each(['headwords','alphabetical'] as const)('word category %s uses exact se
   expect(readDictionaryCategory).toHaveBeenCalledTimes(1);expect(hydrateDictionaryWordResults).toHaveBeenCalledTimes(1);
  }finally{host.remove();}
 });
+
+test.each(['headwords','alphabetical'] as const)('legacy %s does not pair loaded articles with a global meaning total',async category=>{
+ vi.mocked(readDictionaryCategory).mockImplementation(async(_scope,id,onPage)=>{
+  const page={id,total:115,items:[{entry:{id:'one',headword:'bank'}}],page:{hasMore:false,nextCursor:null}};onPage(page,true);return page;
+ });
+ const host=document.createElement('span');document.body.appendChild(host);
+ try{
+  render(<LibraryCategoryResults {...props} category={category} countHost={host}/>);
+  await screen.findByTestId('library-headword-group-group-bank');
+  expect(host).toHaveTextContent('Found: 1');
+  expect(host).not.toHaveTextContent('115');
+  expect(readDictionaryCategory).toHaveBeenCalledTimes(1);
+ }finally{host.remove();}
+});
