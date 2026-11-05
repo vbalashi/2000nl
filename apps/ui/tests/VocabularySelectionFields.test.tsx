@@ -188,3 +188,34 @@ test("batched events on both inline wheels retain both boundary changes",()=>{
  });
  expect(from).toHaveAttribute("aria-valuenow","2");expect(to).toHaveAttribute("aria-valuenow","101");
 });
+
+test("batched sibling clamps are acknowledged before the next wheel tick",()=>{
+ render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"100"}));
+ const from=screen.getByRole("spinbutton",{name:"От"}),to=screen.getByRole("spinbutton",{name:"До"});
+ act(()=>{
+  from.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
+  to.dispatchEvent(new WheelEvent("wheel",{deltaY:-32,bubbles:true,cancelable:true}));
+  to.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
+ });
+ expect(from).toHaveAttribute("aria-valuenow","100");expect(to).toHaveAttribute("aria-valuenow","200");
+ fireEvent.wheel(to,{deltaY:-32});
+ act(()=>{
+  to.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
+  from.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
+ });
+ expect(from).toHaveAttribute("aria-valuenow","200");expect(to).toHaveAttribute("aria-valuenow","200");
+});
+test("modal wheels also merge and acknowledge sibling clamps",()=>{
+ render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
+ const dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ fireEvent.click(within(dialog).getByRole("button",{name:"Колёсики"}));fireEvent.click(within(dialog).getByRole("button",{name:"100"}));
+ const from=within(dialog).getByRole("spinbutton",{name:"От"}),to=within(dialog).getByRole("spinbutton",{name:"До"});
+ act(()=>{
+  from.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
+  to.dispatchEvent(new WheelEvent("wheel",{deltaY:-32,bubbles:true,cancelable:true}));
+  to.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
+ });
+ expect(from).toHaveAttribute("aria-valuenow","100");expect(to).toHaveAttribute("aria-valuenow","200");
+ fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
+ expect(screen.getByRole("button",{name:"Изменить диапазон: 100–200"})).toBeInTheDocument();
+});

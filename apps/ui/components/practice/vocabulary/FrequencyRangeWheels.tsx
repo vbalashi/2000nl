@@ -11,9 +11,10 @@ export function FrequencyRangeWheels({from,to,language,onChange}:{from:number;to
  const pending=useRef({from,to});pending.current={from,to};
  const change=(boundary:"from"|"to",next:number)=>{
   const pair=pending.current;
-  const value=boundary==="from"?Math.max(1,Math.min(pair.to,next)):Math.max(pair.from,next);
+  const value=boundary==="from"?Math.max(1,Math.min(pair.to,next)):Math.max(pair.from,Math.min(Number.MAX_SAFE_INTEGER,next));
   pending.current={...pair,[boundary]:value};
   onChange(pending.current.from,pending.current.to);
+  return value;
  };
  return <div className={s.inlineRange}>
   <RangeStepControl value={step} onChange={setStep} label={t.step}/>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useId, useState } from "react";
+import React, { useId, useRef, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { frequencyRangeSteps, validFrequencyRange } from "@/lib/vocabulary/selection";
@@ -24,7 +24,15 @@ export function RangeEditor({initialFrom,initialTo,language,title,onCancel,onApp
  const id=useId(),t=copy[language];
  const [mode,setMode]=useState<Mode>("buttons"),[step,setStep]=useState(1);
  const [draft,setDraft]=useState({from:String(initialFrom),to:String(initialTo)});
+ const pending=useRef(draft);pending.current=draft;
  const from=Number(draft.from),to=Number(draft.to),valid=validFrequencyRange(from,to);
+ const changeWheel=(boundary:Boundary,next:number)=>{
+  const current=pending.current,start=Number(current.from),end=Number(current.to);
+  const value=boundary==="from"?Math.max(1,Math.min(end,next)):Math.max(start,Math.min(Number.MAX_SAFE_INTEGER,next));
+  pending.current={...current,[boundary]:String(value)};
+  setDraft(pending.current);
+  return value;
+ };
  const numbers={from,to};
  const change=(boundary:Boundary,delta:number)=>setDraft(current=>{
   const start=Number(current.from),end=Number(current.to);
@@ -44,7 +52,7 @@ export function RangeEditor({initialFrom,initialTo,language,title,onCancel,onApp
     <RangeStepControl value={step} onChange={setStep} label={t.step}/>
     <div className={mode==="wheel"&&valid?s.wheelColumns:s.boundaries}>{(["from","to"] as const).map(boundary=><div key={boundary} className={controls.rangeGroup} role="group" aria-label={labels[boundary]}>
      {mode==="buttons"||!valid?<label htmlFor={`${id}-${boundary}`} className={controls.label}>{labels[boundary]}</label>:<span className={controls.label}>{labels[boundary]}</span>}
-     {mode==="wheel"&&valid?<NumberWheel value={numbers[boundary]} min={boundary==="from"?1:from} max={boundary==="from"?to:Number.MAX_SAFE_INTEGER} step={step} label={labels[boundary]} language={language} describedBy={`${id}-wheel-help`} onChange={next=>setDraft(current=>({...current,[boundary]:String(next)}))}/>:<div className={s.stepper}>
+     {mode==="wheel"&&valid?<NumberWheel value={numbers[boundary]} min={boundary==="from"?1:from} max={boundary==="from"?to:Number.MAX_SAFE_INTEGER} step={step} label={labels[boundary]} language={language} describedBy={`${id}-wheel-help`} onChange={next=>changeWheel(boundary,next)}/>:<div className={s.stepper}>
       <IconAction className={`${workspace.button} ${s.stepAction}`} label={boundary==="from"?t.minusFrom:t.minusTo} disabled={valid&&(boundary==="from"?from<=1:to<=from)} onClick={()=>change(boundary,-step)}><Minus size={16}/></IconAction>
       {mode==="buttons"||!valid?<input id={`${id}-${boundary}`} aria-label={labels[boundary]} className={`${workspace.field} ${s.stepValue}`} type="number" inputMode="numeric" min={boundary==="from"?1:(valid?from:1)} max={boundary==="from"&&valid?to:Number.MAX_SAFE_INTEGER} step={1} required value={draft[boundary]} onChange={event=>setDraft(current=>({...current,[boundary]:event.target.value}))}/>:<output className={controls.selection} aria-live="polite">{numbers[boundary].toLocaleString(language)}</output>}
       <IconAction className={`${workspace.button} ${s.stepAction}`} label={boundary==="from"?t.plusFrom:t.plusTo} disabled={valid&&(boundary==="from"?from>=to:to>=Number.MAX_SAFE_INTEGER)} onClick={()=>change(boundary,step)}><Plus size={16}/></IconAction>
