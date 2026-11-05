@@ -28,7 +28,7 @@ export function BuilderSection({
   return (
     <section className={s.section}>
       {headerActions || headerChoices ? (
-        <div className={s.controlledHeader} data-open={open}>
+        <div className={`${s.heading} ${s.controlledHeader}`}>
           <div className={s.titleActions}>
             <button
               type="button"
@@ -42,22 +42,21 @@ export function BuilderSection({
               <span id={`${bodyId}-title`} className={s.title}>
                 {title}
               </span>
-              <ChevronDown
-                size={16}
-                aria-hidden="true"
-                className={open ? s.rotated : s.chevron}
-              />
             </button>
-            {headerActions}
+            <div className={s.headerActions}>{headerActions}</div>
           </div>
-          {open && <div className={s.headerChoices}>{headerChoices}</div>}
           <span
             id={`${bodyId}-summary`}
-            className={s.controlledSummary}
+            className={s.summary}
             data-testid={id ? `${id}-summary` : undefined}
           >
             {summary}
           </span>
+          <ChevronDown
+            size={16}
+            aria-hidden="true"
+            className={open ? s.rotated : s.chevron}
+          />
         </div>
       ) : (
         <button
@@ -90,7 +89,10 @@ export function BuilderSection({
         aria-hidden={!open}
       >
         <div>
-          <div className={s.body}>{children}</div>
+          <div className={s.body}>
+            {headerChoices && <div className={s.headerChoices}>{headerChoices}</div>}
+            {children}
+          </div>
         </div>
       </div>
     </section>

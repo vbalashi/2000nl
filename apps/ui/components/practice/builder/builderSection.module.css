@@ -96,23 +96,6 @@
     transition: none;
   }
 }
-:global([data-text-size="large"]) .heading,
-:global([data-text-size="extra"]) .heading {
-  grid-template-columns: 1fr 17px;
-}
-:global([data-text-size="large"]) .summary,
-:global([data-text-size="extra"]) .summary {
-  grid-column: 1/-1;
-  grid-row: 2;
-}
-:global([data-text-size="large"]) .chevron,
-:global([data-text-size="large"]) .rotated,
-:global([data-text-size="extra"]) .chevron,
-:global([data-text-size="extra"]) .rotated {
-  grid-column: 2;
-  grid-row: 1;
-}
-
 /* Approved Session Builder controls */
 :global(.session-builder-standard) .section{background:transparent;border:1px solid color-mix(in srgb,var(--practice-text) 18%,transparent);padding:0;box-sizing:border-box}
 :global(.session-builder-standard) .reveal>div{background:transparent}
@@ -130,31 +113,30 @@
 
 @media(max-width:700px){:global(.session-builder-standard) .heading{grid-template-columns:108px minmax(0,1fr) 17px}}
 
-/* Headers with sibling actions keep the title disclosure and choices independent. */
-.controlledHeader { display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; padding:12px 18px; }
-.titleActions { display:flex; align-items:center; gap:6px; }
-.titleDisclosure { display:flex; align-items:center; gap:8px; min-height:28px; padding:0; border:0; background:transparent; color:inherit; text-align:left; font-family:var(--practice-font-ui); cursor:pointer; }
-.titleDisclosure:focus-visible { outline:2px solid var(--practice-focus); outline-offset:3px; border-radius:4px; }
-.headerChoices { min-width:0; max-width:100%; }
-.controlledSummary { flex-basis:100%; font-size:var(--practice-text-small); color:var(--practice-text-muted); line-height:1.6; overflow-wrap:anywhere; }
-@media(max-width:700px) { .controlledHeader { padding:12px; gap:6px 12px; } .controlledSummary { font-size:var(--practice-text-caption); } }
+/* Text scaling wins over the standard mobile column widths for every section. */
+:global([data-text-size="large"]) .heading,
+:global([data-text-size="extra"]) .heading {
+  grid-template-columns: 1fr 17px;
+}
+:global([data-text-size="large"]) .summary,
+:global([data-text-size="extra"]) .summary {
+  grid-column: 1/-1;
+  grid-row: 2;
+}
+:global([data-text-size="large"]) .chevron,
+:global([data-text-size="large"]) .rotated,
+:global([data-text-size="extra"]) .chevron,
+:global([data-text-size="extra"]) .rotated {
+  grid-column: 2;
+  grid-row: 1;
+}
 
-/* Collapsed summaries align with the ordinary BuilderSection title column. */
-.controlledHeader[data-open="false"] {
-  display:grid;
-  grid-template-columns:140px minmax(0,1fr);
-  min-height:51px;
-  box-sizing:border-box;
-  padding:11.5px 18px;
-}
-.controlledHeader[data-open="false"] .titleActions,
-.controlledHeader[data-open="false"] .titleDisclosure { min-width:0; }
-.controlledHeader[data-open="false"] .controlledSummary { min-width:0; }
-@media(max-width:700px) {
-  .controlledHeader[data-open="false"] {
-    grid-template-columns:108px minmax(0,1fr);
-    padding:11.5px 12px;
-  }
-  .controlledHeader[data-open="false"] .titleActions,
-  .controlledHeader[data-open="false"] .titleDisclosure { gap:4px; }
-}
+/* Reuse the ordinary heading grid; only search sits above its stretched disclosure. */
+.controlledHeader { position:relative; isolation:isolate; }
+.titleActions { display:flex; align-items:center; gap:6px; min-width:0; }
+.titleDisclosure { min-width:0; padding:0; border:0; background:transparent; color:inherit; text-align:left; font-family:var(--practice-font-ui); cursor:pointer; }
+.titleDisclosure::after { content:""; position:absolute; inset:0; cursor:pointer; }
+.titleDisclosure:focus-visible { outline:none; }
+.controlledHeader:has(.titleDisclosure:focus-visible) { outline:2px solid var(--practice-focus); outline-offset:2px; }
+.headerActions { position:relative; z-index:1; display:flex; align-items:center; flex:none; }
+.headerChoices { min-width:0; max-width:100%; margin-bottom:12px; }
