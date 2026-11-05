@@ -28,14 +28,19 @@ not establish that a full dictionary can be counted within the request deadline.
   Assert correct
   counts and enforce a statement timeout below the route deadline. Repeat after
   warming caches and report first-run and repeated timings separately.
+  Include All words with each meaning limit and parent-word selection for Idioms
+  and word-in-context exercises; a fast frequency path does not establish that
+  those paths avoid repeated per-entry work. Compare selected entry IDs against
+  the scalar selection contract, including homonyms, mixed parts of speech,
+  unbound entries, pointer-only or archived first meanings and ordering ties.
 - Exercise the builder with its real availability hook/client: start with ready
   counts, change the meaning limit, return HTTP 503, and verify that loading ends
   with an actionable error without automatic retry. Separately exhaust the bounded
   retries for network errors and HTTP 429. Manual retry must restore counts;
   changing the selection must cancel obsolete work and never show its result.
   Verify the pending state is visible in light and dark themes.
-- For a managed release, the operator must run the same eight-case rank/meaning
-  matrix on staging with the full operator-supplied dictionary and frequency
+- For a managed release, the operator must run the rank/meaning matrix and broad
+  exercise cases on staging with the full operator-supplied dictionary and frequency
   resources, using the exact candidate application revision and database contract.
   Time the authenticated availability route as well as SQL, with production query
   settings and a documented budget below the route deadline. Any timeout,
