@@ -247,3 +247,9 @@ test("a release hint during an older read queues a fresh authoritative read", as
   await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
   await waitFor(() => expect(hook.result.current.release?.announcement?.id).toBe(news.id));
 });
+
+test("a live correction refreshes text for the same target build without forcing a reload or resurfacing a dismissed banner",async()=>{
+ const hook=renderHook(()=>useAppRelease("owner",false));await waitFor(()=>expect(hook.result.current.banner).toBe(true));
+ act(()=>hook.result.current.dismiss());vi.mocked(fetch).mockResolvedValue({ok:true,json:async()=>({...release,announcement:{...news,summary:"Corrected wording."}})} as Response);
+ await act(async()=>{events.listener?.();});await waitFor(()=>expect(hook.result.current.release?.announcement?.summary).toBe("Corrected wording."));expect(hook.result.current.banner).toBe(false);
+});

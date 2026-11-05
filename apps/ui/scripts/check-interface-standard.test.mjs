@@ -32,3 +32,9 @@ test('onboarding and updates cannot regain baseline exemptions',()=>{
 test('Sign out cannot drift back to tiny labels or lose selector specificity',()=>{assert.ok(check(altered(paths.settings,'font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui);cursor:pointer;','font:400 var(--practice-text-label)/1.5 var(--practice-font-ui);cursor:pointer;')).some(error=>error.includes('Sign out')));assert.ok(check({...clean,[paths.settings]:clean[paths.settings].replaceAll('.settings .signOut','.signOut')}).some(error=>error.includes('Sign out')));});
 
 test('retired baseline command fails without rewriting the checked-in file',()=>{const file=resolve(root,'scripts/interface-standard-baseline.json'),before=readFileSync(file,'utf8');const result=spawnSync(process.execPath,[resolve(root,'scripts/check-interface-standard.mjs'),'--write-baseline'],{encoding:'utf8'});assert.equal(result.status,1);assert.match(result.stderr,/baseline is retired/);assert.equal(readFileSync(file,'utf8'),before);});
+
+test('launch and update buttons cannot diverge in geometry or typography',()=>{
+ assert.ok(check(altered(paths.actions,'min-height: var(--practice-action-height)','min-height:36px')).some(error=>error.includes('shared launch/update')));
+ assert.ok(check(altered(paths.actions,'400 var(--practice-text-small)/1.4','400 var(--practice-text-caption)/1.4')).some(error=>error.includes('shared launch/update')));
+ assert.ok(check(altered(paths.release,'from "@/components/practice/ui/launchAction.module.css"','from "./localButtons.module.css"')).some(error=>error.includes('shared launch/update')));
+});

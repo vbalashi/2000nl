@@ -73,7 +73,7 @@ test("real documents update A → B and rollback B → A without clearing storag
     const updates = () =>
       page
         .getByRole("navigation", { name: "Settings sections", exact: true })
-        .getByRole("button", { name: "Updates", exact: true });
+        .getByRole("button", { name: "About the app", exact: true });
     await updates().click();
     await expect(page.getByRole("status")).toContainText("up to date");
     await stop();

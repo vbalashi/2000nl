@@ -5,7 +5,7 @@ import postcss from 'postcss';
 import ts from 'typescript';
 
 const base='components/library/';
-export const paths={css:base+'organization/organization.module.css',theme:'components/practice/ui/practiceTheme.module.css',settings:'components/practice/settings/settings.module.css',personal:base+'organization/PersonalCollections.tsx',owned:base+'sharing/OwnedSharedCollections.tsx',received:base+'sharing/ReceivedCollections.tsx',sort:base+'organization/CollectionSortControl.tsx',shared:base+'sharing/SharedCollectionsWorkspace.tsx'};
+export const paths={css:base+'organization/organization.module.css',theme:'components/practice/ui/practiceTheme.module.css',settings:'components/practice/settings/settings.module.css',personal:base+'organization/PersonalCollections.tsx',owned:base+'sharing/OwnedSharedCollections.tsx',received:base+'sharing/ReceivedCollections.tsx',sort:base+'organization/CollectionSortControl.tsx',shared:base+'sharing/SharedCollectionsWorkspace.tsx',actions:'components/practice/ui/launchAction.module.css',release:'components/releases/ReleaseUpdates.tsx',builder:'components/training/pilot/ApprovedTrainingBuilder.tsx'};
 /** Bounded collection presentation contract; intentionally not a legacy-wide style linter. */
 export function checkInterfaceStandard(read){
  const errors=[];
@@ -28,6 +28,15 @@ export function checkInterfaceStandard(read){
  const settings=postcss.parse(read(paths.settings));let signOut=false;
  settings.walkRules(rule=>{if(!rule.selectors.includes('.settings .signOut'))return;rule.walkDecls(decl=>{if(decl.prop==='font'){signOut=true;if(decl.value!=='400 var(--practice-text-caption)/1.5 var(--practice-font-ui)')fail(paths.settings,'Sign out must use caption typography at desktop specificity');}if(decl.prop==='font-size'&&decl.value!=='var(--practice-text-body)')fail(paths.settings,'Sign out mobile size must use body typography');});});
  if(!signOut)fail(paths.settings,'Sign out needs its scoped semantic caption font');
+ const actions=postcss.parse(read(paths.actions));
+ for(const [property,value] of [['min-height','var(--practice-action-height)'],['border-radius','var(--practice-action-radius)'],['font','400 var(--practice-text-small)/1.4 var(--practice-font-ui)']]){
+  let matches=false;actions.walkRules(rule=>{if(rule.selector!=='.action.action')return;rule.walkDecls(property,decl=>{if(decl.value===value)matches=true;});});
+  if(!matches)fail(paths.actions,`shared launch/update actions must use ${property}: ${value}`);
+ }
+ for(const key of ['release','builder']){
+  const source=read(paths[key]);
+  if(!source.includes('from "@/components/practice/ui/launchAction.module.css"')||!source.includes('actions.primary'))fail(paths[key],'must use shared launch/update actions');
+ }
  const theme=postcss.parse(read(paths.theme));
  for(const [token,size] of [['caption',12],['body',14],['body-lg',16]]){
   const prop=`--practice-text-${token}`;let found=false;

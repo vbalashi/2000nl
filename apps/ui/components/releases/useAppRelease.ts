@@ -5,6 +5,7 @@ import {
   subscribeAppEvents,
   subscribeAppEventConnection,
 } from "@/lib/events/appEvents";
+import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { appVersionInfo } from "@/lib/appVersion";
 import {
   buildIdentity,
@@ -39,7 +40,7 @@ function write(key: string, value: string) {
   }
 }
 
-export function useAppRelease(ownerId: string, unsafe: boolean) {
+export function useAppRelease(ownerId: string, unsafe: boolean, language: OnboardingLanguage = "en") {
   const [release, setRelease] = useState<AppRelease | null>(null);
   const [status, setStatus] = useState<ReleaseStatus>("checking");
   const [seen, setSeen] = useState<string | null>(null);
@@ -86,7 +87,7 @@ export function useAppRelease(ownerId: string, unsafe: boolean) {
     }, 5000);
     const task = (async () => {
       try {
-        const response = await fetch("/api/app-release", {
+        const response = await fetch(language === "en" ? "/api/app-release" : `/api/app-release?language=${language}`, {
           cache: "no-store",
           signal: abort.signal,
         });
@@ -121,7 +122,7 @@ export function useAppRelease(ownerId: string, unsafe: boolean) {
     })();
     request.current = task;
     return task;
-  }, []);
+  }, [language]);
   useEffect(() => {
     void check(true);
     const focused = () => {
@@ -178,6 +179,8 @@ export function useAppRelease(ownerId: string, unsafe: boolean) {
     return () => {
       disposed = true;
       clearTimeout(timer);
+      controller.current?.abort();
+      request.current = null;
       unsubscribe();
       unsubscribeConnection();
       window.removeEventListener("focus", focused);

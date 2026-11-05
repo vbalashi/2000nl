@@ -104,10 +104,10 @@ test("Updates navigation marks news read, keeps update action and active page di
   fireEvent.click(
     within(
       screen.getByRole("navigation", { name: "Settings sections" }),
-    ).getByRole("button", { name: "Updates" }),
+    ).getByRole("button", { name: "About the app" }),
   );
   expect(value.markRead).toHaveBeenCalledOnce();
-  expect(screen.getByRole("heading", { name: "Updates" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "About the app" })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Update app" })).toBeEnabled();
 });
 test("busy session disables update and explains why; absent news has no empty article", () => {
@@ -123,4 +123,11 @@ test("busy session disables update and explains why; absent news has no empty ar
   expect(screen.getByRole("button", { name: "Update app" })).toBeDisabled();
   expect(screen.getByRole("status")).toHaveTextContent("Finish your training");
   expect(screen.queryByRole("article")).toBeNull();
+});
+
+test("About lists recent versioned notes and links to the full history without showing older notes as current news",()=>{
+ const history=[{id:"release-0.19.22",version:"0.19.22",publishedAt:"2026-11-05T15:00:00Z",locale:"en" as const,title:"Clearer updates",summary:"Shorter notes and matching controls.",details:"Full details.",revision:2}];
+ render(<AppReleaseContext.Provider value={state({release:{schemaVersion:1,build:installed,announcement:null,history}})}><ReleaseUpdatesSection language="en"/></AppReleaseContext.Provider>);
+ expect(screen.getByRole("heading",{name:"Recent updates"})).toBeInTheDocument();expect(screen.getByText("Version 0.19.22")).toBeInTheDocument();
+ expect(screen.getByRole("link",{name:/All updates/})).toHaveAttribute("href","/updates?language=en");expect(screen.getByRole("link",{name:/Read more/})).toHaveAttribute("href","/updates?language=en#v0.19.22");
 });
