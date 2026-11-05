@@ -4,3 +4,6 @@
 .empty { color: var(--practice-text-muted); font-size: var(--practice-text-small); padding: 16px 10px; }
 .match { font-weight: 650; color: inherit; }
 .results button:focus-visible { outline: 2px solid var(--practice-focus); outline-offset: -2px; }
+
+.more { padding: 16px 10px; color: var(--practice-text-muted); font-size: var(--practice-text-small); }
+.more p { margin-bottom: 8px; }

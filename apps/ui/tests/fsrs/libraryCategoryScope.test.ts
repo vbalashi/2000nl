@@ -70,4 +70,24 @@ describe.skipIf(!url)('normal Library category scope',()=>{
   },owner);
  });
 
+ test('unfiltered context search never invokes a per-entry lexical predicate',async()=>{
+  const user=randomUUID();
+  await withTransaction(pool,async c=>{
+   await ensureUserWithSettings(c,user);
+   const dictionary=(await c.query("insert into dictionaries(language_code,slug,name,kind,visibility) values('nl',$1,'Fast scope fixture','curated','system') returning id",['fast-'+randomUUID()])).rows[0].id;
+   const entry=(await c.query("insert into word_entries(dictionary_id,language_code,headword,meaning_id,part_of_speech,raw) values($1,'nl','fiets',1,'zn',$2) returning id",[dictionary,{meanings:[{definition:'Een fiets.',examples:['De fiets rijdt.']}]}])).rows[0].id;
+   await c.query('select refresh_dictionary_search_document($1,2)',[entry]);
+   // The old scope performed this non-inlineable call once for every eligible entry.
+   // Transaction-local instrumentation proves the no-filter path avoids it entirely.
+   await c.query(`create or replace function private.library_entry_matches_filters_v1(p_part text,p_gender text,p_selection jsonb) returns boolean language plpgsql immutable as $spy$ begin raise exception 'lexical_predicate_called'; end $spy$`);
+   for(const group of ['examples','definitions']){
+    const payload=(await c.query("select search_library_category_v1($1,'fiets','nl',array[$2::uuid],'{}',null,$3,50,null) p",[user,dictionary,group])).rows[0].p;
+    expect(payload.groups[0].items).toHaveLength(1);
+   }
+   await c.query('savepoint filtered');
+   await expect(c.query("select search_library_category_v1($1,'fiets','nl',array[$2::uuid],'{\"parts\":[\"noun\"],\"article\":null}',null,'examples',50,null)",[user,dictionary])).rejects.toThrow('lexical_predicate_called');
+   await c.query('rollback to savepoint filtered');
+  },user);
+ });
+
 });

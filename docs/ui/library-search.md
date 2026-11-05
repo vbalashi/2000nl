@@ -25,9 +25,11 @@ localized format (for example, `Found: 9`). It remains visible while results
 scroll. Filter drafts preview the same active category and use the same counter
 format. Drafts do not alter the applied main search until Apply.
 
-Examples and definitions load all cursor pages automatically. The final count
-appears only after completion. Failure does not turn a partial list into a final
-count; retry retains the selected scope. Requests are cancelled when query,
+Examples and definitions load 50 matches at a time. More pages require an explicit
+“More 50” action; opening a category or filter draft never enumerates unseen
+matches for a total. The counter shows the loaded matches with “+” while more
+exist, and an exact count only when the last page is reached. A continuation
+failure retains the current list and retries the same cursor. Requests are cancelled when query,
 account, filters, material preferences or refresh ownership changes. Changes to selected sources, account material preferences and collection
 membership invalidate scope-bound cursors rather than broadening results.
 
