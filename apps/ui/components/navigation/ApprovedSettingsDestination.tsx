@@ -43,7 +43,7 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
     { id: "dictionaries", label: copy.dictionaries, Icon: Library },
     { id: "appearance", label: copy.appearance, Icon: Palette },
     { id: "shortcuts", label: copy.shortcuts, Icon: Keyboard },
-    { id: "updates", label: releaseCopy(props.interfaceLanguage).updates, Icon: RefreshCw, badge: updates?.attention ? <ReleaseDot /> : undefined },
+    { id: "updates", label: releaseCopy(props.interfaceLanguage).about, Icon: RefreshCw, badge: updates?.attention ? <ReleaseDot /> : undefined },
     { id: "billing", label: copy.billing, Icon: CreditCard },
     { id: "account", label: copy.account, Icon: UserRound },
   ] as const;
