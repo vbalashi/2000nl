@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { LibraryPresentationContext } from "@/components/practice/library/LibraryPresentationContext";
 import { TrainingBuilderPresentationContext } from "@/components/practice/builder/TrainingBuilderPresentationContext";
+import { MaterialKindSelection, MaterialKindHelp, materialKindSummary } from "@/components/practice/vocabulary/MaterialKindSelection";
 import { VocabularySelectionFields } from "@/components/practice/vocabulary/VocabularySelectionFields";
 import { LibrarySortControl, type LibrarySort } from "@/components/practice/library/LibrarySortControl";
 import { BuilderSection } from "@/components/practice/builder/BuilderSection";
@@ -15,11 +16,11 @@ const copy={ru:{title:"Отбор слов и значения",note:"Новые
  */
 export function VocabularyFilterReview({children}:{children:React.ReactNode}){
  const [applied,setApplied]=useState(initial),[draft,setDraft]=useState(initial),[training,setTraining]=useState(initial);
- const [sort,setSort]=useState<LibrarySort>("alphabetical"),[open,setOpen]=useState(true);
+ const [sort,setSort]=useState<LibrarySort>("alphabetical"),[open,setOpen]=useState(true),[materialOpen,setMaterialOpen]=useState(true);
  const fields=(language:OnboardingLanguage,value:VocabularySelection,onChange:(value:VocabularySelection)=>void)=><><VocabularySelectionFields language={language} value={value} onChange={onChange}/><p className={s.note}>{copy[language].note}</p></>;
  return <LibraryPresentationContext.Provider value={{
    renderSearchActions:language=><LibrarySortControl language={language} value={sort} onChange={setSort} reviewNotice={{ru:"Проверка вида: порядок слов пока не меняется",en:"UI review: word order does not change yet",nl:"Interfacebeoordeling: de woordvolgorde blijft gelijk"}[language]}/>,
-   renderAdditionalFilters:language=><BuilderSection title={copy[language].title} summary="" open={open} onToggle={()=>setOpen(current=>!current)}>{fields(language,draft,setDraft)}</BuilderSection>,
+   renderAdditionalFilters:language=><><BuilderSection title={{ru:"Материал",en:"Material",nl:"Materiaal"}[language]} summary={materialKindSummary(draft.materialKinds,language)} headerActions={<MaterialKindHelp language={language}/>} open={materialOpen} onToggle={()=>setMaterialOpen(current=>!current)}><MaterialKindSelection value={draft.materialKinds} onChange={materialKinds=>setDraft(current=>({...current,materialKinds}))} language={language}/></BuilderSection><BuilderSection title={copy[language].title} summary="" open={open} onToggle={()=>setOpen(current=>!current)}>{fields(language,draft,setDraft)}</BuilderSection></>,
    onApplyAdditionalFilters:()=>setApplied(draft),onDismissAdditionalFilters:()=>setDraft(applied),onResetAdditionalFilters:()=>setDraft(DEFAULT_VOCABULARY_SELECTION),
  }}><TrainingBuilderPresentationContext.Provider value={{renderAdditionalFilters:language=><div className={s.trainingFields}>{fields(language,training,setTraining)}</div>}}>{children}</TrainingBuilderPresentationContext.Provider></LibraryPresentationContext.Provider>;
 }

@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { beforeEach, expect, test, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { VocabularySelectionFields } from "@/components/practice/vocabulary/VocabularySelectionFields";
+import { MaterialKindSelection } from "@/components/practice/vocabulary/MaterialKindSelection";
+import type { VocabularyMaterialKind } from "@/lib/vocabulary/selection";
 import { LibrarySortControl, type LibrarySort } from "@/components/practice/library/LibrarySortControl";
 import { DEFAULT_VOCABULARY_SELECTION, type VocabularySelection } from "@/lib/vocabulary/selection";
 beforeEach(()=>{
@@ -68,4 +70,43 @@ test("either coincident boundary can be separated by a pointer drag",()=>{
 test("the sort review limitation is available before opening the menu",()=>{
  render(<LibrarySortControl value="alphabetical" onChange={()=>{}} language="ru" reviewNotice="Порядок слов пока не меняется"/>);
  expect(screen.getByRole("button",{name:"Сортировка: По алфавиту"})).toHaveAccessibleDescription("Порядок слов пока не меняется");
+});
+
+test("meaning guidance uses paragraphs and is not permanently repeated below the slider",()=>{
+ render(<Fields/>);
+ expect(screen.queryByText("У каждой отдельной статьи берём первые 2 значения. Если их меньше, берём все.")).not.toBeInTheDocument();
+ const help=screen.getByRole("button",{name:"? Значений на статью"});
+ const popup=document.getElementById(help.getAttribute("aria-controls")!)!;
+ expect(popup.querySelectorAll("p")).toHaveLength(3);
+ expect(popup).toHaveTextContent("Например, lopen");
+ expect(popup).toHaveTextContent("Третье вместо них не добавляем");
+});
+test("button adjustment changes exact values without typing and applies only on Done",()=>{
+ render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
+ const dialog=screen.getByRole("dialog",{name:"Места в списке"});
+ fireEvent.click(within(dialog).getByRole("button",{name:"Кнопки"}));
+ expect(within(dialog).queryByRole("spinbutton")).not.toBeInTheDocument();
+ fireEvent.click(within(dialog).getByRole("button",{name:"10"}));
+ fireEvent.click(within(dialog).getByRole("button",{name:"Увеличить начало"}));
+ fireEvent.click(within(dialog).getByRole("button",{name:"Увеличить конец"}));
+ expect(screen.getByRole("button",{name:"Изменить диапазон: 1–100"})).toBeInTheDocument();
+ fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
+ expect(screen.getByRole("button",{name:"Изменить диапазон: 11–110"})).toBeInTheDocument();
+});
+test("two sliders can be refined by one without opening a numeric field",()=>{
+ render(<Fields/>);fireEvent.click(screen.getByRole("button",{name:"Изменить диапазон: 1–100"}));
+ const dialog=screen.getByRole("dialog",{name:"Места в списке"});fireEvent.click(within(dialog).getByRole("button",{name:"Две шкалы"}));
+ expect(within(dialog).queryByRole("spinbutton")).not.toBeInTheDocument();
+ fireEvent.change(within(dialog).getByRole("slider",{name:"Шкала начала диапазона"}),{target:{value:"1"}});
+ fireEvent.click(within(dialog).getByRole("button",{name:"Увеличить начало"}));
+ fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
+ expect(screen.getByRole("button",{name:"Изменить диапазон: 51–100"})).toBeInTheDocument();
+});
+test("material types are separate from parts of speech and can be combined",()=>{
+ function Kinds(){const [value,setValue]=useState<VocabularyMaterialKind[]>([]);return <MaterialKindSelection value={value} onChange={setValue} language="ru"/>;}
+ render(<Kinds/>);expect(screen.getByRole("button",{name:"Всё"})).toHaveAttribute("aria-pressed","true");
+ fireEvent.click(screen.getByRole("button",{name:"Выражения"}));fireEvent.click(screen.getByRole("button",{name:"Предложения"}));
+ expect(screen.getByRole("button",{name:"Выражения"})).toHaveAttribute("aria-pressed","true");expect(screen.getByRole("button",{name:"Предложения"})).toHaveAttribute("aria-pressed","true");
+ expect(screen.getByRole("button",{name:"Слова"})).toHaveAttribute("aria-pressed","false");
+ fireEvent.click(screen.getByRole("button",{name:"Всё"}));expect(screen.getByRole("button",{name:"Выражения"})).toHaveAttribute("aria-pressed","false");
 });

@@ -17,3 +17,12 @@
 .ticks>span:first-child{transform:none}
 .ticks>span:last-child{transform:translateX(-100%)}
 @media(max-width:600px){.frequencyTicks>span:not(:first-child):not(:last-child){display:none}}
+
+.rangeDialog{max-height:calc(100dvh - 24px);overflow:auto}
+.rangeInputs{margin-top:20px}
+.stepChoice{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px}
+.boundaries{display:grid;gap:20px;margin-top:20px}
+.stepper{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:12px;align-items:center;margin-top:8px}
+.stepper output{text-align:center;overflow-wrap:anywhere}
+.stepAction.stepAction{min-height:44px;min-width:44px;padding:0}
+.rangeActions{position:sticky;bottom:-20px;padding-block:12px 0;background:var(--practice-surface)}
