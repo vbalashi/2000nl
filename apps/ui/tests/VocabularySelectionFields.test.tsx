@@ -179,3 +179,12 @@ test("batched native wheel events retain every increment",()=>{
  act(()=>{for(let n=0;n<3;n++)wheel.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));});
  expect(wheel).toHaveAttribute("aria-valuenow","4");
 });
+
+test("batched events on both inline wheels retain both boundary changes",()=>{
+ render(<Fields/>);const from=screen.getByRole("spinbutton",{name:"От"}),to=screen.getByRole("spinbutton",{name:"До"});
+ act(()=>{
+  from.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
+  to.dispatchEvent(new WheelEvent("wheel",{deltaY:32,bubbles:true,cancelable:true}));
+ });
+ expect(from).toHaveAttribute("aria-valuenow","2");expect(to).toHaveAttribute("aria-valuenow","101");
+});
