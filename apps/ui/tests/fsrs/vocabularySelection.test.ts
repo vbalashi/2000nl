@@ -226,26 +226,20 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
    expect(calls).toBeLessThanOrEqual(20);
   }
  }));
- test("meaning sibling lookups retain indexed planning inside the broad scheduler",()=>withTransaction(pool,async c=>{
-  const {entries,dictionary}=await fixture(c);
-  await c.query(`insert into word_entries(dictionary_id,language_code,headword,meaning_id,part_of_speech,raw)
-   select $1,'nl','planner-unrelated-'||n,1,'zn','{}'::jsonb from generate_series(1,1000) n`,[dictionary]);
-  await c.query("create sequence private.vocabulary_normalization_test_calls");
-  await c.query("alter function private.normalize_training_part_of_speech_v1(text) rename to normalize_training_part_of_speech_test_original");
-  await c.query(`create function private.normalize_training_part_of_speech_v1(p_value text) returns text
-   language plpgsql immutable set search_path=pg_catalog,public,private,pg_temp as $$
+ test("meaning selection keeps its planner setting inside a broad caller",()=>withTransaction(pool,async c=>{
+  const {entries}=await fixture(c);
+  // Observe the selector's actual call context without mutating an immutable
+  // index expression or asserting a planner choice that depends on statistics.
+  await c.query("alter function private.valid_vocabulary_selection_v1(jsonb) rename to valid_vocabulary_selection_test_original");
+  await c.query(`create function private.valid_vocabulary_selection_v1(p_value jsonb) returns boolean
+   language plpgsql stable set search_path=pg_catalog,public,private,pg_temp as $$
    begin
-    perform nextval('private.vocabulary_normalization_test_calls');
-    return private.normalize_training_part_of_speech_test_original(p_value);
+    if current_setting('enable_nestloop') <> 'on' then raise exception 'inherited_scheduler_nested_loop_setting'; end if;
+    return private.valid_vocabulary_selection_test_original(p_value);
    end; $$`);
-  // Match the caller's planner configuration. The narrow predicate must not
-  // inherit the broad scheduler's disabled nested loops and rescan every word.
   await c.query("set local enable_nestloop=off");
   expect((await c.query("select private.vocabulary_entry_selected_v1($1,$2) selected",[entries['vocabfiets:zn'][0],{...options,meanings:1}])).rows[0].selected).toBe(true);
-  const calls=Number((await c.query("select last_value from private.vocabulary_normalization_test_calls")).rows[0].last_value);
   expect((await c.query('show enable_nestloop')).rows[0].enable_nestloop).toBe('off');
-  expect(calls).toBeGreaterThan(0);
-  expect(calls).toBeLessThanOrEqual(20);
  }));
  test.each(['bound-homonyms','unbound','mixed-bindings','pointer-first','archived-first','tied-source-order','tied-fallback-order'])("batch membership matches scalar selection: %s",variant=>withTransaction(pool,async c=>{
   const {entries}=await fixture(c,variant==='archived-first');const nouns=entries['vocabfiets:zn'];
