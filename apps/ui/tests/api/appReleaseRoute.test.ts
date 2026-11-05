@@ -42,7 +42,7 @@ test("metadata reads live notes for the exact served version and locale without 
     items: [note("0.19.22", "Corrected live wording.")],
     nextVersion: null,
   });
-  expect((await (await GET()).json()).announcement.summary).toBe(
+  expect((await (await GET(new Request("http://localhost/api/app-release"))).json()).announcement.summary).toBe(
     "Corrected live wording.",
   );
 });
@@ -51,13 +51,13 @@ test("an older story is kept in history and is never reused as this version's an
     items: [note("0.19.21")],
     nextVersion: null,
   });
-  const result = await (await GET()).json();
+  const result = await (await GET(new Request("http://localhost/api/app-release"))).json();
   expect(result.announcement).toBeNull();
   expect(result.history[0].version).toBe("0.19.21");
 });
 test("editorial storage failure does not hide the real build or block updating", async () => {
   catalog.read.mockRejectedValue(new Error("offline"));
-  const result = await (await GET()).json();
+  const result = await (await GET(new Request("http://localhost/api/app-release"))).json();
   expect(result.build.version).toBe("0.19.22");
   expect(result.announcement).toBeNull();
   expect(result.historyStatus).toBe("unavailable");

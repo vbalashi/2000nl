@@ -6,10 +6,10 @@ import {
   releaseLanguage,
 } from "@/lib/releases/releaseCatalogServer";
 export const dynamic = "force-dynamic";
-export async function GET(request?: Request) {
+export async function GET(request: Request) {
   const { version, commit, buildTimestamp } = appVersionInfo();
   const language = releaseLanguage(
-    request ? new URL(request.url).searchParams.get("language") : null,
+    new URL(request.url).searchParams.get("language"),
   );
   // Release identity must remain available even if editorial storage is temporarily unavailable.
   let historyStatus: "ready" | "unavailable" = "ready";
