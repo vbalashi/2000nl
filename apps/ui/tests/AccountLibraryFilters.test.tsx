@@ -7,7 +7,7 @@ import type { LibraryFilterDraft } from "@/components/practice/library/LibraryFi
 import {CollectionSelectionContext} from '@/components/library/sharing/CollectionSelectionContext';
 vi.mock('@/components/library/sharing/BrowseCollectionSources',()=>({BrowseCollectionSources:({onSelect,select}:{onSelect:(row:any)=>void;select:(id:string)=>void})=><button onClick={()=>{const row={id:'75600000-0000-4000-8000-000000000001',name:'Fresh remote lesson',ownership:'received',isShared:true,itemCount:2,labelIds:[],createdAt:'2026-01-01T00:00:00Z'};onSelect(row);select('collection:'+row.id);}}>Choose remote lesson</button>}));
 const mocked = vi.hoisted(() => ({
-  fetchPage: vi.fn(), fetchList:vi.fn(),
+  fetchPage: vi.fn(), fetchList:vi.fn(), categoryRead:vi.fn(),
   labels: {snapshot:null as null | {revision:number;labels:{id:string;parent_id:null;name:string;description:null;created_at:string;updated_at:string}[];assignments:[]},loading:false,error:null as string|null,refresh:vi.fn()},
   material: {
     status: "ready", currentLanguageAllowed: true,
@@ -26,6 +26,9 @@ vi.mock("@/components/practice/material/useLibraryMaterialSelection", () => ({
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
   fetchPlatformV2LibraryGroupPage: mocked.fetchPage,
 }));
+vi.mock("@/lib/platform/dictionaryCategorySearch",async importOriginal=>({
+ ...await importOriginal<typeof import("@/lib/platform/dictionaryCategorySearch")>(),readDictionaryCategory:mocked.categoryRead,
+}));
 vi.mock("@/lib/trainingService",()=>({fetchWordsForList:mocked.fetchList}));
 const value: LibraryFilterDraft = { languageCode: "nl", dictionaryId: null, parts: [], article: null };
 const props = { value, query: "goed", locale: "en" as const, onClose: vi.fn(), onApply: vi.fn() };
@@ -34,6 +37,7 @@ afterEach(()=>{vi.unstubAllEnvs();});
 
 beforeEach(() => {
   mocked.fetchPage.mockReset();
+  mocked.categoryRead.mockReset();
   mocked.labels.snapshot=null;mocked.labels.error=null;mocked.labels.loading=false;
   vi.stubEnv("NEXT_PUBLIC_COLLECTION_ORGANIZATION_ENABLED","false");
   mocked.material.status = "ready";
@@ -140,4 +144,13 @@ test('a remote choice appears in the Source summary and is reported only on Appl
  fireEvent.click(screen.getByRole('button',{name:/^Source/}));fireEvent.click(await screen.findByRole('button',{name:'Choose remote lesson'}));
  await waitFor(()=>expect(screen.getByRole('button',{name:/^Source/})).toHaveTextContent('Fresh remote lesson'));expect(screen.getByRole('button',{name:/^Source/})).not.toHaveTextContent('No sources');expect(selected).not.toHaveBeenCalled();
  await waitFor(()=>expect(screen.getByRole('button',{name:'Show results'})).toBeEnabled());fireEvent.click(screen.getByRole('button',{name:'Show results'}));expect(selected).toHaveBeenCalledWith(expect.objectContaining({name:'Fresh remote lesson',ownership:'received'}));
+});
+
+test('context draft shows a lower-bound count from one page without article hydration',async()=>{
+ mocked.categoryRead.mockResolvedValue({items:Array.from({length:50},(_,i)=>({entry:{id:String(i),headword:'fiets'}})),page:{hasMore:true,nextCursor:'next'}});
+ render(<AccountLibraryFilters {...props} query='fiets' category='examples'/>);
+ await screen.findByText('Found: 50+');
+ expect(mocked.categoryRead).toHaveBeenCalledTimes(1);
+ expect(mocked.categoryRead.mock.calls[0][1]).toBe('examples');
+ expect(mocked.fetchPage).not.toHaveBeenCalled();
 });

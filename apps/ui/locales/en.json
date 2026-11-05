@@ -222,9 +222,11 @@
       "empty": "No matches",
       "prompt": "Enter a word or part of a sentence.",
       "busy": "Searching…",
-      "error": "Could not load all results.",
+      "error": "Could not load results.",
       "retry": "Retry",
-      "loadingAll": "Loading all matches…",
+      "more": "More {count}",
+      "loadingMore": "Loading…",
+      "moreError": "Could not load more results.",
       "foundCount": "Found: {count}"
     },
     "activeTrainingCard": {
@@ -501,6 +503,8 @@
         "Conjunctions": "Conjunctions",
         "Numerals": "Numerals",
         "Articles": "Articles",
+        "Abbreviations": "Abbreviations",
+        "Prefixes": "Prefixes",
         "Interjections": "Interjections"
       },
       "balance": [

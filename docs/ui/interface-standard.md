@@ -31,7 +31,9 @@ Primary navigation has a 34 px visual height and a persistent group background. 
 
 ## Session builder sources
 
-Source uses the ordinary builder heading grid: the chosen source remains beside the title in both states and the chevron stays at the far right. The entire heading toggles the section except its independent search action beside the title. Source type uses the shared `SegmentedControl standard`: All, Dictionaries and Collections appear on a separate row below the expanded heading, independently of search. The header search action is a sibling of the Source disclosure, with its own expanded state and controlled search field. Opening search focuses the field; Escape or closing search clears its query and returns focus to the action. Closing Source also clears search. Type choices and selected material remain intact while search is hidden. Search and disclosure transitions respect reduced motion.
+Source uses the ordinary builder heading grid: the chosen source remains beside the title in both states and the chevron stays at the far right. Language, source, exercises, filters and session share the same title column and vertical centering. Source type uses the shared `SegmentedControl standard`: All, Dictionaries and Collections appear in a toolbar below the expanded heading, with the independent search action before All. The toolbar is hidden and inert while Source is closed. Opening search focuses the field; Escape or closing search clears its query and returns focus to the toolbar action. Closing Source also clears search. Type choices and selected material remain intact while search is hidden. Search and disclosure transitions respect reduced motion.
+
+Session slider labels and selected values share the caption UI font at weight 400. Values stay on one line when space allows and wrap naturally on narrow screens.
 
 The unfinished Word activity controls are hidden. Existing recipe source/time scopes continue to apply unchanged; a compact localized explanation names any active saved scope. Editing another recipe setting must preserve those values.
 
@@ -58,3 +60,19 @@ The [baseline audit](interface-exceptions-audit.md) classifies the initial 65 en
 The ordinary text scale remains 11/12/13/14/16/18/20/24px and larger named display roles. Special presentation sizes live with the theme, not as local exceptions: `--practice-brand-size` (26px), compact brand cap (22px), headword article proportion (.55em), literal translation proportion (.85em), recall-target size (title ×1.5), and face-context size (title ×1.2). The startup logo keeps 52px through `--practice-startup-logo-size` in the root startup appearance contract, available before account theme hydration. Moving these values into roles preserves their existing visual purpose; they are not ordinary catalog/control text.
 
 Sign out uses caption12 at desktop, body14 at narrow widths, semantic danger/focus colors, and a 44px narrow-screen target. Its scoped selector must override the general Settings button font reset.
+
+## Training overview stability
+
+The selected training card keeps the same responsive height while another saved
+training or availability result loads. Its name occupies one line, with the full
+name available as a native tooltip and accessible heading; its description reserves
+two lines. An empty training keeps a disabled primary action in the same slot.
+Editing remains available in the corner, while existing mix and early-review
+shortcuts remain available when applicable. Empty-state guidance is exposed through
+the action tooltip and a live description without adding another visible row.
+
+Opening the editor is reported to its parent startup gate. Changing language keeps
+the editor visible while catalog-dependent controls wait for their new material;
+failures offer Retry inside the editor. The full startup surface remains for initial
+loading and the overview. The All session-size option remains an ordinary-word
+selection of currently available cards, not a continuously growing queue.

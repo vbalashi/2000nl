@@ -2249,6 +2249,7 @@ function TrainingScreenContent({
         {trainingTodaySetupEnabled && trainingPilot.surface !== "session" ? (
           <TrainingTodaySetup
             onStartupReady={handleHomeStartupReady}
+            onEditorVisibilityChange={setOpenTrainingEditor}
             startupPresentationManaged
             initialView={openTrainingEditor ? "setup" : "today"}
             materialIntent={statisticsMaterialIntent}
@@ -2479,6 +2480,7 @@ function TrainingScreenContent({
         />
       )}
       <LibraryDestination
+        onTrainSelection={({languageCode,material})=>{trainingPilot.returnToToday();setStatisticsMaterialIntent({key:Date.now(),userId:user.id,languageCode,material});onRequestDestination("training");}}
         invitationCode={invitationCode}
         onInvitationConsumed={onInvitationConsumed}
         onboardingSearch={onboardingSearch}

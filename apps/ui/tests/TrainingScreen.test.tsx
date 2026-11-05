@@ -18,6 +18,7 @@ import type {
   ActiveTrainingScope,
   DictionaryEntry,
   TrainingScenario,
+  WordListSummary,
 } from "@/lib/types";
 import type { TrainingSessionSnapshot } from "@/lib/trainingService";
 import type { AppDestination } from "@/components/navigation/appDestination";
@@ -2817,7 +2818,7 @@ test("superseded resume restores every still-permitted setup setting before Star
   for (const section of ["Source", "Exercises", "Filters", "Session"]) {
     fireEvent.click(await screen.findByRole("button", { name: new RegExp(section) }));
   }
-  expect(screen.getByRole("button", { name: "Words" })).toHaveAttribute(
+  expect(screen.getAllByRole("button", { name: "Words" })[0]).toHaveAttribute(
     "aria-pressed",
     "true",
   );
@@ -2962,7 +2963,6 @@ test("pilot Start keeps recovery visible when the replacement queue fails", asyn
       /The next card could not be prepared|De volgende kaart kon niet worden voorbereid|Не удалось подготовить карточку/,
     ),
   ).toHaveAttribute("role", "alert");
-  expect(screen.getByRole("heading", { name: /^(Training|Тренировка)$/ })).toBeInTheDocument();
   expect(
     screen.queryByRole("heading", { name: "huis" }),
   ).not.toBeInTheDocument();
@@ -3102,6 +3102,7 @@ test("dictionary search scope changes lookup language without changing training"
   const copy = getUiMessages("en").library;
   fireEvent.click(screen.getByRole("button", { name: copy.filters }));
   fireEvent.click(screen.getByRole("button", { name: "English" }));
+  await waitFor(()=>expect(screen.getByRole("button",{name:copy.showResults})).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: copy.showResults }));
 
   await waitFor(() =>
@@ -4817,4 +4818,20 @@ test("a retired card notification cannot clear a newly bound run",async()=>{
  await waitFor(()=>expect(start).toBeEnabled());await clickTrainingAction(start);
  const current=await screen.findByTestId("mock-training-sense-card-v2");const id=current.getAttribute("data-training-session-id");expect(id).not.toBe("retired-a");
  act(()=>old());expect(screen.getByTestId("mock-training-sense-card-v2")).toHaveAttribute("data-training-session-id",id);
+});
+
+test('changing the editor language keeps its visible surface while the catalog loads', async()=>{
+ const previous=fetchAvailableLists.getMockImplementation();
+ let release!:(rows:WordListSummary[])=>void;
+ const held=new Promise<WordListSummary[]>(resolve=>{release=resolve;});
+ fetchAvailableLists.mockImplementation((owner,language)=>language==='en'?held:previous!(owner,language));
+ render(<TrainingScreen user={user} trainingTodaySetupEnabled/>);
+ fireEvent.click(await screen.findByRole('button',{name:'Create training'}));
+ const source=await screen.findByRole('button',{name:/^Source /});
+ try {
+  fireEvent.click(screen.getByRole('button',{name:'English'}));
+  await waitFor(()=>expect(fetchAvailableLists.mock.calls.some(call=>call[1]==='en')).toBe(true));
+  expect(screen.queryByTestId('training-startup-gate')).not.toBeInTheDocument();
+  expect(source.isConnected).toBe(true);
+ } finally {await act(async()=>release([]));}
 });

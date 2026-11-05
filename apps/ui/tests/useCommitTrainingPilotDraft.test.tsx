@@ -639,3 +639,11 @@ test("only the latest Continue intent can commit its validated transition",async
  await act(async()=>{expect(await hook.result.current.resumeAfterValidation(async()=>true,currentApply)).toBe(true);});
  await act(async()=>{resolve(true);expect(await pending).toBe(false);});expect(oldApply).not.toHaveBeenCalled();expect(currentApply).toHaveBeenCalledOnce();
 });
+
+ test.each([undefined,'all'] as const)('context Start sends the same source-word selection as availability (%s)',async sourceWordStatus=>{
+  updateActiveTrainingScope.mockReset().mockResolvedValue({error:null});
+  startTrainingSession.mockReset().mockResolvedValue({sessionId:'context-session',runStatus:'active',plannedTotal:1});
+  const {result}=renderHook(()=>useCommitTrainingPilotDraft({userId:'user-1',languageCode:'nl',resolveList:()=>null,applyListLocally:vi.fn(),applyPreferences:vi.fn(),applyFocusFilter:vi.fn(),resetQueue:vi.fn(),loadStats:vi.fn(),loadWord:vi.fn().mockResolvedValue('loaded'),reportError:vi.fn()}));
+  await act(async()=>{expect(await result.current({...draft,family:'word-in-context',modes:['definition-to-word'],materialMode:'all-dictionaries',sourceWordStatus})).toBe(true);});
+  expect(startTrainingSession.mock.calls[0][2].trainingFilter).toMatchObject({sourceWordStatus:sourceWordStatus??'learning',presentationMode:'word-in-context'});
+ });

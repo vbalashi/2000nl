@@ -14,8 +14,8 @@ const ready = (value: TrainingAvailability, refreshing = false, refreshFailed = 
 /** Exactly one selected recipe; no background polling or fan-out to Saved Trainings.
  * Owner, normalized recipe, caller learning revision, event revision and study day scope reads.
  * Start remains authoritative even when these display-only counts are cached. */
-export function useTrainingAvailability({ ownerId, recipe, enabled = true, refresh = 0 }: {
-  ownerId: string | null; recipe: TrainingAvailabilityRecipe | null; enabled?: boolean; refresh?: string | number;
+export function useTrainingAvailability({ ownerId, recipe, enabled = true, refresh = 0, debounceMs = 0 }: {
+  ownerId: string | null; recipe: TrainingAvailabilityRecipe | null; enabled?: boolean; refresh?: string | number; debounceMs?:number;
 }): TrainingAvailabilityState & { reload: () => void } {
   const [, setRevision] = useState(0);
   const [result, setResult] = useState<{ key: string; state: TrainingAvailabilityState } | null>(null);
@@ -64,14 +64,17 @@ export function useTrainingAvailability({ ownerId, recipe, enabled = true, refre
       publish(item ? ready(item.value, false, true) : { status: "error" });
       current = false;
     }, 50000);
-    void fetchTrainingAvailability(ownerId, recipeRef.current, controller.signal).then(value => {
+    const requestedRecipe=recipeRef.current;
+    const fetch=()=>{void fetchTrainingAvailability(ownerId, requestedRecipe, controller.signal).then(value => {
       if (!current || generation !== trainingAvailabilityCacheGeneration(ownerId)) return;
       writeTrainingAvailabilityCache(key, value);
       publish(ready(value));
     }).catch(() => publish(item ? ready(item.value, false, true) : { status: "error" }))
-      .finally(() => window.clearTimeout(timeout));
-    return () => { current = false; controller.abort(); window.clearTimeout(timeout); };
-  }, [enabled, ownerId, key]);
+      .finally(() => window.clearTimeout(timeout));};
+    const request=debounceMs>0?window.setTimeout(fetch,debounceMs):undefined;
+    if(!debounceMs)fetch();
+    return () => { current = false; controller.abort(); window.clearTimeout(timeout);window.clearTimeout(request); };
+  }, [enabled, ownerId, key, debounceMs]);
   if (!enabled || !ownerId || !key) return { status: "idle", reload };
   if (result?.key === key) return { ...result.state, reload };
   const item = readTrainingAvailabilityCache(key);

@@ -76,20 +76,9 @@ const baseProps = {
   onRetry: vi.fn(),
 };
 
-// Calculation applies the editor recipe; only the overview may launch cards.
-const calculateAndStart = async () => {
-  const calculate = screen.queryByRole("button", { name: "Calculate training" });
-  if (calculate) {
-    await waitFor(() => expect(calculate).toBeEnabled());
-    fireEvent.click(calculate);
-    await screen.findByRole("button", { name: "Create training" });
-  }
-  fireEvent.click(await screen.findByRole("button", { name: "Start training" }));
-};
-const reopenCalculatedTraining = async () => {
-  fireEvent.click(screen.getAllByRole("button", { name: /^Edit / })[0]);
-  fireEvent.click(screen.getByRole("button", { name: /^Session / }));
-};
+// Start uses the draft immediately; saving a named recipe is independent.
+const calculateAndStart = async () => {fireEvent.click(await screen.findByRole("button", {name:"Start training"}));};
+const reopenCalculatedTraining = async () => {if(screen.queryByRole("button",{name:"Create training"}))fireEvent.click(screen.getAllByRole("button",{name:/^Edit /})[0]);};
 
 test("the approved builder filters Dutch word families and passes them to Start", async () => {
   const onStart = vi.fn();
@@ -103,7 +92,7 @@ test("the approved builder filters Dutch word families and passes them to Start"
   fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "de" }));
   fireEvent.click(screen.getByRole("button", { name: "Close noun subfilters" }));
   await calculateAndStart();
-  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ partOfSpeech: ["ww", "zn"], nounArticles: ["de"] }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ partOfSpeech: ["ww", "zn"], nounArticles: ["de"] }));
 });
 
 test("the approved builder sends the selected mode and a custom finite session size", async () => {
@@ -115,7 +104,7 @@ test("the approved builder sends the selected mode and a custom finite session s
   fireEvent.click(screen.getByRole("button", { name: /^Session / }));
   fireEvent.change(screen.getByRole("slider", { name: "Session size" }), { target: { value: "0" } });
   await calculateAndStart();
-  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ modes: ["word-to-definition", "definition-to-word"], sessionSize: 5 }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ modes: ["word-to-definition", "definition-to-word"], sessionSize: 5 }));
 });
 
 test("the mix slider preserves its endpoints and middle ratios", async () => {
@@ -126,11 +115,11 @@ test("the mix slider preserves its endpoints and middle ratios", async () => {
   const mix = screen.getByRole("slider", { name: "New / review balance" });
   fireEvent.change(mix, { target: { value: "6" } });
   await calculateAndStart();
-  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "new", newReviewRatio: 2 }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "new", newReviewRatio: 2 }));
   await reopenCalculatedTraining();
   fireEvent.change(screen.getByRole("slider", { name: "New / review balance" }), { target: { value: "1" } });
   await calculateAndStart();
-  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "both", newReviewRatio: 5 }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "both", newReviewRatio: 5 }));
 });
 
 test("an existing one-to-four mix remains representable and is sent to Start", async () => {
@@ -140,7 +129,7 @@ test("an existing one-to-four mix remains representable and is sent to Start", a
   fireEvent.click(screen.getByRole("button", { name: /^Session / }));
   expect(screen.getByRole("slider", { name: "New / review balance" })).toHaveValue("2");
   await calculateAndStart();
-  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ newReviewRatio: 4 }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ newReviewRatio: 4 }));
 });
 
 test("all available cards preserves the mix, and changing the mix preserves all available size", async () => {
@@ -150,11 +139,11 @@ test("all available cards preserves the mix, and changing the mix preserves all 
   fireEvent.click(screen.getByRole("button", { name: /^Session / }));
   fireEvent.change(screen.getByRole("slider", { name: "Session size" }), { target: { value: "6" } });
   await calculateAndStart();
-  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "both", sessionSize: "all-due-today" }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "both", sessionSize: "all-due-today" }));
   await reopenCalculatedTraining();
   fireEvent.change(screen.getByRole("slider", { name: "New / review balance" }), { target: { value: "4" } });
   await calculateAndStart();
-  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "both", sessionSize: "all-due-today" }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ cardFilter: "both", sessionSize: "all-due-today" }));
 });
 
 test("a blocked start leaves the builder usable and never launches", async () => {
@@ -163,8 +152,8 @@ test("a blocked start leaves the builder usable and never launches", async () =>
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
   expect(screen.getByRole("button", { name: "Verbs" })).toBeEnabled();
-  expect(screen.getByRole("button", { name: "Calculate training" })).toBeDisabled();
-  fireEvent.click(screen.getByRole("button", { name: "Calculate training" }));
+  expect(screen.getByRole("button", { name: "Start training" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
   expect(onStart).not.toHaveBeenCalled();
 });
 
@@ -173,7 +162,7 @@ test("a pending Start stays disabled until its first request completes", async (
   seedAccount(userId, []);
   const onStart = vi.fn();
   render(<TrainingTodaySetup {...baseProps} userId={userId} trainingLanguageCode="nl" initialView="setup" startPending onStart={onStart} />);
-  const start = await screen.findByRole("button", { name: "Calculate training" });
+  const start = await screen.findByRole("button", { name: "Start training" });
   expect(start).toBeDisabled();
   fireEvent.click(start);
   expect(onStart).not.toHaveBeenCalled();
@@ -281,12 +270,9 @@ test("a failed Translation start keeps the paused Idioms session and retries the
   fireEvent.click(screen.getByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Exercises / }));
   fireEvent.click(screen.getByRole("button", { name: "Translation" }));
-  fireEvent.click(screen.getByRole("button", { name: "Calculate training" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start training" }));
   await screen.findByRole("button", { name: "Create training" });
-  expect(onStart).not.toHaveBeenCalled();
-  view.rerender(<TrainingTodaySetup {...props} hasOwnedSession={false} />);
-  await calculateAndStart();
-  await screen.findByRole("button", { name: "Create training" });
+  expect(onStart).toHaveBeenCalledOnce();
   view.rerender(<TrainingTodaySetup {...props} startError="training_session_start_timeout" />);
 
   expect(screen.getByRole("alert")).toHaveTextContent("NT2 2000");
@@ -313,7 +299,7 @@ test("a missing collection stays selected and blocked until replaced", async () 
   fireEvent.click(screen.getByRole("button", { name: /^Source / }));
   fireEvent.click(screen.getByRole("button", { name: "NT2 2000" }));
   await calculateAndStart();
-  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ listValue: "curated:nt2" }), "Missing collection", { trainingId: "missing" });
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ listValue: "curated:nt2" }), "Missing collection");
 });
 
 test("an idiom recipe starts with its own family and finite size", async () => {
@@ -324,7 +310,7 @@ test("an idiom recipe starts with its own family and finite size", async () => {
   fireEvent.click(screen.getByRole("button", { name: /^Exercises / }));
   fireEvent.click(screen.getByRole("button", { name: "Idioms" }));
   await calculateAndStart();
-  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ family: "idiom", scenarioId: "idiom", sessionSize: 10 }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ family: "idiom", scenarioId: "idiom", sessionSize: 10 }));
 });
 
 test("an idiom recipe keeps its family and selected modes after saving and reopening", async () => {
@@ -411,7 +397,7 @@ test("changing builder language waits for its catalog and launches only English 
   fireEvent.click(screen.getByRole("button", { name: /^Source / }));
   expect(screen.getByRole("button", { name: "English collection" })).toBeEnabled();
   await calculateAndStart();
-  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ listValue: "user:english" }), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ listValue: "user:english" }));
 });
 
 test("approved overview resumes an owned session independently of edited presets",async()=>{
@@ -487,7 +473,7 @@ test("approved lexical chips and noun subfilters preserve the canonical launch p
  fireEvent.click(screen.getByRole("button",{name:"Verbs"}));fireEvent.click(screen.getByRole("button",{name:"Noun subfilters"}));
  fireEvent.click(within(screen.getByRole("dialog")).getByRole("button",{name:"de"}));fireEvent.click(screen.getByRole("button",{name:"Close noun subfilters"}));
  await calculateAndStart();
- expect(onStart).toHaveBeenCalledWith(expect.objectContaining({partOfSpeech:["ww","zn"],nounArticles:["de"]}), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+ expect(onStart).toHaveBeenCalledWith(expect.objectContaining({partOfSpeech:["ww","zn"],nounArticles:["de"]}));
 });
 
 test("approved source picker selects dictionaries on the same screen",async()=>{
@@ -495,7 +481,7 @@ test("approved source picker selects dictionaries on the same screen",async()=>{
  render(<TrainingTodaySetup {...baseProps} userId="builder-source" trainingLanguageCode="nl" hasOwnedSession={false} dictionaries={[{value:dictionaryA,label:"Dictionary A"}]} onStart={onStart}/>);
  await screen.findByRole("button",{name:"Create training"});fireEvent.click(screen.getByRole("button",{name:"Create training"}));fireEvent.click(screen.getByRole("button",{name:/^Source /}));
  fireEvent.click(screen.getByRole("button",{name:"Dictionary A"}));await calculateAndStart();
- expect(onStart).toHaveBeenCalledWith(expect.objectContaining({materialMode:"selected-dictionaries",dictionaryIds:[dictionaryA]}), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+ expect(onStart).toHaveBeenCalledWith(expect.objectContaining({materialMode:"selected-dictionaries",dictionaryIds:[dictionaryA]}));
 });
 
 
@@ -509,10 +495,10 @@ test("a Statistics material opens the builder in its language without starting a
  expect(onMaterialIntentConsumed).not.toHaveBeenCalled();
  view.rerender(<TrainingTodaySetup {...props} trainingLanguageCode="en" materialIntent={intent}/>);
  await waitFor(()=>expect(onMaterialIntentConsumed).toHaveBeenCalledOnce());
- await screen.findByRole("button",{name:"Calculate training"});
+ await screen.findByRole("button",{name:"Start training"});
  expect(onStart).not.toHaveBeenCalled();
  await calculateAndStart();
- expect(onStart).toHaveBeenCalledWith(expect.objectContaining({materialMode:"selected-dictionaries",dictionaryIds:[dictionaryA]}), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+ expect(onStart).toHaveBeenCalledWith(expect.objectContaining({materialMode:"selected-dictionaries",dictionaryIds:[dictionaryA]}));
 });
 
 test("a Statistics material for another account is ignored",async()=>{
@@ -539,7 +525,7 @@ test("switching accounts discards an open builder draft", async () => {
   await calculateAndStart();
   expect(onStart).toHaveBeenCalledOnce();
   expect(onStart.mock.calls[0][0].partOfSpeech).toEqual(baseProps.initialDraft.partOfSpeech);
-  expect(accounts.get("next-builder-owner")?.document.trainings).toHaveLength(1);
+  expect(accounts.get("next-builder-owner")).toBeUndefined();
 });
 
 test("paused material blocks fresh runs while an owned session still resumes", async () => {
@@ -584,7 +570,7 @@ test("a disabled dictionary is omitted from source choices without modifying the
   expect(screen.queryByRole("button",{name:"Dictionary A"})).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button",{name:"Dictionary B"}));
   await calculateAndStart();
-  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({dictionaryIds:[dictionaryB]}), expect.any(String), expect.objectContaining({ trainingId: expect.any(String) }));
+  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({dictionaryIds:[dictionaryB]}));
   expect(accounts.get("disabled-source")?.document.trainings.find(item=>item.id===saved.id)).toEqual(saved);
 });
 
@@ -613,16 +599,17 @@ test("approved reverse idiom preview names its expression answer", async () => {
   expect(screen.queryByRole("button", { name: /^Reverse Meaning Words$/ })).not.toBeInTheDocument();
 });
 
-test("Source header search and disclosure are independent and filters remain visible without search",async()=>{
+test("Source toolbar search follows disclosure visibility and preserves type selection",async()=>{
  const dictionaries=Array.from({length:12},(_,index)=>({value:`dictionary-${index}`,label:`Dictionary ${index}`}));
  render(<TrainingTodaySetup {...baseProps} userId="source-search-header" trainingLanguageCode="nl" hasOwnedSession={false} dictionaries={dictionaries}/>);
  fireEvent.click(await screen.findByRole("button",{name:"Create training"}));
  const disclosure=screen.getByRole("button",{name:/^Source /});
- const search=screen.getByRole("button",{name:"Search sources"});
- expect(disclosure.contains(search)).toBe(false);
+ expect(screen.queryByRole("button",{name:"Search sources"})).toBeNull();
  expect(disclosure).toHaveAttribute("aria-expanded","false");
  expect(screen.queryByRole("group",{name:"Source type"})).toBeNull();
  fireEvent.click(disclosure);
+ const search=screen.getByRole("button",{name:"Search sources"});
+ expect(document.getElementById(disclosure.getAttribute("aria-controls")!)).toContainElement(search);
  expect(screen.getByRole("group",{name:"Source type"})).toBeInTheDocument();
  expect(screen.queryByRole("textbox",{name:"Search sources"})).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:"Collections"}));
@@ -635,6 +622,9 @@ test("Source header search and disclosure are independent and filters remain vis
  expect(screen.queryByRole("button",{name:"Dictionary 0"})).toBeNull();
  fireEvent.click(disclosure);
  expect(search).toHaveAttribute("aria-expanded","false");
+ expect(screen.queryByRole("button",{name:"Search sources"})).toBeNull();
+ fireEvent.click(disclosure);
+ expect(screen.queryByRole("textbox",{name:"Search sources"})).toBeNull();
  fireEvent.click(search);
  expect(disclosure).toHaveAttribute("aria-expanded","true");
  expect(screen.getByRole("textbox",{name:"Search sources"})).toHaveValue("");
@@ -698,7 +688,7 @@ test("approved Translation is a single contextual reverse choice with a keyword 
  expect(screen.getByText("de fiets")).toBeInTheDocument();
  expect(screen.queryByRole("button", {name:/^Example translation → word/})).not.toBeInTheDocument();
  await calculateAndStart();
- await waitFor(()=>expect(onStart).toHaveBeenCalledWith(expect.objectContaining({family:"word-in-context",modes:["definition-to-word"]}),expect.any(String),expect.objectContaining({trainingId:expect.any(String)})));
+ await waitFor(()=>expect(onStart).toHaveBeenCalledWith(expect.objectContaining({family:"word-in-context",modes:["definition-to-word"]})));
 });
 
 test("paused sentence recipe stays editable and never silently becomes a context session", async () => {
@@ -810,8 +800,8 @@ test("Change mix opens Session, preserves saved settings until explicit save, an
  expect(screen.getByRole("button",{name:/^Session /})).toHaveAttribute("aria-expanded","true");
  expect(screen.getByRole("slider",{name:"Session size"})).toHaveValue("6");
  expect(screen.queryByLabelText("Available cards")).toBeNull();
- expect(availabilityRequests).toHaveBeenLastCalledWith(expect.objectContaining({enabled:false}));
- expect(screen.getByRole("button",{name:"Calculate training"})).toBeEnabled();
+ expect(availabilityRequests).toHaveBeenLastCalledWith(expect.objectContaining({enabled:true}));
+ expect(screen.getByRole("button",{name:"Start training"})).toBeEnabled();
  expect(onStart).not.toHaveBeenCalled();
  expect(accounts.get("empty-review")!.document.trainings[0].draft.cardFilter).toBe("review");
  fireEvent.change(screen.getByRole("slider",{name:"Session size"}),{target:{value:"1"}});
@@ -830,7 +820,7 @@ test("unsaved current setup also opens Session for the new-card restriction",asy
 });
 
 
-test("editing source and session controls never enables availability requests",async()=>{
+test("editing source and session controls requests availability for the current draft",async()=>{
  render(<TrainingTodaySetup {...baseProps} userId="no-live-builder-counts" trainingLanguageCode="nl"/>);
  fireEvent.click(await screen.findByRole("button",{name:"Create training"}));
  availabilityRequests.mockClear();
@@ -840,35 +830,29 @@ test("editing source and session controls never enables availability requests",a
  fireEvent.click(screen.getByRole("button",{name:/^Filters /}));
  fireEvent.click(screen.getByRole("button",{name:"Verbs"}));
  expect(availabilityRequests.mock.calls.length).toBeGreaterThan(0);
- expect(availabilityRequests.mock.calls.every(([input])=>input.enabled===false)).toBe(true);
+ expect(availabilityRequests.mock.calls.at(-1)?.[0].enabled).toBe(true);
  expect(screen.queryByLabelText("Available cards")).toBeNull();
 });
 
 
-test.each([0, 8])("calculate applies the edited recipe and returns to availability without starting (%i due)", async (dueToday) => {
-  availabilityCounts.dueToday = dueToday;
-  const userId = `calculate-${dueToday}`;
-  const onStart = vi.fn();
-  seedAccount(userId, [{ id: "recipe", name: "My recipe", draft: initialDraft }]);
-  render(<TrainingTodaySetup {...baseProps} userId={userId} trainingLanguageCode="nl" hasOwnedSession={false} onStart={onStart} />);
-  fireEvent.click((await screen.findAllByRole("button", { name: "Edit My recipe" }))[0]);
-  fireEvent.click(screen.getByRole("button", { name: /^Session / }));
-  fireEvent.change(screen.getByRole("slider", { name: "Session size" }), { target: { value: "4" } });
-  fireEvent.click(screen.getByRole("button", { name: "Calculate training" }));
-  await screen.findByRole("button", { name: "Create training" });
-  expect(onStart).not.toHaveBeenCalled();
-  expect(accounts.get(userId)?.document.trainings[0].draft.sessionSize).toBe(40);
-  expect(availabilityRequests.mock.calls.at(-1)?.[0]).toMatchObject({ enabled: true, recipe: { draft: { sessionSize: 40 } } });
+test.each([0,8])("builder starts its draft directly without implicitly saving (%i due)",async(dueToday)=>{
+ availabilityCounts.dueToday=dueToday;const onStart=vi.fn();
+ render(<TrainingTodaySetup {...baseProps} userId="direct-draft" trainingLanguageCode="nl" onStart={onStart}/>);
+ fireEvent.click(await screen.findByRole("button",{name:"Create training"}));
+ fireEvent.click(screen.getByRole("button",{name:/^Session /}));
+ fireEvent.change(screen.getByRole("slider",{name:"Session size"}),{target:{value:"4"}});
+ fireEvent.click(screen.getByRole("button",{name:"Start training"}));
+ expect(onStart).toHaveBeenCalledOnce();expect(onStart.mock.calls[0][0]).toMatchObject({sessionSize:40});
+ expect(accounts.get("direct-draft")).toBeUndefined();
+ expect(availabilityRequests.mock.calls.at(-1)?.[0]).toMatchObject({enabled:true,recipe:{draft:{sessionSize:40}}});
 });
 
-test("a failed calculation save leaves the edited recipe open without starting", async () => {
-  const onStart = vi.fn();
-  render(<TrainingTodaySetup {...baseProps} userId="calculate-save-error" trainingLanguageCode="nl" onStart={onStart} />);
-  fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
-  saveFailure.enabled = true;
-  fireEvent.click(screen.getByRole("button", { name: "Calculate training" }));
-  await screen.findAllByText("Could not save. Try again.");
-  expect(screen.getByRole("button", { name: "Calculate training" })).toBeEnabled();
-  expect(onStart).not.toHaveBeenCalled();
-  expect(accounts.get("calculate-save-error")).toBeUndefined();
+test('an editor catalog failure keeps its retry inside the visible editor',async()=>{
+ const visible=vi.fn(),retry=vi.fn();
+ render(<TrainingTodaySetup {...baseProps} userId="editor-language-failure" initialView="setup" status="error" onEditorVisibilityChange={visible} onRetry={retry}/>);
+ expect(visible).toHaveBeenLastCalledWith(true);
+ const message=screen.getByText('Could not load the material for this language.');
+ fireEvent.click(within(message).getByRole('button',{name:'Retry'}));expect(retry).toHaveBeenCalledOnce();
+ fireEvent.click(screen.getByRole('button',{name:'Back to Training'}));
+ await waitFor(()=>expect(visible).toHaveBeenLastCalledWith(false));
 });

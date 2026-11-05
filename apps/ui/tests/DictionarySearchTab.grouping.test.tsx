@@ -493,7 +493,13 @@ test("reapplying the same filters supersedes an in-flight lookup", async () => {
   const oldRead = deferred<unknown>();
   const refreshedRead = deferred<unknown>();
   readableSources.mockReset().mockResolvedValue([source(scopeB, "Enabled B")]);
-  fetchGroupPage.mockReset().mockReturnValueOnce(oldRead.promise).mockReturnValueOnce(refreshedRead.promise);
+  let pageReadCount = 0;
+  fetchGroupPage.mockReset().mockImplementation(request => {
+    // The filter dialog also reads a count preview, independently of list pages.
+    if (!("cursor" in request)) return Promise.resolve({groups:[],librarySearch:{totalGroups:0}});
+    return ++pageReadCount === 1 ? oldRead.promise : refreshedRead.promise;
+  });
+  const pageReads = () => fetchGroupPage.mock.calls.filter(([request]) => "cursor" in request);
   const state = {
     ...createDictionarySearchTabState(),
     query: "",
@@ -506,13 +512,14 @@ test("reapplying the same filters supersedes an in-flight lookup", async () => {
       <Harness initial={state} />
     </AccountMaterialProvider>,
   );
-  await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(1));
-  const initialSignal = fetchGroupPage.mock.calls[0][0].signal as AbortSignal;
+  await waitFor(() => expect(pageReads()).toHaveLength(1));
+  const initialSignal = pageReads()[0][0].signal as AbortSignal;
 
   fireEvent.click(screen.getByRole("button", { name: copy.library.filters }));
+  await waitFor(() => expect(fetchGroupPage.mock.calls.some(([request]) => !("cursor" in request))).toBe(true));
   await waitFor(() => expect(screen.getByRole("button", { name: copy.library.showResults })).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: copy.library.showResults }));
-  await waitFor(() => expect(fetchGroupPage).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(pageReads()).toHaveLength(2));
   expect(initialSignal.aborted).toBe(true);
 
   await act(async () => {
@@ -900,3 +907,25 @@ test("a label with unavailable sources shows its own scope and an availability w
    await waitFor(()=>expect(screen.queryByTestId("library-detail-desktop")).not.toBeInTheDocument());
    expect(reloadLists).toHaveBeenCalled();expect(notify).toHaveBeenCalled();
  });
+
+test("ordinary Library reads retain frequency, entry type, meaning limit and sort after a response",async()=>{
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+ const filters={parts:[] as const,article:null,vocabulary:{mode:"frequency" as const,materialKinds:["word" as const],profile:"written" as const,from:101,to:500,meanings:2 as const},sort:"written" as const};
+ fetchGroupPage.mockReset().mockResolvedValue({groups:[homographGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:1,matchingEntryIds:["entry-goed-zn"]}});
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:"",entryFilters:{...filters,parts:[]}}}/></AccountMaterialProvider>);
+ await screen.findByTestId("library-headword-group-group-goed-homograph");
+ expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:null,filters:{...filters,parts:[]}},cursor:null}));
+ fireEvent.click(screen.getByRole("button",{name:"Search filters"}));
+ await screen.findByRole("dialog",{name:"Library filters"});
+ expect(screen.getByRole("button",{name:"By frequency"})).toHaveAttribute("aria-pressed","true");
+ expect(screen.getByRole("button",{name:"Written language"})).toHaveAttribute("aria-pressed","true");
+ expect(screen.getByRole("slider",{name:"Meanings per entry"})).toHaveValue("1");
+});
+
+test("the default Words search category keeps the sorting action visible",async()=>{
+ const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
+ readableSources.mockReset().mockResolvedValue([source(scopeB,"Enabled B")]);
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:"bank",searchCategory:undefined}}/></AccountMaterialProvider>);
+ expect(await screen.findByRole("button",{name:"Sort: Alphabetical"})).toBeInTheDocument();
+});

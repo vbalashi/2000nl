@@ -10,13 +10,15 @@ import { NounFilterPopover } from "./NounFilterPopover";
 import { BuilderSection } from "../builder/BuilderSection";
 import { LanguageScopeControl } from "../ui/LanguageScopeControl";
 import f from "./libraryFilters.module.css";
+import {VocabularySelectionFields,VocabularySelectionHelp} from "../vocabulary/VocabularySelectionFields";
+import {MaterialKindSelection,MaterialKindHelp,materialKindSummary} from "../vocabulary/MaterialKindSelection";
+import {DEFAULT_VOCABULARY_SELECTION} from "@/lib/vocabulary/selection";
+import {PartOfSpeechSelection} from "../vocabulary/PartOfSpeechSelection";
+import {VOCABULARY_PART_LABELS} from "@/lib/vocabulary/partsOfSpeech";
 import { LibraryPresentationContext } from "./LibraryPresentationContext";
 export type LibraryFilterDraft = LibraryEntryFilters & { languageCode: string; dictionaryId: string | null; applyListFilter?: boolean; collectionId?: string | null; labelId?: string | null; labelName?: string | null };
 export type LibraryFilterOption = { id: string | null; label: string };
-export const LIBRARY_PART_LABELS = {
- noun: "Nouns", verb: "Verbs", adjective: "Adjectives", adverb: "Adverbs", pronoun: "Pronouns",
- preposition: "Prepositions", conjunction: "Conjunctions", numeral: "Numerals", article: "Articles", interjection: "Interjections",
-} as const;
+export const LIBRARY_PART_LABELS = VOCABULARY_PART_LABELS;
 export function LibraryFilters({ value, languageOptions, sourceOptions, locale, countContent, sourceNotice,
   canApply = true, collectionOptions = [], labelOptions = [], onDraftChange, onClose, onApply, renderSources, layout = "chips" }: {
   renderSources?:(props:{options:LibraryFilterOption[];selected:string|null;select:(id:string|null)=>void;query:string;locale:OnboardingLanguage})=>React.ReactNode;
@@ -27,6 +29,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
   layout?: "rows" | "chips";
 }) {
   const presentation = React.useContext(LibraryPresentationContext);
+  const close = () => { presentation?.onDismissAdditionalFilters?.(); onClose(); };
   const inlinePanel = presentation?.filterPlacement === "panel";
   const messages = getUiMessages(locale), copy = messages.library, builder = messages.builder;
   const [draft, setDraft] = useState(value);
@@ -39,6 +42,9 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
   const [query, setQuery] = useState("");
   const [sourceOpen, setSourceOpen] = useState(inlinePanel);
   const [partsOpen, setPartsOpen] = useState(true);
+  const [selectionOpen,setSelectionOpen]=useState(true),[kindOpen,setKindOpen]=useState(true);
+  const vocabulary=draft.vocabulary??DEFAULT_VOCABULARY_SELECTION;
+  const showParts=!vocabulary.materialKinds.includes("other");
   const [searchOpen, setSearchOpen] = useState(false);
   const [nounAnchor, setNounAnchor] = useState<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -75,11 +81,14 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
   };
   const sourceName = draft.labelId ? labelOptions.find(option => option.id === draft.labelId)?.label ?? copy.noSources : draft.applyListFilter && draft.collectionId ? collectionOptions.find(option=>option.id===draft.collectionId)?.label ?? copy.noSources : draft.dictionaryId ? sourceOptions.find(option => option.id === draft.dictionaryId)?.label ?? copy.noSources : copy.allSources;
   const visibleOptions = options.filter(option => `${option.id ?? ""} ${option.label}`.toLowerCase().includes(query.trim().toLowerCase()));
-  useEffect(() => { onDraftChange?.(draft); }, [draft, onDraftChange]);
+  // Keep word choices as a draft for returning to Words, but never submit hidden restrictions.
+  const effectiveDraft = React.useMemo<LibraryFilterDraft>(() => !showParts
+    ? { ...draft, parts: [], article: null } : draft, [draft, showParts]);
+  useEffect(() => { onDraftChange?.(effectiveDraft); }, [effectiveDraft, onDraftChange]);
   const content = <>
     <header className={f.header}>
       {page !== "main" && <button type="button" ref={backRef} className={f.icon} aria-label={copy.backFilters} onClick={back}><ArrowLeft size={19}/></button>}
-      <h2>{title}</h2><button type="button" className={f.icon} aria-label={copy.closeFilters} onClick={onClose}><X size={19}/></button>
+      <h2>{title}</h2><button type="button" className={f.icon} aria-label={copy.closeFilters} onClick={close}><X size={19}/></button>
     </header>
     <div className={f.viewport}>
       <div className={f.track} data-child={page !== "main"}>
@@ -104,14 +113,10 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
             {!renderSources&&!presentation?.renderSources&&!visibleOptions.length && <p className={f.help}>{copy.noSources}</p>}
             {presentation?.renderSourceActions?.()}
           </BuilderSection>
-          <BuilderSection title={builder.partOfSpeech} summary={draft.parts.length ? draft.parts.map(part => builder.parts[LIBRARY_PART_LABELS[part]]).join(" · ") : builder.allParts} open={partsOpen} onToggle={() => setPartsOpen(open => !open)}>
-          {layout === "chips" ? <div className={f.parts}>{LIBRARY_PARTS.map(part => <div className={`${f.part} ${draft.parts.includes(part) ? f.selected : ""}`} key={part}>
-            <button type="button" aria-pressed={draft.parts.includes(part)} onClick={() => togglePart(part)}>{builder.parts[LIBRARY_PART_LABELS[part]]}{part === "noun" && draft.article && <span className={f.dot} role="img" aria-label={formatUiMessage(copy.articleFilter,{article:draft.article??""})}/>}</button>
-            {part === "noun" && draft.languageCode === "nl" && <button type="button" className={f.chipDisclosure} aria-label={builder.nounSubfilters} aria-haspopup="dialog" onClick={event => {
-              if (!draft.parts.includes("noun")) update({ parts: [...draft.parts, "noun"] });
-              setNounAnchor(event.currentTarget);
-            }}><ChevronDown size={15}/></button>}
-          </div>)}</div> : <div className={f.group}>{LIBRARY_PARTS.map(part => <div className={f.partRow} key={part}>
+          <BuilderSection title={{ru:"Отбор слов",en:"Choose words",nl:"Woorden kiezen"}[locale]} summary="" headerActions={<VocabularySelectionHelp language={locale}/>} open={selectionOpen} onToggle={()=>setSelectionOpen(!selectionOpen)}><VocabularySelectionFields section="selection" showSelectionHeading={false} language={locale} value={vocabulary} onChange={vocabulary=>update({vocabulary})}/></BuilderSection>
+          <BuilderSection title={{ru:"Тип статьи",en:"Entry type",nl:"Soort artikel"}[locale]} summary={materialKindSummary(vocabulary.materialKinds,locale)} headerActions={<MaterialKindHelp language={locale}/>} open={kindOpen} onToggle={()=>setKindOpen(!kindOpen)}><MaterialKindSelection language={locale} value={vocabulary.materialKinds} onChange={materialKinds=>update({vocabulary:{...vocabulary,materialKinds}})}/></BuilderSection>
+          {showParts&&<BuilderSection title={builder.partOfSpeech} summary={draft.parts.length ? draft.parts.map(part => builder.parts[LIBRARY_PART_LABELS[part]]).join(" · ") : builder.allParts} open={partsOpen} onToggle={() => setPartsOpen(open => !open)}>
+          {layout === "chips" ? <PartOfSpeechSelection value={{parts:draft.parts,article:draft.article}} onChange={update} language={locale} languageCode={draft.languageCode}/> : <div className={f.group}>{LIBRARY_PARTS.map(part => <div className={f.partRow} key={part}>
             <button type="button" className={f.partToggle} aria-pressed={draft.parts.includes(part)} onClick={() => togglePart(part)}>
               <span className={f.check} aria-hidden="true">{draft.parts.includes(part) && <Check size={13}/>}</span>
               {builder.parts[LIBRARY_PART_LABELS[part]]}{part === "noun" && draft.article && <span className={f.dot} role="img" aria-label={formatUiMessage(copy.articleFilter,{article:draft.article??""})}/>}
@@ -122,7 +127,8 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
             }}><ChevronRight size={17}/></button>}
           </div>)}</div>}
 
-          </BuilderSection>
+          </BuilderSection>}
+          <div className={f.meanings}><VocabularySelectionFields section="meanings" language={locale} value={vocabulary} onChange={vocabulary=>update({vocabulary})}/></div>
           </div></div>
         </div>
         <div className={f.page} ref={node=>{node?.toggleAttribute("inert",page === "main");}} aria-hidden={page === "main"}>
@@ -134,7 +140,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
     <footer className={f.footer}>
       {page === "main" ? <>
         <p className={f.count} role="status">{countContent}</p>
-        <div className={f.actions}><button type="button" className={f.reset} onClick={() => setDraft({ languageCode: draft.languageCode, dictionaryId: null, parts: [], article: null })}>{copy.resetFilters}</button><button type="button" className={f.action} onClick={onClose}>{builder.cancel}</button><button type="button" className={`${f.action} ${f.primary}`} disabled={!canApply} onClick={() => onApply(draft)}>{copy.showResults}</button></div>
+        <div className={f.actions}><button type="button" className={f.reset} onClick={() => { setDraft({ languageCode: draft.languageCode, dictionaryId: null, parts: [], article: null, ...(draft.sort?{sort:draft.sort}:{}) }); presentation?.onResetAdditionalFilters?.(); }}>{copy.resetFilters}</button><button type="button" className={f.action} onClick={close}>{builder.cancel}</button><button type="button" className={`${f.action} ${f.primary}`} disabled={!canApply} onClick={() => { presentation?.onApplyAdditionalFilters?.(); onApply(effectiveDraft); }}>{copy.showResults}</button></div>
       </> : <div className={f.actions}><button type="button" className={`${f.action} ${f.primary}`} onClick={back}>{copy.ok}</button></div>}
     </footer>
     {nounAnchor && <NounFilterPopover locale={locale} anchor={nounAnchor} article={draft.article} onChange={article => update({ article })} onClose={() => setNounAnchor(null)}/>}
@@ -142,7 +148,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
   // Keep the controlled draft mounted while the dev organizer occupies Library.
   if (presentation?.organizerOpen) return <div hidden>{content}</div>;
   if (inlinePanel) return <section className={`${f.dialog} ${f.inlinePanel}`} aria-label={copy.filterTitle} lang={locale}>{content}</section>;
-  return <DialogSurface onDismiss={onClose} ref={dialogRef} className={f.dialog} aria-label={copy.filterTitle} lang={locale}
-    onCancel={event => { event.preventDefault(); if (page === "main") onClose(); else back(); }}
+  return <DialogSurface onDismiss={close} ref={dialogRef} className={f.dialog} aria-label={copy.filterTitle} lang={locale}
+    onCancel={event => { event.preventDefault(); if (page === "main") close(); else back(); }}
   >{content}</DialogSurface>;
 }

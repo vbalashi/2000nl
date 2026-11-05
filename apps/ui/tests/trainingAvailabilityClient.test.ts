@@ -2,7 +2,7 @@ import { expect, test, vi } from "vitest";
 vi.mock("@/lib/preferences/accountRequest", () => ({ authenticatedAccountRequest: vi.fn() }));
 import { authenticatedAccountRequest } from "@/lib/preferences/accountRequest";
 import { fetchTrainingAvailability } from "@/lib/training/availability/client";
-import { parseAvailabilityRecipe } from "@/lib/training/availability/model";
+import { availabilityRpcScope, availabilityRecipeKey, parseAvailabilityRecipe } from "@/lib/training/availability/model";
 
 test("saved recipe metadata is excluded from the strict availability request", async () => {
   const saved = {
@@ -21,3 +21,14 @@ test("saved recipe metadata is excluded from the strict availability request", a
   await expect(fetchTrainingAvailability("owner", saved, new AbortController().signal)).resolves.toMatchObject({ dueToday: 1 });
   expect(JSON.parse(String(vi.mocked(authenticatedAccountRequest).mock.calls[0][2]?.body))).toEqual({ languageCode: saved.languageCode, draft: saved.draft });
 });
+
+ test('source status affects availability only for supported exercise families, independently of card mix',()=>{
+  const base={languageCode:'nl',draft:{family:'word-in-context' as const,scenarioId:'understanding',modes:['definition-to-word' as const],cardFilter:'both' as const,listValue:'curated:f6ad893a-3071-4908-85b1-eb174a5ad72f',newReviewRatio:2,dateWindow:'all' as const,sourceValue:'all',sessionSize:5}};
+  expect(availabilityRpcScope(base).p_training_filter).toHaveProperty('sourceWordStatus','learning');
+  const all={...base,draft:{...base.draft,sourceWordStatus:'all' as const}};
+  expect(availabilityRpcScope(all).p_training_filter).toHaveProperty('sourceWordStatus','all');
+  expect(availabilityRecipeKey(all)).not.toBe(availabilityRecipeKey(base));
+  expect(availabilityRecipeKey({...all,draft:{...all.draft,cardFilter:'new',sessionSize:10}})).toBe(availabilityRecipeKey(all));
+  expect(availabilityRpcScope({...all,draft:{...all.draft,family:'meaning'}}).p_training_filter).not.toHaveProperty('sourceWordStatus');
+  expect(parseAvailabilityRecipe({...base,draft:{...base.draft,sourceWordStatus:'known'}})).toBeNull();
+ });

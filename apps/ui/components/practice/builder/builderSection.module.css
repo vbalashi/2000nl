@@ -14,7 +14,7 @@
 }
 .heading {
   display: grid;
-  grid-template-columns: 140px minmax(0, 1fr) 17px;
+  grid-template-columns: var(--builder-title-width, 140px) minmax(0, 1fr) 17px;
   gap: 16px;
   align-items: center;
   width: 100%;
@@ -75,7 +75,7 @@
 }
 @media (max-width: 700px) {
   .heading {
-    grid-template-columns: 90px minmax(0, 1fr) 17px;
+    grid-template-columns: var(--builder-title-width, 90px) minmax(0, 1fr) 17px;
     gap: 12px;
     padding: 11.5px 12px;
   }
@@ -111,7 +111,7 @@
 
 @media(prefers-reduced-motion:reduce){:global(.session-builder-standard) .heading{transition:none}}
 
-@media(max-width:700px){:global(.session-builder-standard) .heading{grid-template-columns:108px minmax(0,1fr) 17px}}
+@media(max-width:700px){:global(.session-builder-standard) .heading{grid-template-columns:var(--builder-title-width,108px) minmax(0,1fr) 17px}}
 
 /* Text scaling wins over the standard mobile column widths for every section. */
 :global([data-text-size="large"]) .heading,
@@ -131,8 +131,11 @@
   grid-row: 1;
 }
 
-/* Reuse the ordinary heading grid; only search sits above its stretched disclosure. */
+/* Keep room for the title and its independent help or search action. */
 .controlledHeader { position:relative; isolation:isolate; }
+.heading.controlledHeader { grid-template-columns:minmax(var(--builder-title-width,140px),max-content) minmax(0,1fr) 17px; }
+:global([data-text-size="large"]) .heading.controlledHeader,
+:global([data-text-size="extra"]) .heading.controlledHeader { grid-template-columns:1fr 17px; }
 .titleActions { display:flex; align-items:center; gap:6px; min-width:0; }
 .titleDisclosure { min-width:0; padding:0; border:0; background:transparent; color:inherit; text-align:left; font-family:var(--practice-font-ui); cursor:pointer; }
 .titleDisclosure::after { content:""; position:absolute; inset:0; cursor:pointer; }

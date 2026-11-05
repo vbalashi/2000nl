@@ -7,6 +7,7 @@ import type { PlatformHeadwordGroupV2 } from "../../../../packages/shared/types/
 
 export type DictionarySearchCategory = "headwords" | "examples" | "definitions" | "alphabetical";
 export const DICTIONARY_SEARCH_CATEGORIES: DictionarySearchCategory[] = ["headwords", "examples", "definitions", "alphabetical"];
+export const CONTEXT_SEARCH_PAGE_SIZE = 50;
 export type DictionaryCategoryHit = {
   resultKey?: string;
   entry: { id: string; headword: string; languageCode?: string; summaryDefinition?: string };
@@ -18,6 +19,7 @@ export type DictionaryCategoryHit = {
 export type DictionaryCategoryPage = {
   id: DictionarySearchCategory;
   total: number | null;
+  wordGroupCount?:number;
   unavailableEntryCount?: number;
   count?: { value: number | null; relation: string };
   page: { hasMore: boolean; nextCursor: string | null };
@@ -41,7 +43,7 @@ export async function fetchDictionaryCategoryPage(scope: DictionaryCategoryScope
     body: JSON.stringify({ query: scope.query, languageCode: scope.languageCode,
       dictionaryIds: scope.material ? null : scope.dictionaryId ? [scope.dictionaryId] : null,
       filters: scope.filters, material: scope.material,
-      group: category, cursor, limit: category === "alphabetical" ? 31 : 100 }),
+      group: category, cursor, limit: category === "alphabetical" ? 31 : category === "headwords" ? 100 : CONTEXT_SEARCH_PAGE_SIZE }),
   });
   const payload = await response.json();
   if (scope.userId) await authenticatedJsonHeaders(scope.userId);
@@ -52,7 +54,7 @@ export async function fetchDictionaryCategoryPage(scope: DictionaryCategoryScope
   return { ...page, unavailableEntryCount: payload.unavailableEntryCount ?? 0 };
 }
 
-/** Drain bounded cursor pages automatically; each category owns its cancellation. */
+/** Context reads stop at one page. Only word article projection drains its pages. */
 export async function readDictionaryCategory(scope: DictionaryCategoryScope, category: DictionarySearchCategory,
   onPage: (page: DictionaryCategoryPage, complete: boolean) => void,
 ): Promise<DictionaryCategoryPage> {
@@ -69,7 +71,7 @@ export async function readDictionaryCategory(scope: DictionaryCategoryScope, cat
       if (!seenHits.has(key)) { seenHits.add(key); items.push(item); }
     }
     // Alphabetical is a centered neighborhood, not every later dictionary word.
-    const complete = category === "alphabetical" || !page.page.hasMore;
+    const complete = category !== "headwords" || !page.page.hasMore;
     const result = { ...page, items: [...items] };
     onPage(result, complete);
     if (complete) return result;
@@ -77,6 +79,23 @@ export async function readDictionaryCategory(scope: DictionaryCategoryScope, cat
     if (!cursor || seenCursors.has(cursor)) throw new Error("dictionary_search_cursor_did_not_advance");
     seenCursors.add(cursor);
   }
+}
+
+/** One explicit continuation; never enumerate unseen context matches for a count. */
+export async function readMoreDictionaryContext(scope: DictionaryCategoryScope, previous: DictionaryCategoryPage): Promise<DictionaryCategoryPage> {
+  if (!previous.page.hasMore) return previous;
+  if (!previous.page.nextCursor) throw new Error("dictionary_search_cursor_did_not_advance");
+  const cursor = previous.page.nextCursor;
+  const next = await fetchDictionaryCategoryPage(scope, previous.id, cursor);
+  scope.signal.throwIfAborted();
+  if (next.page.hasMore && (!next.page.nextCursor || next.page.nextCursor === cursor)) throw new Error("dictionary_search_cursor_did_not_advance");
+  const seen = new Set(previous.items.map(hit => hit.resultKey ?? JSON.stringify([hit.entry.id, hit.field?.sourcePath ?? hit.match?.sourcePath ?? ""])));
+  const items = [...previous.items];
+  for (const hit of next.items) {
+    const key = hit.resultKey ?? JSON.stringify([hit.entry.id, hit.field?.sourcePath ?? hit.match?.sourcePath ?? ""]);
+    if (!seen.has(key)) { seen.add(key); items.push(hit); }
+  }
+  return {...next, items};
 }
 
 /** Reuse authoritative V2 article metadata and the normal Library projection.
@@ -104,4 +123,14 @@ export async function hydrateDictionaryWordResults(scope: DictionaryCategoryScop
     remaining = remaining.slice(batch.length).filter(item => !entryIds.has(item.entry.id));
   }
   return buildLibraryHeadwordGroupResults(groups, hits.map(item => item.entry.id));
+}
+
+/** Exact article totals are computed with existing server identities, without article hydration. */
+export async function countDictionaryCategory(scope:DictionaryCategoryScope,category:DictionarySearchCategory){
+ if(category==="headwords"||category==="alphabetical"){
+  const page=await fetchDictionaryCategoryPage(scope,category);
+  if(!Number.isSafeInteger(page.wordGroupCount)||page.wordGroupCount!<0)throw new Error("library_count_unavailable");
+  return page.wordGroupCount!;
+ }
+ return (await readDictionaryCategory(scope,category,()=>{})).items.length;
 }

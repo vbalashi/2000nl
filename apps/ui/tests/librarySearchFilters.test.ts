@@ -4,11 +4,11 @@ test("closed filters canonicalize sets and preserve missing legacy scope", () =>
   expect(parseLibraryEntryFilters(undefined)).toBeUndefined();
   expect(parseLibraryEntryFilters({})).toEqual({ parts: [], article: null });
   expect(parseLibraryEntryFilters({ parts: ["verb", "noun", "noun"], article: "het" })).toEqual({ parts: ["noun", "verb"], article: "het" });
-  for (const invalid of [null, [], false, "noun", { parts: null }, { parts: [null] }, { parts: ["Nouns"] }, { parts: ["unknown"] }, { parts: Array(11).fill("noun") }, { article: "de" }, { parts: ["verb"], article: "het" }, { parts: ["noun"], article: "a" }, { parts: [], other: "field" }])
+  for (const invalid of [null, [], false, "noun", { parts: null }, { parts: [null] }, { parts: ["Nouns"] }, { parts: ["unknown"] }, { parts: Array(13).fill("noun") }, { article: "de" }, { parts: ["verb"], article: "het" }, { parts: ["noun"], article: "a" }, { parts: [], other: "field" }])
     expect(parseLibraryEntryFilters(invalid)).toBeNull();
 });
-test("preview matching mirrors all ten DB aliases and noun-only article policy", () => {
-  const codes = ["zn", "ww", "bn", "bw", "vnw", "vz", "vw", "tw", "lidw", "tsw"];
+test("preview matching mirrors all twelve DB aliases and noun-only article policy", () => {
+  const codes = ["zn", "ww", "bn", "bw", "vnw", "vz", "vw", "tw", "lidw", "tsw", "afk", "vv"];
   LIBRARY_PARTS.forEach((part, index) => { for (const value of [part, codes[index]])
     expect(libraryEntryMatchesFilters(value, null, { parts: [part], article: null })).toBe(true); });
   const filters = { parts: ["noun", "verb"] as ("noun" | "verb")[], article: "de" as const };

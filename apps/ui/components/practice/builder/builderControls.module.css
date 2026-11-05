@@ -79,9 +79,16 @@
 :global(.session-builder-standard) .choice[aria-pressed=true]:hover{background:var(--practice-surface-hover)}
 :global(.session-builder-standard) .label{font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui);color:var(--practice-text-muted)}
 
-/* Two stable text lines keep the tracks in place across every slider value. */
-:global(.session-builder-standard) .labelRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;line-height:1.5;min-block-size:3em}
-:global(.session-builder-standard) .selection{line-height:1.5;overflow-wrap:anywhere}
+/* Share the caption role; wrap the selected value only when it needs another line. */
+:global(.session-builder-standard) .labelRow{display:flex;flex-wrap:wrap;align-items:center;align-content:center;gap:4px 12px;font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui);min-block-size:3em}
+:global(.session-builder-standard) .selection{font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui);color:var(--practice-text-secondary);margin-inline-start:auto;max-width:100%;overflow-wrap:anywhere}
 
 .sizeTicks{position:relative;height:1.5em;margin-inline:8px;font-size:var(--practice-text-label);line-height:1.5;color:var(--practice-text-muted)}
 .sizeTicks>span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+
+/* Keep keyboard focus on the movable part, without framing the whole track. */
+.range.range:focus-visible { outline: none; }
+.range:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--practice-focus); outline-offset: 3px; border-radius: 50%; }
+.range:focus-visible::-moz-range-thumb { outline: 2px solid var(--practice-focus); outline-offset: 3px; }
+:global(html[data-input-modality=pointer]) .range::-webkit-slider-thumb { outline: none; }
+:global(html[data-input-modality=pointer]) .range::-moz-range-thumb { outline: none; }

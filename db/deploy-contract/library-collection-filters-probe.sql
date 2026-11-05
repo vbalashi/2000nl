@@ -12,7 +12,7 @@ BEGIN
     RAISE EXCEPTION 'unexpected library collection filter grants'; END IF;
   IF definition NOT LIKE '%principal uuid := (select auth.uid())%' OR definition NOT LIKE '%list.user_id=principal%'
     OR definition NOT LIKE '%can_browse_dictionary(principal,w.dictionary_id)%'
-    OR definition NOT LIKE '%private.library_entry_matches_filters_v1%'
+    OR (definition NOT LIKE '%private.library_entry_matches_filters_v1%' AND definition NOT LIKE '%private.library_entry_selection_matches_v1%')
     OR definition NOT LIKE '%FROM scoped%' THEN
     RAISE EXCEPTION 'missing collection scope/count/filter boundary'; END IF;
 END;

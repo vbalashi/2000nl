@@ -3,7 +3,7 @@ import React, {useEffect,useId,useRef,useState} from "react";
 import {CircleHelp} from "lucide-react";
 import s from "./settings.module.css";
 
-export function SettingsHelp({label,text,hover=false}:{label:string;text:string;hover?:boolean}) {
+export function SettingsHelp({label,text,hover=false}:{label:string;text:string|readonly string[];hover?:boolean}) {
  const id=useId(),timer=useRef<ReturnType<typeof setTimeout>>();
  const trigger=useRef<HTMLButtonElement>(null),popup=useRef<HTMLDivElement>(null);
  const [open,setOpen]=useState(false);
@@ -28,5 +28,5 @@ export function SettingsHelp({label,text,hover=false}:{label:string;text:string;
   onKeyDown={event=>{if(event.key==='Escape')hide();}}
  ><CircleHelp size={14} aria-hidden="true"/></button><div ref={popup} id={id} popover="auto" className={s.helpPopup}
   onPointerEnter={cancelClose} onPointerLeave={()=>{if(hover)scheduleClose();}}
-  onToggle={event=>setOpen(event.newState==="open")}>{text}</div></>;
+  onToggle={event=>setOpen(event.newState==="open")}>{typeof text === "string" ? text : text.map((paragraph,index)=><p key={index}>{paragraph}</p>)}</div></>;
 }

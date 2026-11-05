@@ -7,7 +7,7 @@ import React, { useEffect, useState } from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { getUiMessages, formatUiMessage } from "@/lib/uiMessages";
 import type { LibraryEntryFilters } from "@/lib/platform/librarySearchScope";
-import { readDictionaryCategory, hydrateDictionaryWordResults, type DictionarySearchCategory } from "@/lib/platform/dictionaryCategorySearch";
+import { countDictionaryCategory, readDictionaryCategory, type DictionarySearchCategory } from "@/lib/platform/dictionaryCategorySearch";
 import { fetchPlatformV2LibraryGroupPage } from "@/lib/platform/platformV2LibraryClient";
 import { useAccountMaterial } from "../material/AccountMaterialProvider";
 import { useLibraryMaterialSelection } from "../material/useLibraryMaterialSelection";
@@ -22,6 +22,7 @@ type Preview = {
   key: string;
   status: "loading" | "ready" | "error";
   total?: number;
+  hasMore?: boolean;
 };
 type PreviewScope = {
   category?: DictionarySearchCategory;
@@ -73,7 +74,7 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
     query: query.trim(),
     languageCode: draft.languageCode,
     dictionaryId: draft.dictionaryId,
-    filters: { parts: [...draft.parts].sort(), article: draft.article },
+    filters: { parts: [...draft.parts].sort(), article: draft.article, vocabulary:draft.vocabulary, sort:draft.sort },
     available: ready,
     userId: account?.userId,
     revision: account?.snapshot?.revision,
@@ -96,9 +97,11 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
             userId:request.userId,filters:request.filters,signal:controller.signal,
             material:request.labelId ? {kind:"label" as const,id:request.labelId} : request.collectionId && request.collectionType
               ? {kind:"collection" as const,id:request.collectionId,collectionType:request.collectionType} : undefined};
+          if (request.category === "headwords" || request.category === "alphabetical") {
+            return {total:await countDictionaryCategory(searchScope,request.category),hasMore:false};
+          }
           const page = await readDictionaryCategory(searchScope,request.category,()=>{});
-          return request.category === "headwords" || request.category === "alphabetical"
-            ? (await hydrateDictionaryWordResults(searchScope,page.items)).length : page.items.length;
+          return {total:page.items.length,hasMore:page.page.hasMore};
         }
         const page = await fetchPlatformV2LibraryGroupPage({
         query: request.query,
@@ -114,9 +117,9 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
           filters: request.filters,
         },
         });
-        return page.librarySearch!.totalGroups;
-      })().then(total => {
-        if (!controller.signal.aborted) setPreview({key,status:"ready",total});
+        return {total:page.librarySearch!.totalGroups,hasMore:false};
+      })().then(({total,hasMore}) => {
+        if (!controller.signal.aborted) setPreview({key,status:"ready",total,hasMore});
       }).catch(() => {
         if (!controller.signal.aborted) setPreview({ key, status: "error" });
       });
@@ -146,7 +149,7 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
       countContent = material.currentLanguageAllowed ? copy.noSources : copy.noLanguages;
     }
   } else if (status === "ready") {
-    countContent = formatUiMessage(getUiMessages(locale).librarySearch.foundCount,{count:new Intl.NumberFormat(locale).format(preview.total!)});
+    countContent = formatUiMessage(getUiMessages(locale).librarySearch.foundCount,{count:new Intl.NumberFormat(locale).format(preview.total!) + (preview.hasMore ? "+" : "")});
   } else if (status === "error") {
     countContent = <>
       {copy.searchError}{" "}

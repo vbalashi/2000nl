@@ -1,3 +1,5 @@
+import { sourceWordSelection } from "@/lib/training/sourceWordSelection";
+import {libraryTrainingCriteria} from "@/lib/vocabulary/selection";
 import { useTrainingOperationScope } from "../useTrainingOperationScope";
 import type { TrainingOperation } from "@/lib/training/trainingOperationScope";
 import { isTrainingSetupPaused } from "@/lib/training/setups/availability";
@@ -189,6 +191,9 @@ export function useCommitTrainingPilotDraft({
           : draft.sourceValue === "kind:youtube"
             ? { sourceKind: "youtube" }
             : {}),
+        ...sourceWordSelection(draft),
+        ...(draft.vocabulary?{vocabulary:draft.vocabulary}:{}),
+        ...(draft.librarySelection?{librarySelection:libraryTrainingCriteria(draft.librarySelection)}:{}),
         ...(draft.partOfSpeech?.length
           ? { partOfSpeech: [...new Set(draft.partOfSpeech)].sort() }
           : {}),
@@ -454,6 +459,9 @@ export function useTrainingPilotController({
       : focusFilter.sourceKind === "youtube"
         ? "kind:youtube"
         : "all",
+    ...(focusFilter.sourceWordStatus ? { sourceWordStatus: focusFilter.sourceWordStatus } : {}),
+    ...(focusFilter.vocabulary?{vocabulary:focusFilter.vocabulary}:{}),
+    ...(focusFilter.librarySelection?{librarySelection:focusFilter.librarySelection}:{}),
     partOfSpeech: focusFilter.partOfSpeech ?? [],
     nounArticles: focusFilter.nounArticles ?? [],
   };

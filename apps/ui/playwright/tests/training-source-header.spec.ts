@@ -32,10 +32,17 @@ for(const profile of [
     const bounds=await header.boundingBox();expect(bounds).not.toBeNull();
     if(open){
      await expect(choices).toBeVisible();
+     await expect(search).toBeVisible();
+     expect(await header.evaluate(e=>Boolean(e.querySelector('button[aria-label="Search sources"],button[aria-label="Поиск источников"]')))).toBe(false);
      const filters=await choices.boundingBox();expect(filters!.y).toBeGreaterThanOrEqual(bounds!.y+bounds!.height);
-    }else await expect(choices).not.toBeVisible();
+    }else {
+     await expect(choices).not.toBeVisible();
+     await expect(search).not.toBeVisible();
+    }
     if(step<2)await header.click({position:{x:bounds!.width-5,y:bounds!.height/2}});
    }
+   await source.click();
+   await expect(choices).toBeVisible();
    await search.click();
    await expect(source).toHaveAttribute('aria-expanded','true');
    const input=page.getByRole('textbox',{name:profile.locale==='ru'?'Поиск источников':'Search sources',exact:true});

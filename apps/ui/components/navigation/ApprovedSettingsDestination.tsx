@@ -180,10 +180,10 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
           );
         return (
           <SettingsPanel title={copy.account}>
-            <SettingsRow title={copy.profile}>
+            <SettingsRow title={copy.profile} className={s.accountRow}>
               <p className={s.email}>{props.userEmail}</p>
             </SettingsRow>
-            <SettingsRow title={copy.signOut}>
+            <SettingsRow title={copy.signOut} className={s.accountRow}>
               <button
                 type="button"
                 className={s.signOut}

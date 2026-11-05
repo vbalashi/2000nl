@@ -222,9 +222,11 @@
       "empty": "Geen resultaten",
       "prompt": "Typ een woord of een deel van een zin.",
       "busy": "Zoeken…",
-      "error": "Niet alle resultaten konden worden geladen.",
+      "error": "Resultaten laden is mislukt.",
       "retry": "Opnieuw",
-      "loadingAll": "Alle resultaten laden…",
+      "more": "Nog {count}",
+      "loadingMore": "Laden…",
+      "moreError": "Meer resultaten laden is mislukt.",
       "foundCount": "Gevonden: {count}"
     },
     "activeTrainingCard": {
@@ -501,6 +503,8 @@
         "Conjunctions": "Voegwoorden",
         "Numerals": "Telwoorden",
         "Articles": "Lidwoorden",
+        "Abbreviations": "Afkortingen",
+        "Prefixes": "Voorvoegsels",
         "Interjections": "Tussenwerpsels"
       },
       "balance": [

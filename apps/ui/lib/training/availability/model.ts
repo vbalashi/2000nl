@@ -1,3 +1,6 @@
+import { sourceWordSelection } from "@/lib/training/sourceWordSelection";
+import {singleNounArticle} from "../nounArticles";
+import {libraryTrainingCriteria} from "@/lib/vocabulary/selection";
 import { canonicalDraft, isTrainingSetupDraft } from "../setups/model";
 import type { TrainingSetupDraft } from "../setups/types";
 import { trainingFilterKey } from "../trainingFilterIdentity";
@@ -10,7 +13,7 @@ export type TrainingAvailability = {
 };
 const object = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v);
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const draftKeys = ["family", "scenarioId", "modes", "cardFilter", "listValue", "materialMode", "dictionaryIds", "newReviewRatio", "dateWindow", "daysAgo", "sourceValue", "sessionSize", "partOfSpeech", "nounArticles"];
+const draftKeys = ["family", "scenarioId", "modes", "cardFilter", "listValue", "materialMode", "dictionaryIds", "newReviewRatio", "dateWindow", "daysAgo", "sourceValue", "sessionSize", "partOfSpeech", "nounArticles", "vocabulary", "librarySelection", "sourceWordStatus"];
 
 /** The principal is never accepted in the request. Recipe fields are preferences only. */
 export function parseAvailabilityRecipe(value: unknown): TrainingAvailabilityRecipe | null {
@@ -18,6 +21,7 @@ export function parseAvailabilityRecipe(value: unknown): TrainingAvailabilityRec
       typeof value.languageCode !== "string" || !/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/.test(value.languageCode) || value.languageCode.length > 35 ||
       !object(value.draft) || Object.keys(value.draft).some(k => !draftKeys.includes(k)) || !isTrainingSetupDraft(value.draft) || value.draft.family === "sentence") return null;
   const draft = canonicalDraft(value.draft);
+  if(draft.librarySelection?.languageCode&&draft.librarySelection.languageCode!==value.languageCode)return null;
   if ((!draft.materialMode || draft.materialMode === "collection") && !/^(curated|user):[0-9a-f-]+$/i.test(draft.listValue)) return null;
   if ((!draft.materialMode || draft.materialMode === "collection") && !uuid.test(draft.listValue.split(":")[1])) return null;
   if (draft.sourceValue && draft.sourceValue !== "all" && draft.sourceValue !== "kind:youtube" &&
@@ -34,8 +38,11 @@ export function availabilityRpcScope(recipe: TrainingAvailabilityRecipe) {
     dateWindow: draft.dateWindow,
     ...(draft.dateWindow === "daysAgo" ? { daysAgo: draft.daysAgo ?? 7 } : {}),
     ...(draft.sourceValue.startsWith("source:") ? { sourceId: draft.sourceValue.slice(7) } : draft.sourceValue === "kind:youtube" ? { sourceKind: "youtube" } : {}),
+    ...sourceWordSelection(draft),
+    ...(draft.vocabulary?{vocabulary:draft.vocabulary}:{}),
+    ...(draft.librarySelection?{librarySelection:libraryTrainingCriteria(draft.librarySelection)}:{}),
     ...(draft.partOfSpeech?.length ? { partOfSpeech: [...draft.partOfSpeech].sort() } : {}),
-    ...(draft.nounArticles?.length ? { nounArticles: [...draft.nounArticles].sort() } : {}),
+    ...(singleNounArticle(draft.nounArticles??[])?{nounArticles:[singleNounArticle(draft.nounArticles??[])!]}:{}),
     ...(!collection ? { dictionaryScope: { mode: draft.materialMode === "all-dictionaries" ? "all" as const : "selected" as const, languageCode,
       ...(draft.materialMode === "selected-dictionaries" ? { dictionaryIds: [...(draft.dictionaryIds ?? [])].sort() } : {}) } } : {}),
     ...(draft.family === "word-in-context" ? { presentationMode: "word-in-context" as const } : {}),

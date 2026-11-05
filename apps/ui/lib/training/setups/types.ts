@@ -1,3 +1,5 @@
+import type { SourceWordStatus } from "@/lib/training/sourceWordSelection";
+import type {VocabularySelection,LibraryTrainingSelection} from "@/lib/vocabulary/selection";
 import type {
   CardFilter, DutchNounArticle, DutchTrainingPartOfSpeech, TrainingDateWindow,
   TrainingExerciseFamily, TrainingMode, TrainingSessionSize,
@@ -20,6 +22,9 @@ export type TrainingSetupDraft = {
   /** Maximum unique card targets for this session; omitted by old callers. */
   sessionSize?: TrainingSessionSize;
   /** Empty means all supported Dutch parts of speech. */
+  vocabulary?:VocabularySelection;
+  librarySelection?:LibraryTrainingSelection;
+  sourceWordStatus?: SourceWordStatus;
   partOfSpeech?: DutchTrainingPartOfSpeech[];
   /** Article selection narrows noun candidates; selected non-noun POS remain eligible. */
   nounArticles?: DutchNounArticle[];
