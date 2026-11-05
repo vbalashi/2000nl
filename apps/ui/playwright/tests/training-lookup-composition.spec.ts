@@ -64,7 +64,7 @@ test("@latency models serialized versus overlapped exact lookup composition with
         expect(before).toBeTruthy();
         displayedHeadwords.add(before!);
         const action = page.getByRole("button", {
-          name: /Begin met leren|Учить|Start learning|Goed|Хорошо|Good/i,
+          name: /Begin met leren|Учить|Start learning|Learn|Goed|Хорошо|Good/i,
         });
         const startedAt = performance.now();
         await action.click();

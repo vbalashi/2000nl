@@ -13,7 +13,7 @@ async function advanceToApprovedPosition(page: import("@playwright/test").Page) 
       })
       .click();
     const learn = page.getByRole("button", {
-      name: /Begin met leren|Учить|Start learning/i,
+      name: /Begin met leren|Учить|Start learning|Learn/i,
     });
     if (await learn.isVisible().catch(() => false)) {
       await learn.click();
