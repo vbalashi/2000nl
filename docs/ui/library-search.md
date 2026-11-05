@@ -25,6 +25,12 @@ localized format (for example, `Found: 9`). It remains visible while results
 scroll. Filter drafts preview the same active category and use the same counter
 format. Drafts do not alter the applied main search until Apply.
 
+Ordinary filter previews use one count-only request under the same authenticated
+scope. They consume the exact group total without continuing through result pages
+or projecting articles, learning state or translations. Count requests have no
+cursor and do not change the normal 50-group result page. Examples and definitions
+retain their loaded-match counter policy below.
+
 Examples and definitions load 50 matches at a time. More pages require an explicit
 “More 50” action; opening a category or filter draft never enumerates unseen
 matches for a total. The counter shows the loaded matches with “+” while more

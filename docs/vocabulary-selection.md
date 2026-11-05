@@ -28,6 +28,9 @@ not establish that a full dictionary can be counted within the request deadline.
   Assert correct
   counts and enforce a statement timeout below the route deadline. Repeat after
   warming caches and report first-run and repeated timings separately.
+  Include a wider noninitial range such as 400–800, not just the top 100 ranks.
+  Measure a new backend connection and repeated calls through the prepared-plan
+  threshold; distinguish warmed buffers from physical cold-disk measurements.
   Include All words with each meaning limit and parent-word selection for Idioms
   and word-in-context exercises; a fast frequency path does not establish that
   those paths avoid repeated per-entry work. Compare selected entry IDs against
