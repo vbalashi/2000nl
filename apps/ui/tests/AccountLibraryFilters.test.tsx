@@ -24,7 +24,7 @@ vi.mock("@/components/practice/material/useLibraryMaterialSelection", () => ({
   useLibraryMaterialSelection: () => mocked.material,
 }));
 vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
-  fetchPlatformV2LibraryGroupPage: mocked.fetchPage,
+  countPlatformV2LibraryGroups: async (input: unknown) => (await mocked.fetchPage(input)).librarySearch.totalGroups,
 }));
 vi.mock("@/lib/platform/dictionaryCategorySearch",async importOriginal=>({
  ...await importOriginal<typeof import("@/lib/platform/dictionaryCategorySearch")>(),readDictionaryCategory:mocked.categoryRead,

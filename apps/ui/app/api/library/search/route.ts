@@ -31,6 +31,11 @@ export async function POST(request: NextRequest) {
       },
       body.error === "too_large" ? 413 : 400,
     );
+  const countOnly = (body.body as Record<string, unknown>)?.countOnly;
+  if (countOnly !== undefined && typeof countOnly !== "boolean")
+    return jsonNoStore({ error: "invalid_count_request" }, 400);
+  if (countOnly && (body.body as Record<string, unknown>).cursor != null)
+    return jsonNoStore({ error: "invalid_count_request" }, 400);
   const parsed = parsePlatformV2LookupRequest(body.body, { allowLibraryBrowse: true });
   if (!parsed.ok) return jsonNoStore({ error: parsed.error }, 400);
   if (parsed.request.entryId || parsed.request.intent !== "dictionary-lookup")
@@ -51,10 +56,12 @@ export async function POST(request: NextRequest) {
   if (material === null || (material !== undefined && scope.dictionaryIds !== null))
     return jsonNoStore({ error: "invalid_material_scope" }, 400);
   if (material !== undefined) scope.material = material;
+  if (countOnly && !scope.filters && !scope.material)
+    scope.filters = { parts: [], article: null };
   const service = getPlatformServiceSupabase();
   if (service instanceof Response) return service;
   const result = await performPlatformV2Lookup(
-    { kind: "authenticated", auth, service },
+    { kind: "authenticated", auth, service, signal: request.signal, ...(countOnly ? { libraryCountOnly: true } : {}) },
     parsed.request,
     scope,
   );
