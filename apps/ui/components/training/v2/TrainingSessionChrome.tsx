@@ -26,7 +26,7 @@ export type TrainingSessionChromeProps = {
   onClose: () => void;
   disabled?: boolean;
   approvedPresentation?: boolean;
-  /** Show progress only while the session is ready. */
+  /** Keep the session indicator visible through card loading and completion. */
   showProgress?: boolean;
 };
 

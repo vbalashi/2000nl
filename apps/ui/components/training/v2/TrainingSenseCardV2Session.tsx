@@ -670,13 +670,12 @@ export function TrainingSenseCardV2Session({
 
   const handlePlayAudio = React.useCallback(async () => {
     const capability = result?.group.header.audio;
-    if (!capability || !onPlayResolvedAudio || interactionBusyRef.current) return;
-    interactionBusyRef.current = true;
+    if (!capability || !onPlayResolvedAudio || interactionBusyRef.current || audioRequestRef.current) return;
     const generation=actionScopeRef.current.generation;
     const controller=new AbortController();
-    audioRequestRef.current?.abort();audioRequestRef.current=controller;
+    // Audio owns its request lock; it must not dim or disable the whole card.
+    audioRequestRef.current=controller;
     const isCurrent=()=>!controller.signal.aborted&&mountedRef.current&&actionScopeRef.current.generation===generation;
-    setBusy(true);
     setNoticeTone("error");
     setError(null);
     try {
@@ -695,7 +694,6 @@ export function TrainingSenseCardV2Session({
     } finally {
       if(audioRequestRef.current===controller){
         audioRequestRef.current=null;
-        if(mountedRef.current&&actionScopeRef.current.generation===generation){interactionBusyRef.current = false;setBusy(false);}
       }
     }
   }, [cacheOwnerId, onPlayResolvedAudio, result, currentCard.context]);

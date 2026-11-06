@@ -91,6 +91,7 @@ import { TrainingSessionState } from "./v2/TrainingSessionState";
 import { TrainingUnsupportedMode } from "./v2/TrainingUnsupportedMode";
 import {
   TrainingSessionSurface,
+  TrainingSessionFrame,
   type TrainingSessionNoticeInput,
 } from "./v2/TrainingSessionSurface";
 import sessionStyles from "./v2/TrainingSessionLayout.module.css";
@@ -2343,7 +2344,9 @@ function TrainingScreenContent({
           />
         ) : activeExerciseFamily === "sentence" && sentenceSession && typeof translationLang === "string" && translationLang !== "off" ? (
           <TrainingSentenceSession interactionDisabled={sessionAuthorityChecking} authorityRefreshing={sessionAuthorityRefreshing} presentationActive={visibleDestination === "training"} pending={trainingPilot.startPending} startFailed={Boolean(trainingLoadError)} sessionSize={sessionSize} onRestart={restartCompletedSession} onEdit={() => { setOpenTrainingEditor(true); trainingPilot.returnToToday(); }} sessionName={displayedSessionName} studyTimeEnabled={studyTimeEnabled} key={sentenceSession.sessionId} userId={user.id} session={sentenceSession} contentLanguageCode={currentTrainingLanguage} translationTargetLanguageCode={translationLang} interfaceLanguage={onboardingLang} onExit={exitIdiomSession} onProgress={handleExerciseProgress} onSessionSuperseded={()=>handleTrainingSessionSuperseded(runSelection??undefined)} onHistory={openTrainingHistory} onPlayResolvedAudio={(url, label) => playAudio(url, label)} onOpenDetails={handleShowCurrentWordDetails} onCurrentCardContextChange={handleCurrentCardContextChange} />
-        ) : v2SessionOwned && currentWord && v2SessionMode ? (
+        ) : (
+          <TrainingSessionFrame chrome={trainingSessionChrome}>
+          {v2SessionOwned && currentWord && v2SessionMode ? (
           <TrainingSenseCardV2Session
             presentationActive={visibleDestination === "training"}
             studyTimeEnabled={studyTimeEnabled}
@@ -2425,6 +2428,8 @@ function TrainingScreenContent({
               </div>
             )}
           </TrainingSessionSurface>
+        )}
+          </TrainingSessionFrame>
         )}
         {user?.id ? <TrainingExclusionUndoNotice userId={user.id} language={onboardingLang}/> : null}
         <TrainingKnownUndoNotice
