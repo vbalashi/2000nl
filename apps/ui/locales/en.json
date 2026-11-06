@@ -1825,9 +1825,9 @@
       "cancel": "Cancel",
       "apply": "Done",
       "invalid": "Start at 1 or higher. The end must be at least the start.",
-      "selectionHelp": "Choose all words, or words used more often in speech or writing. Frequency selection includes only words for which these figures are available.",
+      "selectionHelp": "Choose all words, or select a range from a list ordered from most to least common. Frequency selection includes only words for which this information is available.",
       "speechHelp": "Spoken language uses conversations from CGN. Written language uses texts from SoNaR500. A word can be common in speech and less common in writing.",
-      "rangeHelp": "A lower number means a more common word. For example, 1–100 selects the hundred most common words. We show those found in your dictionary that match your other settings, so there may be fewer. Swipe the numbers up or down. The step sets how far each change moves. Select the pencil to type an exact range.",
+      "rangeHelp": "A lower number means a more common word. For example, 1–100 selects the hundred most common words. We show those found in your dictionary that match your other settings, so there may be fewer. Select the pencil to change the range.",
       "meaningHelp": [
         "A word can have several meanings. For example, lopen can describe walking, a motor running, or an event taking place.",
         "Meanings follow dictionary order. Choose the first one, two or three, or keep them all. If there are fewer, take those available. Each separate dictionary entry has its own limit.",
