@@ -151,8 +151,9 @@ test("offers the approved frameless header without changing session controls or 
   );
   const chrome = screen.getByTestId("training-session-chrome");
   expect(chrome).toHaveAttribute("data-visual-spec", "training-approved-v1");
-  expect(screen.getByTestId("training-session-position")).toHaveTextContent("2 / 5");
-  expect(screen.queryByTestId("training-session-progress-track")).not.toBeInTheDocument();
+  expect(screen.queryByTestId("training-session-position")).toBeNull();
+  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "2");
+  expect(screen.getByTestId("training-session-progress-track")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Close session" }));
   expect(onClose).toHaveBeenCalledOnce();
 });
@@ -164,5 +165,6 @@ test("shows the selected training name instead of the queue label", () => {
     approvedPresentation />);
   expect(screen.getByTestId("training-session-name")).toHaveTextContent("Мои пять слов");
   expect(screen.queryByText("Новые + повторение")).not.toBeInTheDocument();
-  expect(screen.getByTestId("training-session-position")).toHaveTextContent("2 / 5");
+  expect(screen.queryByTestId("training-session-position")).toBeNull();
+  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "2");
 });

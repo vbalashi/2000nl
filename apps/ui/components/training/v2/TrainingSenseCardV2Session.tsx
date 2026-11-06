@@ -1,4 +1,5 @@
 "use client";
+import { useTrainingAudioPlayback } from "../useTrainingAudioPlayback";
 import { useCardLoadDiagnostics } from "@/lib/diagnostics/useCardLoadDiagnostics";
 import {signalOnboarding} from "@/lib/onboarding/signals";
 import {useEntryNoteMaterial} from "../useEntryNoteMaterial";
@@ -229,7 +230,6 @@ export function TrainingSenseCardV2Session({
   const [presentationAnnouncement, setPresentationAnnouncement] =
     React.useState<string>("");
   const interactionBusyRef = React.useRef(false);
-  const audioRequestRef=React.useRef<AbortController|null>(null);
   const loadGenerationRef = React.useRef(0);
   const presentationHandledRef = React.useRef(false);
   const autoPlayedCardRef = React.useRef<string | null>(null);
@@ -243,7 +243,6 @@ export function TrainingSenseCardV2Session({
     interactionBusyRef.current = false;
   }
   const mountedRef = React.useRef(false);
-  React.useEffect(()=>()=>audioRequestRef.current?.abort(),[actionScopeKey,presentationActive]);
 
   React.useEffect(() => {
     mountedRef.current = true;
@@ -668,35 +667,19 @@ export function TrainingSenseCardV2Session({
     }
   };
 
-  const handlePlayAudio = React.useCallback(async () => {
-    const capability = result?.group.header.audio;
-    if (!capability || !onPlayResolvedAudio || interactionBusyRef.current || audioRequestRef.current) return;
-    const generation=actionScopeRef.current.generation;
-    const controller=new AbortController();
-    // Audio owns its request lock; it must not dim or disable the whole card.
-    audioRequestRef.current=controller;
-    const isCurrent=()=>!controller.signal.aborted&&mountedRef.current&&actionScopeRef.current.generation===generation;
-    setNoticeTone("error");
-    setError(null);
-    try {
-      const url = await resolvePlatformV2Audio({
-        cacheOwnerId,
-        capability,
-        entryId: result.entry.entryId,
-        sourceVersion: result.entry.sourceVersion,
-        currentCard: currentCard.context ?? undefined,
-        signal: controller.signal,
-        text: result.group.header.text,
-      });
-      if(isCurrent())onPlayResolvedAudio(url, result.group.header.text);
-    } catch (cause) {
-      if(isCurrent())setError(platformV2Message(interfaceLanguageRef.current,"senseCard.audio.failed"));
-    } finally {
-      if(audioRequestRef.current===controller){
-        audioRequestRef.current=null;
-      }
-    }
-  }, [cacheOwnerId, onPlayResolvedAudio, result, currentCard.context]);
+  const handlePlayAudio = useTrainingAudioPlayback({
+    identity: JSON.stringify([cacheOwnerId, actionScopeKey, currentCard.context?.permitId]),
+    active: presentationActive,
+    enabled: Boolean(result?.group.header.audio && onPlayResolvedAudio) && !busy && !interactionDisabled,
+    onStart: () => { setNoticeTone("error"); setError(null); },
+    resolve: signal => resolvePlatformV2Audio({
+      cacheOwnerId, capability: result!.group.header.audio!,
+      entryId: result!.entry.entryId, sourceVersion: result!.entry.sourceVersion,
+      currentCard: currentCard.context ?? undefined, signal, text: result!.group.header.text,
+    }),
+    onPlay: url => onPlayResolvedAudio?.(url, result!.group.header.text),
+    onError: () => setError(platformV2Message(interfaceLanguageRef.current,"senseCard.audio.failed")),
+  });
 
   React.useEffect(() => {
     if (

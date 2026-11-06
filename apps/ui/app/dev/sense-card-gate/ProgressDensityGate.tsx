@@ -25,7 +25,7 @@ export function ProgressDensityGate() {
           <h2 style={{fontSize:14,fontWeight:500,margin:"0 0 8px"}}>{total} карточек · пройдено {completed}</h2>
           <div style={{padding:"14px 16px 16px",background:"var(--practice-canvas)"}}>
             <TrainingInteractionPreferencesProvider userId={`density-${total}`} initial={defaultTrainingInteractions} repository={repository}>
-              <TrainingSessionChrome interfaceLanguage="ru" scenario="understanding" mode="word-to-definition" cardFilter="both" approvedPresentation showProgress sessionName="VanDale 2k words" presentation={{kind:"planned",position:completed,total,fraction:completed/total}} onClose={() => {}} onHistory={() => {}} />
+              <TrainingSessionChrome interfaceLanguage="ru" scenario="understanding" mode="word-to-definition" cardFilter="both" approvedPresentation sessionName="VanDale 2k words" presentation={{kind:"planned",position:completed,total,fraction:completed/total}} onClose={() => {}} onHistory={() => {}} />
             </TrainingInteractionPreferencesProvider>
             <div aria-hidden="true" style={{height:44,marginTop:10,borderRadius:"var(--practice-radius-panel)",background:"var(--practice-surface)"}} />
           </div>

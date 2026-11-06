@@ -1,4 +1,5 @@
 "use client";
+import { useTrainingAudioPlayback } from "../useTrainingAudioPlayback";
 import {useEntryNoteMaterial} from "../useEntryNoteMaterial";
 import { useCurrentTrainingCard, usePresentedTrainingCard, type PresentedTrainingCard } from "../v2/useCurrentTrainingCard";
 import { readCurrentTrainingCard, type CurrentTrainingCardContext } from "@/lib/platform/trainingCurrentCardClient";
@@ -70,8 +71,6 @@ export function TrainingSentenceSession(props: Props) {
   });
   const {candidate,content,setContent,revealed,setRevealed,loading,submitting,failed,setFailed,terminal,completed,loadNext}=runtime;
   const translationPending=runtime.pendingEntryId!==null;
-  const audioController=useRef<AbortController|null>(null);
-  useEffect(()=>()=>audioController.current?.abort(),[userId,session.sessionId,candidate?.targetId,props.presentationActive]);
   const currentCard = useCurrentTrainingCard({ userId, active: props.presentationActive !== false && Boolean(candidate && content) && !loading && !terminal,
     target: candidate && content ? { sessionId: session.sessionId, entryId: candidate.entryId,
       cardTypeId: `${candidate.family}:${candidate.direction}`, targetId: candidate.targetId, direction: candidate.direction,
@@ -106,23 +105,23 @@ export function TrainingSentenceSession(props: Props) {
   const sessionPresentation = { kind: "planned" as const, position: Math.min(completed, session.requestedTotal), total: session.requestedTotal, fraction: session.requestedTotal ? Math.min(completed / session.requestedTotal, 1) : 0 };
   const noteMaterial=useEntryNoteMaterial({userId,entryId:content?.entry.entryId,scope:JSON.stringify([session.sessionId,session.runGeneration,candidate?.targetId]),active:props.presentationActive!==false&&content?.entry.noteMaterial!==undefined,busy:loading||submitting});
   const presentation = content ? buildSentenceCardPresentation({ content:{...content,entry:{...content.entry,noteMaterial}}, interfaceLanguage, translationTargetLanguageCode, repeatCount: candidate?.state?.seenCount ?? 0 }) : null;
-  const playAudio=async()=>{
-    if(!content?.group.header.audio||!onPlayResolvedAudio||audioController.current)return;
-    const controller=new AbortController();audioController.current=controller;
-    const expected=runtime.operations.capture("selection");
-    try{
-      const url=await resolvePlatformV2Audio({cacheOwnerId:userId,entryId:content.entry.entryId,sourceVersion:content.entry.sourceVersion,
-        node:{contentNodeId:content.sentence.contentNodeId,sourceTextFingerprint:content.sentence.sourceTextFingerprint},
-        currentCard:currentCard.context??undefined,signal:controller.signal,
-        capability:content.group.header.audio,text:content.sentence.text});
-      if(!controller.signal.aborted&&expected.isCurrent())onPlayResolvedAudio(url,content.sentence.text);
-    }catch{if(!controller.signal.aborted&&expected.isCurrent())setFailed(true);}
-    finally{if(audioController.current===controller)audioController.current=null;}
-  };
+  const playAudio = useTrainingAudioPlayback({
+    identity: JSON.stringify([userId, session.sessionId, session.runGeneration, candidate?.targetId, currentCard.context?.permitId]),
+    active: props.presentationActive !== false && !runtime.superseded,
+    enabled: Boolean(content?.group.header.audio && onPlayResolvedAudio) && !submitting && !props.interactionDisabled,
+    resolve: signal => resolvePlatformV2Audio({
+      cacheOwnerId:userId,entryId:content!.entry.entryId,sourceVersion:content!.entry.sourceVersion,
+      node:{contentNodeId:content!.sentence.contentNodeId,sourceTextFingerprint:content!.sentence.sourceTextFingerprint},
+      currentCard:currentCard.context??undefined,signal,
+      capability:content!.group.header.audio!,text:content!.sentence.text,
+    }),
+    onPlay: url => onPlayResolvedAudio?.(url,content!.sentence.text),
+    onError: () => setFailed(true),
+  });
 
   if(runtime.superseded)return null;
   return <TrainingSessionV2Layout authorityRefreshing={props.authorityRefreshing && !submitting && !exclusion.busy} approvedPresentation={true} phase={loading || translationPending || (candidate && !currentCard.ready && !currentCard.failed) ? "loading" : currentCard.failed || (failed && !candidate) ? "failure" : "ready"}
-    chrome={<TrainingSessionChrome approvedPresentation={true} interfaceLanguage={interfaceLanguage} scenario="idiom" mode="word-to-definition" cardFilter="both" sessionName={props.sessionName || t.title} presentation={sessionPresentation} unlimited={props.sessionSize === "all-due-today"} showProgress={!loading && !(failed && !candidate) && !terminal} onHistory={onHistory} onClose={onExit} disabled={submitting || exclusion.busy} />}
+    chrome={<TrainingSessionChrome approvedPresentation={true} interfaceLanguage={interfaceLanguage} scenario="idiom" mode="word-to-definition" cardFilter="both" sessionName={props.sessionName || t.title} presentation={sessionPresentation} unlimited={props.sessionSize === "all-due-today"} onHistory={onHistory} onClose={onExit} disabled={submitting || exclusion.busy} />}
     notice={!preparationFailed && (failed || exclusion.failed) ? <TrainingSessionNotice notice={{ kind: "error", message: exclusion.failed ? trainingExclusionCopy[interfaceLanguage].failed : t.failed, retryLabel: t.retry, retryDisabled: submitting || loading, onRetry: () => exclusion.failed ? void exclusion.exclude() : void runtime.retry() }} /> : null}
     footer={<TrainingSessionStatsFooter {...stats} interfaceLanguage={interfaceLanguage} />}>
       {currentCard.enabled && candidate && !loading && !currentCard.ready ? <TrainingSessionState loading={!currentCard.failed} title={currentCard.failed ? t.failed : t.loading}

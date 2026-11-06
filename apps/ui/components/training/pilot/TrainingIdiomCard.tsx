@@ -1,4 +1,5 @@
 "use client";
+import { useTrainingAudioPlayback } from "../useTrainingAudioPlayback";
 import {useEntryNoteMaterial} from "../useEntryNoteMaterial";
 import { readCurrentTrainingCard, type CurrentTrainingCardContext } from "@/lib/platform/trainingCurrentCardClient";
 import { resolveIdiomExerciseContent } from "@/lib/training/idiomExerciseContent";
@@ -68,8 +69,6 @@ export function TrainingIdiomCard({
   const [translationPending, setTranslationPending] = React.useState(false);
   const pending = React.useRef<object | null>(null);
   const scope = React.useRef(0);
-  const audioController=React.useRef<AbortController|null>(null);
-  React.useEffect(()=>()=>audioController.current?.abort(),[userId,currentCard?.sessionId,currentCard?.permitId]);
   React.useEffect(() => {
     scope.current += 1;
     setContent(initialContent);
@@ -78,7 +77,6 @@ export function TrainingIdiomCard({
     setFailed(false);
     pending.current = null;
     return () => {
-      audioController.current?.abort();
       scope.current += 1;
     };
   }, [initialContent, translationTargetLanguageCode]);
@@ -145,6 +143,20 @@ export function TrainingIdiomCard({
     }
   }
 
+  const playAudio = useTrainingAudioPlayback({
+    identity: JSON.stringify([userId, candidate.targetKey, currentCard?.sessionId, currentCard?.permitId, translationTargetLanguageCode]),
+    active: presentationActive,
+    enabled: Boolean(content.group.header.audio && onPlayResolvedAudio) && !busy && !actionBusy,
+    onStart: () => setFailed(false),
+    resolve: signal => resolvePlatformV2Audio({
+      cacheOwnerId: userId, capability: content.group.header.audio!,
+      entryId: content.entry.entryId, sourceVersion: content.entry.sourceVersion,
+      currentCard, signal, text: content.headword,
+    }),
+    onPlay: url => onPlayResolvedAudio?.(url, content.headword),
+    onError: () => setFailed(true),
+  });
+
   return (
     <>
       <TrainingExerciseCard
@@ -160,23 +172,7 @@ export function TrainingIdiomCard({
         onGrade={onGrade}
         onPlayAudio={
           content.group?.header.audio && onPlayResolvedAudio
-            ? () => {
-                const controller=new AbortController();
-                audioController.current?.abort();audioController.current=controller;
-                void run(
-                  () =>
-                    resolvePlatformV2Audio({
-                      cacheOwnerId: userId,
-                      capability: content.group.header.audio!,
-                      entryId: content.entry.entryId,
-                      sourceVersion: content.entry.sourceVersion,
-                      currentCard,
-                      signal: controller.signal,
-                      text: content.headword,
-                    }).catch(error=>{if(controller.signal.aborted)return "";throw error;}),
-                  (url) => {if(!controller.signal.aborted)onPlayResolvedAudio(url, content.headword);},
-                ).catch(() => undefined);
-              }
+            ? () => { void playAudio(); }
             : undefined
         }
         onOpenDetails={

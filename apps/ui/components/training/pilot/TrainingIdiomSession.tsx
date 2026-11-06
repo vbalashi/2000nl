@@ -147,7 +147,6 @@ export function TrainingIdiomSession({
           sessionName={sessionName || t.title}
           presentation={sessionPresentation}
           unlimited={sessionSize === "all-due-today"}
-          showProgress={!loading && !(error && !candidate) && !terminal}
           onHistory={onHistory}
           onClose={onExit}
           disabled={submitting || exclusion.busy}

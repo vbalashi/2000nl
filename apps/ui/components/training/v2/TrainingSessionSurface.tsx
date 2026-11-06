@@ -63,7 +63,7 @@ export function TrainingSessionFrame({chrome, children}: {
   return <SessionFrameContext.Provider value={true}>
     <div className={`${styles.main} ${styles.mainApproved}`}>
       <section className={styles.stack}>
-        <TrainingSessionChrome {...chrome} approvedPresentation showProgress />
+        <TrainingSessionChrome {...chrome} approvedPresentation />
         {children}
       </section>
     </div>
@@ -90,7 +90,6 @@ export function TrainingSessionSurface({
         <TrainingSessionChrome
           {...chrome}
           approvedPresentation={approvedPresentation}
-          showProgress
         />
       ) : null}
       footer={approvedPresentation ? null : <FooterStats {...footer} />}

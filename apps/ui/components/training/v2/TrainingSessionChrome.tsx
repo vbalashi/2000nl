@@ -26,10 +26,9 @@ export type TrainingSessionChromeProps = {
   onClose: () => void;
   disabled?: boolean;
   approvedPresentation?: boolean;
-  /** Keep the session indicator visible through card loading and completion. */
-  showProgress?: boolean;
 };
 
+/** The indicator belongs to the session, including loading, recovery and completion. */
 export function TrainingSessionChrome({
   interfaceLanguage,
   scenario,
@@ -43,7 +42,6 @@ export function TrainingSessionChrome({
   onClose,
   disabled = false,
   approvedPresentation = false,
-  showProgress = false,
 }: TrainingSessionChromeProps) {
   const text = copy[interfaceLanguage];
   const { preferences } = useTrainingInteractions();
@@ -63,7 +61,7 @@ export function TrainingSessionChrome({
       >
         {name}
       </span>
-      {(!approvedPresentation || !showProgress || unlimited || preferences.alwaysShowCardCount || preferences.progressAnimation === "off" || presentation.kind === "ordinal") && <span data-testid="training-session-position" className={styles.position}>
+      {(!approvedPresentation || unlimited || preferences.alwaysShowCardCount || preferences.progressAnimation === "off" || presentation.kind === "ordinal") && <span data-testid="training-session-position" className={styles.position}>
         {presentation.position}
         {presentation.kind === "planned" ? ` / ${presentation.total}` : null}
       </span>}
@@ -105,7 +103,7 @@ export function TrainingSessionChrome({
   return (
     <div className={styles.progressHeader}>
       {chrome}
-      {showProgress && !unlimited && presentation.kind === "planned" && preferences.progressAnimation !== "off" ? (
+      {!unlimited && presentation.kind === "planned" && preferences.progressAnimation !== "off" ? (
         <TrainingSessionProgress
           presentation={presentation}
           language={interfaceLanguage}

@@ -5,7 +5,7 @@ import {TrainingSessionChrome} from '@/components/training/v2/TrainingSessionChr
 import {TrainingInteractionSettings} from '@/components/practice/ui/TrainingInteractionSettings';
 import {TrainingInteractionPreferencesProvider,defaultTrainingInteractions} from '@/components/practice/ui/TrainingInteractionPreferences';
 afterEach(cleanup);
-const props={interfaceLanguage:'en' as const,scenario:'understanding',mode:'word-to-definition' as const,cardFilter:'both' as const,presentation:{kind:'planned' as const,position:7,total:15,fraction:7/15},onClose:()=>{},approvedPresentation:true,showProgress:true};
+const props={interfaceLanguage:'en' as const,scenario:'understanding',mode:'word-to-definition' as const,cardFilter:'both' as const,presentation:{kind:'planned' as const,position:7,total:15,fraction:7/15},onClose:()=>{},approvedPresentation:true};
 const wrap=(child:React.ReactNode,alwaysShowCardCount=false)=><TrainingInteractionPreferencesProvider userId="test" initial={{...defaultTrainingInteractions,alwaysShowCardCount}}>{child}</TrainingInteractionPreferencesProvider>;
 test('finite sessions default to dots and expose exact progress to assistive technology',()=>{
  render(wrap(<TrainingSessionChrome {...props}/>));

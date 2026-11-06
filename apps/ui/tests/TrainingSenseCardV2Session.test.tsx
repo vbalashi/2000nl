@@ -2362,11 +2362,12 @@ describe("TrainingSenseCardV2Session", () => {
     },
   );
 
-  test("audio preparation leaves the card controls steady and deduplicates playback", async () => {
+  test.each([false,true])("audio preparation leaves the card controls steady and deduplicates playback (context=%s)", async wordInContext => {
+    if(wordInContext)loadContextPrompt.mockResolvedValue({state:"ready",prompt:{text:"Example",sourceText:singleSenseEntry.contentNodes[1].text,contentNodeId:"example-1",sourceTextFingerprint:"example-fingerprint"}});
     let release!: (url:string)=>void;
     resolveAudio.mockImplementation(()=>new Promise<string>(resolve=>{release=resolve;}));
     const play=vi.fn();
-    render(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onPlayResolvedAudio={play} onProgressActionAccepted={vi.fn()}/>);
+    render(<TestTrainingSenseCardV2Session word={word} wordInContext={wordInContext} trainingSessionId={wordInContext?"audio-context":undefined} mode="word-to-definition" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onPlayResolvedAudio={play} onProgressActionAccepted={vi.fn()}/>);
     const reveal=await screen.findByRole("button",{name:"Show answer"});
     const shell=screen.getByTestId("training-sense-card-shell");
     fireEvent.click(screen.getByRole("button",{name:"Play audio"}));
