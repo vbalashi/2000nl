@@ -32,12 +32,13 @@ for (const viewport of [{width: 1440, height: 1000}, {width: 390, height: 844}])
         contractVersion: "platform-lookup-v2", query: request.query ?? "",
         request: {contentLanguageCode: request.contentLanguageCode, translationTargetLanguageCode: request.translationTargetLanguageCode, cardTypeId: request.cardTypeId, intent: request.intent},
         groups: [multiSenseBankGroup], page: {selectedTierComplete: true, nextGroupCursor: null},
-        librarySearch: {totalGroups: 1, matchingEntryIds: multiSenseBankGroup.entries.map(entry => entry.kind === "sense-card" ? entry.entryId : entry.crossReferenceId)},
+        librarySearch: {totalGroups: 1, totalMeanings: 2, matchingEntryIds: multiSenseBankGroup.entries.map(entry => entry.kind === "sense-card" ? entry.entryId : entry.crossReferenceId)},
       }});
     });
     await page.getByRole("button", {name: uk.ui.navigation.library, exact: true}).click();
     await expect(page.getByPlaceholder(uk.ui.library.searchPlaceholder)).toBeVisible();
     await expect(page.getByTestId("library-headword-group-row").first()).toBeVisible();
+    await expect(page.getByText("1 стаття · 2 значення", {exact: true})).toBeVisible();
     await page.screenshot({path: info.outputPath("uk-library.png")});
     await page.getByRole("button", {name: uk.ui.navigation.training, exact: true}).click();
     await page.locator('[data-onboarding="launch"]').click();

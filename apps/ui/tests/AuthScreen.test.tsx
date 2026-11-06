@@ -95,7 +95,7 @@ test("Ukrainian sign-in and provider failures use the catalog without leaking pr
   const copy = uk.features.auth;
   expect(screen.getByText(copy.title)).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText(copy.emailLabel), {target: {value: "user@example.invalid"}});
-  fireEvent.click(screen.getByRole("button", {name: copy.submitButton, exact: true}));
+  fireEvent.click(screen.getByRole("button", {name: copy.submitButton}));
   expect(await screen.findByText(copy.sendError)).toBeInTheDocument();
   expect(screen.queryByText("RAW_PROVIDER_DETAIL")).not.toBeInTheDocument();
 });
