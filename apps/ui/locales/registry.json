@@ -13,5 +13,10 @@
     "name": "Nederlands",
     "direction": "ltr",
     "formatLocale": "nl-NL"
+  },
+  "uk": {
+    "name": "Українська",
+    "direction": "ltr",
+    "formatLocale": "uk-UA"
   }
 }

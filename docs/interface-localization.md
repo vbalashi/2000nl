@@ -104,17 +104,35 @@ run it automatically to make a failing check pass. Removing an English key also
 requires removing it from the target catalogs; obsolete review entries are pruned
 by a deliberate whole-catalog acknowledgement.
 
+## Catalog delivery and updates
+
+Catalogs and the language registry are statically imported into the application
+bundle. A new interface language or a correction to existing wording currently
+requires rebuilding and deploying the app; replacing a JSON file in a running
+container does not update loaded browser bundles. Dictionary content is a separate
+resource and compatible dictionary data does not require an interface rebuild.
+A new dictionary format or renderer can require application changes.
+
+[Runtime catalog delivery (#85)](https://github.com/vbalashi/2000nl/issues/85)
+tracks updating compatible message text and registering interface languages
+without a new application build. This is a separate follow-up; it must preserve
+version compatibility, validation, atomic publication and fallback behavior.
+New controls and new rendering logic still require application code.
+
 ## Preparing and enabling a new language
 
-1. `npm run i18n:prepare -- --locale uk` creates a draft catalog using English text
+English, Russian, Dutch and Ukrainian are registered. The following example
+prepares Turkish, which remains disabled until explicitly registered.
+
+1. `npm run i18n:prepare -- --locale tr` creates a draft catalog using English text
    and an empty review file. It refuses to overwrite an existing catalog.
 2. Translate it with the screen context and terminology in mind. English text in
    the draft is source material, not a completed translation.
-3. `npm run i18n:report -- --locale uk --json` lists outstanding work.
+3. `npm run i18n:report -- --locale tr --json` lists outstanding work.
 4. After language review, acknowledge completed keys, or explicitly use
-   `npm run i18n:review -- --locale uk --all` for a fully reviewed catalog.
-5. `node scripts/interface-localization.mjs check --locale uk` must pass.
-6. Add `"uk": {"name": "Українська", "direction": "ltr"}` to
+   `npm run i18n:review -- --locale tr --all` for a fully reviewed catalog.
+5. `node scripts/interface-localization.mjs check --locale tr` must pass.
+6. Add `"tr": {"name": "Türkçe", "direction": "ltr"}` to
    `locales/registry.json`. This is the only hand-edited registration point.
 7. Run `npm run i18n:sync` to regenerate static imports, then
    `npm run i18n:check`, `npm run typecheck` and relevant tests.

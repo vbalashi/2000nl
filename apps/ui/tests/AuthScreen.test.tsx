@@ -1,3 +1,4 @@
+import uk from "@/locales/uk.json";
 import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, vi } from "vitest";
@@ -85,3 +86,16 @@ test("sending an OTP stores pending email so refresh/reopen keeps the code-entry
   );
 });
 
+
+
+test("Ukrainian sign-in and provider failures use the catalog without leaking provider details", async () => {
+  localStorage.setItem("onboarding_language", "uk");
+  signInWithOtp.mockResolvedValue({error: {message: "RAW_PROVIDER_DETAIL"}});
+  render(<AuthScreen />);
+  const copy = uk.features.auth;
+  expect(screen.getByText(copy.title)).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText(copy.emailLabel), {target: {value: "user@example.invalid"}});
+  fireEvent.click(screen.getByRole("button", {name: copy.submitButton, exact: true}));
+  expect(await screen.findByText(copy.sendError)).toBeInTheDocument();
+  expect(screen.queryByText("RAW_PROVIDER_DETAIL")).not.toBeInTheDocument();
+});

@@ -1,3 +1,4 @@
+import { interfaceLanguages } from "@/lib/i18n/registry";
 import React from "react";
 import {act, fireEvent, render, screen, waitFor} from "@testing-library/react";
 import {afterEach, beforeEach, expect, test, vi} from "vitest";
@@ -17,7 +18,7 @@ beforeEach(()=>{
 });
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllGlobals();window.history.replaceState({},"","/");});
 
-test.each(["en","ru","nl"] as const)("password recovery uses the %s catalog for headings, labels, buttons and validation",async language=>{
+test.each(interfaceLanguages.map(({code}) => code))("password recovery uses the %s catalog for headings, labels, buttons and validation",async language=>{
  setOnboardingLanguage(language);const copy=getInterfaceCatalog(language).features.authPages;
  render(<ResetPasswordPage/>);
  expect(await screen.findByRole("heading",{name:copy.title})).toBeInTheDocument();
@@ -34,12 +35,12 @@ test("a recovery error is localized again when the interface changes, without sh
  expect(screen.queryByText(/PROVIDER_RAW_DETAIL/)).not.toBeInTheDocument();expect(state.getSession).toHaveBeenCalledTimes(1);
 });
 
-test("connection permissions and errors use the interface catalog, not server English labels",async()=>{
- setOnboardingLanguage("ru");const copy=getInterfaceCatalog("ru").features.connect;
+test.each(interfaceLanguages.map(({code}) => code))("connection permissions and errors use the %s interface catalog, not server English labels",async language=>{
+ setOnboardingLanguage(language);const copy=getInterfaceCatalog(language).features.connect;
  window.history.replaceState({},"","/connect/authorize?response_type=code&client_id=demo&redirect_uri=https%3A%2F%2Fexample.invalid%2Fcallback&scope=platform%3Aread&code_challenge=synthetic");
  const fetch=vi.fn().mockResolvedValueOnce({ok:true,json:async()=>({clientId:"demo",displayName:"Demo app",clientType:"browser",redirectUri:"https://example.invalid/callback",scopes:[{id:"platform:read",label:"RAW_SERVER_ENGLISH"}],requiresPkce:true})}).mockResolvedValueOnce({ok:false,json:async()=>({error:"synthetic-failure"})});
  vi.stubGlobal("fetch",fetch);render(<ConnectAuthorizePage/>);
- expect(await screen.findByRole("heading",{name:"Подключить Demo app"})).toBeInTheDocument();
+ expect(await screen.findByRole("heading",{name:copy.title.replace("{name}","Demo app")})).toBeInTheDocument();
  expect(screen.getByText(copy.scopes["platform:read"])).toBeInTheDocument();expect(screen.queryByText("RAW_SERVER_ENGLISH")).not.toBeInTheDocument();
  fireEvent.click(screen.getByRole("button",{name:copy.approve}));expect(await screen.findByText(copy.errors.failed)).toBeInTheDocument();
  await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(2));
