@@ -86,7 +86,7 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
   // Cursor shape is bound to the criteria even when the visible result count changes.
   expect(cursor).toBeTruthy();
   if(cursor){expect((await read('spoken',cursor)).error).toBe('invalid_cursor');await c.query("update private.vocabulary_frequency_profiles set revision='changed'");expect((await read('written',cursor)).error).toBe('invalid_cursor');}
-  for(const invalid of [null,{...options,from:0},{...options,meanings:4},{...options,materialKinds:['word','other']}]){
+  for(const invalid of [null,{...options,from:0},{...options,meanings:6},{...options,materialKinds:['word','other']}]){
    const response=(await c.query("select lookup_platform_v2_library_filtered_entries($1,null,'nl',$2,null,100,100,$3) r",[user,[dictionary],{parts:[],article:null,vocabulary:invalid}])).rows[0].r;
    expect(response.error).toBe('invalid_library_filters');
   }
@@ -252,7 +252,7 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
    await c.query("update word_entries set meaning_id=1 where id=any($1::uuid[])",[nouns]);
   }
   const ids=Object.values(entries).flat();
-  for(const mode of ['all','frequency'])for(const profile of ['spoken','written'])for(const meanings of ['all',1,2,3])for(const materialKinds of [[],['word'],['other']]){
+  for(const mode of ['all','frequency'])for(const profile of ['spoken','written'])for(const meanings of ['all',1,2,3,4,5])for(const materialKinds of [[],['word'],['other']]){
    const selection={...options,mode,profile,from:1,to:3,meanings,materialKinds};
    const expected=(await c.query("select id from private.active_word_entries where id=any($1::uuid[]) and private.vocabulary_entry_selected_v1(id,$2) order by id",[ids,selection])).rows.map(r=>r.id);
    const actual=(await c.query("select entry_id id from private.vocabulary_selected_entry_ids_v1($2,$1) where entry_id=any($1::uuid[]) order by entry_id",[ids,selection])).rows.map(r=>r.id);
@@ -275,7 +275,7 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
    const e=(await c.query(`insert into word_entries(dictionary_id,language_code,headword,meaning_id,part_of_speech,management_kind,raw) values($1,'nl','vocabfiets',$2,$3,$4,'{"meanings":[{"definition":"Personal fixture"}]}') returning id`,[dictionary,n,n===1?'NOUN':'zn',dictionary?'user':'source'])).rows[0].id;
    ids.push(e);
   }
-  for(const mode of ['all','frequency'])for(const meanings of ['all',1,2,3]){
+  for(const mode of ['all','frequency'])for(const meanings of ['all',1,2,3,4,5]){
    const selection={...options,mode,meanings};
    const expected=(await c.query("select id from private.active_word_entries where id=any($1::uuid[]) and private.vocabulary_entry_selected_v1(id,$2) order by id",[ids,selection])).rows.map(r=>r.id);
    const actual=(await c.query("select entry_id id from private.vocabulary_selected_entry_ids_v1($2,$1) order by entry_id",[ids,selection])).rows.map(r=>r.id);
@@ -291,7 +291,7 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
   const {user,entries,filter}=await fixture(c);const nouns=entries['vocabfiets:zn'];
   const scope={...filter,partOfSpeech:['zn'],sourceWordStatus:'all',vocabulary:{...options,mode:'all',meanings:2}};
   const context=(await c.query("select read_training_recipe_availability_v1($1,ARRAY['definition-to-word'],null,'curated',$2,'meaning') r",[user,{...scope,presentationMode:'word-in-context'}])).rows[0].r;
-  expect(context.newCards).toBe(2);
+  expect(context).toMatchObject({newCards:2,totalWords:1,totalMeanings:2,totalCards:2});
   for(const entry of nouns)for(let i=0;i<10;i++){
    const node=randomUUID();await c.query(`insert into private.platform_v2_content_nodes(id,entry_id,parent_content_node_id,kind,binding_state,first_source_revision,last_source_revision,source_text_fingerprint,diagnostic_locator) values($1,$2,null,'idiom','active','v1','v1',$3,'test.idiom'),($4,$2,$1,'idiom-explanation','active','v1','v1',$5,'test.explanation')`,[node,entry,`idiom-${node}`,randomUUID(),`explanation-${node}`]);
   }
@@ -301,7 +301,7 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
    language plpgsql stable security definer set search_path=pg_catalog,public,private,pg_temp as $$
    begin perform nextval('private.idiom_selection_test_calls'); return private.vocabulary_entry_selected_test_original(p_entry_id,p_value); end; $$`);
   const idioms=(await c.query("select read_training_recipe_availability_v1($1,ARRAY['idiom:direct'],null,'curated',$2,'idiom') r",[user,scope])).rows[0].r;
-  expect(idioms.newCards).toBe(20);
+  expect(idioms).toMatchObject({newCards:20,totalWords:1,totalMeanings:2,totalCards:20});
   expect(Number((await c.query("select last_value from private.idiom_selection_test_calls")).rows[0].last_value)).toBeLessThanOrEqual(4);
  }));
  test("batch context candidates match legacy and explicit source-word rules",()=>withTransaction(pool,async c=>{

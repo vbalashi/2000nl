@@ -65,7 +65,7 @@ async function availability(
         "select start_training_session($1::uuid,ARRAY['definition-to-word'],null::uuid,'curated','review','{}'::jsonb,'5',$2::uuid,2) s",
         [u, randomUUID()],
       )).rows[0].s;
-      expect(count.dueToday).toBe(1);
+      expect(count).toMatchObject({dueToday:1,totalWords:1,totalMeanings:1,totalCards:1});
       expect(plan.plannedTotal).toBe(1);
     }));
   test("reviews scheduled later today do not advertise a due launch", () =>
@@ -103,6 +103,9 @@ async function availability(
         dueToday: 1,
         totalReviews: 4,
         newCards: 1,
+        totalCards: 6,
+        totalWords: 6,
+        totalMeanings: 6,
         studyDay: "2026-10-03",
         timezone: "Europe/Amsterdam",
       });
@@ -120,7 +123,7 @@ async function availability(
       await insertWord(c, `unintroduced-${randomUUID()}`);
       expect(
         await availability(c, u, ["word-to-definition", "definition-to-word"]),
-      ).toMatchObject({ dueToday: 1, totalReviews: 2, newCards: 1 });
+      ).toMatchObject({ dueToday: 1, totalReviews: 2, newCards: 1, totalWords:2, totalMeanings:2, totalCards:3 });
       expect(await availability(c, u, ["definition-to-word"])).toMatchObject({
         dueToday: 0,
         totalReviews: 1,
@@ -255,7 +258,7 @@ async function availability(
       ).rows[0].n;
       expect(
         await availability(c, u, ["idiom:direct"], {}, "idiom"),
-      ).toMatchObject({ dueToday: 1, totalReviews: 2, newCards: 1 });
+      ).toMatchObject({ dueToday: 1, totalReviews: 2, newCards: 1, totalWords:1, totalMeanings:1, totalCards:3 });
       expect(
         await availability(
           c,

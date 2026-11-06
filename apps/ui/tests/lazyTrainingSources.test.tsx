@@ -26,7 +26,7 @@ test('closing remote search reloads the unfiltered page and type filters retain 
  expect(mock.resolved).toHaveBeenCalledWith([id],[row]);
  fireEvent.click(screen.getByRole('button',{name:'Dictionaries'}));
  expect(screen.queryByRole('button',{name:'Shared lesson'})).toBeNull();
- fireEvent.click(screen.getByRole('button',{name:'Collections'}));
+ fireEvent.click(screen.getByRole('button',{name:'Shared'}));
  expect(screen.getByRole('button',{name:'Shared lesson'})).toHaveAttribute('aria-pressed','true');
  fireEvent.click(screen.getByRole('button',{name:'Search sources'}));
  fireEvent.change(screen.getByRole('textbox'),{target:{value:'Shared'}});
@@ -35,7 +35,7 @@ test('closing remote search reloads the unfiltered page and type filters retain 
  await waitFor(()=>expect(mock.page).toHaveBeenLastCalledWith('reader','nl','',null,expect.any(AbortSignal)));
  expect(JSON.parse(screen.getByTestId('source-draft').textContent!)).toMatchObject({materialMode:'collection',listValue:'user:'+id});
  expect(await screen.findByRole('button',{name:'Shared lesson'})).toHaveAttribute('aria-pressed','true');
- expect(screen.getByRole('button',{name:'Collections'})).toHaveAttribute('aria-pressed','true');
+ expect(screen.getByRole('button',{name:'Shared'})).toHaveAttribute('aria-pressed','true');
 });
 test('a next cursor is fetched only after explicit Show more',async()=>{
  const first=Array.from({length:50},(_,n)=>({...row,id:n===49?id:'75600000-0000-4000-8000-'+String(n+10).padStart(12,'0'),name:'Lesson '+n}));

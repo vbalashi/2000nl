@@ -401,7 +401,7 @@
       "yesterday": "Gisteren",
       "daysAgo": "Dagen geleden",
       "allDueToday": "Alle beschikbare kaarten",
-      "allDueHelp": "De gekozen samenstelling bepaalt welke kaarten meedoen. De sessie eindigt na één ronde.",
+      "allDueHelp": "Kies Alle om de beschikbare kaarten mee te nemen die bij de sessieverhouding passen. De sessie eindigt na één ronde.",
       "mixHelp": "Streepritme; de verhouding hangt af van beschikbare kaarten."
     },
     "accountTrainingSetups": {
@@ -440,7 +440,9 @@
       "moreSaved": "Meer opgeslagen trainingen",
       "noSaved": "Nog geen opgeslagen trainingen. Maak een training om de instellingen te bewaren.",
       "availabilityFailed": "Kaartaantallen konden niet worden geladen.",
-      "sessionLimit": "Tot {count} kaarten",
+      "sessionLimit": "Tot {count}",
+      "sessionLimitAccessible": "Tot {count} kaarten",
+      "meaningLimitCompact": "Max. {count} betekenissen",
       "allCards": "Alle kaarten",
       "earlyReview": "Eerder herhalen",
       "wordInContext": "Vertaling",
@@ -1581,7 +1583,10 @@
         "Antwoord typen en andere antwoordvormen willen we later toevoegen."
       ],
       "clearLibrarySelection": "Bibliotheekselectie wissen",
-      "activityScopeNotice": "Opgeslagen filters voor woordactiviteit blijven gelden: {scope}. Bewerken is nog niet beschikbaar."
+      "activityScopeNotice": "Opgeslagen filters voor woordactiviteit blijven gelden: {scope}. Bewerken is nog niet beschikbaar.",
+      "filtersHelp": "Filters beperken het materiaal waaruit kaarten voor deze training worden gekozen.",
+      "sessionSizeHelp": "Kies hoeveel kaarten je in één training wilt oefenen. Het werkelijke aantal hangt af van de beschikbare kaarten.",
+      "mixChoiceHelp": "Kies alleen nieuwe kaarten, alleen herhalingen van kaarten die je leert, of een combinatie. Bijvoorbeeld: 1 nieuwe : 2 herhalingen betekent één nieuwe kaart per twee herhalingen. De werkelijke verhouding hangt af van de beschikbare kaarten."
     },
     "startup": {
       "preparing": "Training voorbereiden"
@@ -1659,6 +1664,10 @@
         "Bronnen zoeken",
         "Geen resultaten"
       ],
+      "shared": "Gedeeld",
+      "dictionarySingular": "Woordenboek",
+      "collectionSingular": "Collectie",
+      "sharedSingular": "Gedeelde collectie",
       "scroll": [
         "Vorige bronnen",
         "Meer bronnen"
@@ -1800,11 +1809,11 @@
       "title": "Soort artikel",
       "all": "Alles",
       "word": "Woorden",
-      "other": "Overig",
+      "other": "Zinnen",
       "help": [
-        "Kies woorden of andere zelfstandige artikelen. Woordsoorten, zoals zelfstandige naamwoorden en werkwoorden, verfijnen de woordkeuze.",
-        "Overig bevat uitdrukkingen, woordgroepen en hele zinnen. Dit zijn aparte woordenboekartikelen, geen voorbeelden binnen een woord.",
-        "We willen deze keuze later uitbreiden, zodat je woordgroepen, idiomen en zinnen apart kunt kiezen."
+        "Kies woorden of zinnen. Woordsoorten, zoals zelfstandige naamwoorden en werkwoorden, verfijnen de woordselectie.",
+        "Zinnen omvatten uitdrukkingen en volledige zinnen, maar ook andere artikelen zonder herkende woordsoort. Dit zijn afzonderlijke woordenboekartikelen, geen voorbeelden bij een woord.",
+        "Later willen we deze keuze uitbreiden, zodat zinnen, uitdrukkingen en volledige zinnen apart kunnen worden geselecteerd."
       ]
     },
     "trainingAvailability": {
@@ -1812,7 +1821,26 @@
       "updating": "Kaartaantallen bijwerken…",
       "helpTitle": "Over deze aantallen",
       "help": "Dit zijn alle beschikbare kaarten bij je instellingen. De sessiegrootte en de verhouding tussen nieuwe kaarten en herhalingen bepalen hoeveel er in de training komen.",
-      "error": "De aantallen konden niet worden bijgewerkt."
+      "error": "De aantallen konden niet worden bijgewerkt.",
+      "later": "Later herhalen",
+      "compactHelp": "Kaarten die passen bij het gekozen materiaal en de filters: nu herhalen, later herhalen en nieuw. De sessiegrootte en balans bepalen welke kaarten in deze training komen.",
+      "cardsPrefix": "Kaarten:",
+      "summaryWords": "Woorden",
+      "summaryMeanings": "Betekenissen",
+      "summaryCards": "Kaarten",
+      "summaryLearning": "In studie",
+      "summaryNew": "Nieuw",
+      "summaryOther": "Andere statussen",
+      "wordCountZero": "{count} woorden",
+      "wordCountOne": "{count} woord",
+      "wordCountTwo": "{count} woorden",
+      "wordCountFew": "{count} woorden",
+      "wordCountMany": "{count} woorden",
+      "wordCountOther": "{count} woorden",
+      "sentenceFound": "Gevonden: {words} met {meanings}.",
+      "sentenceCards": "Beschikbare kaarten: {cards}.",
+      "sentenceProgress": "Van deze kaarten leer je er al {learning}; nieuw: {new}. Nu te herhalen: {due}.",
+      "sentenceOther": "Kaarten met een andere status: {other}."
     },
     "libraryWordSelection": {
       "train": "Deze woorden oefenen",
@@ -1838,12 +1866,13 @@
       "cancel": "Annuleren",
       "apply": "Gereed",
       "invalid": "Begin bij 1 of hoger. Het einde mag niet lager zijn dan het begin.",
-      "selectionHelp": "Kies alle woorden, of kies een bereik uit een lijst van meest naar minst voorkomende woorden. De frequentiekeuze bevat alleen woorden waarvoor deze gegevens beschikbaar zijn.",
+      "selectionHelp": "Kies alle artikelen of een frequentiebereik, van meest naar minst voorkomend. Alleen artikelen met beschikbare frequentiegegevens komen in een frequentieselectie. Beperk hieronder het artikeltype tot woorden of zinnen.",
       "speechHelp": "Gesproken taal gebruikt gesprekken uit CGN. Geschreven taal gebruikt teksten uit SoNaR500. Een woord kan in gesprekken vaker voorkomen dan in teksten.",
+      "speechGeneralHelp": "Kies een frequentielijst voor gesproken of geschreven taal. Hetzelfde woord kan in gesprekken en teksten verschillend vaak voorkomen.",
       "rangeHelp": "Een lager getal betekent een vaker gebruikt woord. Bijvoorbeeld: 1–100 kiest de honderd meest voorkomende woorden. We tonen de woorden uit je woordenboek die bij je andere instellingen passen. Dat kunnen er minder zijn. Gebruik het potlood om het bereik te wijzigen.",
       "meaningHelp": [
-        "Een woord kan verschillende betekenissen hebben. Denk bij lopen aan naar huis lopen, een motor die loopt of een evenement dat goed loopt.",
-        "De betekenissen staan op volgorde in het woordenboek. Kies de eerste, de eerste twee of drie, of alle betekenissen. Zijn er minder, dan nemen we wat er is. Elk apart artikel heeft een eigen limiet.",
+        "Een artikel kan meerdere betekenissen hebben. Elke betekenis kun je apart leren.",
+        "De betekenissen staan op volgorde in het woordenboek. Kies hoeveel eerste betekenissen je wilt meenemen, of kies alle betekenissen. Zijn er minder, dan nemen we wat er is. Elk apart artikel heeft een eigen limiet.",
         "In een training met alleen nieuwe betekenissen slaan we betekenissen over die je al leert. Leer je de eerste twee al, dan komen ze niet in die training. De derde komt niet in hun plaats."
       ],
       "firstMeaningsZero": "Eerste {count} betekenissen",
@@ -1851,7 +1880,28 @@
       "firstMeaningsTwo": "Eerste {count} betekenissen",
       "firstMeaningsFew": "Eerste {count} betekenissen",
       "firstMeaningsMany": "Eerste {count} betekenissen",
-      "firstMeaningsOther": "Eerste {count} betekenissen"
+      "firstMeaningsOther": "Eerste {count} betekenissen",
+      "partsSelected": "{count} woordsoorten",
+      "spokenShort": "Gesproken",
+      "writtenShort": "Geschreven",
+      "top": "Top {count}",
+      "rangeCompactHelp": "Hoe lager de plaats in de lijst, hoe vaker het woord voorkomt. Kies Top 100 of een andere snelle optie, of stel met het potlood zelf een bereik in. Alleen woorden uit het gekozen materiaal die aan de andere filters voldoen tellen mee.",
+      "rangeDutchSource": "Voor het Nederlands gebruiken we CGN- en SoNaR-gegevens die beschikbaar zijn gesteld door het Instituut voor de Nederlandse Taal.",
+      "rangeDialogTitle": "Plaatsen in de frequentielijst"
+    },
+    "vocabularyPartShort": {
+      "noun": "zn.",
+      "verb": "ww.",
+      "adjective": "bn.",
+      "adverb": "bw.",
+      "pronoun": "vnw.",
+      "preposition": "vz.",
+      "conjunction": "vw.",
+      "numeral": "tw.",
+      "article": "lidw.",
+      "interjection": "tsw.",
+      "abbreviation": "afk.",
+      "prefix": "voorv."
     }
   },
   "tour": {

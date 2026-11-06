@@ -9,6 +9,7 @@ import type { TrainingFocusFilter } from "@/lib/types";
 export type TrainingAvailabilityRecipe = { languageCode: string; draft: TrainingSetupDraft };
 export type TrainingAvailability = {
   dueToday: number; totalReviews: number; newCards: number;
+  totalWords?: number; totalMeanings?: number; totalCards?: number;
   studyDay: string; timezone: string; asOf: string;
 };
 const object = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v);
@@ -59,9 +60,15 @@ export function parseTrainingAvailability(value: unknown): TrainingAvailability 
   if (!object(value) || !["dueToday", "totalReviews", "newCards"].every(k => typeof value[k] === "number" && Number.isSafeInteger(value[k]) && (value[k] as number) >= 0) ||
       (value.dueToday as number) > (value.totalReviews as number) || typeof value.studyDay !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value.studyDay) ||
       typeof value.timezone !== "string" || typeof value.asOf !== "string" || !Number.isFinite(Date.parse(value.asOf))) return null;
+  const totals = [value.totalWords, value.totalMeanings, value.totalCards];
+  const hasTotals = totals.some(n => n !== undefined);
+  if (hasTotals && (!totals.every(n => typeof n === "number" && Number.isSafeInteger(n) && n >= 0) ||
+    (value.totalWords as number) > (value.totalMeanings as number) || (value.totalMeanings as number) > (value.totalCards as number) ||
+    (value.totalReviews as number) + (value.newCards as number) > (value.totalCards as number))) return null;
   if (!Number.isFinite(Date.parse(value.studyDay + "T00:00:00Z")) || new Date(value.studyDay + "T00:00:00Z").toISOString().slice(0, 10) !== value.studyDay) return null;
   try { new Intl.DateTimeFormat("en", { timeZone: value.timezone }).format(); } catch { return null; }
   return { dueToday: value.dueToday as number, totalReviews: value.totalReviews as number, newCards: value.newCards as number,
+    ...(hasTotals ? {totalWords:value.totalWords as number,totalMeanings:value.totalMeanings as number,totalCards:value.totalCards as number} : {}),
     studyDay: value.studyDay, timezone: value.timezone, asOf: value.asOf };
 }
 

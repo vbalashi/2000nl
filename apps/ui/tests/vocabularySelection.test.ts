@@ -7,7 +7,7 @@ import type {TrainingSetupDraft} from "@/lib/training/setups/types";
 const draft:TrainingSetupDraft={family:'meaning',modes:['word-to-definition'],cardFilter:'both',scenarioId:'understanding',materialMode:'all-dictionaries',listValue:'',dateWindow:'all',sourceValue:'all',newReviewRatio:2,sessionSize:10};
 test('closed wire formats reject malformed and ambiguous choices',()=>{
  const valid={...DEFAULT_VOCABULARY_SELECTION,mode:'frequency',meanings:2};expect(parseVocabularySelection(valid)).toEqual(valid);
- for(const invalid of [null,{}, {...valid,from:0},{...valid,to:0},{...valid,to:1.5},{...valid,meanings:4},{...valid,mode:['frequency']},{...valid,profile:['spoken']},{...valid,materialKinds:['word','other']},{...valid,extra:true}])expect(parseVocabularySelection(invalid)).toBeNull();
+ for(const invalid of [null,{}, {...valid,from:0},{...valid,to:0},{...valid,to:1.5},{...valid,meanings:6},{...valid,mode:['frequency']},{...valid,profile:['spoken']},{...valid,materialKinds:['word','other']},{...valid,extra:true}])expect(parseVocabularySelection(invalid)).toBeNull();
  expect(parseLibraryTrainingSelection({query:'x',category:['headwords']})).toBeNull();
 });
 test('Library handoff copies criteria with all source types, never result page IDs',()=>{

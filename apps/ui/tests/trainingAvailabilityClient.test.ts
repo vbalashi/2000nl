@@ -32,3 +32,12 @@ test("saved recipe metadata is excluded from the strict availability request", a
   expect(availabilityRpcScope({...all,draft:{...all.draft,family:'meaning'}}).p_training_filter).not.toHaveProperty('sourceWordStatus');
   expect(parseAvailabilityRecipe({...base,draft:{...base.draft,sourceWordStatus:'known'}})).toBeNull();
  });
+
+test('validates complete, internally consistent totals without inventing missing data',async()=>{
+ const {parseTrainingAvailability}=await import('@/lib/training/availability/model');
+ const base={dueToday:1,totalReviews:2,newCards:3,studyDay:'2026-10-03',timezone:'UTC',asOf:'2026-10-03T12:00:00Z'};
+ expect(parseTrainingAvailability({...base,totalWords:2,totalMeanings:3,totalCards:5})).toMatchObject({totalWords:2,totalMeanings:3,totalCards:5});
+ expect(parseTrainingAvailability({...base,totalWords:2,totalCards:5})).toBeNull();
+ expect(parseTrainingAvailability({...base,totalWords:4,totalMeanings:3,totalCards:5})).toBeNull();
+ expect(parseTrainingAvailability({...base,totalWords:2,totalMeanings:3,totalCards:4})).toBeNull();
+});

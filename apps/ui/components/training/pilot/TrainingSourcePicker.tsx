@@ -10,7 +10,7 @@ import s from "./trainingSourcePicker.module.css";
 import { SegmentedControl } from "@/components/practice/ui/SegmentedControl";
 import { BuilderChoice } from "@/components/practice/builder/BuilderChoice";
 import { IconAction } from "@/components/practice/ui/IconAction";
-import { Search, BookOpen, Layers, Check, ChevronUp, ChevronDown } from "lucide-react";
+import { Search, BookOpen, Layers, Share2, Check, ChevronUp, ChevronDown } from "lucide-react";
 export function TrainingSourcePicker({
   locale,
   lists,
@@ -63,7 +63,7 @@ export function TrainingSourcePicker({
     localizedField("sourcePicker", "labels")[locale];
   const entries = [
     ...dictionaries.map((x) => ({ ...x, kind: "dictionary" })),
-    ...lists.filter(x=>!remote.active||!x.value.startsWith('user:')).map((x) => ({ ...x, kind: "collection",server:false,ownership:undefined as undefined|'received'|'owned' })),
+    ...lists.filter(x=>!remote.active||!x.value.startsWith('user:')).map((x) => ({ ...x, kind: "collection",server:false,ownership:x.ownership })),
     ...(remote.active?remote.page.collections.map(row=>({value:'user:'+row.id,label:row.name,kind:'collection',server:true,ownership:row.ownership,disabled:false})):[]),
   ];
   const listRef=useRef<HTMLDivElement>(null);
@@ -71,7 +71,7 @@ export function TrainingSourcePicker({
   const updateEdges=()=>{const el=listRef.current;if(el)setEdges({top:el.scrollTop>1,bottom:el.scrollTop+el.clientHeight<el.scrollHeight-1});};
   const visible = entries.filter(
     (x) =>
-      (kind === "all" || kind === x.kind) &&
+      (kind === "all" || (kind === "dictionary" && x.kind === "dictionary") || (kind === "collection" && x.kind === "collection" && x.ownership !== "received") || (kind === "shared" && x.kind === "collection" && x.ownership === "received")) &&
       (!search ||
         ('server'in x&&x.server||x.label.toLocaleLowerCase().includes(query.toLocaleLowerCase()))),
   );
@@ -101,16 +101,13 @@ export function TrainingSourcePicker({
       standard
       label={localizedField("sourcePicker", "type")[locale]}
     >
-      {["all", "dictionary", "collection"].map((value, i) => (
-        <BuilderChoice
-          key={value}
-          active={kind === value}
-          disabled={disabled}
-          onClick={() => setKind(value)}
-        >
-          {labels[i]}
-        </BuilderChoice>
-      ))}
+      {(["all", "dictionary", "collection", "shared"] as const).map((value, i) => {
+        const label=value === "shared" ? localizedField("sourcePicker", "shared")[locale] : labels[i];
+        const Icon=value === "dictionary" ? BookOpen : value === "collection" ? Layers : value === "shared" ? Share2 : null;
+        return <BuilderChoice key={value} active={kind === value} disabled={disabled} aria-label={label} title={label} onClick={() => setKind(value)} className={s.filterChoice}>
+          {Icon&&<Icon size={15} aria-hidden="true"/>}<span className={value === "shared" ? s.sharedLabel : value === "all" ? s.allLabel : s.filterLabel}>{label}</span>
+        </BuilderChoice>;
+      })}
     </SegmentedControl>
   );
   const content = (
@@ -186,17 +183,18 @@ export function TrainingSourcePicker({
             >
               {x.kind === "dictionary" ? (
                 <BookOpen size={14} />
+              ) : x.ownership === "received" ? (
+                <Share2 size={14} />
               ) : (
                 <Layers size={14} />
               )}
               <span>{x.label}</span>
-              <small>{x.kind === "dictionary" ? labels[1] : labels[2]}</small>
-              {active && <Check size={14} />}
+              <span className={s.sourceMeta}><Check size={14} className={active ? s.checkVisible : s.checkHidden} aria-hidden="true"/><small>{localizedField("sourcePicker", x.kind === "dictionary" ? "dictionarySingular" : x.ownership === "received" ? "sharedSingular" : "collectionSingular")[locale]}</small></span>
             </button>
           );
         })}
         {remote.active&&remote.page.nextCursor&&<button type="button" disabled={remote.more} onClick={()=>void remote.loadMore()}>{localizedField("sourcePicker", "more")[locale]}</button>}
-        {!visible.length && <p>{labels[4]}</p>}
+        {!visible.length && !(remote.active&&remote.page.nextCursor) && <p className={s.empty}>{labels[4]}</p>}
       </div>
       {edges.bottom&&<button type="button" className={`${s.edge} ${s.edgeBottom}`} aria-label={scrollLabel[1]} onClick={()=>listRef.current?.scrollBy({top:180,behavior:"smooth"})}><ChevronDown size={14}/></button>}
       </div>

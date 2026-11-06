@@ -37,7 +37,23 @@
 
 .meaningHeader { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 16px; }
 .meaningLabel, .meaningSelection { font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui); }
-.meaningLabel { color:var(--practice-text-muted); }
+.meaningLabel { color:var(--practice-text-muted); display:inline-flex; align-items:center; white-space:nowrap; }
 .meaningSelection { color:var(--practice-text-secondary); margin-left:auto; text-align:right; }
 
 .meaningTrack { padding-inline:12px; }
+
+.compactRow.compactRow{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;min-width:0}.compactRow .heading{margin:0}.compactRow>div:last-child{max-width:100%}.frequencyDetails:has(.compactRow){padding-left:0;gap:16px}
+
+.quickChoices :global([role=group]){display:flex;gap:2px}.quickChoices :global([role=group]) button{padding-inline:6px}
+
+.compact .heading,.compact .heading>span,.compact .meaningLabel{font-weight:500;color:var(--practice-text-secondary)}
+
+/* Keep the reveal mounted so both opening and closing follow builder motion. */
+.selectionBlock{min-width:0}
+.frequencyReveal{display:grid;grid-template-rows:0fr;visibility:hidden;min-height:0;transition:grid-template-rows .44s var(--practice-motion),visibility 0s .44s}
+.frequencyRevealOpen{grid-template-rows:1fr;visibility:visible;transition-delay:0s}
+.frequencyReveal>div{overflow:hidden;min-height:0}
+.frequencyReveal .frequencyDetails{padding-top:24px}
+@media(prefers-reduced-motion:reduce){.frequencyReveal{transition:none}}
+
+.profileChoice{display:inline-flex;align-items:center;gap:5px}.profileChoice svg{flex:none;color:var(--practice-text-muted)}

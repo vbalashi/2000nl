@@ -53,3 +53,7 @@
 
 @media (max-width:650px) { .hero[data-recipe] { height:min(300px,46dvh); } }
 @media (min-width:651px) { .hero[data-recipe] .heroActions > .start { min-width:220px; } }
+
+.directionIcon{display:inline-flex;vertical-align:middle;color:var(--practice-text-muted)}
+
+.sourceIcon{display:inline-flex;vertical-align:middle;margin-inline-start:8px;color:var(--practice-text-muted);letter-spacing:normal}

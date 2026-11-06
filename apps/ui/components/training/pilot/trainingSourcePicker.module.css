@@ -14,3 +14,11 @@
 .edgeTop{top:0;background:linear-gradient(var(--practice-canvas) 25%,transparent)}
 .edgeBottom{bottom:0;background:linear-gradient(transparent,var(--practice-canvas) 75%)}
 .edge svg{background:var(--practice-canvas);border-radius:50%}
+
+.filterChoice{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}.filterChoice svg{display:inline-block;flex:none}
+@media(max-width:560px){.sharedLabel{display:none}}
+@media(max-width:420px){.filterLabel{display:none}}
+
+.sourceMeta{margin-inline-start:auto;display:inline-flex;align-items:center;gap:7px;flex:none}.sourceMeta small{margin:0}.checkHidden{visibility:hidden}.checkVisible{visibility:visible}
+
+.empty{margin:0;padding:9px;color:var(--practice-text-muted);font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui)}

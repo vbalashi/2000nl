@@ -1,11 +1,15 @@
 "use client";
-import { localizedField } from "@/lib/i18n/catalog";
+import { localizedField, localizedSection } from "@/lib/i18n/catalog";
 
+import {FrequencyProfileIcon} from "@/components/practice/vocabulary/FrequencyProfileIcon";
+import {AdaptiveFilterSummary} from "./AdaptiveFilterSummary";
 import {VocabularySelectionFields} from "@/components/practice/vocabulary/VocabularySelectionFields";
 import {PartOfSpeechSelection} from "@/components/practice/vocabulary/PartOfSpeechSelection";
-import {MaterialKindSelection,MaterialKindHelp} from "@/components/practice/vocabulary/MaterialKindSelection";
+import {MaterialKindSelection,MaterialKindHelp,materialKindSummary} from "@/components/practice/vocabulary/MaterialKindSelection";
 import {DEFAULT_VOCABULARY_SELECTION} from "@/lib/vocabulary/selection";
 import {partCode,partId,VOCABULARY_PART_LABELS} from "@/lib/vocabulary/partsOfSpeech";
+import {SessionMix,SessionSizeIcon} from "./SessionSummaryIcons";
+import {DirectionIcon,SourceWordIcon} from "./ExerciseSummaryIcons";
 import {SourceWordSelection} from "./SourceWordSelection";
 import {usesSourceWordSelection} from "@/lib/training/sourceWordSelection";
 import {SettingsHelp} from "@/components/practice/settings/SettingsHelp";
@@ -21,7 +25,7 @@ import {
   Trash2,
   X,
   Pencil,
-  Info,
+  ListOrdered,
 } from "lucide-react";
 import {
   singleNounArticle,
@@ -34,7 +38,6 @@ import { DialogSurface } from "@/components/practice/ui/DialogSurface";
 import actions from "@/components/practice/ui/launchAction.module.css";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
 import {
-  formatExerciseCount,
   formatUiMessage,
   getPartOfSpeechLabel,
   getUiMessages,
@@ -199,6 +202,9 @@ export function ApprovedTrainingBuilder(p: Props) {
           )
           .filter(Boolean)
           .join(" + ");
+  const sourceWordCopy=localizedSection("sourceWordSelection")[p.interfaceLanguage];
+  const sourceStatus=p.draft.sourceWordStatus === "all" ? "all" : "learning";
+  const fullExerciseSummary=[exerciseSummary(family, familyName, direction),usesSourceWordSelection(family)?`${sourceWordCopy.title}: ${sourceWordCopy[sourceStatus]}`:null].filter(Boolean).join(" · ");
   const balance =
     p.draft.cardFilter === "review"
       ? c.reviewsOnly
@@ -227,6 +233,22 @@ export function ApprovedTrainingBuilder(p: Props) {
   ]
     .filter(Boolean)
     .join(" · ");
+  const abbreviations=localizedSection("vocabularyPartShort")[p.interfaceLanguage];
+  const abbreviatedParts=[p.draft.partOfSpeech?.length ? p.draft.partOfSpeech.map(part=>{const id=partId(part);return id?abbreviations[id]:partName(part);}).join(" · ") : b.allParts,singleNounArticle(p.draft.nounArticles??[])].filter(Boolean).join(" · ");
+  const vocabulary=p.draft.vocabulary??DEFAULT_VOCABULARY_SELECTION;
+  const vcopy=localizedSection("vocabularySelection")[p.interfaceLanguage];
+  const partCount=p.draft.partOfSpeech?.length??0;
+  const shortParts=partCount?[formatUiMessage(vcopy.partsSelected,{count:partCount}),singleNounArticle(p.draft.nounArticles??[])].filter(Boolean).join(" · "):b.allParts;
+  const selectedKind=vocabulary.materialKinds.length?materialKindSummary(vocabulary.materialKinds,p.interfaceLanguage):null;
+  const otherKind=vocabulary.materialKinds.includes("other");
+  const filterParts=otherKind?selectedKind!:[selectedKind,abbreviatedParts].filter(Boolean).join(" · ");
+  const accessibleFilterParts=otherKind?selectedKind!:[selectedKind,partSummary].filter(Boolean).join(" · ");
+  const shortFilterParts=otherKind?selectedKind!:[selectedKind,shortParts].filter(Boolean).join(" · ");
+  const frequencyRange=vocabulary.mode==="frequency"?(vocabulary.from===1?formatUiMessage(vcopy.top,{count:vocabulary.to.toLocaleString(p.interfaceLanguage)}):`${vocabulary.from.toLocaleString(p.interfaceLanguage)}–${vocabulary.to.toLocaleString(p.interfaceLanguage)}`):null;
+  const meaningSummary=vocabulary.meanings==="all"?null:vocabulary.meanings===1?vcopy.firstMeaning:formatUiCount(p.interfaceLanguage,vocabulary.meanings,vcopy,"firstMeanings");
+  const vocabularySummary=frequencyRange;
+  const accessibleVocabularySummary=[frequencyRange?(vocabulary.profile==="spoken"?vcopy.spoken:vcopy.written):null,frequencyRange,meaningSummary].filter(Boolean).join(" · ");
+  const [partsExpanded,setPartsExpanded]=useState(false);
   const activityScope = [
     p.draft.sourceValue !== "all"
       ? p.sources.find(option => option.value === p.draft.sourceValue)?.label ??
@@ -244,11 +266,13 @@ export function ApprovedTrainingBuilder(p: Props) {
     title: string,
     summary: React.ReactNode,
     children: React.ReactNode,
+    headerActions?: React.ReactNode,
   ) => (
     <BuilderSection
       id={`${uid}-${key}`}
       title={title}
       summary={summary}
+      headerActions={headerActions}
       open={open.includes(key)}
       onToggle={() => toggle(key)}
     >
@@ -340,9 +364,14 @@ export function ApprovedTrainingBuilder(p: Props) {
             {section(
               "exercises",
               b.exercises,
-              exerciseSummary(family, familyName, direction),
+              <span className={s.exerciseSummary} title={fullExerciseSummary}>
+                <span className={s.exerciseSummaryVisual} aria-hidden="true"><span>{familyName}</span>
+                  {family!=="word-in-context"&&family!=="sentence"&&<DirectionIcon modes={p.draft.modes}/>}
+                  {usesSourceWordSelection(family)&&<SourceWordIcon status={sourceStatus}/>}
+                </span><span className={s.visuallyHidden}>{fullExerciseSummary}</span>
+              </span>,
               <>
-                <div className={s.field}>
+                <div className={`${s.field} ${s.filterRow}`}>
                   <h2>{b.exerciseType}</h2>
                   <SegmentedControl standard label={b.exerciseType}>
                     {(["meaning", "idiom", "word-in-context"] as const).map(
@@ -371,6 +400,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                     )}
                   </SegmentedControl>
                 </div>
+                <div className={`${s.dynamicReveal} ${usesSourceWordSelection(family)?s.dynamicRevealOpen:""}`} aria-hidden={!usesSourceWordSelection(family)} ref={node=>{node?.toggleAttribute("inert",!usesSourceWordSelection(family))}}><div><div className={s.sourceWordReveal}><SourceWordSelection translation={family === "word-in-context"} language={p.interfaceLanguage} value={p.draft.sourceWordStatus ?? "learning"} onChange={sourceWordStatus=>p.onDraftChange(current=>({...current,sourceWordStatus}))}/></div></div></div>
                 {family === "sentence" && (
                   <p role="status" className={s.help}>
                     {c.sentencePaused}
@@ -430,6 +460,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                                   ? o.direction.Direct
                                   : o.direction.Reverse
                             }
+                            labelIcon={family!=="word-in-context"&&family!=="sentence"?<DirectionIcon modes={[mode]}/>:undefined}
                             selected={p.draft.modes.includes(mode)}
                             onClick={
                               family === "word-in-context"
@@ -459,6 +490,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                             classes={{
                               card: s.direction,
                               heading: s.directionHeading,
+                              headingLabel: s.directionHeadingLabel,
                               check: s.directionCheck,
                               prompt: s.prompt,
                               arrow: s.directionArrow,
@@ -485,20 +517,20 @@ export function ApprovedTrainingBuilder(p: Props) {
             {section(
               "filters",
               b.filters,
-              partSummary,
+              <AdaptiveFilterSummary parts={filterParts} accessibleParts={accessibleFilterParts} shortParts={shortFilterParts} suffix={vocabularySummary??undefined} meaning={meaningSummary?String(vocabulary.meanings):undefined} meaningIcon={meaningSummary?<ListOrdered size={15} aria-hidden="true"/>:undefined} suffixIcon={frequencyRange?<FrequencyProfileIcon profile={vocabulary.profile}/>:undefined} accessibleSuffix={accessibleVocabularySummary} lines={2}/>,
               <div className={s.filterFields}>
-                <VocabularySelectionFields section="selection" value={p.draft.vocabulary??DEFAULT_VOCABULARY_SELECTION} language={p.interfaceLanguage} onChange={vocabulary=>p.onDraftChange(current=>({...current,vocabulary}))}/>
-                <div className={s.field}><h2>{localizedField("libraryFilters", "entryType")[p.interfaceLanguage]}<MaterialKindHelp language={p.interfaceLanguage}/></h2><MaterialKindSelection language={p.interfaceLanguage} value={p.draft.vocabulary?.materialKinds??[]} onChange={materialKinds=>p.onDraftChange(current=>({...current,vocabulary:{...(current.vocabulary??DEFAULT_VOCABULARY_SELECTION),materialKinds}}))}/></div>
-                {!p.draft.vocabulary?.materialKinds.includes("other")&&<div className={s.field}><h2>{b.partOfSpeech}</h2><PartOfSpeechSelection value={{parts:(p.draft.partOfSpeech??[]).map(partId).filter((id):id is NonNullable<typeof id>=>Boolean(id)),article:singleNounArticle(p.draft.nounArticles??[])}} language={p.interfaceLanguage} languageCode={p.languageCode} onChange={next=>p.onDraftChange(current=>({...current,partOfSpeech:next.parts.map(partCode),nounArticles:next.article?[next.article]:[]}))}/></div>}
-                {usesSourceWordSelection(family) && <SourceWordSelection translation={family === "word-in-context"} language={p.interfaceLanguage} value={p.draft.sourceWordStatus ?? "learning"} onChange={sourceWordStatus=>p.onDraftChange(current=>({...current,sourceWordStatus}))}/>}
-                <VocabularySelectionFields section="meanings" value={p.draft.vocabulary??DEFAULT_VOCABULARY_SELECTION} language={p.interfaceLanguage} onChange={vocabulary=>p.onDraftChange(current=>({...current,vocabulary}))}/>
+                <VocabularySelectionFields compact learningLanguage={p.languageCode} section="selection" value={p.draft.vocabulary??DEFAULT_VOCABULARY_SELECTION} language={p.interfaceLanguage} onChange={vocabulary=>p.onDraftChange(current=>({...current,vocabulary}))}/>
+                <div className={`${s.field} ${s.filterRow}`}><h2>{localizedField("libraryFilters", "entryType")[p.interfaceLanguage]}<MaterialKindHelp language={p.interfaceLanguage}/></h2><MaterialKindSelection language={p.interfaceLanguage} value={p.draft.vocabulary?.materialKinds??[]} onChange={materialKinds=>p.onDraftChange(current=>({...current,vocabulary:{...(current.vocabulary??DEFAULT_VOCABULARY_SELECTION),materialKinds}}))}/></div>
+                <div className={`${s.dynamicReveal} ${!p.draft.vocabulary?.materialKinds.includes("other")?s.dynamicRevealOpen:""}`} aria-hidden={Boolean(p.draft.vocabulary?.materialKinds.includes("other"))} ref={node=>{node?.toggleAttribute("inert",Boolean(p.draft.vocabulary?.materialKinds.includes("other")))}}><div><div className={s.partsSection}><button type="button" className={s.partsHeading} aria-expanded={partsExpanded} aria-controls={`${uid}-parts-body`} onClick={()=>setPartsExpanded(!partsExpanded)}><span>{b.partOfSpeech}</span><AdaptiveFilterSummary parts={abbreviatedParts} accessibleParts={partSummary} shortParts={shortParts} lines={1}/><ChevronDown size={16} className={partsExpanded?s.partsChevronOpen:s.partsChevron}/></button><div id={`${uid}-parts-body`} className={`${s.partsReveal} ${partsExpanded?s.partsRevealOpen:""}`} aria-hidden={!partsExpanded} ref={node=>{node?.toggleAttribute("inert",!partsExpanded)}}><div><PartOfSpeechSelection compact value={{parts:(p.draft.partOfSpeech??[]).map(partId).filter((id):id is NonNullable<typeof id>=>Boolean(id)),article:singleNounArticle(p.draft.nounArticles??[])}} language={p.interfaceLanguage} languageCode={p.languageCode} onChange={next=>p.onDraftChange(current=>({...current,partOfSpeech:next.parts.map(partCode),nounArticles:next.article?[next.article]:[]}))}/></div></div></div></div></div>
+                <VocabularySelectionFields compact section="meanings" value={p.draft.vocabulary??DEFAULT_VOCABULARY_SELECTION} language={p.interfaceLanguage} onChange={vocabulary=>p.onDraftChange(current=>({...current,vocabulary}))}/>
                 {p.draft.librarySelection&&(p.draft.librarySelection.query||p.draft.librarySelection.labelId)&&<p className={s.help}>{[p.draft.librarySelection.labelName,p.draft.librarySelection.query?`${messages.librarySearch.labels[p.draft.librarySelection.category]}: «${p.draft.librarySelection.query}»`:null].filter(Boolean).join(" · ")} <button type="button" onClick={()=>p.onDraftChange(current=>({...current,librarySelection:(!current.materialMode||current.materialMode==="collection")&&current.librarySelection?.languageCode?{languageCode:current.librarySelection.languageCode,query:"",category:"headwords"}:undefined}))}>{localizedField("trainingBuilderActions", "clearLibrarySelection")[p.interfaceLanguage]}</button></p>}
               </div>,
+              <SettingsHelp label={b.filters} text={localizedField("trainingBuilderActions", "filtersHelp")[p.interfaceLanguage]}/>,
             )}
             {section(
               "session",
               b.session,
-              <span className={s.sessionSummary}>{`${size === "all-due-today" ? c.allDueToday : formatExerciseCount(p.interfaceLanguage, size)} · ${balance}`}</span>,
+              <span className={s.sessionSummary} title={`${size === "all-due-today" ? c.allDueToday : formatUiCount(p.interfaceLanguage,size,messages.collections,"card")} · ${balance}`}><span aria-hidden="true"><span className={s.sessionIcon}><SessionSizeIcon/></span>{" "}{size === "all-due-today" ? c.allDueToday : formatUiCount(p.interfaceLanguage,size,messages.collections,"card")}{" · "}<SessionMix filter={p.draft.cardFilter} ratio={p.draft.newReviewRatio} label={balance} expanded/></span><span className={s.visuallyHidden}>{`${size === "all-due-today" ? c.allDueToday : formatUiCount(p.interfaceLanguage,size,messages.collections,"card")} · ${balance}`}</span></span>,
               <div className={s.sessionFields}>
                 <TrainingSessionSizePicker
                   approved
@@ -510,8 +542,9 @@ export function ApprovedTrainingBuilder(p: Props) {
                     }))
                   }
                   label={b.sessionSize}
+                  helpText={family === "meaning" ? [localizedField("trainingBuilderActions", "sessionSizeHelp")[p.interfaceLanguage],c.allDueHelp] : localizedField("trainingBuilderActions", "sessionSizeHelp")[p.interfaceLanguage]}
                   exercisesLabel={(count) =>
-                    formatExerciseCount(p.interfaceLanguage, count)
+                    formatUiCount(p.interfaceLanguage,count,messages.collections,"card")
                   }
                   allDueLabel={c.allDueToday}
                   allAvailableTick={localizedField("trainingBuilderActions", "all")[p.interfaceLanguage]}
@@ -524,17 +557,12 @@ export function ApprovedTrainingBuilder(p: Props) {
                   ratio={p.draft.newReviewRatio}
                   onChange={p.onMixChange}
                   label={b.balanceLabel}
+                  helpText={localizedField("trainingBuilderActions", "mixChoiceHelp")[p.interfaceLanguage]}
                   reviewsOnly={c.reviewsOnly}
                   newOnly={c.newOnly}
                   ratioLabel={ratioLabel}
                   help=""
                 />
-                <p className={s.session_note}>
-                  <Info size={13} aria-hidden="true" />
-                  <span>
-                    {localizedField("trainingBuilderActions", "availabilityHint")[p.interfaceLanguage]}
-                  </span>
-                </p>
               </div>,
             )}
           </div>
