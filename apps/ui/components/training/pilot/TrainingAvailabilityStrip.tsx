@@ -15,9 +15,9 @@ export function TrainingAvailabilityStrip({state,language,onRetry}:{state:Traini
  const pending=state.status==="loading";
  const updating=pending||(state.status==="ready"&&state.refreshing);
  const failed=state.status==="error"||(state.status==="ready"&&state.refreshFailed);
- return <section className={local.strip} aria-label={localizedField("trainingAvailability", "title")[language]}>
-  <p className={local.status} role="status" aria-live="polite">{updating?<><span className={local.spinner} aria-hidden="true"/>{localizedField("trainingAvailability", "updating")[language]}</>:null}</p>
-  <dl className={s.numbers} aria-busy={updating}>{labels.map((label,index)=><div key={label}><dt>{label}</dt><dd>{pending?<span className={s.pulse} aria-label={t.loading}/>:values[index]?.toLocaleString(language)??"—"}</dd></div>)}</dl>
+ return <section className={local.strip} data-updating={updating} aria-label={localizedField("trainingAvailability", "title")[language]}>
+  <p className={local.status} role="status" aria-live="polite">{updating?localizedField("trainingAvailability", "updating")[language]:null}</p>
+  <dl className={s.numbers} aria-busy={updating} aria-hidden={updating}>{labels.map((label,index)=><div key={label}><dt>{label}</dt><dd>{pending?<span className={s.pulse} aria-label={t.loading}/>:values[index]?.toLocaleString(language)??"—"}</dd></div>)}</dl>
   <span className={local.help}><SettingsHelp label={localizedField("trainingAvailability", "helpTitle")[language]} text={localizedField("trainingAvailability", "help")[language]}/></span>
   {failed&&<p role="alert" className={s.emptyMessage}>{localizedField("trainingAvailability", "error")[language]}<button type="button" className={s.retry} onClick={onRetry}>{t.retry}</button></p>}
  </section>;
