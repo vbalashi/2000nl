@@ -16,6 +16,23 @@ import {
 } from "./platformV2IdiomHierarchyFixture";
 
 describe("Library multi-sense model", () => {
+  test("numbers complete POS groups locally and preserves incomplete source ordinals", () => {
+    const makeGroup = (ordinals: number[]) => ({ ...multiSenseBankGroup,
+      entryCount: ordinals.length, senseCount: ordinals.length,
+      entries: ordinals.map(meaningOrdinal => ({ ...furnitureEntry, entryId: `entry-${meaningOrdinal}`, meaningOrdinal })),
+    });
+    const preposition = makeGroup([1, 2, 3, 4, 5, 6, 7]);
+    const adverb = makeGroup([8, 9]);
+    expect(buildLibrarySenseCardGroupModel(preposition, "en", "word-to-definition", true).meanings.map(m => m.displayOrdinal)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(buildLibrarySenseCardGroupModel(adverb, "en").meanings.map(m => m.displayOrdinal)).toEqual([8, 9]);
+    const model = buildLibrarySenseCardGroupModel(adverb, "en", "word-to-definition", true);
+    expect(model.meanings.map(m => m.displayOrdinal)).toEqual([1, 2]);
+    expect(model.meanings.map(m => m.entryId)).toEqual(["entry-8", "entry-9"]);
+    expect(adverb.entries.map(e => e.meaningOrdinal)).toEqual([8, 9]);
+    expect(model.meanings[0].reportCapability).toEqual(furnitureEntry.capabilities.find(c => c.actionId === "report-content"));
+    expect(buildLibrarySenseCardGroupModel({ ...adverb, entries: adverb.entries.slice(1) }, "en", "word-to-definition", true).meanings.map(m => m.displayOrdinal)).toEqual([9]);
+  });
+
   test("keeps authorized notes on their exact entry, separate from learning/report content and absent siblings",()=>{
     const baseline=buildLibrarySenseCardGroupModel(multiSenseBankGroup,"en");
     const noteMaterial=[{noteId:"teacher-note",ownerUserId:"teacher",text:"Provided teaching material",revision:"9007199254740993",isOwn:false},{noteId:"own-note",ownerUserId:"reader",text:"My addition",revision:"2",isOwn:true}];

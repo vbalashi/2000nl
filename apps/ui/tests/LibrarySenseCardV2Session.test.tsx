@@ -1768,6 +1768,20 @@ test("training MORE preserves normally authorized active siblings without using 
   expect(currentRead).not.toHaveBeenCalled();
 });
 
+test("uses local ordinals only after a full Library read, not a filtered display seed", async () => {
+  const group = {...multiSenseBankGroup, entries: multiSenseBankGroup.entries.map((entry, index) => ({...entry, meaningOrdinal: index + 8}))};
+  const pending = deferred<PlatformHeadwordGroupV2>();
+  fetchGroup.mockReset().mockReturnValue(pending.promise);
+  render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} initialGroup={group}
+    headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" />);
+  const firstCard = () => within(screen.getByTestId(`library-sense-card-${furnitureEntry.entryId}`));
+  expect(firstCard().getByText("8", {exact: true})).toBeInTheDocument();
+  await act(async () => pending.resolve(group));
+  await waitFor(() => expect(firstCard().getByText("1", {exact: true})).toBeInTheDocument());
+  expect(firstCard().queryByText("8", {exact: true})).not.toBeInTheDocument();
+  expect(performAction).not.toHaveBeenCalled();
+});
+
 test("archived MORE fallback replaces the initial article with only the permitted meaning", async () => {
   const exact = {...multiSenseBankGroup,entries:[financeEntry],senseCount:1,entryCount:1};
   fetchGroup.mockReset().mockRejectedValue(new Error("http_403"));

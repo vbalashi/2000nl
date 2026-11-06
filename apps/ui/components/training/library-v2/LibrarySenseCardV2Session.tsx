@@ -131,6 +131,7 @@ function SenseCardV2Session({
   >({});
   const [error, setError] = React.useState<string | null>(null);
   const [savedReviewMessageKey, setSavedReviewMessageKey] = React.useState<string | null>(null);
+  const [completeOrdinalGroup, setCompleteOrdinalGroup] = React.useState<PlatformHeadwordGroupV2 | null>(null);
   const [lookupError, setLookupError] = React.useState<
     "forbidden" | "timeout" | "contract" | "unavailable" | null
   >(null);
@@ -232,6 +233,7 @@ function SenseCardV2Session({
       const requestSequence = ++groupRequestSequence.current;
       setLoading(true);
       try {
+      let completeGroupRead = false;
       const readArticle = async () => {
         // Normal Library authorization owns the whole article, including siblings.
         // The displayed-card exception is only a fallback for an unavailable entry;
@@ -242,7 +244,10 @@ function SenseCardV2Session({
             translationTargetLanguageCode: translationLanguage, signal,
             ...(userId?{expectedUserId:userId}:{}),
           });
-          if (article || !permittedCurrentCard || !userId) return article;
+          if (article || !permittedCurrentCard || !userId) {
+            completeGroupRead = Boolean(article);
+            return article;
+          }
         } catch (cause) {
           if (!permittedCurrentCard || !userId || signal?.aborted) throw cause;
         }
@@ -278,6 +283,7 @@ function SenseCardV2Session({
         return null;
       }
       setGroup(next);
+      setCompleteOrdinalGroup(completeGroupRead ? next : null);
       setNoteAuthority(next?{scope:detailIdentity,group:next}:null);
       if (next && copyReviewGeneration.current === copyReviewAtStart) setCopyReviewRequired(false);
       if (!next) setLookupError("unavailable");
@@ -353,9 +359,10 @@ function SenseCardV2Session({
           userId&&noteAuthority?.scope===detailIdentity&&noteAuthority.group===compatibleGroup?compatibleGroup:clearPlatformNoteMaterial(compatibleGroup),
           interfaceLanguage,
           cardTypeId,
+          compatibleGroup === completeOrdinalGroup,
         )
       : null;
-  }, [activeReferenceTarget, cardTypeId, entryId, group, interfaceLanguage,userId,detailIdentity,noteAuthority]);
+  }, [activeReferenceTarget, cardTypeId, entryId, group, interfaceLanguage,userId,detailIdentity,noteAuthority,completeOrdinalGroup]);
 
   React.useEffect(() => {
     setActiveMeaningId(entryId);

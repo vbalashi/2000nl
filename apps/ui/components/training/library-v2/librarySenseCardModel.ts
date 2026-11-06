@@ -141,7 +141,12 @@ export function buildLibrarySenseCardGroupModel(
   group: PlatformHeadwordGroupV2,
   interfaceLanguage: OnboardingLanguage,
   requestedCardTypeId: CardTypeId = "word-to-definition",
+  completeGroup = false,
 ): LibrarySenseCardGroupModel {
+  // Source ordinals can span multiple lexical groups. Only a full article read
+  // authorizes local numbering; search seeds and exact-card fallbacks may be subsets.
+  const ordinals = new Map(group.entries.map((entry, index) => [entry, index + 1]));
+  const localOrdinals = completeGroup && group.entries.length === group.entryCount;
   const senseEntries = group.entries.filter(
     (entry): entry is PlatformSenseCardEntryV2 => entry.kind === "sense-card",
   );
@@ -155,7 +160,7 @@ export function buildLibrarySenseCardGroupModel(
     .filter((entry) => entry.kind === "cross-reference")
     .map((entry) => ({
       crossReferenceId: entry.crossReferenceId,
-      displayOrdinal: group.entryCount > 1 ? entry.meaningOrdinal : null,
+      displayOrdinal: group.entryCount > 1 ? (localOrdinals ? ordinals.get(entry)! : entry.meaningOrdinal) : null,
       label: entry.label
         ? platformV2Message(interfaceLanguage, entry.label.messageKey)
         : null,
@@ -178,6 +183,7 @@ export function buildLibrarySenseCardGroupModel(
       group.entryCount,
       requestedCardTypeId,
       interfaceLanguage,
+      localOrdinals ? ordinals.get(entry)! : entry.meaningOrdinal,
     ),
   );
   const meaningById = new Map(
@@ -228,6 +234,7 @@ function buildMeaning(
   entryCount: number,
   requestedCardTypeId: CardTypeId,
   interfaceLanguage: OnboardingLanguage,
+  displayOrdinal: number | null,
 ): LibrarySenseCardModel {
   const { orderedNodes: content, rootNodes } =
     projectPlatformV2SenseContent(entry);
@@ -244,7 +251,7 @@ function buildMeaning(
     canArchive: entry.authorActions?.canArchive === true,
     ...(entry.wordDetails ? {wordDetails:entry.wordDetails} : {}),
     cardTypeId: entry.card?.cardTypeId ?? requestedCardTypeId,
-    displayOrdinal: entryCount > 1 ? entry.meaningOrdinal : null,
+    displayOrdinal: entryCount > 1 ? displayOrdinal : null,
     partOfSpeech: localizePlatformSemanticTerm(
       entry.partOfSpeech,
       interfaceLanguage,
