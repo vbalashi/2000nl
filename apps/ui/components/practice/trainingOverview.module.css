@@ -32,14 +32,14 @@
 
 /* Keep secondary actions inside the same fixed card. */
 .hero,.heroActions{min-width:0}.heroActions{gap:18px}.heroActions>.start{flex:none;max-width:100%}
-@media(max-width:650px){.heroActions{flex-wrap:wrap;gap:10px}.heroActions>.start{flex:1 0 100%}}
+@media(max-width:650px){.heroActions{flex-wrap:nowrap;gap:10px}.heroActions>.start{flex:1 1 0;width:auto;min-width:0}.heroActions>.retry{flex:1 1 0;min-width:0}}
 @media (max-width:650px) and (max-height:650px) {
   .hero { gap:6px; padding-block:10px; }
   .heroActions { gap:6px; }
 }
 
 /* Selecting a different routine must not move the saved-routine list below it. */
-.hero[data-recipe] { box-sizing:border-box; height:min(344px,46dvh); display:flex; flex-direction:column; }
+.hero[data-recipe] { box-sizing:border-box; height:min(312px,46dvh); display:flex; flex-direction:column; }
 .hero[data-recipe] > .heroTop, .heroIntro, .hero[data-recipe] > .heroActions, .hero[data-recipe] > .progress { flex:none; }
 .hero[data-recipe] > .numbers { flex:1; align-content:center; }
 .heroIntro { min-width:0; }
@@ -50,3 +50,6 @@
 @media(max-height:650px) {
   .hero[data-recipe] .heroTop .icon { width:28px; height:28px; }
 }
+
+@media (max-width:650px) { .hero[data-recipe] { height:min(300px,46dvh); } }
+@media (min-width:651px) { .hero[data-recipe] .heroActions > .start { min-width:220px; } }

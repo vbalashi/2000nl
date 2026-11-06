@@ -606,18 +606,10 @@ function MeaningCardBody({
         <div
           data-testid="library-sense-card-lead"
           data-meaning-lead
-          className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3"
+          className="flow-root"
         >
-          <div className="min-w-0">
-            {<ProductionArticleReading>
-              <ArticleTranslation translationKey="entry" text={[meaning.entryTranslation,...meaning.entryTranslationAlternatives].filter(Boolean).join(" · ")} visible={state.translationVisible} pending={translationState === "pending"} failed={translationState === "failed"} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} emphasis language={translationLanguage}/>
-              <p className={reading.definitionText} lang={contentLanguage}>{meaning.definition?.text??"—"}</p>
-              <ArticleTranslation translationKey={meaning.definition?.contentNodeId} sourceTextFingerprint={meaning.definition?.sourceTextFingerprint} text={meaning.definition?.translation} pending={Boolean(meaning.definition) && translationState === "pending"} failed={Boolean(meaning.definition) && translationState === "failed"} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} multiline visible={state.translationVisible} language={translationLanguage}/>
-            </ProductionArticleReading>}
-
-          </div>
           <div
-            className="flex shrink-0 items-center gap-2"
+            className="float-right ml-3 flex items-center gap-2"
             data-testid="sense-card-top-actions"
           >
             {null}
@@ -639,6 +631,14 @@ function MeaningCardBody({
                 direction={state.expanded ? "up" : "down"}
               />
             </button>
+          </div>
+          <div className="min-w-0">
+            {<ProductionArticleReading>
+              <ArticleTranslation translationKey="entry" text={[meaning.entryTranslation,...meaning.entryTranslationAlternatives].filter(Boolean).join(" · ")} visible={state.translationVisible} pending={translationState === "pending"} failed={translationState === "failed"} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} emphasis language={translationLanguage}/>
+              <p className={reading.definitionText} lang={contentLanguage}>{meaning.definition?.text??"—"}</p>
+              <ArticleTranslation translationKey={meaning.definition?.contentNodeId} sourceTextFingerprint={meaning.definition?.sourceTextFingerprint} text={meaning.definition?.translation} pending={Boolean(meaning.definition) && translationState === "pending"} failed={Boolean(meaning.definition) && translationState === "failed"} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} multiline visible={state.translationVisible} language={translationLanguage}/>
+            </ProductionArticleReading>}
+
           </div>
         </div>
         {null}
