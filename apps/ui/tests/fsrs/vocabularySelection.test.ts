@@ -74,7 +74,7 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
   expect(scoped.newCards).toBe(1);
   for(const category of ['headwords','examples','definitions','alphabetical']){
    const chosen=await c.query("select distinct entry_id from private.training_library_selection_entry_ids_v1($1,null,'curated',$2)",[user,{...scope,librarySelection:{query:'vocabfiets',category}}]);
-   const page=(await c.query("select search_library_category_v1($1,'vocabfiets','nl',$2,$3,null,$4,100,null) r",[user,[dictionary],{parts:[],article:null,vocabulary:options},category])).rows[0].r;
+   const page:{error?:string;groups:Array<{items:Array<{entry:{id:string}}>;page:{nextCursor:string|null}}>}=(await c.query("select search_library_category_v1($1,'vocabfiets','nl',$2,$3,null,$4,100,null) r",[user,[dictionary],{parts:[],article:null,vocabulary:options},category])).rows[0].r;
    expect(chosen.rows.map(r=>r.entry_id).sort()).toEqual([...new Set(page.groups[0].items.map((item:{entry:{id:string}})=>item.entry.id))].sort());
   }
  }));
@@ -380,7 +380,7 @@ describe.skipIf(!url)("written POS observations preserve spelling frequency",()=
   expect(categoryIds.indexOf(entries['vocabfiets:zn'].at(-1)!)).toBeLessThan(categoryIds.indexOf(unknown));
   let categoryCursor:string|null=null;const categoryPaged:string[]=[];let categoryFirstCursor:string|null=null;
   for(let n=0;n<30;n++){
-   const page=(await c.query("select search_library_category_v1($1,'vocabfiets','nl',$2,$3,null,'headwords',1,$4) r",[user,[dictionary],{parts:[],article:null,sort:'written'},categoryCursor])).rows[0].r;
+   const page:{error?:string;groups:Array<{items:Array<{entry:{id:string}}>;page:{nextCursor:string|null}}>}=(await c.query("select search_library_category_v1($1,'vocabfiets','nl',$2,$3,null,'headwords',1,$4) r",[user,[dictionary],{parts:[],article:null,sort:'written'},categoryCursor])).rows[0].r;
    expect(page.error).toBeUndefined();categoryPaged.push(...page.groups[0].items.map((x:{entry:{id:string}})=>x.entry.id));
    categoryCursor=page.groups[0].page.nextCursor;if(n===0)categoryFirstCursor=categoryCursor;
    if(!categoryCursor)break;
