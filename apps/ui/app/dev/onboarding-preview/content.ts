@@ -5,7 +5,7 @@ import nl from "./locales/nl.json";
 import ru from "./locales/ru.json";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 
-export const previewLocales = { ...mapInterfaceCatalogs(() => en), en, nl, ru } satisfies Record<OnboardingLanguage, typeof en>;
+export const previewLocales:Record<OnboardingLanguage,typeof en> = { ...mapInterfaceCatalogs(() => en), en, nl, ru } satisfies Record<OnboardingLanguage, typeof en>;
 export const previewLanguageOptions = interfaceLanguages;
 export type PreviewCopy = typeof en;
 // Stable IDs and translation keys stay independent of translated labels.

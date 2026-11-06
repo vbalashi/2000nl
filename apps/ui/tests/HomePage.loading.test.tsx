@@ -96,7 +96,7 @@ vi.mock("@/components/DevDatabaseWarning", () => ({
   DevDatabaseWarning: () => null,
 }));
 
-const { default: HomePage } = await import("@/app/page");
+const { default: HomePage } = await import("@/app/HomePage");
 const {default:InvitationHomePage}=await import("@/app/HomePage");
 
 beforeEach(() => {

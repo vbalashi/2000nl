@@ -1,4 +1,5 @@
-import {getInterfaceCatalog} from "@/lib/i18n/catalog";
+import {getRequestInterfaceSnapshot,interfaceSnapshotScript} from "@/lib/i18n/serverSnapshot";
+import {InterfaceCatalogBoundary} from "@/components/system/InterfaceCatalogBoundary";
 import "../styles/globals.css";
 import { InterfaceLanguageEffect } from "@/components/system/InterfaceLanguageEffect";
 import { startupAppearanceBootstrap } from "@/lib/preferences/startupAppearance";
@@ -26,11 +27,11 @@ const senseSerif = Newsreader({
   adjustFontFallback: false,
 });
 
-export const metadata = {
-  ...getInterfaceCatalog("en").features.appMetadata,
-  manifest: "/manifest.json",
+export async function generateMetadata() { return {
+  ...(await getRequestInterfaceSnapshot()).catalogs.en.features.appMetadata,
+  manifest: "/api/interface-manifest",
   icons: { icon: "/icons/favicon-v3.ico" }
-};
+}; }
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -40,14 +41,16 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
   // Environment-specific configuration belongs to this response, never a cached build.
   const portable = process.env.NEXT_PUBLIC_RUNTIME_CONFIG_REQUIRED === "true";
-  if (portable) noStore();
+  noStore();
+  const snapshot=await getRequestInterfaceSnapshot();
   const runtimeConfig = portable ? publicRuntimeConfig() : null;
   return (
     <html suppressHydrationWarning lang="en" dir="ltr" className={`${senseSans.variable} ${senseSerif.variable}`}>
       <head>
+        <script dangerouslySetInnerHTML={{__html:interfaceSnapshotScript(snapshot)}} />
         {runtimeConfig && <script dangerouslySetInnerHTML={{ __html: publicConfigScript(runtimeConfig) }} />}
         <script dangerouslySetInnerHTML={{ __html: startupAppearanceBootstrap }} />
         <meta name="theme-color" content="#202124" />
@@ -109,10 +112,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="min-h-screen bg-background-light text-slate-900 dark:bg-background-dark dark:text-white">
-        <InterfaceLanguageEffect />
+        <InterfaceCatalogBoundary><InterfaceLanguageEffect />
         <InputModality />
         <SystemThemeEffect />
-        <OfflineBanner />
+        <OfflineBanner /></InterfaceCatalogBoundary>
         <DiagnosticReportOutboxBootstrap />
         {children}
       </body>

@@ -29,7 +29,9 @@
     "i18n:review": "node scripts/interface-localization.mjs review",
     "i18n:audit": "node scripts/interface-copy-audit.mjs",
     "i18n:check-registration": "node scripts/check-interface-registration.mjs",
-    "i18n:add": "node scripts/interface-localization.mjs add"
+    "i18n:add": "node scripts/interface-localization.mjs add",
+    "i18n:publish": "node scripts/interface-catalog-snapshot.mjs",
+    "test:e2e:i18n": "PLAYWRIGHT_RUNTIME_CATALOGS=true PLAYWRIGHT_OPTIMIZED=true playwright test --grep @runtime-catalog --workers=1"
   },
   "dependencies": {
     "@google-cloud/text-to-speech": "^6.4.0",
