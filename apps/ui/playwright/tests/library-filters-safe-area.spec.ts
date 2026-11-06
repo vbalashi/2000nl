@@ -1,8 +1,13 @@
 import {readFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
 import {expect,test} from '@playwright/test';
 
 // Emulated devices report zero env() insets. Resolve OS values in the shipped
 // stylesheet to exercise native dialog centering inside the real safe rectangle.
+// RootLayout imports globals.css, whose @tailwind base supplies the reset.
+// Read the installed reset instead of approximating dialog/button/heading styles.
+const resolvePackage=createRequire(`${process.cwd()}/package.json`);
+const preflight=readFileSync(resolvePackage.resolve('tailwindcss/lib/css/preflight.css'),'utf8');
 const css=readFileSync('components/practice/library/libraryFilters.module.css','utf8');
 for(const device of [
  {name:'iPhone Pro portrait',width:402,height:874,top:62,bottom:34,left:0,right:0},
@@ -14,7 +19,7 @@ for(const device of [
  await page.emulateMedia({reducedMotion:'reduce'});
  const insets:Record<string,number>={top:device.top,bottom:device.bottom,left:device.left,right:device.right};
  const resolved=css.replace(/env\(safe-area-inset-(top|bottom|left|right)(?:,\s*0px)?\)/g,(_,edge)=>`${insets[edge]}px`);
- await page.setContent(`<style>body{margin:0}${resolved}</style>
+ await page.setContent(`<style>${preflight}${resolved}</style>
  <dialog class="dialog"><header class="header"><h2>Library filters</h2><button>Close</button></header>
  <div class="viewport"><div class="track"><div class="page">${'<p>Filter choice</p>'.repeat(100)}</div></div></div>
  <footer class="footer"><p class="count">100 entries</p><div class="actions"><button>Reset</button><button>Cancel</button><button>Show results</button></div></footer></dialog>`);
