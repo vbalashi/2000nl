@@ -62,3 +62,25 @@ The fixed part-of-speech catalog also includes Abbreviations and Prefixes. The
 `afk`/`abbreviation` and `vv`/`prefix` labels have the same meaning in the UI
 preview predicate and every Library server read (ordinary, collection, material
 and category search). Source permissions and noun-only article rules still apply.
+
+Written frequency keeps the global normalized-spelling ranks and all inclusive
+rank ranges unchanged. Optional POS observations only order entries sharing a
+ranked spelling: observed POS counts descend, then unobserved POS retain their
+existing stable tie order. Match tier precedes frequency; spoken and alphabetical
+orders are unchanged. Meanings within each POS retain their source sense order.
+This applies to grouped browse/search, material scope, headword category search
+and collection entry lists. Body category search retains its existing relevance
+order.
+
+Fresh installations include the empty private tables
+`vocabulary_written_pos_profiles` and `vocabulary_written_pos_frequencies`.
+Operators may supply language, normalized spelling, application POS and a positive
+observed count separately. The application accepts its existing normalized POS
+codes; source corpus tags require an explicit external mapping. Unsupported labels
+(including `determiner`) stay unknown; no linguistic category or count is inferred.
+The adjunct contains observations, not replacement global ranks, and is not exposed
+to application client roles. Installations without it retain their existing order.
+Replace observations and their profile revision atomically. Cursor scope includes
+that revision, so a changed resource rejects an old page cursor. The public
+migration is a fresh-install contract; managed upgrades use the private release
+process.
