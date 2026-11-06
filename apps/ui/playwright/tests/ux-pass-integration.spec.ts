@@ -94,6 +94,6 @@ test("@pilot builder offers one Translation with a nonempty contextual direction
   await expect(translation).toHaveCount(1);
   await expect(page.getByRole('button', { name: /^Word in context$/i })).toHaveCount(0);
   await translation.click();
-  await expect(page.locator('[class*="directionHeading"]')).toHaveCount(1);
-  await expect(page.locator('[class*="directionHeading"]')).not.toBeEmpty();
+  await expect(page.locator('[class*="directionHeadingLabel"]')).toHaveCount(1);
+  await expect(page.locator('[class*="directionHeadingLabel"]')).not.toBeEmpty();
 });
