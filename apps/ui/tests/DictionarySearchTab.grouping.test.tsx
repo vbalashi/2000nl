@@ -476,6 +476,7 @@ test("approved chips panel excludes disabled sources, cancels drafts and applies
  expect(pageReads()[0][0].libraryScope.dictionaryIds).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));
  panel=within(screen.getByRole("dialog"));
+ fireEvent.click(panel.getByRole("button",{name:new RegExp(`^${copy.builder.partOfSpeech}`)}));
  fireEvent.click(panel.getByRole("button",{name:copy.builder.parts.Nouns}));
  await waitFor(()=>expect(panel.getByRole("button",{name:copy.library.showResults})).toBeEnabled());
  fireEvent.click(panel.getByRole("button",{name:copy.library.showResults}));
@@ -895,6 +896,7 @@ test.each([
   fireEvent.click(screen.getByRole("button",{name:copy.library.filters}));
   const form = screen.getByRole(placement === "panel" ? "region" : "dialog",{name:copy.library.filterTitle});
   expect(within(form).getByRole("button",{name:new RegExp(`^${copy.builder.source}`)})).toBeInTheDocument();
+  fireEvent.click(within(form).getByRole("button",{name:new RegExp(`^${copy.builder.partOfSpeech}`)}));
   expect(within(form).getByRole("button",{name:"Nouns"})).toBeInTheDocument();
   fireEvent.click(within(form).getByRole("button",{name:"Nouns"}));
   fireEvent.click(within(form).getByRole("button",{name:copy.builder.cancel}));
@@ -902,6 +904,7 @@ test.each([
   // Reopening proves that changing the shared form did not apply the draft.
   fireEvent.click(screen.getByRole("button",{name:copy.library.filters}));
   const reopened = screen.getByRole(placement === "panel" ? "region" : "dialog",{name:copy.library.filterTitle});
+  fireEvent.click(within(reopened).getByRole("button",{name:new RegExp(`^${copy.builder.partOfSpeech}`)}));
   expect(within(reopened).getByRole("button",{name:"Nouns"})).toHaveAttribute("aria-pressed","false");
   expect(screen.getAllByRole("button",{name:copy.library.filters})).toHaveLength(1);
 });
@@ -946,8 +949,9 @@ test("ordinary Library reads retain frequency, entry type, meaning limit and sor
  fireEvent.click(screen.getByRole("button",{name:"Search filters"}));
  await screen.findByRole("dialog",{name:"Library filters"});
  expect(screen.getByRole("button",{name:"By frequency"})).toHaveAttribute("aria-pressed","true");
- expect(screen.getByRole("button",{name:"Written language"})).toHaveAttribute("aria-pressed","true");
- expect(screen.getByRole("slider",{name:"Meanings per entry"})).toHaveValue("1");
+ expect(screen.getByRole("button",{name:"Written"})).toHaveAttribute("aria-pressed","true");
+ expect(screen.getByRole("button",{name:"First 2 meanings"})).toHaveAttribute("aria-pressed","true");
+ expect(screen.getByRole("button",{name:"First 3 meanings"})).toHaveAttribute("aria-pressed","false");
 });
 
 test("the default Words search category keeps the sorting action visible",async()=>{
