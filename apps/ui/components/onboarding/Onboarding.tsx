@@ -11,7 +11,7 @@ import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import {SettingsPanel} from '@/components/practice/settings/SettingsLayout';
 import s from './onboarding.module.css';
 import settings from '@/components/practice/settings/settings.module.css';
-import {tooltipBounds} from './tooltipBounds';
+import {actionTooltipBounds,tooltipBounds} from './tooltipBounds';
 export type TourPort={prepare:(topic:TourTopic,step:number)=>void;pause:()=>void;completeCore:()=>void;enter?:(topic:TourTopic,step:number)=>void};
 const TourContext=React.createContext<ReturnType<typeof useTour>|null>(null);
 function visible(selector:string):HTMLElement|null {
@@ -81,9 +81,17 @@ function TourOverlay(){
   const parent=await state.platform.getOffsetParent?.(state.elements.floating);
   const rect=await state.platform.convertOffsetParentRelativeRectToViewportRelativeRect!({elements:state.elements,rect:{...state.rects.floating,x:state.x,y:state.y},offsetParent:parent,strategy:state.strategy});
   const desired=step?.id==='done'?{x:viewport.left+(viewport.width-rect.width)/2,y:viewport.top+(viewport.height-rect.height)/2}:{x:rect.x,y:rect.y};
-  const bounded=tooltipBounds(viewport,{width:document.documentElement.clientWidth,height:document.documentElement.clientHeight},safe,rect,desired);
+  const layout={width:document.documentElement.clientWidth,height:document.documentElement.clientHeight};
+  const reference=state.elements.reference.getBoundingClientRect();
+  const bounded=step?.next!=='continue'&&step?.id!=='done'
+   ?actionTooltipBounds(viewport,layout,safe,rect,desired,reference)
+   :{...tooltipBounds(viewport,layout,safe,rect,desired),maxHeight:Math.min(viewport.top+viewport.height,layout.height-safe.bottom)-Math.max(viewport.top,safe.top)-24};
+  if(tooltip){
+   const limit=`${bounded.maxHeight}px`;
+   if(tooltip.style.getPropertyValue('--tour-slot-height')!==limit){tooltip.style.setProperty('--tour-slot-height',limit);return {reset:{rects:true}};}
+  }
   return {x:state.x+bounded.x-rect.x,y:state.y+bounded.y-rect.y};
- }}]};},[step?.id,viewportVersion]);
+ }}]};},[step?.id,step?.next,viewportVersion]);
  useEffect(()=>{
   setTarget(null);setWaiting(false);if(!running||!step)return;
   let cancelled=false,frame=0,previous='',stable=0,armed=false;

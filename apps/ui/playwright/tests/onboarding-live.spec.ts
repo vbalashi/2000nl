@@ -65,3 +65,27 @@ test('mobile guide highlights a target inside a dialog and respects reduced moti
  await pause.click();
  await expect.poll(()=>target.evaluate(el=>Array.from(el.classList).some(name=>name.includes('target')))).toBe(false);
 });
+
+for(const readingSize of ['largest','extra'])test(`mobile launch guidance leaves the highlighted action tappable (${readingSize})`,async({page})=>{
+ await page.setViewportSize({width:393,height:852});
+ await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{reading_size_phone:readingSize,reading_size_desktop:readingSize,preferences:{onboardingCompleted:false,onboardingLanguage:'ru'}}});
+ const tooltip=page.locator('[data-training-hotkeys-suspended="true"]');
+ await expect(tooltip).toBeVisible();
+ await tooltip.locator('button').last().click();
+ await tooltip.locator('button').last().click();
+ await page.locator('[data-onboarding="nav-training"]:visible').click();
+ await expect(tooltip).toContainText('4 / 10');
+ await page.addStyleTag({content:'[class*="safeArea"] { padding: 59px 0 34px !important; } [data-app-frame] { padding-top: 59px !important; }'});
+ await page.setViewportSize({width:393,height:851});
+ const launch=page.locator('[data-onboarding="launch"]');
+ // Let the floating guide settle after its content, target and safe viewport change.
+ await page.waitForTimeout(500);
+ await expect.poll(async()=>{
+  const action=await launch.boundingBox(),guide=await tooltip.boundingBox();
+  return Boolean(action&&guide&&(guide.y+guide.height<=action.y||guide.y>=action.y+action.height||guide.x+guide.width<=action.x||guide.x>=action.x+action.width));
+ }).toBe(true);
+ await expect.poll(()=>tooltip.evaluate(el=>el.scrollHeight>el.clientHeight)).toBe(true);
+ await tooltip.locator('p').last().scrollIntoViewIfNeeded();
+ // A visible locator alone does not prove that an overlay lets the user tap it.
+ await launch.click({trial:true,timeout:5000});
+});
