@@ -1,4 +1,8 @@
 "use client";
+import {formatLibraryCounts} from "@/lib/platform/libraryCountLabel";
+import { languageAutonym } from "@/lib/languages/languageDisplayName";
+import { localizedField } from "@/lib/i18n/catalog";
+
 import {IconAction} from "@/components/practice/ui/IconAction";
 import {LibrarySortControl} from "@/components/practice/library/LibrarySortControl";
 import {librarySelectionToTraining,type LibraryTrainingHandoff} from "@/lib/vocabulary/libraryTrainingHandoff";
@@ -85,16 +89,10 @@ type Props = {
   >;
 };
 
-const languageLabel = (code: string) => {
-  if (code === "nl") return "Nederlands";
-  if (code === "en") return "English";
-  if (code === "de") return "Deutsch";
-  if (code === "fr") return "Français";
-  return code;
-};
+const languageLabel = languageAutonym;
 
 const firstDefinition = (entry: DictionaryEntry, fallback: string) => {
-  const meaning = getAllMeanings(entry.raw)[0] as
+  const meaning = getAllMeanings(entry.raw, fallback)[0] as
     { definition?: string; context?: string; examples?: unknown } | undefined;
   const definition = (
     hidePerfectParticiple(meaning?.definition ?? "") ?? ""
@@ -169,6 +167,7 @@ export function DictionarySearchTab({
     groupPageCursors,
     groupHasMore,
     groupTotal,
+    meaningTotal,
     selectedHeadwordGroupId,
     wordTotal,
     page,
@@ -520,7 +519,7 @@ export function DictionarySearchTab({
           onClose={()=>setFiltersOpen(false)} onApply={draft=>{
             updateSearchState({labelId:draft.labelId ?? null,labelName:draft.labelName ?? null,languageCode:draft.languageCode,dictionaryId:draft.dictionaryId,applyListFilter:Boolean(draft.applyListFilter),collectionId:draft.collectionId ?? null,
               entryFilters:{parts:[...draft.parts].sort(),article:draft.article,vocabulary:draft.vocabulary,sort:draft.sort},page:1,groupPageCursors:[null],groupHasMore:false,
-              groupTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});
+              groupTotal:null,meaningTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});
             refreshSearch();
             setFiltersOpen(false);
           }}/>
@@ -603,8 +602,8 @@ export function DictionarySearchTab({
             {onTrainSelection && searchMaterialReady && (
               <IconAction
                 className={workspace.trainSelection}
-                label={{ru:"Тренировать эти слова",en:"Train these words",nl:"Deze woorden oefenen"}[interfaceLanguage]}
-                title={{ru:"Настроить тренировку по этим словам",en:"Set up training with these words",nl:"Training instellen met deze woorden"}[interfaceLanguage]}
+                label={localizedField("libraryWordSelection", "train")[interfaceLanguage]}
+                title={localizedField("libraryWordSelection", "setup")[interfaceLanguage]}
                 onClick={() => onTrainSelection(librarySelectionToTraining({
                   languageCode: searchLanguage,
                   filters: searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS,
@@ -616,7 +615,7 @@ export function DictionarySearchTab({
             )}
           </div>
           {categorySearchActive && <span ref={setCategoryCountHost} className={workspace.scope}/> }
-          {!categorySearchActive && hasCurrentResults && <span className={workspace.scope}>{formatUiMessage(getUiMessages(interfaceLanguage).librarySearch.foundCount,{count:number(!groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length))})}</span>}
+          {!categorySearchActive && hasCurrentResults && <span className={workspace.scope}>{formatLibraryCounts(interfaceLanguage,!groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length),groupedSearchActive ? meaningTotal : undefined)}</span>}
         </div>
 
         {categorySearchActive && <div ref={setCategoryTabsHost}/> }
@@ -873,7 +872,7 @@ export function DictionarySearchTab({
     updateSearchState({query:copy.headword,languageCode:copy.contentLanguageCode,dictionaryId:copy.dictionaryId,
       applyListFilter:false,collectionId:null,labelId:null,labelName:null,entryFilters:EMPTY_LIBRARY_ENTRY_FILTERS,
       detailSelection:{entryId:copy.entryId,headword:copy.headword,contentLanguageCode:copy.contentLanguageCode},
-      selectedHeadwordGroupId:null,mobileDetailOpen:true,groupResults:[],wordResults:[],groupTotal:null,wordTotal:0,
+      selectedHeadwordGroupId:null,mobileDetailOpen:true,groupResults:[],wordResults:[],groupTotal:null,meaningTotal:null,wordTotal:0,
       page:1,groupPageCursors:[null],groupHasMore:false});
     invalidateFreshness();
     refreshSearch();
@@ -883,7 +882,7 @@ export function DictionarySearchTab({
     closeAfterArchive.current = true;
     material?.reload();
     updateSearchState({ detailSelection: null, selectedHeadwordGroupId: null, mobileDetailOpen: false,
-      groupResults:[],wordResults:[],groupTotal:null,wordTotal:0,page:1,groupPageCursors:[null],groupHasMore:false });
+      groupResults:[],wordResults:[],groupTotal:null,meaningTotal:null,wordTotal:0,page:1,groupPageCursors:[null],groupHasMore:false });
     invalidateFreshness();
     refreshSearch();
     void reloadLists().catch(() => undefined);

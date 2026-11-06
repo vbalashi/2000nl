@@ -1,9 +1,12 @@
+import { localizedSection } from "@/lib/i18n/catalog";
+import type { InterfaceLanguage } from "@/lib/i18n/registry";
 import React from "react";
 import { useEffect, useRef, useState } from "react";
 
 type Option = { value: string; label: string };
 
 type Props = {
+  interfaceLanguage?: InterfaceLanguage;
   disabled?:boolean;
   label: string;
   value: string;
@@ -21,6 +24,7 @@ type Props = {
  */
 export function DropUpSelect({
   label,
+  interfaceLanguage = "nl",
   value,
   options,
   onChange,
@@ -116,7 +120,7 @@ export function DropUpSelect({
                   <span>{option.label}</span>
                   {isActive && (
                     <span className="text-[10px] uppercase text-primary dark:text-primary-light">
-                      gekozen
+                      {localizedSection("trainingScope")[interfaceLanguage].selected}
                     </span>
                   )}
                 </button>

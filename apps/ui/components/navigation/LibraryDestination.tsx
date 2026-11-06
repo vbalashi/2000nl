@@ -1,4 +1,6 @@
 "use client";
+import { localizedField } from "@/lib/i18n/catalog";
+
 import { dictionarySourceProfile } from "@/lib/dictionary/sourceProfile";
 import {CollectionSelectionContext} from "@/components/library/sharing/CollectionSelectionContext";
 
@@ -174,6 +176,6 @@ export function LibraryDestinationTabs({language,destination,organizationEnabled
  return <nav className={organization.tabs} aria-label={getUiMessages(language).library.title}>
   <button type="button" aria-current={destination==="words"?"page":undefined} onClick={()=>onChange("words")}><List size={14}/>{copy.words}</button>
   {organizationEnabled&&<button type="button" data-onboarding="library-collections" aria-current={destination==="collections"?"page":undefined} onClick={()=>onChange("collections")}><Folders size={14}/>{copy.collections}</button>}
-  {sharingEnabled&&<button type="button" data-onboarding="library-shared" aria-current={destination==="shared"?"page":undefined} onClick={()=>onChange("shared")}><Share2 size={14}/>{language==="ru"?"Общий доступ":language==="nl"?"Gedeeld":"Shared"}</button>}
+  {sharingEnabled&&<button type="button" data-onboarding="library-shared" aria-current={destination==="shared"?"page":undefined} onClick={()=>onChange("shared")}><Share2 size={14}/>{localizedField("libraryNavigation", "shared")[language]}</button>}
  </nav>;
 }

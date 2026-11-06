@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
+import { useInterfaceLanguage } from "@/lib/i18n/useInterfaceLanguage";
+import { localizedSection } from "@/lib/i18n/catalog";
+
 export default function AuthCallbackPage() {
+  const language = useInterfaceLanguage();
   const router = useRouter();
 
   useEffect(() => {
@@ -36,7 +40,7 @@ export default function AuthCallbackPage() {
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-        <p className="text-slate-600 dark:text-slate-400">Inloggen...</p>
+        <p className="text-slate-600 dark:text-slate-400">{localizedSection("authPages")[language].signingIn}</p>
       </div>
     </div>
   );

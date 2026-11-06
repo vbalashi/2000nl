@@ -1,4 +1,6 @@
 'use client';
+import { localizedSection } from "@/lib/i18n/catalog";
+
 import {CollectionSortControl} from '@/components/library/organization/CollectionSortControl';
 import React,{useState,useRef,useEffect} from 'react';
 import {Eye,FileText,Plus,Search,MoreHorizontal} from 'lucide-react';
@@ -10,11 +12,7 @@ import {ForwardCollection,UnsubscribeCollection,receivedActionCopy} from './Rece
 import {useReceivedCatalog} from '../organization/useReceivedCatalog';
 import {organizationCopy} from '../organization/copy';
 import s from '../organization/organization.module.css';
-const copy={
- en:{added:'Added by me',add:'Add by link / code',empty:'No shared collections added',error:'Could not load shared collections.',shared:'Shared · view only'},
- ru:{added:'Добавленные мной',add:'Добавить по ссылке / коду',empty:'Пока нет добавленных общих коллекций',error:'Не удалось загрузить общие коллекции.',shared:'Общая · только просмотр'},
- nl:{added:'Door mij toegevoegd',add:'Toevoegen via link / code',empty:'Nog geen gedeelde collecties toegevoegd',error:'Gedeelde collecties konden niet worden geladen.',shared:'Gedeeld · alleen bekijken'},
-};
+const copy=localizedSection("receivedCollections");
 export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=false,onChanged,catalogOverride}:{userId:string;active:boolean;locale:OnboardingLanguage;onOpen:(row:ReceivedCollection)=>void;onAdd:()=>void;embedded?:boolean;onChanged?:()=>void;catalogOverride?:ReturnType<typeof useReceivedCatalog>}){
  const [query,setQuery]=useState('');
  const actionFocus=useRef<HTMLButtonElement|null>(null),addButton=useRef<HTMLButtonElement|null>(null),searchInput=useRef<HTMLInputElement|null>(null);

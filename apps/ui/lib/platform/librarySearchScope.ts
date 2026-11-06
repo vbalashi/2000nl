@@ -21,6 +21,7 @@ export type LibrarySearchScope = {
 export type LibrarySearchSummary = {
   unavailableEntryCount?: number;
   totalGroups: number;
+  totalMeanings?: number;
   matchingEntryIds: string[];
 };
 /** Missing filters retain the migration-185 boundary; null/malformed filters fail closed. */

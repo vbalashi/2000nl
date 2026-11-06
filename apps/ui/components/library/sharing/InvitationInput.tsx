@@ -1,10 +1,12 @@
 'use client';
+import { localizedSection } from "@/lib/i18n/catalog";
+
 import React,{useState} from 'react';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import {parseShareCode} from '@/lib/collections/sharing/shareCode';
 import {organizationCopy} from '../organization/copy';
 import s from '../organization/organization.module.css';
-const copy={en:{title:'Add by link / code',hint:'Paste an invitation link or code',check:'Check invitation',error:'Enter a valid invitation link or code.'},ru:{title:'Добавить по ссылке / коду',hint:'Вставьте ссылку приглашения или код',check:'Проверить приглашение',error:'Введите корректную ссылку приглашения или код.'},nl:{title:'Toevoegen via link / code',hint:'Plak een uitnodigingslink of code',check:'Uitnodiging controleren',error:'Voer een geldige uitnodigingslink of code in.'}};
+const copy=localizedSection("invitationInput");
 export function InvitationInput({locale,onSubmit,onCancel,initialValue="",readOnly=false}:{locale:OnboardingLanguage;onSubmit:(code:string)=>void;onCancel:()=>void;initialValue?:string;readOnly?:boolean}){
  const [value,setValue]=useState(initialValue),[error,setError]=useState(false);
  const t=copy[locale],common=organizationCopy(locale);

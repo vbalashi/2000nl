@@ -1,3 +1,4 @@
+import {getUiMessages} from "@/lib/uiMessages";
 import { WordRaw } from "./types";
 
 export type LinkTerm = {
@@ -5,7 +6,7 @@ export type LinkTerm = {
   headword?: string;
 };
 
-export const getPrimaryMeaning = (raw: WordRaw) => {
+export const getPrimaryMeaning = (raw: WordRaw, fallbackDefinition = getUiMessages("en").library.noDefinition) => {
   const firstMeaning = raw.meanings?.[0];
   const userExample =
     typeof raw.example === "string"
@@ -20,7 +21,7 @@ export const getPrimaryMeaning = (raw: WordRaw) => {
     raw.notes ??
     userExample ??
     raw.headword ??
-    "Definitie niet beschikbaar.";
+    fallbackDefinition;
 
   // Prefer new 'examples' array, fallback to legacy 'example' string
   const examples =
@@ -44,13 +45,13 @@ export const getPrimaryMeaning = (raw: WordRaw) => {
   return { definition, context, examples, idioms, links: normalizedLinks };
 };
 
-export const getAllMeanings = (raw: WordRaw) => {
+export const getAllMeanings = (raw: WordRaw, fallbackDefinition = getUiMessages("en").library.noDefinition) => {
   if (!raw.meanings || raw.meanings.length === 0) {
-    return [getPrimaryMeaning(raw)];
+    return [getPrimaryMeaning(raw, fallbackDefinition)];
   }
 
   return raw.meanings.map((m) => {
-    const definition = m.definition ?? "Definitie niet beschikbaar.";
+    const definition = m.definition ?? fallbackDefinition;
     const examples = m.examples ?? (m.example ? [m.example] : []);
     const context = m.context;
     const idioms = m.idioms ?? [];

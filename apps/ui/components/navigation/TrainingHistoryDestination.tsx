@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { interfaceFormattingLocale } from "@/lib/i18n/registry";
 import { useRetainedAccountRead } from "@/lib/training/activity/useRetainedAccountRead";
 import { getUiMessages } from "@/lib/uiMessages";
 import { PracticePanel } from "@/components/practice/ui/PracticePanel";
@@ -14,16 +15,10 @@ import {
   type RecentTrainingHistoryItem,
 } from "@/lib/training/trainingHistoryService";
 
-const localeByLanguage: Record<OnboardingLanguage, string> = {
-  nl: "nl-NL",
-  en: "en-GB",
-  ru: "ru-RU",
-};
-
 const formatTime = (language: OnboardingLanguage, value: string) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat(localeByLanguage[language], {
+  return new Intl.DateTimeFormat(interfaceFormattingLocale(language), {
     day: "numeric",
     month: "short",
     hour: "2-digit",

@@ -76,7 +76,7 @@ test("authenticated Training transition attribution harness", async ({
       await expect(reveal).toBeVisible();
       await reveal.click();
       const learn = page.getByRole("button", {
-        name: /Begin met leren|Учить|Start learning/i,
+        name: /Begin met leren|Учить|Start learning|Learn/i,
       });
       if (await learn.isVisible().catch(() => false)) {
         await learn.click();
@@ -149,7 +149,7 @@ test("authenticated Training transition attribution harness", async ({
       name: /Antwoord Tonen|Показать ответ|Show answer/i,
     }).click();
     const finalLearn = page.getByRole("button", {
-      name: /Begin met leren|Учить|Start learning/i,
+      name: /Begin met leren|Учить|Start learning|Learn/i,
     });
     if (await finalLearn.isVisible().catch(() => false)) await finalLearn.click();
     else await page.getByRole("button", { name: /Goed|Хорошо|Good/i }).click();

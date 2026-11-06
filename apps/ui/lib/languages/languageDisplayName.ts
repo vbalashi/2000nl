@@ -21,3 +21,11 @@ export function languageDisplayName(
     return fallback;
   }
 }
+
+/** A language autonym is dictionary/locale identity, independent of UI language. */
+export function languageAutonym(code: string): string {
+  try {
+    const label = new Intl.DisplayNames([code], {type:"language",fallback:"none"}).of(code) ?? code;
+    return label.charAt(0).toLocaleUpperCase(code) + label.slice(1);
+  } catch { return code; }
+}

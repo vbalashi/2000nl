@@ -1,4 +1,7 @@
 "use client";
+import { languageAutonym } from "@/lib/languages/languageDisplayName";
+import { localizedField, localizedSection } from "@/lib/i18n/catalog";
+
 import {useTrainingEditorMaterial} from "./useTrainingEditorMaterial";
 import {useTrainingSourceReferences} from '@/components/library/sharing/useTrainingSourceReferences';
 import {useAccountMaterial} from "@/components/practice/material/AccountMaterialProvider";
@@ -117,74 +120,13 @@ type Props = {
   onRetry: () => void;
 };
 
-const copy = {
-  en: {
-    contextLanguageNeeded: "Choose a translation language in Settings to use this exercise.",
-    allDictionaries: "All accessible dictionaries",
-    partialDictionaryAccess: "Some selected dictionaries are unavailable; this session will use only those you can access.",
-    loadingDictionaries: "Loading dictionaries…",
-    start: "Start training",
-    starting: "Starting…",
-    loading: "Loading Training",
-    materialUnavailable: "Selected material is unavailable. Choose another before starting.",
-    chooseGoal: "Choose a training goal",
-    resumePending: "Checking your saved session…",
-    resumeError: "Your saved session could not be checked.",
-    retryResume: "Retry session check",
-    cardError: "The next card could not be prepared. You can retry or adjust the setup.",
-    retryCard: "Retry card preparation",
-    startTimeout: "The selected training did not start because the server took too long. Your selection is saved here; you can retry it.",
-    startFailed: "The selected training could not be started. Your selection is saved here; you can retry it.",
-    retryStart: "Retry starting this training",
-    selectedMaterial: "Selected material",
-  },
-  nl: {
-    contextLanguageNeeded: "Kies een vertaaltaal in Instellingen voor deze oefening.",
-    allDictionaries: "Alle toegankelijke woordenboeken",
-    partialDictionaryAccess: "Sommige gekozen woordenboeken zijn niet beschikbaar; deze sessie gebruikt alleen de toegankelijke.",
-    loadingDictionaries: "Woordenboeken laden…",
-    start: "Training starten",
-    starting: "Starten…",
-    loading: "Training laden",
-    materialUnavailable: "Het gekozen materiaal is niet beschikbaar. Kies ander materiaal voordat je start.",
-    chooseGoal: "Kies een trainingsdoel",
-    resumePending: "Je opgeslagen sessie wordt gecontroleerd…",
-    resumeError: "Je opgeslagen sessie kon niet worden gecontroleerd.",
-    retryResume: "Sessiecontrole opnieuw proberen",
-    cardError: "De volgende kaart kon niet worden voorbereid. Probeer opnieuw of pas de selectie aan.",
-    retryCard: "Kaart opnieuw voorbereiden",
-    startTimeout: "De gekozen training is niet gestart omdat de server te lang nodig had. Je selectie is hier bewaard; je kunt het opnieuw proberen.",
-    startFailed: "De gekozen training kon niet worden gestart. Je selectie is hier bewaard; je kunt het opnieuw proberen.",
-    retryStart: "Deze training opnieuw starten",
-    selectedMaterial: "Gekozen materiaal",
-  },
-  ru: {
-    contextLanguageNeeded: "Для этого упражнения выберите язык перевода в настройках.",
-    allDictionaries: "Все доступные словари",
-    partialDictionaryAccess: "Некоторые выбранные словари недоступны; сессия использует только те, к которым есть доступ.",
-    loadingDictionaries: "Загружаем словари…",
-    start: "Начать тренировку",
-    starting: "Запускаем…",
-    loading: "Загрузка тренировки",
-    materialUnavailable: "Выбранный материал недоступен. Перед запуском выберите другой.",
-    chooseGoal: "Выберите цель тренировки",
-    resumePending: "Проверяем сохранённую сессию…",
-    resumeError: "Не удалось проверить сохранённую сессию.",
-    retryResume: "Повторить проверку сессии",
-    cardError: "Не удалось подготовить карточку. Повторите попытку или измените настройки.",
-    retryCard: "Повторить подготовку карточки",
-    startTimeout: "Тренировка не запустилась: сервер слишком долго отвечал. Выбранные настройки сохранены, можно попробовать ещё раз.",
-    startFailed: "Не удалось запустить выбранную тренировку. Настройки сохранены, можно попробовать ещё раз.",
-    retryStart: "Повторить запуск этой тренировки",
-    selectedMaterial: "Выбранный материал",
-  },
-} satisfies Record<OnboardingLanguage, Record<string, unknown>>;
+const copy = localizedSection("trainingSetup") satisfies Record<OnboardingLanguage, Record<string, unknown>>;
 
 export function TrainingTodaySetup({
   userId,
   emptyTraining,
   trainingLanguageCode: actualTrainingLanguage,
-  trainingLanguageOptions: readableLanguageOptions = [{ value: "nl", label: "Nederlands" }],
+  trainingLanguageOptions: readableLanguageOptions = [{ value: "nl", label: languageAutonym("nl") }],
   trainingLanguageLoading = false,
   onTrainingLanguageChange,
   interfaceLanguage,
@@ -280,7 +222,7 @@ export function TrainingTodaySetup({
   const currentReferenceMissing=collectionValue(currentRecipe).startsWith('user:')&&(!currentReferenceOption||currentReferenceOption.ownership==='received'||currentReferenceOption.disabled);
   const sourceReferenceBlocked=currentReferenceMissing&&collectionReferences.status!=='ready';
   const startBlocked=externalStartBlocked||material.status!=='ready'||sourceReferenceBlocked;
-  const sourceReferenceNotice=sourceReferenceBlocked?<p role={collectionReferences.status==='error'?'alert':'status'}>{collectionReferences.status==='error'?({en:'Could not load collection details.',ru:'Не удалось загрузить сведения о коллекции.',nl:'Collectiegegevens konden niet worden geladen.'})[interfaceLanguage]:t.loading}{collectionReferences.status==='error'&&<button type="button" onClick={()=>void collectionReferences.refresh()}>{({en:'Retry',ru:'Повторить',nl:'Opnieuw proberen'})[interfaceLanguage]}</button>}</p>:null;
+  const sourceReferenceNotice=sourceReferenceBlocked?<p role={collectionReferences.status==='error'?'alert':'status'}>{collectionReferences.status==='error'?(localizedField("trainingSetup", "collectionError"))[interfaceLanguage]:t.loading}{collectionReferences.status==='error'&&<button type="button" onClick={()=>void collectionReferences.refresh()}>{(localizedField("trainingSetup", "retry"))[interfaceLanguage]}</button>}</p>:null;
   const failedStartContextMatches = Boolean(failedStart &&
     failedStart.ownerId === userId && failedStart.languageCode === trainingLanguageCode);
   useEffect(() => {
@@ -518,7 +460,7 @@ export function TrainingTodaySetup({
         setSelectedIntent({id:training.id,userId,language:training.languageCode,action});
         if(training.languageCode!==trainingLanguageCode)onTrainingLanguageChange?.(training.languageCode);
       }}>
-      {status === "error" && <p role="alert">{{ru:"Не удалось загрузить данные для этого языка.",en:"Could not load the material for this language.",nl:"Het materiaal voor deze taal kon niet worden geladen."}[interfaceLanguage]} <button type="button" onClick={onRetry}>{{ru:"Повторить",en:"Retry",nl:"Opnieuw proberen"}[interfaceLanguage]}</button></p>}
+      {status === "error" && <p role="alert">{localizedField("trainingSetup", "languageMaterialError")[interfaceLanguage]} <button type="button" onClick={onRetry}>{localizedField("trainingSetup", "retry")[interfaceLanguage]}</button></p>}
       {sourceReferenceNotice}
       {materialNotice}
       {presetMessage&&<p role="status">{presetMessage}</p>}
@@ -590,9 +532,9 @@ export function TrainingTodaySetup({
     onBeginSave={()=>setPresetMessage("")} onStart={()=>void requestStart(draft,trainingName??undefined,editingTraining&&!hasUnsavedTrainingChanges(editingTraining,{name:trainingName??selectedList??"",languageCode:trainingLanguageCode??"nl",draft})?{trainingId:editingTraining.id}:undefined)} canSave={canSaveAccount}
     saveDisabled={account.status!=="ready"||account.pending||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
     startDisabled={Boolean(queuedLanguageStart)||!canSaveAccount||account.status!=="ready"||account.pending||isTrainingSetupPaused(draft)||startPending||scenarioLoading||startBlocked||!material.currentLanguageAllowed||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
-    saveLabel={editingPresetId?({en:"Save changes",nl:"Wijzigingen opslaan",ru:"Сохранить изменения"})[interfaceLanguage]:accountCopy.save} startLabel={material.status==="loading"||scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable&&!sourceReferenceBlocked?t.materialUnavailable:({en:"Start training",nl:"Training starten",ru:"Начать тренировку"})[interfaceLanguage]}
+    saveLabel={editingPresetId?(localizedField("trainingSetup", "saveChanges"))[interfaceLanguage]:accountCopy.save} startLabel={material.status==="loading"||scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable&&!sourceReferenceBlocked?t.materialUnavailable:(localizedField("trainingSetup", "start"))[interfaceLanguage]}
     saveNotice={presetMessage} notice={<>
-      {status === "error" && <p role="alert">{{ru:"Не удалось загрузить данные для этого языка.",en:"Could not load the material for this language.",nl:"Het materiaal voor deze taal kon niet worden geladen."}[interfaceLanguage]} <button type="button" onClick={onRetry}>{{ru:"Повторить",en:"Retry",nl:"Opnieuw proberen"}[interfaceLanguage]}</button></p>}
+      {status === "error" && <p role="alert">{localizedField("trainingSetup", "languageMaterialError")[interfaceLanguage]} <button type="button" onClick={onRetry}>{localizedField("trainingSetup", "retry")[interfaceLanguage]}</button></p>}
       {sourceReferenceNotice}
       {materialNotice}
       {presetMessage&&<p role="status">{presetMessage}</p>}

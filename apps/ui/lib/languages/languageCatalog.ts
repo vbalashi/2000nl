@@ -1,3 +1,4 @@
+import { interfaceLanguages } from "@/lib/i18n/registry";
 import catalog from "./languageCatalog.json";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { languageDisplayName } from "./languageDisplayName";
@@ -19,7 +20,7 @@ const nativeAliases: Record<string, string> = {
 };
 export const normalizeLanguageSearch = (text: string) =>
   text.normalize("NFKD").replace(/\p{M}/gu, "").toLocaleLowerCase();
-const localized = ["en", "nl", "ru"] as const;
+const localized = interfaceLanguages.map(({code}) => code);
 function nativeName(code: string) {
   try {
     return (

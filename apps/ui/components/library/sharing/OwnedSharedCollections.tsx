@@ -1,4 +1,6 @@
 'use client';
+import { localizedSection } from "@/lib/i18n/catalog";
+
 import {CollectionSortControl} from '@/components/library/organization/CollectionSortControl';
 import React,{useEffect,useRef,useState} from 'react';
 import {FileText,MoreHorizontal,Search,Share2} from 'lucide-react';
@@ -14,11 +16,7 @@ import {useOwnedSharedCatalog} from './useOwnedSharedCatalog';
 import {OwnedCollectionSharing} from './OwnedCollectionSharing';
 import s from '../organization/organization.module.css';
 
-const copy={
- en:{title:'Shared by me',empty:'No collections shared yet',error:'Could not load your shared collections.',active:'Link active',subscribers:'Subscribers',copy:'Copy link',copied:'Link copied',copyFailed:'Open Link and code to copy this invitation.',manage:'Link and code',stop:'Stop sharing',sort:'Sort',owned:'yours'},
- ru:{title:'Я поделился',empty:'Пока нет открытых общих коллекций',error:'Не удалось загрузить ваши общие коллекции.',active:'Ссылка активна',subscribers:'Подписчики',copy:'Копировать ссылку',copied:'Ссылка скопирована',copyFailed:'Откройте «Ссылка и код», чтобы скопировать приглашение.',manage:'Ссылка и код',stop:'Закрыть общий доступ',sort:'Сортировка',owned:'ваша'},
- nl:{title:'Door mij gedeeld',empty:'Nog geen gedeelde collecties',error:'Gedeelde collecties konden niet worden geladen.',active:'Link actief',subscribers:'Abonnees',copy:'Link kopiëren',copied:'Link gekopieerd',copyFailed:'Open Link en code om de uitnodiging te kopiëren.',manage:'Link en code',stop:'Delen stoppen',sort:'Sorteren',owned:'van jou'},
-};
+const copy=localizedSection("ownedSharedCollections");
 type Dialog={ownerId:string;row:Pick<OwnedSharedCollection,'id'|'name'>;initialAction?:'close'};
 export function OwnedSharedCollections({userId,active,locale,onOpen,onChanged,catalogOverride}:{userId:string;active:boolean;locale:OnboardingLanguage;onOpen:(row:OwnedSharedCollection)=>void;onChanged:()=>void;catalogOverride?:ReturnType<typeof useOwnedSharedCatalog>}){
  const [query,setQuery]=useState(''),[sort,setSort]=useState<OwnedCatalogQuery['sort']>('recent');
