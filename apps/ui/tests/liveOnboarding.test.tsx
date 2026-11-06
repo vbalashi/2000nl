@@ -64,3 +64,12 @@ test('completed topics survive opening another topic and reloading',async()=>{
 test('checkpoint validation rejects unknown completed topics',()=>{
  expect(parseTourRecord(JSON.stringify({...record,completedTopics:['bogus']}))).toBeNull();
 });
+test('invitation step targets the check action while retaining the preview readiness gate',()=>{
+ const step=tourFlows.incoming.find(item=>item.id==='input')!;
+ const form=document.createElement('form');form.dataset.onboarding='invitation-input';
+ form.innerHTML='<input><button type="submit">Check invitation</button>';
+ document.body.append(form);
+ expect(document.querySelector(step.target)).toBe(form.querySelector('button'));
+ expect(step.ready).toBe('[data-onboarding="invitation-preview"]');
+ form.remove();
+});

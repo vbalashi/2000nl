@@ -38,3 +38,30 @@ test('guide stays within mobile safe areas and remains scrollable on a short vie
  await button.click();
  await expect(page.getByRole('heading',{name:'Choose your translation language'})).toBeVisible();
 });
+
+test('mobile guide highlights a target inside a dialog and respects reduced motion',async({page})=>{
+ await page.setViewportSize({width:393,height:852});
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingCompleted:false,onboardingLanguage:'en'}}});
+ await expect(page.getByRole('heading',{name:'Choose your interface language'})).toBeVisible();
+ await page.evaluate(()=>{
+  const original=document.querySelector<HTMLElement>('[data-onboarding="interface"]')!;
+  const host=original.closest('[data-account-palette]')!;
+  original.removeAttribute('data-onboarding');
+  const dialog=document.createElement('dialog');
+  dialog.style.setProperty('--practice-focus',getComputedStyle(original).getPropertyValue('--practice-focus'));
+  const target=document.createElement('button');
+  target.dataset.onboarding='interface';target.textContent='Dialog target';
+  dialog.append(target);host.append(dialog);dialog.showModal();
+ });
+ const target=page.getByRole('button',{name:'Dialog target'});
+ await expect.poll(()=>target.evaluate(el=>Array.from(el.classList).some(name=>name.includes('target')))).toBe(true);
+ await expect.poll(()=>target.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('solid');
+ await expect.poll(()=>target.evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
+ const tooltip=page.locator('[data-training-hotkeys-suspended="true"]');
+ await expect(tooltip).toBeVisible();
+ const pause=tooltip.getByRole('button',{name:'Pause tour'});
+ await expect(pause).toHaveCSS('border-top-width','0px');
+ await pause.click();
+ await expect.poll(()=>target.evaluate(el=>Array.from(el.classList).some(name=>name.includes('target')))).toBe(false);
+});
