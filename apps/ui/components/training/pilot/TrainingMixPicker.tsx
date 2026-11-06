@@ -1,6 +1,9 @@
 "use client";
 
 import React from "react";
+import {SessionBalanceIcon} from "./SessionSummaryIcons";
+import iconStyles from "./sessionSummaryIcons.module.css";
+import {SettingsHelp} from "@/components/practice/settings/SettingsHelp";
 import s from "@/components/practice/builder/builderControls.module.css";
 import type { CardFilter } from "@/lib/types";
 
@@ -44,7 +47,9 @@ export function TrainingMixPicker({
   newOnly,
   ratioLabel,
   help,
+  helpText,
 }: {
+  helpText?:string;
   approved?:boolean;
   cardFilter: CardFilter;
   ratio: number;
@@ -65,12 +70,12 @@ export function TrainingMixPicker({
   return (
     <div className={approved?s.rangeGroup:undefined}>
       <div className={approved?s.labelRow:"flex items-baseline justify-between gap-3"}>
-        <label
+        <div className={s.labelWithHelp}><label
           htmlFor="training-session-mix"
           className={approved?s.label:"text-sm font-semibold text-slate-950 dark:text-white"}
         >
-          {label}
-        </label>
+          {approved&&<span className={iconStyles.labelIcon}><SessionBalanceIcon/></span>}{label}
+        </label>{helpText&&<SettingsHelp label={label} text={helpText}/>}</div>
         <span className={approved?s.selection:"text-right text-sm font-semibold text-indigo-700 dark:text-indigo-300"}>
           {selectedLabel}
         </span>

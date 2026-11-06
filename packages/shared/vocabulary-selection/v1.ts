@@ -1,6 +1,6 @@
 export type FrequencyProfile="spoken"|"written";
 export type VocabularyMaterialKind="word"|"other";
-export type MeaningLimit=1|2|3|"all";
+export type MeaningLimit=1|2|3|4|5|"all";
 export type VocabularySelection={mode:"all"|"frequency";materialKinds:VocabularyMaterialKind[];profile:FrequencyProfile;from:number;to:number;meanings:MeaningLimit};
 export type LibraryTrainingSelection={query:string;category:"headwords"|"examples"|"definitions"|"alphabetical";labelId?:string;labelName?:string;languageCode?:string};
 const object=(value:unknown):value is Record<string,unknown>=>Boolean(value)&&typeof value==="object"&&!Array.isArray(value);
@@ -9,7 +9,7 @@ export function parseVocabularySelection(value:unknown):VocabularySelection|null
  if(!object(value)||Object.keys(value).length!==6||Object.keys(value).some(key=>!["mode","materialKinds","profile","from","to","meanings"].includes(key))||
   typeof value.mode!=="string"||!["all","frequency"].includes(value.mode)||typeof value.profile!=="string"||!["spoken","written"].includes(value.profile)||
   typeof value.from!=="number"||typeof value.to!=="number"||!validFrequencyRange(value.from,value.to)||
-  ![1,2,3,"all"].includes(value.meanings as MeaningLimit)||!Array.isArray(value.materialKinds)||value.materialKinds.length>1||
+  ![1,2,3,4,5,"all"].includes(value.meanings as MeaningLimit)||!Array.isArray(value.materialKinds)||value.materialKinds.length>1||
   value.materialKinds.some(kind=>kind!=="word"&&kind!=="other"))return null;
  return {mode:value.mode as VocabularySelection["mode"],materialKinds:[...value.materialKinds],profile:value.profile as FrequencyProfile,from:value.from,to:value.to,meanings:value.meanings as MeaningLimit};
 }

@@ -120,7 +120,7 @@ describeIfDb('Library set based selection',()=>{
  test('matches scalar membership across arbitrary ranges, meanings, POS and material modes without refilling',async()=>{
   await withTransaction(pool,async client=>{
    const f=await fixture(client);
-   for(const mode of ['frequency','all'])for(const profile of ['spoken','written'])for(const meanings of ['all',1,2,3])for(const kinds of [[],['word'],['other']]){
+   for(const mode of ['frequency','all'])for(const profile of ['spoken','written'])for(const meanings of ['all',1,2,3,4,5])for(const kinds of [[],['word'],['other']]){
     for(const [parts,article] of [[[],null],[['noun'],'de']] as [string[],string|null][]){
      const scope=selection(f.dictionary,mode,meanings,profile,kinds,parts,article);
      const {rows}=await client.query(`select array(select entry_id from private.library_selected_entry_ids_v1($1,$2) order by entry_id) batch,

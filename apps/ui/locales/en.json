@@ -401,7 +401,7 @@
       "yesterday": "Yesterday",
       "daysAgo": "Days ago",
       "allDueToday": "All available cards",
-      "allDueHelp": "The selected mix determines which cards are included. The session ends after one pass.",
+      "allDueHelp": "Choose All to include the available cards that match the session mix. The session ends after one pass.",
       "mixHelp": "Target rhythm; the actual mix depends on available cards."
     },
     "accountTrainingSetups": {
@@ -441,7 +441,9 @@
       "moreSaved": "More saved trainings",
       "noSaved": "No saved trainings yet. Create a training to keep its settings here.",
       "availabilityFailed": "Could not load card counts.",
-      "sessionLimit": "Up to {count} cards",
+      "sessionLimit": "Up to {count}",
+      "sessionLimitAccessible": "Up to {count} cards",
+      "meaningLimitCompact": "{count} meanings max",
       "allCards": "All cards",
       "earlyReview": "Review ahead",
       "wordInContext": "Translation",
@@ -1582,7 +1584,10 @@
         "Type the answer and other response modes are planned for later."
       ],
       "clearLibrarySelection": "Clear Library selection",
-      "activityScopeNotice": "Saved word activity filters still apply: {scope}. Editing them is not yet available."
+      "activityScopeNotice": "Saved word activity filters still apply: {scope}. Editing them is not yet available.",
+      "filtersHelp": "Filters narrow the material used to select cards for this training.",
+      "sessionSizeHelp": "Choose how many cards to study in one training session. The actual number depends on available cards.",
+      "mixChoiceHelp": "Choose only new cards, only reviews of cards you are learning, or a mix. For example, 1 new : 2 reviews means one new card for every two reviews. The actual balance depends on available cards."
     },
     "startup": {
       "preparing": "Preparing training"
@@ -1660,6 +1665,10 @@
         "Search sources",
         "No matches"
       ],
+      "shared": "Shared",
+      "dictionarySingular": "Dictionary",
+      "collectionSingular": "Collection",
+      "sharedSingular": "Shared collection",
       "scroll": [
         "Previous sources",
         "More sources"
@@ -1801,10 +1810,10 @@
       "title": "Entry type",
       "all": "All",
       "word": "Words",
-      "other": "Other",
+      "other": "Phrases",
       "help": [
-        "Choose words or other standalone entries. Parts of speech, such as nouns and verbs, narrow the word selection.",
-        "Other includes expressions, phrases and whole sentences. These are separate dictionary entries, not examples within a word.",
+        "Choose words or phrases. Parts of speech, such as nouns and verbs, narrow the word selection.",
+        "Phrases include expressions and whole sentences, as well as other entries without a recognised part of speech. These are separate dictionary entries, not examples within a word.",
         "We plan to expand this choice so phrases, idioms and sentences can be selected separately."
       ]
     },
@@ -1813,7 +1822,26 @@
       "updating": "Updating card counts…",
       "helpTitle": "About these counts",
       "help": "These are all available cards matching your settings. Session size and the balance of new cards and reviews determine how many enter the training.",
-      "error": "Could not update the card counts."
+      "error": "Could not update the card counts.",
+      "later": "Review later",
+      "compactHelp": "Cards matching the selected material and filters: due now, scheduled for later, and new. The session size and balance determine which cards enter this training.",
+      "cardsPrefix": "Cards:",
+      "summaryWords": "Words",
+      "summaryMeanings": "Meanings",
+      "summaryCards": "Cards",
+      "summaryLearning": "Being learned",
+      "summaryNew": "New",
+      "summaryOther": "Other states",
+      "wordCountZero": "{count} words",
+      "wordCountOne": "{count} word",
+      "wordCountTwo": "{count} words",
+      "wordCountFew": "{count} words",
+      "wordCountMany": "{count} words",
+      "wordCountOther": "{count} words",
+      "sentenceFound": "Found {words} with {meanings}.",
+      "sentenceCards": "Available cards: {cards}.",
+      "sentenceProgress": "Of these cards, you are learning {learning}; new: {new}. Ready to review now: {due}.",
+      "sentenceOther": "Other card states: {other}."
     },
     "libraryWordSelection": {
       "train": "Train these words",
@@ -1839,12 +1867,13 @@
       "cancel": "Cancel",
       "apply": "Done",
       "invalid": "Start at 1 or higher. The end must be at least the start.",
-      "selectionHelp": "Choose all words, or select a range from a list ordered from most to least common. Frequency selection includes only words for which this information is available.",
+      "selectionHelp": "Choose all entries or select a frequency range, from most to least common. Frequency selection includes only entries with available frequency data. Use Entry type below to limit the selection to words or phrases.",
       "speechHelp": "Spoken language uses conversations from CGN. Written language uses texts from SoNaR500. A word can be common in speech and less common in writing.",
+      "speechGeneralHelp": "Choose a frequency list based on spoken or written language. The same word can occur at different rates in speech and writing.",
       "rangeHelp": "A lower number means a more common word. For example, 1–100 selects the hundred most common words. We show those found in your dictionary that match your other settings, so there may be fewer. Select the pencil to change the range.",
       "meaningHelp": [
-        "A word can have several meanings. For example, lopen can describe walking, a motor running, or an event taking place.",
-        "Meanings follow dictionary order. Choose the first one, two or three, or keep them all. If there are fewer, take those available. Each separate dictionary entry has its own limit.",
+        "An entry can have more than one meaning. Each meaning can be studied separately.",
+        "Meanings follow dictionary order. Choose how many first meanings to include, or keep them all. If there are fewer, take those available. Each separate dictionary entry has its own limit.",
         "In a new-only session, meanings already being learned are left out. If the first two are already being learned, they will not appear in that session. We do not replace them with the third."
       ],
       "firstMeaningsZero": "First {count} meanings",
@@ -1852,7 +1881,28 @@
       "firstMeaningsTwo": "First {count} meanings",
       "firstMeaningsFew": "First {count} meanings",
       "firstMeaningsMany": "First {count} meanings",
-      "firstMeaningsOther": "First {count} meanings"
+      "firstMeaningsOther": "First {count} meanings",
+      "partsSelected": "{count} parts selected",
+      "spokenShort": "Spoken",
+      "writtenShort": "Written",
+      "top": "Top {count}",
+      "rangeCompactHelp": "A lower position means a more common word. Choose Top 100 or another shortcut, or use the pencil to set a custom range. Only words available in your selected material and matching your other filters are included.",
+      "rangeDutchSource": "Dutch frequency rankings use CGN and SoNaR data made available by the Dutch Language Institute.",
+      "rangeDialogTitle": "Positions in the frequency list"
+    },
+    "vocabularyPartShort": {
+      "noun": "n.",
+      "verb": "v.",
+      "adjective": "adj.",
+      "adverb": "adv.",
+      "pronoun": "pron.",
+      "preposition": "prep.",
+      "conjunction": "conj.",
+      "numeral": "num.",
+      "article": "art.",
+      "interjection": "interj.",
+      "abbreviation": "abbr.",
+      "prefix": "prefix"
     }
   },
   "tour": {

@@ -100,9 +100,69 @@ test('clearing a Library query keeps the selected collection language',()=>{
 
  test.each(['idiom','word-in-context'] as const)('source words have a separate explicit choice for %s',family=>{
   const p=props();const draft={...p.draft,family};render(<ApprovedTrainingBuilder {...p} draft={draft}/>);
+  expect(screen.getByRole('button',{name:/^Exercises /})).toHaveTextContent('Source words: Learning only');
   fireEvent.click(screen.getByRole('button',{name:/^Filters /}));
+  expect(screen.queryByRole('group',{name:'Source words'})).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:/^Exercises /}));
   expect(screen.getByRole('button',{name:'Learning only'})).toHaveAttribute('aria-pressed','true');
   fireEvent.click(within(screen.getByRole('group',{name:'Source words'})).getByRole('button',{name:'All words'}));
   const update=p.onDraftChange.mock.calls.at(-1)![0] as (current:typeof draft)=>typeof draft & {sourceWordStatus:string};
   expect(update(draft)).toMatchObject({sourceWordStatus:'all',cardFilter:'review'});
  });
+
+test('part-of-speech disclosure hides its choices until opened and keeps them out of keyboard access when closed',()=>{
+ const p=props();render(<ApprovedTrainingBuilder {...p}/>);fireEvent.click(screen.getByRole('button',{name:/^Filters /}));
+ const trigger=screen.getByRole('button',{name:/^Part of speech /});const body=document.getElementById(trigger.getAttribute('aria-controls')!)!;
+ expect(body).toHaveAttribute('inert');expect(body).toHaveAttribute('aria-hidden','true');
+ fireEvent.click(trigger);expect(body).not.toHaveAttribute('inert');expect(screen.getByRole('button',{name:'Nouns'})).toBeVisible();
+ fireEvent.click(trigger);expect(body).toHaveAttribute('inert');expect(body).toHaveAttribute('aria-hidden','true');
+});
+
+test.each([
+ ['word-to-definition','lucide-arrow-right'],
+ ['definition-to-word','lucide-arrow-left'],
+] as const)('direction card and exercise summary use the same %s arrow',(mode,icon)=>{
+ const p=props();render(<ApprovedTrainingBuilder {...p} draft={{...p.draft,modes:[mode]}} scenarios={[{value:'understanding',label:'Words',modes:['word-to-definition','definition-to-word']} as never]}/>);
+ const header=screen.getByRole('button',{name:/^Exercises /});
+ expect(header.querySelector(`svg.${icon}`)).not.toBeNull();
+ fireEvent.click(header);
+ const label=mode==='word-to-definition'?'Direct':'Reverse';
+ const card=screen.getByRole('button',{name:new RegExp(`^${label}`)});
+ expect(card.querySelector(`svg.${icon}`)).not.toBeNull();
+});
+test.each([['learning','lucide-book-open-check','Learning only'],['all','lucide-library-big','All words']] as const)('source word icon matches its option for %s',(status,icon,label)=>{
+ const p=props();render(<ApprovedTrainingBuilder {...p} draft={{...p.draft,family:'idiom',sourceWordStatus:status}}/>);
+ const header=screen.getByRole('button',{name:/^Exercises /});
+ expect(header).toHaveAccessibleName(new RegExp(`Source words: ${label}`));
+ expect(header.querySelector(`svg.${icon}`)).not.toBeNull();
+ fireEvent.click(header);
+ expect(within(screen.getByRole('group',{name:'Source words'})).getByRole('button',{name:label}).querySelector(`svg.${icon}`)).not.toBeNull();
+});
+test('both directions have a compact two-way icon and preserve a spoken description',()=>{
+ const p=props();render(<ApprovedTrainingBuilder {...p} draft={{...p.draft,modes:['word-to-definition','definition-to-word']}}/>);
+ const header=screen.getByRole('button',{name:/^Exercises /});
+ expect(header).toHaveAccessibleName(/Direct \+ Reverse/);
+ expect(header.querySelector('svg.lucide-arrow-left-right')).not.toBeNull();
+});
+
+test('filter summaries use local abbreviations while keeping full names accessible and reporting the frequency profile',()=>{
+ const p=props();const draft={...p.draft,partOfSpeech:['zn','ww'] as ('zn'|'ww')[],vocabulary:{mode:'frequency' as const,profile:'written' as const,from:200,to:300,meanings:'all' as const,materialKinds:[]}};
+ render(<ApprovedTrainingBuilder {...p} draft={draft}/>);
+ const filters=screen.getByRole('button',{name:/^Filters /});
+ expect(filters).toHaveAccessibleName(/Nouns · Verbs · Written language · 200–300/);
+ const heading=filters.closest('[class*="controlledHeader"]')!;
+ expect(heading.querySelector('[title] [aria-hidden="true"]')).toHaveTextContent('n. · v. · 200–300');
+ expect(heading.querySelector('[title] svg.lucide-file-text')).not.toBeNull();
+ fireEvent.click(filters);
+ const parts=screen.getByRole('button',{name:/^Part of speech /});expect(parts).toHaveAccessibleName(/Nouns · Verbs/);
+ expect(parts.querySelector('[aria-hidden="true"]')).toHaveTextContent('n. · v.');
+});
+
+
+test.each([['word','Words · All parts of speech'],['other','Phrases'] ] as const)('filter summary shows the selected entry type: %s',(kind,expected)=>{
+ const p=props();const draft={...p.draft,vocabulary:{mode:'all' as const,profile:'spoken' as const,from:1,to:100,meanings:'all' as const,materialKinds:[kind]}};
+ render(<ApprovedTrainingBuilder {...p} draft={draft}/>);
+ const filters=screen.getByRole('button',{name:/^Filters /});
+ expect(filters).toHaveAccessibleName(`Filters ${expected}`);
+ expect(filters.closest('[class*="controlledHeader"]')!.querySelector('[title] [aria-hidden="true"]')).toHaveTextContent(expected);
+});

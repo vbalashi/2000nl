@@ -17,3 +17,9 @@ test('saved identity resolution tolerates deletion without borrowing another own
  expect(readLastSelectedTraining('one')).toBe('b');expect(readLastSelectedTraining('two')).toBe('a');
  expect(resolveHighlightedTraining(saved,'b','a')).toBe('b');expect(resolveHighlightedTraining(saved,'deleted','a')).toBe('a');expect(resolveHighlightedTraining(saved,'deleted',null)).toBe('a');
 });
+
+test('overview describes the selected material and vocabulary restrictions',()=>{
+ const result=trainingMetadata({...draft,partOfSpeech:['zn','ww'],vocabulary:{mode:'frequency',materialKinds:['word'],profile:'spoken',from:1,to:100,meanings:4}},'ru','нидерландский');
+ expect(result.summary).toContain('Прямой · сущ. · гл. · Устная Топ 100 · До 4 знач.');
+ expect(result.summary).toMatch(/До 5$/);
+});

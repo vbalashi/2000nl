@@ -15,7 +15,7 @@ test("the meaning slider runs from one to all",()=>{
  render(<Fields/>);const slider=screen.getByRole("slider",{name:"Значений на статью"});
  expect(slider).toHaveValue("1");expect(slider).toHaveAttribute("aria-valuetext","Первые 2 значения");
  fireEvent.change(slider,{target:{value:"0"}});expect(slider).toHaveAttribute("aria-valuetext","Первое значение");
- fireEvent.change(slider,{target:{value:"3"}});expect(slider).toHaveAttribute("aria-valuetext","Все значения");
+ fireEvent.change(slider,{target:{value:"5"}});expect(slider).toHaveAttribute("aria-valuetext","Все значения");
 });
 test("exact bounds reject zero and reversed ranges; cancelling restores the opener",()=>{
  render(<Fields/>);const open=screen.getByRole("button",{name:"Изменить диапазон: 1–100"});open.focus();fireEvent.click(open);
@@ -55,7 +55,7 @@ test("meaning guidance uses paragraphs and is not permanently repeated below the
  const help=screen.getByRole("button",{name:"? Значений на статью"});
  const popup=document.getElementById(help.getAttribute("aria-controls")!)!;
  expect(popup.querySelectorAll("p")).toHaveLength(3);
- expect(popup).toHaveTextContent("Например, lopen");
+ expect(popup).toHaveTextContent("У статьи может быть несколько значений");
  expect(popup).toHaveTextContent("Третье вместо них не добавляем");
 });
 test("button adjustment changes exact values without typing and applies only on Done",()=>{
@@ -72,14 +72,14 @@ test("button adjustment changes exact values without typing and applies only on 
 test("entry types offer only confirmed groups, independently of parts of speech",()=>{
  function Kinds(){const [value,setValue]=useState<VocabularyMaterialKind[]>([]);return <MaterialKindSelection value={value} onChange={setValue} language="ru"/>;}
  render(<Kinds/>);expect(screen.getByRole("button",{name:"Любые"})).toHaveAttribute("aria-pressed","true");
- fireEvent.click(screen.getByRole("button",{name:"Другое"}));
- expect(screen.getByRole("button",{name:"Другое"})).toHaveAttribute("aria-pressed","true");
+ fireEvent.click(screen.getByRole("button",{name:"Фразы"}));
+ expect(screen.getByRole("button",{name:"Фразы"})).toHaveAttribute("aria-pressed","true");
  expect(screen.getByRole("button",{name:"Слова"})).toHaveAttribute("aria-pressed","false");
  expect(screen.queryByRole("button",{name:"Предложения"})).not.toBeInTheDocument();
  fireEvent.click(screen.getByRole("button",{name:"Слова"}));
  expect(screen.getByRole("button",{name:"Слова"})).toHaveAttribute("aria-pressed","true");
- fireEvent.click(screen.getByRole("button",{name:"Другое"}));
- expect(screen.getByRole("button",{name:"Другое"})).toHaveAttribute("aria-pressed","true");
+ fireEvent.click(screen.getByRole("button",{name:"Фразы"}));
+ expect(screen.getByRole("button",{name:"Фразы"})).toHaveAttribute("aria-pressed","true");
  expect(screen.getByRole("button",{name:"Любые"})).toHaveAttribute("aria-pressed","false");
 });
 test("buttons and typing share the exact draft and selected step",()=>{
@@ -113,4 +113,11 @@ test("range edits notify the parent only on confirmation",()=>{
  fireEvent.click(within(dialog).getByRole("button",{name:"Готово"}));
  expect(change).toHaveBeenCalledTimes(1);
  expect(change).toHaveBeenCalledWith(expect.objectContaining({from:20,to:100}));
+});
+
+test.each([['nl',true],['en',false],['fr',false]])('frequency help reflects the dictionary language %s',(learningLanguage,dutch)=>{
+ render(<VocabularySelectionFields value={{...DEFAULT_VOCABULARY_SELECTION,mode:'frequency'}} onChange={()=>{}} language="en" learningLanguage={learningLanguage}/>);
+ const help=screen.getByRole('button',{name:'? Where they occur'});
+ const popup=document.getElementById(help.getAttribute('aria-controls')!)!;
+ expect(popup.textContent?.includes('CGN')).toBe(dutch);
 });

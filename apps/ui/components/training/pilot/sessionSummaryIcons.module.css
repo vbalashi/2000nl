@@ -1,0 +1,4 @@
+.mix{display:inline-block;white-space:nowrap}
+.mix svg{display:inline-block;vertical-align:-2px;color:var(--practice-text-muted)}
+
+.labelIcon{display:inline-flex;vertical-align:-2px;margin-inline-end:6px;color:var(--practice-text-muted)}

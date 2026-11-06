@@ -172,3 +172,45 @@ test('an empty routine keeps its primary slot disabled and editing stays in the 
  expect(screen.getByRole('button',{name:'No matching cards'})).toBeDisabled();
  fireEvent.click(screen.getAllByRole('button',{name:'Edit Words'})[0]);expect(edit).toHaveBeenCalledWith('a');
 });
+
+test('overview uses the same direction icons in the hero and saved row',()=>{
+ const training={...items[0],description:'Words · Direct · New',summary:'Dutch · Words · Direct · New',directionLabel:'Direct',directionModes:['word-to-definition' as const]};
+ setup({status:'ready',trainings:[training],mainId:training.id});
+ expect(document.querySelectorAll('svg.lucide-arrow-right')).toHaveLength(2);
+ expect(screen.getByLabelText('Words · Direct · New')).toBeInTheDocument();
+ expect(screen.getByLabelText('Dutch · Words · Direct · New')).toBeInTheDocument();
+});
+
+test.each([['spoken','Spoken','message-circle'],['written','Written','file-text']] as const)('frequency icon is shown with its range and accessible profile: %s',(frequencyProfile,frequencyLabel,icon)=>{
+ const text=`Words · ${frequencyLabel} Top 100`;
+ const training={...items[0],description:text,summary:`Dutch · ${text}`,frequencyProfile,frequencyLabel};
+ setup({status:'ready',trainings:[training],mainId:training.id});
+ expect(document.querySelectorAll(`svg.lucide-${icon}`)).toHaveLength(2);
+ expect(screen.getByLabelText(text)).toBeInTheDocument();
+ expect(screen.getByLabelText(`Dutch · ${text}`)).toBeInTheDocument();
+});
+
+test('meaning and session limits use distinct icons and retain their labels',()=>{
+ const text='Words · First 4 meanings · Up to 10';
+ const training={...items[0],description:text,summary:`Dutch · ${text}`,meaningLabel:'First 4 meanings',meaningLimit:4,sessionLimitLabel:'Up to 10',sessionLimitValue:10};
+ setup({status:'ready',trainings:[training],mainId:training.id});
+ expect(document.querySelectorAll('svg.lucide-list-ordered')).toHaveLength(2);
+ expect(document.querySelectorAll('svg.lucide-layers-2')).toHaveLength(2);
+ expect(screen.getByLabelText(text)).toBeInTheDocument();
+});
+
+test('overview shows the new-to-review ratio with the session icons',()=>{
+ const training={...items[0],description:'Words · New + reviews',summary:'Dutch · Words · New + reviews',mixSelectionLabel:'New + reviews',mixAccessibleLabel:'1 new : 3 reviews',mixFilter:'both' as const,mixRatio:3,accessibleDescription:'Words · 1 new : 3 reviews'};
+ setup({status:'ready',trainings:[training],mainId:training.id});
+ expect(document.querySelectorAll('svg.lucide-scale')).toHaveLength(2);
+ expect(document.querySelector('svg.lucide-scale')?.parentElement).toHaveTextContent('1 : 3');
+ expect(screen.getByLabelText('Words · 1 new : 3 reviews')).toBeInTheDocument();
+});
+
+test.each([['dictionary','Dictionary','book-open'],['collection','Collection','layers'],['shared','Shared','share-2']] as const)('shows %s icon beside the language',(sourceKind,sourceLabel,icon)=>{
+ const training={...items[0],sourceKind,sourceLabel,summary:'Dutch · Words',accessibleSummary:`Dutch · ${sourceLabel} · Words`};
+ setup({status:'ready',trainings:[training],mainId:training.id});
+ expect(screen.getByRole('img',{name:sourceLabel}).querySelector(`svg.lucide-${icon}`)).not.toBeNull();
+ expect(document.querySelectorAll(`svg.lucide-${icon}`)).toHaveLength(2);
+ expect(screen.getByLabelText(`Dutch · ${sourceLabel} · Words`)).toBeInTheDocument();
+});

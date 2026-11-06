@@ -60,3 +60,5 @@
 .menuDescription{display:block;margin-top:4px;color:var(--practice-text-muted);font-size:var(--practice-text-label);line-height:1.5}
 
 .menuNotice{margin:0;padding:8px 12px;font-size:var(--practice-text-caption);line-height:1.5;color:var(--practice-text-muted)}
+
+.menuTrailing{margin-inline-start:auto;display:flex;align-items:center;flex-shrink:0}

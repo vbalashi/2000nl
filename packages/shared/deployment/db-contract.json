@@ -69,6 +69,16 @@
       "sha256": "6cb3a2ea9a2cd6194fbae5145a543ec99745720339e5cefd24c556e2f2d10914"
     },
     {
+      "migrationId": 300,
+      "file": "db/migrations/300_training_availability_totals.sql",
+      "sha256": "247f56451c796aaa0a7760c1557bb2ccd7df4b3c912ef3c773467cb43b7345bd"
+    },
+    {
+      "migrationId": 301,
+      "file": "db/migrations/301_vocabulary_meaning_limits.sql",
+      "sha256": "fa935b73bc33f1333a5708dfa2764f6a05896a8206649a5f38d57b93a7875e7b"
+    },
+    {
       "migrationId": 302,
       "file": "db/migrations/302_new_learner_starter_training.sql",
       "sha256": "9322e7104166b8082cc319b4953a056dc055585e09943f5c7dd862abd98ed8c5"
@@ -77,6 +87,6 @@
   "postflightProbe": "db/deploy-contract/postflight-302.sql",
   "readOnlyPostflightProbe": {
     "file": "db/deploy-contract/read-only-postflight-302.sql",
-    "sha256": "b77e83c60637a747e0b6aafecf45fd6f87c6411e0740d945c4bf1e8badabb3c8"
+    "sha256": "6c8b163f2853ec735dfb7113a9c499ec38cf3bc890936b769378a3ddb80c7118"
   }
 }

@@ -66,6 +66,18 @@
     "reason": "Illustrative learning-language sentences and headwords, selected by dictionary/translation language rather than interface locale."
   },
   {
+    "file": "components/practice/vocabulary/PartOfSpeechSelection.tsx",
+    "rule": "property",
+    "text": "de",
+    "reason": "Dutch article names identify grammatical forms and are not interface translations."
+  },
+  {
+    "file": "components/practice/vocabulary/PartOfSpeechSelection.tsx",
+    "rule": "property",
+    "text": "het",
+    "reason": "Dutch article names identify grammatical forms and are not interface translations."
+  },
+  {
     "file": "components/practice/ui/NounArticleChoices.tsx",
     "rule": "expression",
     "text": "de",
