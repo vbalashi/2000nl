@@ -2,7 +2,6 @@
 import { localizedSection } from "@/lib/i18n/catalog";
 import { formatUiCount } from "@/lib/uiMessages";
 import React, { useId, useState } from "react";
-import { FrequencyRangeWheels } from "./FrequencyRangeWheels";
 import { RangeEditor } from "./RangeEditor";
 import { Pencil } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -35,9 +34,8 @@ export function VocabularySelectionFields({ value, onChange, language, section="
       <div className={controls.rangeGroup}>
         <div className={controls.labelRow}>
           <div className={s.heading}><span className={controls.label}>{t.range}</span><SettingsHelp label={t.range} text={t.rangeHelp}/></div>
-          <IconAction className={`${controls.selection} ${s.rangeValue}`} label={`${t.edit}: ${rangeLabel}`} onClick={()=>setRangeEdit({from:String(value.from),to:String(value.to)})}><Pencil size={15} aria-hidden="true"/></IconAction>
+          <IconAction className={`${controls.selection} ${s.rangeValue}`} label={`${t.edit}: ${rangeLabel}`} onClick={()=>setRangeEdit({from:String(value.from),to:String(value.to)})}>{rangeLabel} <Pencil size={15} aria-hidden="true"/></IconAction>
         </div>
-        <FrequencyRangeWheels from={value.from} to={value.to} language={language} onChange={(from,to)=>update({from,to})}/>
       </div>
     </div>}
     </>}

@@ -170,3 +170,23 @@ test("dictionary-only count previews normalize empty filters before their single
  expect(c.service.supabase.rpc).toHaveBeenCalledWith('lookup_platform_v2_library_filtered_entries',expect.objectContaining({p_dictionary_ids:[],p_filters:{parts:[],article:null},p_group_limit:1}));
  expect(c.service.supabase.rpc).toHaveBeenCalledTimes(1);
 });
+
+test('exact selected meaning total survives count-only projection and absent field stays absent',async()=>{
+ const c=context();
+ for(const totalMeanings of [undefined,115]){
+  vi.mocked(c.service.supabase.rpc).mockResolvedValue({data:{items:[],page:{totalGroups:73,...(totalMeanings!==undefined?{totalMeanings}:{}),selectedTierComplete:true,nextGroupCursor:null}},error:null} as never);
+  const result=await performPlatformV2Lookup({...c,libraryCountOnly:true},request,{dictionaryIds:null});
+  expect(result.status).toBe(200);
+  const summary=(result.payload as any).librarySearch;
+  expect(summary).toEqual({totalGroups:73,matchingEntryIds:[],...(totalMeanings!==undefined?{totalMeanings}:{})});
+ }
+});
+test.each([null,-1,1.5,'115',72])('invalid provided database meaning total %s fails closed',async totalMeanings=>{
+ const c=context();vi.mocked(c.service.supabase.rpc).mockResolvedValue({data:{items:[],page:{totalGroups:73,totalMeanings}},error:null} as never);
+ expect((await performPlatformV2Lookup({...c,libraryCountOnly:true},request,{dictionaryIds:null})).status).toBe(409);
+});
+
+test.each([[0,0,200],[0,1,409],[1,0,409]])('meaning totals enforce zero and article consistency %d/%d',async(totalGroups,totalMeanings,status)=>{
+ const c=context();vi.mocked(c.service.supabase.rpc).mockResolvedValue({data:{items:[],page:{totalGroups,totalMeanings}},error:null} as never);
+ expect((await performPlatformV2Lookup({...c,libraryCountOnly:true},request,{dictionaryIds:null})).status).toBe(status);
+});

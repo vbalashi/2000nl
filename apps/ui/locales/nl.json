@@ -262,7 +262,20 @@
       "more": "Nog {count}",
       "loadingMore": "Laden…",
       "moreError": "Meer resultaten laden is mislukt.",
-      "foundCount": "Gevonden: {count}"
+      "foundCount": "Gevonden: {count}",
+      "articleCountZero": "{count} artikelen",
+      "articleCountOne": "{count} artikel",
+      "articleCountTwo": "{count} artikelen",
+      "articleCountFew": "{count} artikelen",
+      "articleCountMany": "{count} artikelen",
+      "articleCountOther": "{count} artikelen",
+      "meaningCountZero": "{count} betekenissen",
+      "meaningCountOne": "{count} betekenis",
+      "meaningCountTwo": "{count} betekenissen",
+      "meaningCountFew": "{count} betekenissen",
+      "meaningCountMany": "{count} betekenissen",
+      "meaningCountOther": "{count} betekenissen",
+      "articleMeaningCount": "{articles} · {meanings}"
     },
     "activeTrainingCard": {
       "title": "Nu aan het oefenen",
@@ -1825,9 +1838,9 @@
       "cancel": "Annuleren",
       "apply": "Gereed",
       "invalid": "Begin bij 1 of hoger. Het einde mag niet lager zijn dan het begin.",
-      "selectionHelp": "Kies alle woorden, of woorden die vaker voorkomen in gesprekken of teksten. De frequentiekeuze bevat alleen woorden waarvoor deze gegevens beschikbaar zijn.",
+      "selectionHelp": "Kies alle woorden, of kies een bereik uit een lijst van meest naar minst voorkomende woorden. De frequentiekeuze bevat alleen woorden waarvoor deze gegevens beschikbaar zijn.",
       "speechHelp": "Gesproken taal gebruikt gesprekken uit CGN. Geschreven taal gebruikt teksten uit SoNaR500. Een woord kan in gesprekken vaker voorkomen dan in teksten.",
-      "rangeHelp": "Een lager getal betekent een vaker gebruikt woord. Bijvoorbeeld: 1–100 kiest de honderd meest voorkomende woorden. We tonen de woorden uit je woordenboek die bij je andere instellingen passen. Dat kunnen er minder zijn. Veeg over de getallen omhoog of omlaag. De stap bepaalt hoeveel het getal verandert. Gebruik het potlood voor een precies bereik.",
+      "rangeHelp": "Een lager getal betekent een vaker gebruikt woord. Bijvoorbeeld: 1–100 kiest de honderd meest voorkomende woorden. We tonen de woorden uit je woordenboek die bij je andere instellingen passen. Dat kunnen er minder zijn. Gebruik het potlood om het bereik te wijzigen.",
       "meaningHelp": [
         "Een woord kan verschillende betekenissen hebben. Denk bij lopen aan naar huis lopen, een motor die loopt of een evenement dat goed loopt.",
         "De betekenissen staan op volgorde in het woordenboek. Kies de eerste, de eerste twee of drie, of alle betekenissen. Zijn er minder, dan nemen we wat er is. Elk apart artikel heeft een eigen limiet.",

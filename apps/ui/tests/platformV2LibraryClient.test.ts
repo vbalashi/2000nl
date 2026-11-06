@@ -579,3 +579,16 @@ test("dictionary-only count scope accepts the authoritative count without articl
  expect(await countPlatformV2LibraryGroups({query:'',cardTypeId:'word-to-definition',contentLanguageCode:'nl',translationTargetLanguageCode:null,libraryScope:{dictionaryIds:[]}})).toBe(200);
  expect(fetchMock).toHaveBeenCalledTimes(1);
 });
+
+test.each(['all',1,2,3] as const)('count summary carries selected meanings for limit %s without extra reads',async meanings=>{
+ const totalMeanings=meanings==='all'?191:meanings===1?73:115;
+ const fetchMock=vi.fn().mockResolvedValue(new Response(JSON.stringify({...payload,groups:[],librarySearch:{totalGroups:73,totalMeanings,matchingEntryIds:[]}}),{status:200}));
+ vi.stubGlobal('fetch',fetchMock);
+ const {readPlatformV2LibraryCounts}=await import('@/lib/platform/platformV2LibraryClient');
+ expect(await readPlatformV2LibraryCounts({query:'',cardTypeId:'word-to-definition',contentLanguageCode:'nl',translationTargetLanguageCode:null,libraryScope:{dictionaryIds:[],filters:{parts:[],article:null,vocabulary:{mode:'frequency',profile:'spoken',from:1,to:100,meanings,materialKinds:[]}}}})).toEqual({totalGroups:73,totalMeanings});
+ expect(fetchMock).toHaveBeenCalledTimes(1);
+});
+test.each([-1,null,'115',1.5])('malformed provided meaning total %s fails closed',async totalMeanings=>{
+ vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(JSON.stringify({...payload,groups:[],librarySearch:{totalGroups:73,totalMeanings,matchingEntryIds:[]}}),{status:200})));
+ await expect(countPlatformV2LibraryGroups({query:'',cardTypeId:'word-to-definition',contentLanguageCode:'nl',translationTargetLanguageCode:null,libraryScope:{dictionaryIds:[],filters:{parts:[],article:null}}})).rejects.toThrow();
+});

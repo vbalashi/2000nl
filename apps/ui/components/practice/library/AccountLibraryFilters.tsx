@@ -7,12 +7,13 @@ import React, { useEffect, useState } from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { getUiMessages, formatUiMessage } from "@/lib/uiMessages";
 import type { LibraryEntryFilters } from "@/lib/platform/librarySearchScope";
-import { countDictionaryCategory, readDictionaryCategory, type DictionarySearchCategory } from "@/lib/platform/dictionaryCategorySearch";
-import { countPlatformV2LibraryGroups } from "@/lib/platform/platformV2LibraryClient";
+import { readDictionaryCategoryCounts, readDictionaryCategory, type DictionarySearchCategory } from "@/lib/platform/dictionaryCategorySearch";
+import { readPlatformV2LibraryCounts } from "@/lib/platform/platformV2LibraryClient";
 import { useAccountMaterial } from "../material/AccountMaterialProvider";
 import { useLibraryMaterialSelection } from "../material/useLibraryMaterialSelection";
 import { LibraryFilters, type LibraryFilterDraft } from "./LibraryFilters";
 import type { WordListSummary } from "@/lib/types";
+import {formatLibraryCounts} from "@/lib/platform/libraryCountLabel";
 import f from "./libraryFilters.module.css";
 import { usePersonalLabels } from "@/components/library/organization/usePersonalLabels";
 import { labelRows } from "@/lib/collections/labels/catalog";
@@ -22,6 +23,7 @@ type Preview = {
   key: string;
   status: "loading" | "ready" | "error";
   total?: number;
+  meanings?: number;
   hasMore?: boolean;
 };
 type PreviewScope = {
@@ -98,12 +100,13 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
             material:request.labelId ? {kind:"label" as const,id:request.labelId} : request.collectionId && request.collectionType
               ? {kind:"collection" as const,id:request.collectionId,collectionType:request.collectionType} : undefined};
           if (request.category === "headwords" || request.category === "alphabetical") {
-            return {total:await countDictionaryCategory(searchScope,request.category),hasMore:false};
+            const counts=await readDictionaryCategoryCounts(searchScope,request.category);
+            return {total:counts.totalGroups,meanings:counts.totalMeanings,hasMore:false};
           }
           const page = await readDictionaryCategory(searchScope,request.category,()=>{});
-          return {total:page.items.length,hasMore:page.page.hasMore};
+          return {total:page.items.length,meanings:undefined,hasMore:page.page.hasMore};
         }
-        const total = await countPlatformV2LibraryGroups({
+        const counts = await readPlatformV2LibraryCounts({
         query: request.query,
         cardTypeId: "word-to-definition",
         contentLanguageCode: request.languageCode,
@@ -117,9 +120,9 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
           filters: request.filters,
         },
         });
-        return {total,hasMore:false};
-      })().then(({total,hasMore}) => {
-        if (!controller.signal.aborted) setPreview({key,status:"ready",total,hasMore});
+        return {total:counts.totalGroups,meanings:counts.totalMeanings,hasMore:false};
+      })().then(({total,meanings,hasMore}) => {
+        if (!controller.signal.aborted) setPreview({key,status:"ready",total,meanings,hasMore});
       }).catch(() => {
         if (!controller.signal.aborted) setPreview({ key, status: "error" });
       });
@@ -149,7 +152,9 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
       countContent = material.currentLanguageAllowed ? copy.noSources : copy.noLanguages;
     }
   } else if (status === "ready") {
-    countContent = formatUiMessage(getUiMessages(locale).librarySearch.foundCount,{count:new Intl.NumberFormat(locale).format(preview.total!) + (preview.hasMore ? "+" : "")});
+    countContent = category && category !== "headwords" && category !== "alphabetical"
+      ? formatUiMessage(getUiMessages(locale).librarySearch.foundCount,{count:new Intl.NumberFormat(locale).format(preview.total!) + (preview.hasMore ? "+" : "")})
+      : formatLibraryCounts(locale,preview.total!,preview.meanings);
   } else if (status === "error") {
     countContent = <>
       {copy.searchError}{" "}
