@@ -83,7 +83,8 @@ function TourOverlay(){
   const desired=step?.id==='done'?{x:viewport.left+(viewport.width-rect.width)/2,y:viewport.top+(viewport.height-rect.height)/2}:{x:rect.x,y:rect.y};
   const layout={width:document.documentElement.clientWidth,height:document.documentElement.clientHeight};
   const reference=state.elements.reference.getBoundingClientRect();
-  const bounded=step?.next!=='continue'&&step?.id!=='done'
+  const interactive=state.elements.reference instanceof HTMLElement&&(state.elements.reference.matches('button,input,a,[role=button]')||Boolean(state.elements.reference.querySelector('button,input,a,[role=button]')));
+  const bounded=(step?.next!=='continue'||interactive)&&step?.id!=='done'
    ?actionTooltipBounds(viewport,layout,safe,rect,desired,reference)
    :{...tooltipBounds(viewport,layout,safe,rect,desired),maxHeight:Math.min(viewport.top+viewport.height,layout.height-safe.bottom)-Math.max(viewport.top,safe.top)-24};
   if(tooltip){

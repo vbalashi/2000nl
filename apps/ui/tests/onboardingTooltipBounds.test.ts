@@ -29,3 +29,10 @@ test('a changed preferred position cannot move the guide back onto the action',(
  const result=actionTooltipBounds({left:0,top:0,width:393,height:852},layout,safe,{width:340,height:346},{x:27,y:375},{top:390,bottom:440});
  expect(result.y).toBe(460);
 });
+
+test('a control group may use a short scrollable slot without reverting to an overlay',()=>{
+ const device={width:320,height:568};
+ const result=actionTooltipBounds({left:0,top:0,...device},device,safe,{width:296,height:450},{x:12,y:434},{top:154,bottom:414});
+ expect(result.y).toBe(434);
+ expect(result.maxHeight).toBe(88);
+});

@@ -26,8 +26,8 @@ export function actionTooltipBounds(
   :position.y>=target.bottom+gap&&size.height<=below?'below'
   :above>below?'above':'below';
  const maxHeight=side==='above'?above:below;
- // Large region targets (e.g. the whole answer panel) have no external slot.
- if(maxHeight<100)return {...tooltipBounds(viewport,layout,safe,size,position),maxHeight:bottom-top};
+ // Below the 44px padding/border box, a full-panel target has no usable external slot.
+ if(maxHeight<44)return {...tooltipBounds(viewport,layout,safe,size,position),maxHeight:bottom-top};
  const height=Math.min(size.height,maxHeight);
  return {...tooltipBounds(viewport,layout,safe,{...size,height},{x:position.x,y:side==='above'?target.top-gap-height:target.bottom+gap}),maxHeight};
 }
