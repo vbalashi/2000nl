@@ -42,10 +42,16 @@ export const catalogLanguages: CatalogLanguage[] = catalog.map((item) => {
     ),
   };
 });
-export function searchCatalogLanguages(query: string) {
+const runtimeNames = new Map<string, string[]>();
+export function searchCatalogLanguages(query: string, locale?: OnboardingLanguage) {
   const term = normalizeLanguageSearch(query.trim());
+  let translated:string[]|undefined;
+  if(locale&&!localized.includes(locale)) {
+    translated=runtimeNames.get(locale);
+    if(!translated){translated=catalogLanguages.map(item=>normalizeLanguageSearch(languageDisplayName(locale,item.code,"")));runtimeNames.set(locale,translated);}
+  }
   return catalogLanguages
-    .filter((item) => item.search.includes(term))
+    .filter((item,index) => item.search.includes(term)||translated?.[index].includes(term))
     .sort(
       (a, b) => Number(b.codes.includes(term)) - Number(a.codes.includes(term)),
     );

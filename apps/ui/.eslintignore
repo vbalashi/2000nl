@@ -1,0 +1,2 @@
+# This declaration is checked by TypeScript; the current ESLint parser treats .mts as JavaScript.
+lib/i18n/snapshot-contract.d.mts

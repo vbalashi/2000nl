@@ -1,4 +1,5 @@
 "use client";
+import {InterfaceCatalogBoundary} from "@/components/system/InterfaceCatalogBoundary";
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,7 +9,7 @@ import { useInterfaceLanguage } from "@/lib/i18n/useInterfaceLanguage";
 import { localizedSection, type MessageCatalog } from "@/lib/i18n/catalog";
 
 type MessageKey = keyof MessageCatalog["features"]["authPages"];
-export default function ResetPasswordPage() {
+function ResetPasswordPageContent() {
   const language = useInterfaceLanguage();
   const copy = localizedSection("authPages")[language];
   const router = useRouter();
@@ -133,3 +134,5 @@ export default function ResetPasswordPage() {
     </div>
   );
 }
+
+export default function ResetPasswordPage() {return <InterfaceCatalogBoundary><ResetPasswordPageContent /></InterfaceCatalogBoundary>;}
