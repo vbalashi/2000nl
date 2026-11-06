@@ -86,3 +86,12 @@ deferred: changing candidate selection alone would produce cards that cannot be
 graded. No Known mark is cleared by choosing All, and no second schedule is created.
 The contextual help states this limit explicitly. Idioms already have their own
 exercise state and can use Known parent meanings.
+
+## Shared filter presentation
+
+Library and the training builder render `VocabularyFilters` and `VocabularyFilterSummary`.
+This shared block owns compact Spoken/Written choices, Top100/200/300/500/1000,
+exact range editing, entry type, POS/article selection and1–5/all meaning limits.
+Library keeps draft/Apply/Cancel and its independent sorting; training keeps session
+controls. The cross-surface regression exercises the actual two adapters and requires
+the same accessible choices and equivalent committed content criteria.

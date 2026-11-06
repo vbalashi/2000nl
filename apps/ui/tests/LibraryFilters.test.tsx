@@ -1,16 +1,22 @@
 import React from "react";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render as renderView, screen, within } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
 import { LibraryPresentationContext } from "@/components/practice/library/LibraryPresentationContext";
 import { LibraryFilters, type LibraryFilterDraft } from "@/components/practice/library/LibraryFilters";
+function render(element:React.ReactElement){
+ const result=renderView(element);
+ const parts=screen.queryByRole("button",{name:/^Part of speech/});
+ if(parts?.getAttribute("aria-expanded")==="false")fireEvent.click(parts);
+ return result;
+}
 const value:LibraryFilterDraft={languageCode:"nl",dictionaryId:null,parts:[],article:null};
 const props={value,locale:"en" as const,languageOptions:[{id:"nl",label:"Dutch"},{id:"en",label:"English"}],sourceOptions:[{id:"source",label:"Real source"}],countContent:"3 matching articles"};
 test("chips keep draft edits private; noun chevron opens a single nearby article picker",()=>{
  const apply=vi.fn(),close=vi.fn();render(<LibraryFilters {...props} onClose={close} onApply={apply}/>);
  fireEvent.click(screen.getByRole("button",{name:"Nouns"}));expect(screen.getByRole("button",{name:"Nouns"})).toHaveAttribute("aria-pressed","true");expect(apply).not.toHaveBeenCalled();
  fireEvent.click(screen.getByRole("button",{name:"Noun subfilters"}));
- const pop=screen.getByRole("dialog",{name:"Noun article"});fireEvent.click(within(pop).getByRole("button",{name:"het"}));
- fireEvent.click(within(pop).getByRole("button",{name:"Close noun subfilters"}));
+ const pop=screen.getByRole("menu",{name:"Noun article"});fireEvent.click(within(pop).getByRole("menuitem",{name:"het"}));
+ expect(pop).not.toBeInTheDocument();
  fireEvent.click(screen.getByRole("button",{name:"Show results"}));expect(apply).toHaveBeenCalledWith({...value,parts:["noun"],article:"het"});
 });
 test("language/source navigation uses real IDs and Cancel never applies changes",()=>{
@@ -81,6 +87,7 @@ test("opening organization suspends the filter dialog without applying or losing
  expect(apply).not.toHaveBeenCalled();
  rerender(view(false));
  expect(screen.getByRole("dialog",{name:"Library filters"})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:/^Part of speech/}));
  expect(screen.getByRole("button",{name:"Nouns"})).toHaveAttribute("aria-pressed","true");
  expect(screen.getByRole("button",{name:"Organize collections"})).toBeInTheDocument();
  expect(close).not.toHaveBeenCalled();
@@ -133,7 +140,7 @@ test("Phrases hides POS, count and Apply omit hidden restrictions, Words restore
 });
 test("selection, type, POS and meanings follow the common order",()=>{
  render(<LibraryFilters {...props} onClose={()=>{}} onApply={()=>{}}/>);
- const words=screen.getByRole("button",{name:/^Choose words/}),type=screen.getByRole("button",{name:/^Entry type/}),parts=screen.getByRole("button",{name:/^Part of speech/}),meanings=screen.getByRole("slider",{name:"Meanings per entry"});
+ const words=screen.getByRole("group",{name:"Choose words"}),type=screen.getByRole("group",{name:"Entry type"}),parts=screen.getByRole("button",{name:/^Part of speech/}),meanings=screen.getByRole("group",{name:"Meanings per entry"});
  expect(words.compareDocumentPosition(type)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();expect(type.compareDocumentPosition(parts)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();expect(parts.compareDocumentPosition(meanings)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
 
