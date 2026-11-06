@@ -6,7 +6,7 @@ import type {TrainingSetupDraft} from '@/lib/training/setups/types';
 import type {TrainingSessionSize} from '@/lib/types';
 import {exerciseSummary} from '@/lib/training/exerciseSummary';
 afterEach(cleanup);
-function Fixture({large=false,disabled=false}:{large?:boolean;disabled?:boolean}){const[draft,setDraft]=useState<TrainingSetupDraft & {sessionSize:TrainingSessionSize}>({family:'meaning',scenarioId:'understanding',modes:['word-to-definition'],cardFilter:'review',newReviewRatio:2,listValue:'all',materialMode:'all-dictionaries',dateWindow:'all',sourceValue:'all',sessionSize:5});return <><TrainingSourcePicker locale="en" disabled={disabled} draft={draft} onChange={setDraft} lists={[{value:'collection',label:'My words'}]} dictionaries={Array.from({length:large?12:2},(_,i)=>({value:'d'+i,label:'Dictionary '+i}))}/><output data-testid="draft">{JSON.stringify(draft)}</output></>}
+function Fixture({large=false,disabled=false}:{large?:boolean;disabled?:boolean}){const[draft,setDraft]=useState<TrainingSetupDraft & {sessionSize:TrainingSessionSize}>({family:'meaning',scenarioId:'understanding',modes:['word-to-definition'],cardFilter:'review',newReviewRatio:2,listValue:'all',materialMode:'all-dictionaries',dateWindow:'all',sourceValue:'all',sessionSize:5});return <><TrainingSourcePicker locale="en" disabled={disabled} draft={draft} onChange={setDraft} lists={[{value:'collection',label:'My words',ownership:'owned'},{value:'received',label:'Shared words',ownership:'received'}]} dictionaries={Array.from({length:large?12:2},(_,i)=>({value:'d'+i,label:'Dictionary '+i}))}/><output data-testid="draft">{JSON.stringify(draft)}</output></>}
 test('dictionary multi-selection and exclusive collection keep actual draft semantics',()=>{render(<Fixture/>);expect(screen.getByRole('button',{name:'Search sources'})).toBeInTheDocument();fireEvent.click(screen.getByRole('button',{name:/Dictionary 0/}));fireEvent.click(screen.getByRole('button',{name:/Dictionary 1/}));let d=JSON.parse(screen.getByTestId('draft').textContent!);expect(d.dictionaryIds).toEqual(['d0','d1']);fireEvent.click(screen.getByRole('button',{name:/My words/}));d=JSON.parse(screen.getByTestId('draft').textContent!);expect(d.materialMode).toBe('collection');expect(d.listValue).toBe('collection');fireEvent.click(screen.getByRole('button',{name:/Dictionary 1/}));d=JSON.parse(screen.getByTestId('draft').textContent!);expect(d.materialMode).toBe('selected-dictionaries');expect(d.dictionaryIds).toEqual(['d1']);});
 test('type filters work without search and preserve selected identity across hidden choices',()=>{
  render(<Fixture/>);
@@ -50,3 +50,15 @@ test('search reveals only its field; Escape resets query, retains type and resto
 });
 test('pending language prevents draft changes',()=>{render(<Fixture disabled/>);expect(screen.getByRole('button',{name:/My words/})).toBeDisabled();});
 test('summary policy omits fixed Translation direction and default answer mode',()=>{expect(exerciseSummary('word-in-context','Translation','Example translation → word')).toBe('Translation');expect(exerciseSummary('idiom','Idioms','Direct + Reverse')).toBe('Idioms · Direct + Reverse');});
+
+test('shared and personal collection filters distinguish ownership',()=>{
+ render(<Fixture/>);
+ fireEvent.click(screen.getByRole('button',{name:'Collections'}));
+ expect(screen.getByRole('button',{name:'My words'})).toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:'Shared words'})).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'Shared'}));
+ expect(screen.getByRole('button',{name:'Shared words'})).toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:'My words'})).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'Shared words'}));
+ expect(JSON.parse(screen.getByTestId('draft').textContent!).listValue).toBe('received');
+});

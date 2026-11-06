@@ -1,49 +1,7 @@
-.strip {
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto;
-  align-items:center;
-  gap:8px;
-  width:100%;
-  max-width:720px;
-  margin:0 auto 12px;
-  padding:12px 18px;
-  box-sizing:border-box;
-  background:linear-gradient(120deg,var(--practice-hero),var(--practice-hero-end));
-  border:1px solid var(--practice-border);
-  border-radius:20px;
-}
-.help { display:flex; align-items:center; }
-.strip dl > div { gap:4px; }
-.strip dl dd { font-size:var(--practice-overview-count-size-short); }
-.strip p { grid-column:1/-1; margin-top:4px; }
-@media(max-width:430px) {
-  .strip { padding:10px 14px; }
-}
+.strip{width:100%;max-width:720px;margin:0 auto 12px;padding:4px 2px;box-sizing:border-box;color:var(--practice-text-muted);font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui)}
+.summarySpace{display:grid;min-block-size:3.2em}.summary,.status,.error{grid-area:1/1;align-self:start}.summary{margin:0;line-height:1.6;overflow-wrap:anywhere}.hidden{visibility:hidden}
+.summary strong{font-weight:600;color:var(--practice-text-secondary);font-variant-numeric:tabular-nums}
+.status,.error{margin:0;min-height:1.5em}
+.retry{border:0;background:transparent;color:var(--practice-selected-text);font:inherit;text-decoration:underline;cursor:pointer}
 
-.strip .status {
-  position:absolute;
-  width:1px;
-  height:1px;
-  padding:0;
-  margin:-1px;
-  overflow:hidden;
-  clip-path:inset(50%);
-  white-space:nowrap;
-}
-.strip[data-updating="true"] {
-  background-image:linear-gradient(110deg,
-    var(--practice-hero) 20%,
-    color-mix(in srgb, var(--practice-accent) 30%, var(--practice-hero)) 46%,
-    var(--practice-hero-end) 70%);
-  background-size:350% 100%;
-  animation:availability-flow 2.8s ease-in-out infinite;
-}
-.strip[data-updating="true"] dl,
-.strip[data-updating="true"] .help { visibility:hidden; }
-@keyframes availability-flow {
-  0%,100% { background-position:100% 50%; }
-  45%,55% { background-position:0% 50%; }
-}
-@media(prefers-reduced-motion:reduce) {
-  .strip[data-updating="true"] { animation:none; }
-}
+@media(max-width:360px){.summarySpace{min-block-size:4.8em}}

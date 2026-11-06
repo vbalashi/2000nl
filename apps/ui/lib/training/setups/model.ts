@@ -9,7 +9,7 @@ export type TrainingSetupsDocument = {
   trainings: SavedTraining[];
   mainTrainingId: string | null;
 };
-export type TrainingSetupsSnapshot = { revision: number; document: TrainingSetupsDocument };
+export type TrainingSetupsSnapshot = { revision: number; document: TrainingSetupsDocument; starterStatus?: "pending" | "complete" | "superseded" | "not_applicable" };
 export const MAX_SAVED_TRAININGS = 100;
 export const MAX_TRAINING_SETUPS_BYTES = 200_000;
 export const emptyTrainingSetups = (): TrainingSetupsSnapshot => ({
@@ -92,5 +92,6 @@ export function parseTrainingSetupsDocument(value: unknown): TrainingSetupsDocum
 export function parseTrainingSetupsSnapshot(value: unknown): TrainingSetupsSnapshot | null {
   if (!record(value) || typeof value.revision !== "number" || !Number.isSafeInteger(value.revision) || value.revision < 0) return null;
   const document = parseTrainingSetupsDocument(value.document);
-  return document ? { revision: value.revision, document } : null;
+  if (value.starterStatus !== undefined && !["pending", "complete", "superseded", "not_applicable"].includes(String(value.starterStatus))) return null;
+  return document ? { revision: value.revision, document, ...(value.starterStatus !== undefined ? {starterStatus:value.starterStatus as NonNullable<TrainingSetupsSnapshot["starterStatus"]>} : {}) } : null;
 }

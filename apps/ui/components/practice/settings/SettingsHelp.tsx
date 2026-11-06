@@ -8,7 +8,11 @@ export function SettingsHelp({label,text,hover=false}:{label:string;text:string|
  const trigger=useRef<HTMLButtonElement>(null),popup=useRef<HTMLDivElement>(null);
  const [open,setOpen]=useState(false);
  const cancelClose=()=>clearTimeout(timer.current);
- useEffect(()=>()=>clearTimeout(timer.current),[]);
+ useEffect(()=>{
+  const closeOnResize=()=>{clearTimeout(timer.current);popup.current?.hidePopover?.();setOpen(false);};
+  window.addEventListener("resize",closeOnResize);
+  return()=>{clearTimeout(timer.current);window.removeEventListener("resize",closeOnResize);};
+ },[]);
  const hide=()=>{cancelClose();popup.current?.hidePopover?.();setOpen(false);};
  const show=()=>{
   cancelClose();const box=trigger.current?.getBoundingClientRect(),panel=popup.current;

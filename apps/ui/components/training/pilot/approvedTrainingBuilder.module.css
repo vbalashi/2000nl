@@ -137,7 +137,7 @@
   font-family: var(--practice-font-ui);
   font-size: var(--practice-text-caption);
 }
-.directionHeading > span {
+.directionHeading > span:last-child {
   width: 16px;
   height: 16px;
   border: 1px solid var(--practice-control-border);
@@ -384,7 +384,6 @@
 
 .name{display:flex;align-items:center;gap:10px;min-height:44px;margin-bottom:24px}.name h2,.name input{font:var(--practice-training-name-weight) var(--practice-training-name-size)/var(--practice-training-name-line) var(--practice-font-reading);letter-spacing:var(--practice-training-name-spacing);margin:0}.name h2{overflow-wrap:anywhere}.name button{border:0;background:transparent;color:var(--practice-text-muted);width:28px;height:28px}.name input{max-width:100%;width:100%;box-sizing:border-box;border:0;border-bottom:1px solid var(--practice-border);background:transparent;color:var(--practice-text)}
 .section_group{border:1px solid color-mix(in srgb,var(--practice-text) 18%,transparent);border-radius:12px;overflow:hidden}.inline_language{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 18px;min-height:28px}.inline_language h2{width:140px;margin:0;font:500 var(--practice-text-body) var(--practice-font-ui)}
-.session_note{grid-column:1/-1;display:flex;align-items:flex-start;gap:7px;margin:0;font:400 var(--practice-text-label)/1.5 var(--practice-font-ui);color:color-mix(in srgb,var(--practice-text) 58%,var(--practice-canvas))}.session_note svg{flex:none;margin-top:2px}
 @media(max-width:650px){.header>button{position:static;margin-right:8px}.name h2,.name input{font-size:var(--practice-training-name-size)}.inline_language{padding:12px;gap:12px}.inline_language h2{width:90px}.footer>div:has(.saveMenu){display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px}.delete{grid-column:1;grid-row:1;width:34px;height:44px;margin:0;justify-content:center}.delete>span{display:none}.updateGroup{grid-column:2;grid-row:1;width:100%;min-width:0}.footer>div>.primary{grid-column:1/-1;grid-row:2;width:100%;min-width:0}}
 @media(max-height:650px){.name h2,.name input{font-size:var(--practice-training-name-size)}}
 
@@ -436,3 +435,31 @@
   .inline_language h2 { font-size:var(--practice-text-body); }
 }
 @media(max-width:430px) { .section_group { --builder-title-width:108px; } }
+
+.partsHeading{display:grid;grid-template-columns:minmax(110px,1fr) minmax(0,1fr) 17px;align-items:center;gap:12px;width:100%;border:0;background:transparent;text-align:left;color:var(--practice-text-secondary);font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui);padding:8px 0;cursor:pointer}.partsHeading>span:nth-child(2){min-width:0;color:var(--practice-text-muted)}.partsChevron,.partsChevronOpen{color:color-mix(in srgb,var(--practice-text) 18%,transparent);transition:transform .44s var(--practice-motion)}.partsChevronOpen{transform:rotate(180deg)}.partsSection>div{margin-top:8px}@media(prefers-reduced-motion:reduce){.partsChevron,.partsChevronOpen{transition:none}}
+
+/* Match the existing builder disclosure timing and respect reduced motion. */
+.partsReveal{display:grid;grid-template-rows:0fr;visibility:hidden;transition:grid-template-rows .44s var(--practice-motion),visibility 0s .44s;min-height:0}.partsRevealOpen{grid-template-rows:1fr;visibility:visible;transition-delay:0s}.partsReveal>div{overflow:hidden;min-height:0}.partsRevealOpen>div{padding-top:8px}.partsSection>.partsReveal{margin-top:0}.sourceWordRow.sourceWordRow{display:flex;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px}.sourceWordRow h2{margin:0}@media(prefers-reduced-motion:reduce){.partsReveal{transition:none}}
+
+/* Filter titles are distinct from the values and share one compact row family. */
+.filterRow.filterRow{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;min-width:0}.filterFields>.filterRow h2,.partsHeading>span:first-child{font-weight:500;color:var(--practice-text-secondary)}
+
+/* Dependent controls appear and leave using the same disclosure motion. */
+.dynamicReveal{display:grid;grid-template-rows:0fr;visibility:hidden;min-height:0;transition:grid-template-rows .44s var(--practice-motion),visibility 0s .44s}
+.dynamicRevealOpen{grid-template-rows:1fr;visibility:visible;transition-delay:0s}
+.dynamicReveal>div{overflow:hidden;min-height:0}
+.sourceWordReveal{padding-block:22px}
+@media(prefers-reduced-motion:reduce){.dynamicReveal{transition:none}}
+/* Collapse the grid spacing together with a hidden dependent filter. */
+.filterFields>.dynamicReveal{margin-bottom:-24px;transition:grid-template-rows .44s var(--practice-motion),margin-bottom .44s var(--practice-motion),visibility 0s .44s}
+.filterFields>.dynamicRevealOpen{margin-bottom:0;transition-delay:0s}
+@media(prefers-reduced-motion:reduce){.filterFields>.dynamicReveal{transition:none}}
+.dynamicReveal:not(.dynamicRevealOpen)+.field{margin-top:22px}
+
+.directionHeadingLabel{display:inline-flex;align-items:center;gap:6px;min-width:0}.directionHeadingLabel svg,.sourceChoice svg{flex:none;color:var(--practice-text-muted)}
+.sourceChoice{display:inline-flex;align-items:center;gap:5px}.exerciseSummary{display:block;min-width:0}.exerciseSummaryVisual{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.exerciseSummaryVisual svg{flex:none;color:var(--practice-text-muted)}
+.visuallyHidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+
+.sessionIcon{display:inline-flex;vertical-align:middle;color:var(--practice-text-muted)}
+
+@media (min-width:651px) and (max-width:850px){.sessionFields{grid-template-columns:1fr;gap:24px}}

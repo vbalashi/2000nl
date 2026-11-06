@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
 import { beforeEach, expect, test, vi } from "vitest";
-const { auth, rpc, read } = vi.hoisted(() => ({ auth: vi.fn(), rpc: vi.fn(), read: vi.fn() }));
+const { auth, rpc, retry, read } = vi.hoisted(() => ({ auth: vi.fn(), rpc: vi.fn(), retry: vi.fn(), read: vi.fn() }));
 vi.mock("@/lib/platform/serverSupabase", () => ({
   getAuthenticatedSupabase: auth,
   jsonNoStore: (body: unknown, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store" } }),
 }));
 vi.mock("@/lib/training/setups/server", () => ({ readAccountTrainingSetups: read }));
-import { GET, PUT } from "@/app/api/training/setups/route";
+import { GET, POST, PUT } from "@/app/api/training/setups/route";
 const snapshot = { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } };
 const request = (body: unknown = { expectedRevision: 0, document: snapshot.document }) =>
   new NextRequest("http://localhost/api/training/setups", { method: "PUT", body: JSON.stringify(body) });
@@ -14,7 +14,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   auth.mockResolvedValue({ supabase: { rpc }, user: { id: "owned-user" }, principal: { authKind: "first_party" } });
   read.mockResolvedValue(snapshot);
-  rpc.mockResolvedValue({ data: { ...snapshot, revision: 1, conflict: false }, error: null });
+  retry.mockResolvedValue({data: "complete", error: null});
+  rpc.mockImplementation((name: string) => name === "retry_starter_training_v1" ? {abortSignal: retry} : Promise.resolve({ data: { ...snapshot, revision: 1, conflict: false }, error: null }));
 });
 test("requires authenticated first-party access before reading or writing", async () => {
   auth.mockResolvedValue(Response.json({ error: "unauthorized" }, { status: 401 }));
@@ -53,4 +54,23 @@ test("does not mask read failures or invalid persisted data with an empty accoun
   expect((await GET(request())).status).toBe(503);
   rpc.mockResolvedValue({ data: { ...snapshot, conflict: false, revision: "bad" }, error: null });
   expect((await PUT(request())).status).toBe(503);
+});
+
+test("reads saved settings independently of a pending retry", async () => {
+  expect((await GET(request())).status).toBe(200);
+  expect(rpc).not.toHaveBeenCalled();
+});
+test("initializes only for the authenticated first-party account", async () => {
+  const response = await POST(request());
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual({status:"complete"});
+  expect(rpc).toHaveBeenCalledWith("retry_starter_training_v1");
+  expect(retry).toHaveBeenCalledWith(expect.any(AbortSignal));
+  auth.mockResolvedValue({principal:{authKind:"connected_client"}});
+  expect((await POST(request())).status).toBe(403);
+});
+test("retry errors do not affect subsequent reads", async () => {
+  retry.mockRejectedValue(new Error("temporary database failure"));
+  expect((await POST(request())).status).toBe(503);
+  expect((await GET(request())).status).toBe(200);
 });

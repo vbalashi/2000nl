@@ -10,6 +10,7 @@ export type ActionMenuItem = {
   label: string;
   description?: string;
   icon?: React.ReactNode;
+  trailingIcon?: React.ReactNode;
   disabled?: boolean;
   onSelect: () => void;
 };
@@ -106,7 +107,7 @@ export function ActionMenu({ anchor, title, language, items, onClose, notice }: 
     }}>
     {notice && <p className={s.menuNotice} aria-hidden="true">{notice}</p>}
     {items.map(item => <button type="button" role="menuitem" data-menu-action={item.id} key={item.id} disabled={item.disabled} aria-label={item.label} aria-describedby={item.description ? `${descriptionId}-${item.id}` : undefined} onClick={item.onSelect}>
-      {item.icon}<span className={s.menuCopy}>{item.label}{item.description && <span id={`${descriptionId}-${item.id}`} className={s.menuDescription}>{item.description}</span>}</span>
+      {item.icon}<span className={s.menuCopy}>{item.label}{item.description && <span id={`${descriptionId}-${item.id}`} className={s.menuDescription}>{item.description}</span>}</span>{item.trailingIcon && <span className={s.menuTrailing}>{item.trailingIcon}</span>}
     </button>)}
   </div>, anchor.closest("dialog") || anchor.closest("[data-practice-palette]") || document.body);
 }

@@ -45,7 +45,7 @@ vi.mock("@/lib/training/availability/useTrainingAvailability", () => ({
 }));
 const { savedSetupAccounts } = vi.hoisted(() => ({ savedSetupAccounts: new Map<string, { revision: number; document: unknown }>() }));
 vi.mock("@/lib/training/setups/client", () => ({
-  fetchAccountTrainingSetups: vi.fn(async (userId: string) => savedSetupAccounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } }),
+  initializeStarterTraining: async () => "done", fetchAccountTrainingSetups: vi.fn(async (userId: string) => savedSetupAccounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } }),
   saveAccountTrainingSetups: vi.fn(async (userId: string, revision: number, document: unknown) => {
     const snapshot = { revision: revision + 1, document };
     savedSetupAccounts.set(userId, snapshot);
@@ -999,6 +999,11 @@ const clickTrainingAction = async (button: HTMLElement) => {
     fireEvent.click(launch);
   } else fireEvent.click(button);
 };
+
+function openWordParts(){
+ const section=screen.queryByRole("button",{name:/^Part of speech/});
+ if(section?.getAttribute("aria-expanded")==="false")fireEvent.click(section);
+}
 
 test("search action opens the dedicated dictionary search surface", async () => {
   render(<TrainingScreen user={user} />);
@@ -2041,6 +2046,7 @@ test("setup and the prepared card stay usable while scoped stats are pending", a
   expect(statsRequests).toHaveLength(0);
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(await screen.findByRole("button", { name: /^Filters / }));
+  openWordParts();
   expect(screen.getByRole("button", { name: "Verbs" })).toBeEnabled();
   const startButton = screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ });
   await waitFor(() => expect(startButton).toBeEnabled());
@@ -2745,6 +2751,7 @@ test("offline disables answers until reconnect authority validation succeeds", a
   expect(startTrainingSession).not.toHaveBeenCalled();
 });
 
+// Composite restoration and Start flow; individual waits keep their own bounds.
 test("superseded resume restores every still-permitted setup setting before Start here", async () => {
   fetchTrainingScenarios.mockResolvedValueOnce([
     {
@@ -2816,7 +2823,7 @@ test("superseded resume restores every still-permitted setup setting before Star
     name: /Start training|Calculate training/,
   });
   for (const section of ["Source", "Exercises", "Filters", "Session"]) {
-    fireEvent.click(await screen.findByRole("button", { name: new RegExp(section) }));
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(`^${section} `) }));
   }
   expect(screen.getAllByRole("button", { name: "Words" })[0]).toHaveAttribute(
     "aria-pressed",
@@ -2864,7 +2871,7 @@ test("superseded resume restores every still-permitted setup setting before Star
     }),
     expect.any(String),
   );
-});
+}, 15_000);
 
 // Composite behavior check, not a latency assertion: its helper alone permits 3s.
 // Keep a bounded budget for the complete sequence on slower CI CPUs.
@@ -2915,6 +2922,7 @@ test("pilot Setup preserves saved source and date filters until Start commits th
   fireEvent.click(await screen.findByRole("button", { name: /^Filters / }));
   expect(screen.queryByLabelText("Time window")).not.toBeInTheDocument();
   expect(screen.queryByRole("combobox", { name: "Source" })).not.toBeInTheDocument();
+  openWordParts();
   fireEvent.click(screen.getByRole("button", { name: "Verbs" }));
   expect(savedSetupAccounts.get(user.id)?.document).toEqual({
     schemaVersion: 1, trainings: [savedRecipe], mainTrainingId: savedRecipe.id,

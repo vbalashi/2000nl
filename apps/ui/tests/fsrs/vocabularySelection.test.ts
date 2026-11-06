@@ -74,7 +74,7 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
   expect(scoped.newCards).toBe(1);
   for(const category of ['headwords','examples','definitions','alphabetical']){
    const chosen=await c.query("select distinct entry_id from private.training_library_selection_entry_ids_v1($1,null,'curated',$2)",[user,{...scope,librarySelection:{query:'vocabfiets',category}}]);
-   const page=(await c.query("select search_library_category_v1($1,'vocabfiets','nl',$2,$3,null,$4,100,null) r",[user,[dictionary],{parts:[],article:null,vocabulary:options},category])).rows[0].r;
+   const page:{error?:string;groups:Array<{items:Array<{entry:{id:string}}>;page:{nextCursor:string|null}}>}=(await c.query("select search_library_category_v1($1,'vocabfiets','nl',$2,$3,null,$4,100,null) r",[user,[dictionary],{parts:[],article:null,vocabulary:options},category])).rows[0].r;
    expect(chosen.rows.map(r=>r.entry_id).sort()).toEqual([...new Set(page.groups[0].items.map((item:{entry:{id:string}})=>item.entry.id))].sort());
   }
  }));
@@ -86,7 +86,7 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
   // Cursor shape is bound to the criteria even when the visible result count changes.
   expect(cursor).toBeTruthy();
   if(cursor){expect((await read('spoken',cursor)).error).toBe('invalid_cursor');await c.query("update private.vocabulary_frequency_profiles set revision='changed'");expect((await read('written',cursor)).error).toBe('invalid_cursor');}
-  for(const invalid of [null,{...options,from:0},{...options,meanings:4},{...options,materialKinds:['word','other']}]){
+  for(const invalid of [null,{...options,from:0},{...options,meanings:6},{...options,materialKinds:['word','other']}]){
    const response=(await c.query("select lookup_platform_v2_library_filtered_entries($1,null,'nl',$2,null,100,100,$3) r",[user,[dictionary],{parts:[],article:null,vocabulary:invalid}])).rows[0].r;
    expect(response.error).toBe('invalid_library_filters');
   }
@@ -252,7 +252,7 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
    await c.query("update word_entries set meaning_id=1 where id=any($1::uuid[])",[nouns]);
   }
   const ids=Object.values(entries).flat();
-  for(const mode of ['all','frequency'])for(const profile of ['spoken','written'])for(const meanings of ['all',1,2,3])for(const materialKinds of [[],['word'],['other']]){
+  for(const mode of ['all','frequency'])for(const profile of ['spoken','written'])for(const meanings of ['all',1,2,3,4,5])for(const materialKinds of [[],['word'],['other']]){
    const selection={...options,mode,profile,from:1,to:3,meanings,materialKinds};
    const expected=(await c.query("select id from private.active_word_entries where id=any($1::uuid[]) and private.vocabulary_entry_selected_v1(id,$2) order by id",[ids,selection])).rows.map(r=>r.id);
    const actual=(await c.query("select entry_id id from private.vocabulary_selected_entry_ids_v1($2,$1) where entry_id=any($1::uuid[]) order by entry_id",[ids,selection])).rows.map(r=>r.id);
@@ -275,7 +275,7 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
    const e=(await c.query(`insert into word_entries(dictionary_id,language_code,headword,meaning_id,part_of_speech,management_kind,raw) values($1,'nl','vocabfiets',$2,$3,$4,'{"meanings":[{"definition":"Personal fixture"}]}') returning id`,[dictionary,n,n===1?'NOUN':'zn',dictionary?'user':'source'])).rows[0].id;
    ids.push(e);
   }
-  for(const mode of ['all','frequency'])for(const meanings of ['all',1,2,3]){
+  for(const mode of ['all','frequency'])for(const meanings of ['all',1,2,3,4,5]){
    const selection={...options,mode,meanings};
    const expected=(await c.query("select id from private.active_word_entries where id=any($1::uuid[]) and private.vocabulary_entry_selected_v1(id,$2) order by id",[ids,selection])).rows.map(r=>r.id);
    const actual=(await c.query("select entry_id id from private.vocabulary_selected_entry_ids_v1($2,$1) order by entry_id",[ids,selection])).rows.map(r=>r.id);
@@ -291,7 +291,7 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
   const {user,entries,filter}=await fixture(c);const nouns=entries['vocabfiets:zn'];
   const scope={...filter,partOfSpeech:['zn'],sourceWordStatus:'all',vocabulary:{...options,mode:'all',meanings:2}};
   const context=(await c.query("select read_training_recipe_availability_v1($1,ARRAY['definition-to-word'],null,'curated',$2,'meaning') r",[user,{...scope,presentationMode:'word-in-context'}])).rows[0].r;
-  expect(context.newCards).toBe(2);
+  expect(context).toMatchObject({newCards:2,totalWords:1,totalMeanings:2,totalCards:2});
   for(const entry of nouns)for(let i=0;i<10;i++){
    const node=randomUUID();await c.query(`insert into private.platform_v2_content_nodes(id,entry_id,parent_content_node_id,kind,binding_state,first_source_revision,last_source_revision,source_text_fingerprint,diagnostic_locator) values($1,$2,null,'idiom','active','v1','v1',$3,'test.idiom'),($4,$2,$1,'idiom-explanation','active','v1','v1',$5,'test.explanation')`,[node,entry,`idiom-${node}`,randomUUID(),`explanation-${node}`]);
   }
@@ -301,7 +301,7 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
    language plpgsql stable security definer set search_path=pg_catalog,public,private,pg_temp as $$
    begin perform nextval('private.idiom_selection_test_calls'); return private.vocabulary_entry_selected_test_original(p_entry_id,p_value); end; $$`);
   const idioms=(await c.query("select read_training_recipe_availability_v1($1,ARRAY['idiom:direct'],null,'curated',$2,'idiom') r",[user,scope])).rows[0].r;
-  expect(idioms.newCards).toBe(20);
+  expect(idioms).toMatchObject({newCards:20,totalWords:1,totalMeanings:2,totalCards:20});
   expect(Number((await c.query("select last_value from private.idiom_selection_test_calls")).rows[0].last_value)).toBeLessThanOrEqual(4);
  }));
  test("batch context candidates match legacy and explicit source-word rules",()=>withTransaction(pool,async c=>{
@@ -336,4 +336,76 @@ describe.skipIf(!url)("real vocabulary selection",()=>{
   expect((await c.query("select count(*)::int n from private.training_recipe_eligible_cards_v1($1,ARRAY['word-to-definition'],null,'curated','both','auto',ARRAY[]::uuid[],ARRAY[]::text[],$2,false,false)",[user,scope])).rows[0].n).toBe(0);
  }));
 
+});
+
+describe.skipIf(!url)("written POS observations preserve spelling frequency",()=>{
+ const pool=new Pool({connectionString:url});beforeAll(()=>runMigrations(pool),120000);afterAll(()=>pool.end());
+ test("written-only known POS precede unknown within a spelling, with complete cursor pages and revision invalidation",()=>withTransaction(pool,async c=>{
+  const {user,dictionary,entries}=await fixture(c);
+  const otherDictionary=await fixture(c);
+  const unknown=entries['vocabonbekend:afk'][0];
+  await c.query("update word_entries set headword='vocabfiets',part_of_speech='determiner' where id=$1",[unknown]);
+  await c.query("select refresh_dictionary_search_document($1,2)",[unknown]);
+  const read=async(sort:string,query:string|null=null,cursor:string|null=null)=>(await c.query(
+   "select lookup_platform_v2_library_filtered_entries($1,$2,'nl',$3,$4,1,100,$5) r",[user,query,[dictionary,otherDictionary.dictionary],cursor,{parts:[],article:null,sort}])).rows[0].r;
+  const collect=async(sort:string,query:string|null=null)=>{
+   let cursor:string|null=null;const result:string[]=[];
+   for(let n=0;n<20;n++){
+    const page=await read(sort,query,cursor);expect(page.error).toBeUndefined();
+    result.push(...page.items.map((e:{id:string})=>e.id));cursor=page.page.nextGroupCursor;
+    if(!cursor)return result;
+   }throw new Error('pagination_did_not_finish');
+  };
+  const spoken=await collect('spoken');const alphabetical=await collect('alphabetical');const withoutObservations=await collect('written');
+  await c.query("insert into private.vocabulary_written_pos_profiles(language_code,revision) values('nl','fixture-pos-1')");
+  await c.query("insert into private.vocabulary_written_pos_frequencies values('nl','vocabfiets','zn',10),('nl','vocabfiets','ww',25000000)");
+  for(const query of [null,'vocabfiets']){
+   const actual=await collect('written',query);
+   const nouns=entries['vocabfiets:zn'],verbs=entries['vocabfiets:ww'];
+   expect(actual.indexOf(verbs[0])).toBeLessThan(actual.indexOf(nouns[0]));
+   expect(actual.indexOf(otherDictionary.entries['vocabfiets:ww'][0])).toBeLessThan(actual.indexOf(nouns[0]));
+   expect(actual.indexOf(verbs[0])).toBeLessThan(actual.indexOf(otherDictionary.entries['vocabfiets:zn'][0]));
+   expect(actual.indexOf(nouns.at(-1)!)).toBeLessThan(actual.indexOf(unknown));
+   expect(new Set(actual).size).toBe(actual.length);
+   expect(actual.filter(id=>[...nouns,...verbs,unknown].includes(id))).toHaveLength(7);
+  }
+  expect(await collect('spoken')).toEqual(spoken);expect(await collect('alphabetical')).toEqual(alphabetical);
+  const first=await read('written');expect(first.page.nextGroupCursor).toBeTruthy();
+  await c.query("update private.vocabulary_written_pos_profiles set revision='fixture-pos-2'");
+  expect((await read('written',null,first.page.nextGroupCursor)).error).toBe('invalid_cursor');
+  const headwordPage=(await c.query("select private.search_library_headwords_v1($1,false,'vocabfiets','nl',$2,100,null,$3) r",[user,[dictionary],{dictionaryIds:[dictionary],parts:[],article:null,sort:'written'}])).rows[0].r;
+  expect(headwordPage.error).toBeUndefined();
+  const categoryIds=headwordPage.items.map((x:{entry:{id:string}})=>x.entry.id);
+  expect(categoryIds.indexOf(entries['vocabfiets:ww'][0])).toBeLessThan(categoryIds.indexOf(entries['vocabfiets:zn'][0]));
+  expect(categoryIds.indexOf(entries['vocabfiets:zn'].at(-1)!)).toBeLessThan(categoryIds.indexOf(unknown));
+  let categoryCursor:string|null=null;const categoryPaged:string[]=[];let categoryFirstCursor:string|null=null;
+  for(let n=0;n<30;n++){
+   const page:{error?:string;groups:Array<{items:Array<{entry:{id:string}}>;page:{nextCursor:string|null}}>}=(await c.query("select search_library_category_v1($1,'vocabfiets','nl',$2,$3,null,'headwords',1,$4) r",[user,[dictionary],{parts:[],article:null,sort:'written'},categoryCursor])).rows[0].r;
+   expect(page.error).toBeUndefined();categoryPaged.push(...page.groups[0].items.map((x:{entry:{id:string}})=>x.entry.id));
+   categoryCursor=page.groups[0].page.nextCursor;if(n===0)categoryFirstCursor=categoryCursor;
+   if(!categoryCursor)break;
+  }
+  expect(categoryCursor).toBeNull();expect(categoryPaged).toEqual(categoryIds);expect(categoryFirstCursor).toBeTruthy();
+  await c.query("update private.vocabulary_written_pos_profiles set revision='fixture-pos-3'");
+  const staleCategory=(await c.query("select search_library_category_v1($1,'vocabfiets','nl',$2,$3,null,'headwords',1,$4) r",[user,[dictionary],{parts:[],article:null,sort:'written'},categoryFirstCursor])).rows[0].r;
+  expect(staleCategory.error).toBe('invalid_cursor');
+  await c.query("delete from private.vocabulary_written_pos_profiles");
+  expect(await collect('written')).toEqual(withoutObservations);
+  expect(await collect('spoken')).toEqual(spoken);
+ }));
+ test("every inclusive range retains exactly its baseline meaning membership",()=>withTransaction(pool,async c=>{
+  const {dictionary}=await fixture(c);
+  await c.query("delete from private.vocabulary_frequency_ranks where profile='written' and language_code='nl'");
+  await c.query("update private.vocabulary_frequency_profiles set max_rank=1500 where profile='written' and language_code='nl'");
+  await c.query(`insert into private.vocabulary_frequency_ranks
+   select 'nl','written',case n when 100 then 'vocabvoor' when 200 then 'vocabfiets' when 1250 then 'vocabuitdrukking' else 'unusedfixture'||n end,n from generate_series(1,1500) n`);
+  const ranges=[[1,100],[1,200],[1,300],[200,400],[1000,1500]];
+  const members=async()=>Promise.all(ranges.map(async([from,to])=>(await c.query(
+   "select entry_id from private.vocabulary_selected_entry_ids_v1($1,ARRAY(select id from word_entries where dictionary_id=$2)) order by entry_id",
+   [{...options,profile:'written',from,to,meanings:'all'},dictionary])).rows.map(r=>r.entry_id)));
+  const before=await members();expect(before.map(x=>x.length)).toEqual([1,7,7,6,3]);
+  await c.query("insert into private.vocabulary_written_pos_profiles(language_code,revision) values('nl','range-fixture')");
+  await c.query("insert into private.vocabulary_written_pos_frequencies values('nl','vocabfiets','ww',2000),('nl','vocabuitdrukking','zn',9999999)");
+  expect(await members()).toEqual(before);
+ }));
 });

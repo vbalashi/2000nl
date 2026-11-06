@@ -22,6 +22,18 @@ export async function GET(request: NextRequest) {
   return snapshot ? jsonNoStore(snapshot) : jsonNoStore({ error: "training_setups_unavailable" }, 503);
 }
 
+// Initialization is separate from reads: slow dictionary checks never hold the overview.
+export async function POST(request: NextRequest) {
+  const auth = await accountAuth(request);
+  if (auth instanceof Response) return auth;
+  try {
+    const { data, error } = await auth.supabase.rpc("retry_starter_training_v1").abortSignal(AbortSignal.timeout(10000));
+    if (error || !["complete", "pending", "superseded", "not_applicable"].includes(data))
+      return jsonNoStore({ error: "starter_training_unavailable" }, 503);
+    return jsonNoStore({ status: data });
+  } catch { return jsonNoStore({ error: "starter_training_unavailable" }, 503); }
+}
+
 export async function PUT(request: NextRequest) {
   const auth = await accountAuth(request);
   if (auth instanceof Response) return auth;

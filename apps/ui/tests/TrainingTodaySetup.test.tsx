@@ -10,7 +10,7 @@ const { availabilityRequests, availabilityCounts } = vi.hoisted(() => ({ availab
 vi.mock("@/lib/training/availability/useTrainingAvailability",()=>({useTrainingAvailability:(input: { enabled: boolean })=>{availabilityRequests(input);return {status:"ready",value:{...availabilityCounts,studyDay:"2026-10-03",timezone:"Europe/Amsterdam",asOf:"2026-10-03T10:00:00Z"},refreshing:false,refreshFailed:false,reload:vi.fn()};}}));
 const { accounts, saveFailure } = vi.hoisted(() => ({ accounts: new Map<string, TrainingSetupsSnapshot>(), saveFailure: { enabled: false } }));
 vi.mock("@/lib/training/setups/client", () => ({
-  fetchAccountTrainingSetups: async (userId: string) => accounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } },
+  initializeStarterTraining: async () => "done", fetchAccountTrainingSetups: async (userId: string) => accounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } },
   saveAccountTrainingSetups: async (userId: string, revision: number, document: TrainingSetupsDocument) => {
     if (saveFailure.enabled) return { kind: "error" };
     const current = accounts.get(userId);
@@ -80,17 +80,24 @@ const baseProps = {
 const calculateAndStart = async () => {fireEvent.click(await screen.findByRole("button", {name:"Start training"}));};
 const reopenCalculatedTraining = async () => {if(screen.queryByRole("button",{name:"Create training"}))fireEvent.click(screen.getAllByRole("button",{name:/^Edit /})[0]);};
 
+function openWordParts(){
+ const section=screen.queryByRole("button",{name:/^Part of speech/});
+ if(section?.getAttribute("aria-expanded")==="false")fireEvent.click(section);
+}
+
 test("the approved builder filters Dutch word families and passes them to Start", async () => {
   const onStart = vi.fn();
   render(<TrainingTodaySetup {...baseProps} userId="filters" trainingLanguageCode="nl" onStart={onStart} />);
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
+  openWordParts();
   expect(screen.getByRole("button", { name: "Verbs" })).toBeEnabled();
   expect(screen.getByRole("button", { name: "Noun subfilters" })).toBeEnabled();
+  openWordParts();
   fireEvent.click(screen.getByRole("button", { name: "Verbs" }));
   fireEvent.click(screen.getByRole("button", { name: "Noun subfilters" }));
-  fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "de" }));
-  fireEvent.click(screen.getByRole("button", { name: "Close noun subfilters" }));
+  fireEvent.click(within(screen.getByRole("menu")).getByRole("menuitem", { name: "de" }));
+  expect(screen.queryByRole("menu")).toBeNull();
   await calculateAndStart();
   expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ partOfSpeech: ["ww", "zn"], nounArticles: ["de"] }));
 });
@@ -151,6 +158,7 @@ test("a blocked start leaves the builder usable and never launches", async () =>
   render(<TrainingTodaySetup {...baseProps} userId="blocked" trainingLanguageCode="nl" startBlocked onStart={onStart} />);
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
+  openWordParts();
   expect(screen.getByRole("button", { name: "Verbs" })).toBeEnabled();
   expect(screen.getByRole("button", { name: "Start training" })).toBeDisabled();
   fireEvent.click(screen.getByRole("button", { name: "Start training" }));
@@ -185,10 +193,12 @@ test("Back discards builder edits before another training is created", async () 
   render(<TrainingTodaySetup {...baseProps} userId="back-discards" trainingLanguageCode="nl" hasOwnedSession={false} />);
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
+  openWordParts();
   fireEvent.click(screen.getByRole("button", { name: "Verbs" }));
   fireEvent.click(screen.getByRole("button", { name: "Back to Training" }));
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
+  openWordParts();
   expect(screen.getByRole("button", { name: "Verbs" })).toHaveAttribute("aria-pressed", "false");
 });
 
@@ -461,6 +471,7 @@ test("approved builder opens every section collapsed and resets when creating ag
  for(const name of ["Source","Exercises","Filters","Session"])expect(screen.getByRole("button",{name:new RegExp(`^${name} `)})).toHaveAttribute("aria-expanded","false");
  expect(screen.queryByRole("button",{name:"Nouns"})).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:/^Filters /}));
+ openWordParts();
  expect(screen.getByRole("button",{name:"Nouns"})).toBeInTheDocument();
  fireEvent.click(screen.getByRole("button",{name:"Back to Training"}));fireEvent.click(screen.getByRole("button",{name:"Create training"}));
  expect(screen.getByRole("button",{name:/^Filters /})).toHaveAttribute("aria-expanded","false");
@@ -470,8 +481,9 @@ test("approved lexical chips and noun subfilters preserve the canonical launch p
  const onStart=vi.fn();
  render(<TrainingTodaySetup {...baseProps} userId="builder-lexical" trainingLanguageCode="nl" hasOwnedSession={false} onStart={onStart}/>);
  await screen.findByRole("button",{name:"Create training"});fireEvent.click(screen.getByRole("button",{name:"Create training"}));fireEvent.click(screen.getByRole("button",{name:/^Filters /}));
+ openWordParts();
  fireEvent.click(screen.getByRole("button",{name:"Verbs"}));fireEvent.click(screen.getByRole("button",{name:"Noun subfilters"}));
- fireEvent.click(within(screen.getByRole("dialog")).getByRole("button",{name:"de"}));fireEvent.click(screen.getByRole("button",{name:"Close noun subfilters"}));
+ fireEvent.click(within(screen.getByRole("menu")).getByRole("menuitem",{name:"de"}));expect(screen.queryByRole("menu")).toBeNull();
  await calculateAndStart();
  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({partOfSpeech:["ww","zn"],nounArticles:["de"]}));
 });
@@ -517,6 +529,7 @@ test("switching accounts discards an open builder draft", async () => {
   await screen.findByRole("button", { name: "Create training" });
   fireEvent.click(screen.getByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
+  openWordParts();
   fireEvent.click(screen.getByRole("button", { name: "Verbs" }));
   view.rerender(<TrainingTodaySetup {...props} userId="next-builder-owner" />);
   await screen.findByRole("button", { name: "Create training" });
@@ -670,6 +683,7 @@ test("empty-state recovery opens the builder with the selected word filter intac
   render(<TrainingTodaySetup {...baseProps} status="empty" initialDraft={{ ...initialDraft, partOfSpeech: ["ww"] }} />);
   fireEvent.click(screen.getByRole("button", { name: "Adjust filters" }));
   fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
+  openWordParts();
   expect(screen.getByRole("button", { name: "Verbs" })).toHaveAttribute("aria-pressed", "true");
 });
 
@@ -828,6 +842,7 @@ test("editing source and session controls requests availability for the current 
  fireEvent.change(screen.getByRole("slider",{name:"Session size"}),{target:{value:"2"}});
  fireEvent.change(screen.getByRole("slider",{name:"New / review balance"}),{target:{value:"6"}});
  fireEvent.click(screen.getByRole("button",{name:/^Filters /}));
+ openWordParts();
  fireEvent.click(screen.getByRole("button",{name:"Verbs"}));
  expect(availabilityRequests.mock.calls.length).toBeGreaterThan(0);
  expect(availabilityRequests.mock.calls.at(-1)?.[0].enabled).toBe(true);
@@ -855,4 +870,14 @@ test('an editor catalog failure keeps its retry inside the visible editor',async
  fireEvent.click(within(message).getByRole('button',{name:'Retry'}));expect(retry).toHaveBeenCalledOnce();
  fireEvent.click(screen.getByRole('button',{name:'Back to Training'}));
  await waitFor(()=>expect(visible).toHaveBeenLastCalledWith(false));
+});
+
+test('pending starter prevents an unsaved builder start while leaving Save available', async () => {
+ const userId='new-pending';const onStart=vi.fn();
+ accounts.set(userId,{revision:0,starterStatus:'pending',document:{schemaVersion:1,trainings:[],mainTrainingId:null}});
+ render(<TrainingTodaySetup {...baseProps} userId={userId} trainingLanguageCode="nl" initialView="setup" onStart={onStart}/>);
+ const start=await screen.findByRole('button',{name:'Start training'});
+ await waitFor(()=>expect(start).toBeDisabled());
+ expect(screen.getByRole('button',{name:'Save training'})).toBeEnabled();
+ fireEvent.click(start);expect(onStart).not.toHaveBeenCalled();
 });
