@@ -54,3 +54,11 @@ test("does not mask read failures or invalid persisted data with an empty accoun
   rpc.mockResolvedValue({ data: { ...snapshot, conflict: false, revision: "bad" }, error: null });
   expect((await PUT(request())).status).toBe(503);
 });
+
+test("retries pending starter setup without blocking account reads", async () => {
+  rpc.mockRejectedValue(new Error("temporary database failure"));
+  const response = await GET(request());
+  expect(response.status).toBe(200);
+  expect(rpc).toHaveBeenCalledWith("retry_starter_training_v1");
+  expect(await response.json()).toEqual(snapshot);
+});

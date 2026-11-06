@@ -18,6 +18,8 @@ async function accountAuth(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const auth = await accountAuth(request);
   if (auth instanceof Response) return auth;
+  // Retry only explicit pending registrations; failures never block reading existing setups.
+  try { await auth.supabase.rpc("retry_starter_training_v1"); } catch { /* Best effort; the pending record remains. */ }
   const snapshot = await readAccountTrainingSetups(auth.supabase, auth.user.id);
   return snapshot ? jsonNoStore(snapshot) : jsonNoStore({ error: "training_setups_unavailable" }, 503);
 }
