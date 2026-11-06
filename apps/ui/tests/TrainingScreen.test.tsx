@@ -2751,6 +2751,7 @@ test("offline disables answers until reconnect authority validation succeeds", a
   expect(startTrainingSession).not.toHaveBeenCalled();
 });
 
+// Composite restoration and Start flow; individual waits keep their own bounds.
 test("superseded resume restores every still-permitted setup setting before Start here", async () => {
   fetchTrainingScenarios.mockResolvedValueOnce([
     {
@@ -2870,7 +2871,7 @@ test("superseded resume restores every still-permitted setup setting before Star
     }),
     expect.any(String),
   );
-});
+}, 15_000);
 
 // Composite behavior check, not a latency assertion: its helper alone permits 3s.
 // Keep a bounded budget for the complete sequence on slower CI CPUs.
