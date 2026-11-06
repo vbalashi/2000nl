@@ -1,4 +1,5 @@
-.dialog.dialog{height:min(740px,calc(100dvh - 32px));max-height:calc(100dvh - 32px);overflow:hidden;border-radius:22px;background:var(--practice-surface)}
+/* Center inside the OS safe rectangle: fullscreen iPhone insets are asymmetric. */
+.dialog.dialog{--filter-top:max(16px,env(safe-area-inset-top,0px));--filter-bottom:max(16px,env(safe-area-inset-bottom,0px));--filter-left:max(16px,env(safe-area-inset-left,0px));--filter-right:max(16px,env(safe-area-inset-right,0px));box-sizing:border-box;inset:var(--filter-top) var(--filter-right) var(--filter-bottom) var(--filter-left);margin:auto;height:min(740px,calc(100dvh - var(--filter-top) - var(--filter-bottom)));max-height:calc(100dvh - var(--filter-top) - var(--filter-bottom));max-width:calc(100vw - var(--filter-left) - var(--filter-right));overflow:hidden;border-radius:22px;background:var(--practice-surface)}
 .dialog[open]{display:flex;flex-direction:column}
 .header{display:flex;align-items:center;gap:12px;padding:18px 20px;flex-shrink:0}
 .header h2{flex:1;margin:0;font-size:var(--practice-text-lead);font-weight:550;color:var(--practice-text)}
@@ -29,7 +30,7 @@
 .count{font-size:var(--practice-text-caption);color:var(--practice-text-muted);margin:0 0 12px}
 .actions{display:flex;align-items:center;justify-content:flex-end;gap:8px}
 .reset{margin-right:auto;border:0;background:transparent;color:var(--practice-text-muted);font:inherit;font-size:var(--practice-text-caption);padding:8px 0}
-@media(max-width:600px){.dialog.dialog{width:calc(100vw - 24px);height:min(780px,calc(100dvh - 24px));max-height:calc(100dvh - 24px)}.header{padding:14px 16px}.page{padding:8px 14px 16px}.footer{padding:12px 14px 14px}.row,.partRow{min-height:46px}.reset{font-size:var(--practice-text-label)}}
+@media(max-width:600px){.dialog.dialog{--filter-top:max(12px,env(safe-area-inset-top,0px));--filter-bottom:max(12px,env(safe-area-inset-bottom,0px));--filter-left:max(12px,env(safe-area-inset-left,0px));--filter-right:max(12px,env(safe-area-inset-right,0px));width:calc(100vw - var(--filter-left) - var(--filter-right));height:min(780px,calc(100dvh - var(--filter-top) - var(--filter-bottom)));max-height:calc(100dvh - var(--filter-top) - var(--filter-bottom))}.header{padding:14px 16px}.page{padding:8px 14px 16px}.footer{padding:12px 14px 14px}.row,.partRow{min-height:46px}.reset{font-size:var(--practice-text-label)}}
 @media(prefers-reduced-motion:reduce){.track{transition:none}}
 .row:focus-visible,.partToggle:focus-visible,.disclosure:focus-visible{outline:2px solid var(--practice-focus);outline-offset:-3px;border-radius:10px}
 .popover{position:fixed;inset:auto;margin:0;width:min(280px,calc(100vw - 24px));padding:14px 16px;border:1px solid var(--practice-border);border-radius:16px;background:var(--practice-surface);color:var(--practice-text-secondary);box-shadow:0 12px 36px var(--practice-shadow);box-sizing:border-box}
