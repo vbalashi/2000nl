@@ -5,6 +5,7 @@ import { Check, Flag, RotateCcw, X } from "lucide-react";
 import { senseCardQuietAction } from "@/components/training/SenseCardChrome";
 import actionStyles from "@/components/practice/article/articleActions.module.css";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
+import { ONBOARDING_PAUSE, signalOnboarding } from "@/lib/onboarding/signals";
 import overlays from "@/components/practice/library/libraryOverlays.module.css";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -105,6 +106,18 @@ export function SenseCardReportSheet({
     else firstRadioRef.current?.focus();
   }, [terminal]);
 
+  const closingForPause = React.useRef(false);
+  React.useEffect(() => {
+    const markPause = () => { closingForPause.current = true; };
+    window.addEventListener(ONBOARDING_PAUSE, markPause, true);
+    return () => window.removeEventListener(ONBOARDING_PAUSE, markPause, true);
+  }, []);
+  const dismissFromSurface = () => {
+    if (delivery === "sending") return;
+    if (!closingForPause.current) signalOnboarding("report-dismissed");
+    dismiss();
+  };
+
   const submit = async () => {
     if (!deliveryEnabled || !kind || delivery === "sending") return;
     setDelivery("sending");
@@ -155,6 +168,7 @@ export function SenseCardReportSheet({
           aria-label={t("senseCard.reportSheet.title")}
           tabIndex={terminal ? -1 : 0}
           className="max-h-[calc(100dvh-8rem)] overflow-y-auto px-5 pb-3">
+          <div data-onboarding="report-guide-slot" aria-live="polite" aria-atomic="true" />
           {terminal ? (
             <ReportStatus state={delivery} t={t} />
           ) : (
@@ -236,7 +250,7 @@ export function SenseCardReportSheet({
   return <DialogSurface className={overlays.dialog} lang={interfaceLanguage}
     data-training-hotkeys-suspended="true" aria-labelledby="sense-card-report-title"
     aria-describedby={terminal ? "sense-card-report-delivery-description" : "sense-card-report-context"}
-    aria-busy={delivery === "sending"} onDismiss={dismiss}>{content}</DialogSurface>;
+    aria-busy={delivery === "sending"} onDismiss={dismissFromSurface} onCancel={dismissFromSurface}>{content}</DialogSurface>;
 }
 
 function ReportStatus({

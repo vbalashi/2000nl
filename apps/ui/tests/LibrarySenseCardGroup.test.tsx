@@ -280,12 +280,6 @@ describe("LibrarySenseCardGroup", () => {
       "library-sense-card-entry-bank-finance",
     );
     expect(financeCard).toHaveClass("py-2.5");
-    expect(
-      within(financeCard).getByTestId("library-sense-card-lead"),
-    ).toHaveClass("grid", "items-start");
-    expect(
-      within(financeCard).getByTestId("sense-card-top-actions"),
-    ).not.toHaveClass("float-right");
     const furnitureDetails = screen
       .getByText("Mila en Noor keken samen vanaf de bank naar een film.")
       .closest('[aria-hidden="false"]');

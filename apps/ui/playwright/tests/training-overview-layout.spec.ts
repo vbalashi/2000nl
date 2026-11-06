@@ -31,6 +31,8 @@ for(const profile of [{name:'desktop',width:1280,height:900,language:'en',dark:f
  await expect(title).toHaveAttribute('title',longName);
  expect(await title.evaluate(el=>el.getBoundingClientRect().height<=parseFloat(getComputedStyle(el).lineHeight)+1)).toBe(true);
  await expect(hero.getByRole('button',{name:profile.language==='ru'?'Повторить раньше срока':'Review ahead'})).toBeEnabled();
+ const secondary=await hero.getByRole('button',{name:profile.language==='ru'?'Повторить раньше срока':'Review ahead'}).boundingBox();
+ expect(secondary!.y+secondary!.height).toBeLessThanOrEqual(after!.y+after!.height);
  await page.screenshot({path:info.outputPath('selected34.png'),fullPage:true});
  if(profile.width<500){
   await page.setViewportSize({width:320,height:568});await page.emulateMedia({reducedMotion:'reduce'});
