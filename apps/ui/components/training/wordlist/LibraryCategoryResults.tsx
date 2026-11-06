@@ -1,6 +1,7 @@
 "use client";
 
 // Normal Library search categories; scope and authoritative article metadata stay shared.
+import {formatLibraryCounts} from "@/lib/platform/libraryCountLabel";
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { SegmentedControl } from "@/components/practice/ui/SegmentedControl";
@@ -133,7 +134,9 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
   const showSource = new Set(hits?.map(item => item.dictionary?.id)).size > 1;
   const moreLoading = moreRequest?.scopeKey === scopeKey && moreRequest.category === active;
   const moreAvailable = !isWords && current?.complete && current.page?.page.hasMore;
-  const countLabel = formatUiMessage(copy.foundCount, {count:new Intl.NumberFormat(locale).format(isWords ? wordState?.results.length ?? 0 : hits?.length ?? 0) + (moreAvailable ? "+" : "")});
+  const countLabel = isWords
+    ? formatLibraryCounts(locale,current?.page?.wordGroupCount ?? wordState?.results.length ?? 0,current?.page?.wordGroupCount === undefined ? undefined : current.page.total)
+    : formatUiMessage(copy.foundCount, {count:new Intl.NumberFormat(locale).format(hits?.length ?? 0) + (moreAvailable ? "+" : "")});
   return <div className={styles.results}>
     {tabsHost ? createPortal(tabs, tabsHost) : tabs}
     {countHost && createPortal(<span className={styles.count} role="status">{!enabled ? "" : loading ? copy.busy : !failed ? countLabel : ""}</span>, countHost)}

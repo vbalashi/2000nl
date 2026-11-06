@@ -70,3 +70,10 @@ test("opening context search returns the first page without fetching unseen matc
  expect(result.page.hasMore).toBe(true);
 
 });
+
+test.each(['headwords','alphabetical'] as const)('exact %s draft counts reuse one metadata read without hydration',async category=>{
+ const read=vi.fn().mockResolvedValue(new Response(JSON.stringify({groups:[{id:category,items:[hit('one')],total:115,wordGroupCount:73,page:{hasMore:true,nextCursor:'unused'}}]})));vi.stubGlobal('fetch',read);
+ const {readDictionaryCategoryCounts}=await import('@/lib/platform/dictionaryCategorySearch');
+ expect(await readDictionaryCategoryCounts(scope(),category)).toEqual({totalGroups:73,totalMeanings:115});
+ expect(read).toHaveBeenCalledTimes(1);expect(fetchPlatformV2LibraryGroup).not.toHaveBeenCalled();
+});
