@@ -17,8 +17,7 @@ for(const profile of [{name:'desktop-light',width:1280,height:900,dark:false},{n
  await page.reload();
  await page.getByRole('button',{name:'Edit Frequency test',exact:true}).first().click();
  await page.getByRole('button',{name:/^Filters/}).click();
- await page.getByRole('slider',{name:'Meanings per entry'}).focus();
- await page.getByRole('slider',{name:'Meanings per entry'}).press('Home');
+ await page.getByRole('button',{name:'First meaning',exact:true}).click();
  const strip=page.getByRole('region',{name:'Available for training'});
  await expect(strip.getByRole('status')).toHaveText('Updating card counts…');
  await strip.scrollIntoViewIfNeeded();await page.screenshot({path:info.outputPath('pending.png'),fullPage:true});
@@ -26,7 +25,7 @@ for(const profile of [{name:'desktop-light',width:1280,height:900,dark:false},{n
  expect(limitedCalls).toBe(1);
  await page.screenshot({path:info.outputPath('failed.png'),fullPage:true});
  await strip.getByRole('button',{name:'Try again'}).click();
- await expect(strip.getByRole('alert')).toHaveCount(0);await expect(strip.getByRole('status')).toBeEmpty();
+ await expect(strip.getByRole('alert')).toHaveCount(0);await expect(strip.getByRole('status')).toHaveCount(0);
  await expect.poll(()=>limitedCalls).toBe(2);
 });
 test('renaming a saved training reuses counts for its unchanged normalized recipe',async({page})=>{
@@ -37,12 +36,12 @@ test('renaming a saved training reuses counts for its unchanged normalized recip
  let calls=0;
  await page.route('**/api/training/availability',async route=>{calls++;await route.fulfill({json:{dueToday:1,totalReviews:4,newCards:6,studyDay:new Date().toISOString().slice(0,10),timezone:'Europe/Amsterdam',asOf:new Date().toISOString()}});});
  await page.reload();await page.getByRole('button',{name:'Edit Frequency test',exact:true}).first().click();
- await expect(page.getByRole('region',{name:'Available for training'}).getByRole('status')).toBeEmpty();
+ await expect(page.getByRole('region',{name:'Available for training'}).getByRole('status')).toHaveCount(0);
  expect(calls).toBe(1);
  await page.getByRole('button',{name:'Training name',exact:true}).click();
  await page.getByRole('textbox',{name:'Training name'}).fill('Renamed frequency');
  await page.getByRole('button',{name:'Save changes',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Renamed frequency',exact:true})).toBeVisible();
- await expect(page.getByRole('region',{name:'Available for training'}).getByRole('status')).toBeEmpty();
+ await expect(page.getByRole('region',{name:'Available for training'}).getByRole('status')).toHaveCount(0);
  expect(calls).toBe(1);
 });
