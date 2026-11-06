@@ -66,7 +66,7 @@ test('mobile guide highlights a target inside a dialog and respects reduced moti
  await expect.poll(()=>target.evaluate(el=>Array.from(el.classList).some(name=>name.includes('target')))).toBe(false);
 });
 
-for(const readingSize of ['largest','extra'])test(`mobile launch guidance leaves the highlighted action tappable (${readingSize})`,async({page})=>{
+for(const readingSize of ['normal','largest','extra'])test(`mobile launch guidance leaves the highlighted action tappable (${readingSize})`,async({page})=>{
  await page.setViewportSize({width:393,height:852});
  await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{reading_size_phone:readingSize,reading_size_desktop:readingSize,preferences:{onboardingCompleted:false,onboardingLanguage:'ru'}}});
  const tooltip=page.locator('[data-training-hotkeys-suspended="true"]');
@@ -84,8 +84,12 @@ for(const readingSize of ['largest','extra'])test(`mobile launch guidance leaves
   const action=await launch.boundingBox(),guide=await tooltip.boundingBox();
   return Boolean(action&&guide&&(guide.y+guide.height<=action.y||guide.y>=action.y+action.height||guide.x+guide.width<=action.x||guide.x>=action.x+action.width));
  }).toBe(true);
- await expect.poll(()=>tooltip.evaluate(el=>el.scrollHeight>el.clientHeight)).toBe(true);
+ await expect(tooltip).not.toContainText('Нажмите подсвеченную кнопку');
+ await expect(tooltip).toContainText('Если карточек нет');
+ if(readingSize==='normal')await expect.poll(()=>tooltip.evaluate(el=>el.scrollHeight<=el.clientHeight)).toBe(true);
  await tooltip.locator('p').last().scrollIntoViewIfNeeded();
  // A visible locator alone does not prove that an overlay lets the user tap it.
  await launch.click({trial:true,timeout:5000});
+ await launch.click();
+ await expect(tooltip).toContainText('5 / 10');
 });

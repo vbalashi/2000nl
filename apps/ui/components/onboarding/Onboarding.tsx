@@ -55,7 +55,7 @@ function Tooltip({step,tooltipProps}:TooltipRenderProps){
  const canContinue=current.next==='continue'&&Boolean(step.data?.ready);
  return <div {...tooltipProps} data-training-hotkeys-suspended="true" className={s.tooltip}><span className={s.safeArea} aria-hidden="true"/><div className={s.top}><span>{tour.copy.tourName} · {tour.record!.step+1} / {tourFlows[tour.record!.topic].length}</span><button onClick={tour.pause}>{tour.copy.pause}</button></div><h2>{step.title}</h2><p>{step.content}</p>
  {current.id==='interface'&&<p>{tour.copy.pauseIntro}</p>}{current.id==='translation'&&<p>{tour.copy.secondaryMention}</p>}
- {current.next==='continue'?<button disabled={!canContinue} className={s.primary} onClick={tour.advance}>{current.id==='done'?tour.copy.done:tour.copy.continue}</button>:<p className={s.instruction}>{tour.copy.clickHint}</p>}
+ {current.next==='continue'?<button disabled={!canContinue} className={s.primary} onClick={tour.advance}>{current.id==='done'?tour.copy.done:tour.copy.continue}</button>:current.id!=='launch'&&<p className={s.instruction}>{tour.copy.clickHint}</p>}
  {tour.saveError&&<p role="alert">{tour.copy.storageError}</p>}</div>;
 }
 export function useOnboardingQueryLocked(){const tour=React.useContext(TourContext);return tour?.record?.status==='running'&&['collections','stats'].includes(tour.record.topic);}
