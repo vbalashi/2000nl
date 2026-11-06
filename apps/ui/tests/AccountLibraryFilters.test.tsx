@@ -57,6 +57,7 @@ test("preview uses real group totals and aborted drafts cannot replace the curre
   render(<AccountLibraryFilters {...props} />);
   await waitFor(() => expect(mocked.fetchPage).toHaveBeenCalledTimes(1));
   const oldSignal = mocked.fetchPage.mock.calls[0][0].signal;
+  fireEvent.click(screen.getByRole("button", { name: /^Part of speech/ }));
   fireEvent.click(screen.getByRole("button", { name: "Nouns" }));
   await screen.findByText("Found: 1");
   expect(oldSignal.aborted).toBe(true);
@@ -159,7 +160,7 @@ test('draft preview shows exact selected meanings independently of article total
  mocked.fetchPage.mockResolvedValueOnce({librarySearch:{totalGroups:73,totalMeanings:191}}).mockResolvedValueOnce({librarySearch:{totalGroups:73,totalMeanings:115}});
  render(<AccountLibraryFilters {...props} query=""/>);
  await screen.findByText('73 articles · 191 meanings');
- fireEvent.change(screen.getByRole('slider',{name:'Meanings per entry'}),{target:{value:'1'}});
+ fireEvent.click(screen.getByRole('button',{name:'First 2 meanings'}));
  await screen.findByText('73 articles · 115 meanings');
  expect(mocked.fetchPage).toHaveBeenCalledTimes(2);
  expect(mocked.fetchPage.mock.calls[1][0].libraryScope.filters.vocabulary.meanings).toBe(2);
