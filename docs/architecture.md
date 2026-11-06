@@ -131,7 +131,14 @@ Interface, learning and dictionary translation languages have separate owners.
 The interface registry and all learner UI message catalogs live in
 `apps/ui/locales`; adding a dictionary does not change interface preferences.
 The [localization guide](interface-localization.md) describes the catalog APIs,
-source-change review tracking, draft languages, validation and RTL readiness.
+source-change review tracking, draft languages, validation and RTL readiness. Runtime
+snapshots from an operator-mounted directory can replace compatible wording and
+add interface languages without rebuilding. One validated snapshot is pinned per
+document; reloading adopts a publication without remounting an active training
+session in response to background text changes. Message keys and placeholders
+form a compatibility contract; application revisions with different contracts
+read separate active files. Bundled and last-known-good catalogs protect startup.
+
 
 Every new or changed learner-facing label, heading, button, table column,
 settings explanation, tooltip, accessibility label, validation or failure notice
