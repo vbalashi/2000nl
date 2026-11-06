@@ -77,7 +77,14 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public,private,pg_t
 DECLARE principal uuid := auth.uid();
 BEGIN
   IF principal IS NULL THEN RAISE EXCEPTION 'unauthorized' USING ERRCODE='42501'; END IF;
-  RETURN private.initialize_starter_training_v1(principal);
+  BEGIN
+    RETURN private.initialize_starter_training_v1(principal);
+  EXCEPTION WHEN OTHERS THEN
+    UPDATE private.starter_training_initializations SET last_failure='unexpected_error',updated_at=now()
+      WHERE user_id=principal AND status='pending';
+    RAISE WARNING 'starter training retry failed: %', SQLSTATE;
+    RETURN 'pending';
+  END;
 END;
 $$;
 REVOKE ALL ON FUNCTION public.retry_starter_training_v1() FROM PUBLIC,anon,authenticated,service_role;

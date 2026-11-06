@@ -67,4 +67,11 @@ describe.skipIf(!url)('new learner starter training',()=>{
   } finally {await registrar.query('rollback');await blocker.query('rollback');registrar.release();blocker.release();}
  });
 
+ test('unexpected initializer errors leave an explicit retryable failure',()=>withTransaction(pool,async c=>{
+  const id=await account(c);await c.query("select set_config('request.jwt.claim.sub',$1,true)",[id]);
+  await c.query(`create or replace function private.initialize_starter_training_v1(p_user_id uuid) returns text language plpgsql as $$ begin raise exception 'fixture failure'; end $$`);
+  expect((await c.query('select public.retry_starter_training_v1() result')).rows[0].result).toBe('pending');
+  expect(await state(c,id)).toEqual({status:'pending',last_failure:'unexpected_error'});
+ }));
+
 });

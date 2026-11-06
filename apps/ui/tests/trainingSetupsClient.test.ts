@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 const { getSession } = vi.hoisted(() => ({ getSession: vi.fn() }));
 vi.mock("@/lib/supabaseClient", () => ({ supabase: { auth: { getSession } } }));
-import { fetchAccountTrainingSetups, saveAccountTrainingSetups } from "@/lib/training/setups/client";
+import { fetchAccountTrainingSetups, initializeStarterTraining, saveAccountTrainingSetups } from "@/lib/training/setups/client";
 import { emptyTrainingSetups } from "@/lib/training/setups/model";
 const fetchMock = vi.fn();
 beforeEach(() => {
@@ -36,4 +36,16 @@ test("contextual Translation survives save and authenticated fetch without sente
  expect(await saveAccountTrainingSetups("a",3,document)).toEqual({kind:"saved",snapshot});
  expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({expectedRevision:3,document});
  expect(await fetchAccountTrainingSetups("a")).toEqual(snapshot);
+});
+
+test("a hung account lookup is bounded and unknown statuses remain retryable", async () => {
+  vi.useFakeTimers();
+  try {
+    getSession.mockImplementationOnce(() => new Promise(() => {}));
+    const pending = initializeStarterTraining("a");
+    await vi.advanceTimersByTimeAsync(12001);
+    expect(await pending).toBe("pending");
+    fetchMock.mockResolvedValueOnce(Response.json({status:"unexpected"}));
+    expect(await initializeStarterTraining("a")).toBe("pending");
+  } finally { vi.useRealTimers(); }
 });

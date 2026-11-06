@@ -66,7 +66,7 @@
     {
       "migrationId": 300,
       "file": "db/migrations/300_new_learner_starter_training.sql",
-      "sha256": "79f5efea39958defef01a0ee3e2e2840debbe4ed1a4b3463fdb8209743fc9349"
+      "sha256": "b07b11b62bfbe7dc17b64d68561c312f7d78090892597f9c58dae9a18f0d4b7a"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-300.sql",

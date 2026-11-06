@@ -1,7 +1,8 @@
+import React from "react";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
-const { read, write } = vi.hoisted(() => ({ read: vi.fn(), write: vi.fn() }));
-vi.mock("@/lib/training/setups/client", () => ({ fetchAccountTrainingSetups: read, saveAccountTrainingSetups: write }));
+const { read, write, initialize } = vi.hoisted(() => ({ read: vi.fn(), write: vi.fn(), initialize: vi.fn() }));
+vi.mock("@/lib/training/setups/client", () => ({ fetchAccountTrainingSetups: read, initializeStarterTraining: initialize, saveAccountTrainingSetups: write }));
 import { useAccountTrainingSetups } from "@/lib/training/setups/useAccountTrainingSetups";
 import { emptyTrainingSetups, type SavedTraining } from "@/lib/training/setups/model";
 const training: SavedTraining = { id: "one", name: "Words", languageCode: "nl", draft: {
@@ -9,7 +10,7 @@ const training: SavedTraining = { id: "one", name: "Words", languageCode: "nl", 
 } };
 const saved = { revision: 1, document: { schemaVersion: 1, trainings: [training], mainTrainingId: "one" } };
 beforeEach(() => {
-  vi.clearAllMocks(); read.mockResolvedValue(emptyTrainingSetups());
+  vi.clearAllMocks(); read.mockResolvedValue(emptyTrainingSetups()); initialize.mockResolvedValue("done");
   write.mockImplementation(async (_user, revision, document) => ({ kind: "saved", snapshot: { revision: revision + 1, document } }));
 });
 test("signed-out users are not fetched and browser presets are never restored", async () => {
@@ -79,4 +80,54 @@ test("focus refresh retains the ready overview until the accepted replacement ar
   expect(result.current.snapshot).toEqual(saved);
   await act(async () => finish({...saved, revision: 2}));
   expect(result.current.snapshot.revision).toBe(2);
+});
+
+test("slow provisioning does not block reads and refreshes after it finishes", async () => {
+  let finish!: (value: string) => void;
+  initialize.mockImplementation(() => new Promise<string>(resolve => { finish = resolve; }));
+  const {result} = renderHook(() => useAccountTrainingSetups("a"));
+  await waitFor(() => expect(result.current.status).toBe("ready"));
+  expect(result.current.snapshot.document.trainings).toEqual([]);
+  read.mockResolvedValue(saved);
+  await act(async () => { finish("complete"); });
+  await waitFor(() => expect(result.current.snapshot).toEqual(saved));
+});
+
+test("Strict Mode cleanup does not suppress the replacement initialization", async () => {
+  const resolvers: Array<(value: string) => void> = [];
+  initialize.mockImplementation(() => new Promise<string>(resolve => { resolvers.push(resolve); }));
+  const {result} = renderHook(() => useAccountTrainingSetups("a"), {wrapper: React.StrictMode});
+  await waitFor(() => expect(initialize).toHaveBeenCalledTimes(2));
+  await act(async () => { resolvers[0]("done"); });
+  read.mockResolvedValue(saved);
+  await act(async () => { resolvers[1]("complete"); });
+  await waitFor(() => expect(result.current.snapshot).toEqual(saved));
+});
+
+test("pending initialization retries while the page stays visible", async () => {
+  vi.useFakeTimers();
+  try {
+    initialize.mockResolvedValueOnce("pending").mockResolvedValue("done");
+    renderHook(() => useAccountTrainingSetups("a"));
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(initialize).toHaveBeenCalledTimes(1);
+    await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
+    expect(initialize).toHaveBeenCalledTimes(2);
+  } finally { vi.useRealTimers(); }
+});
+
+test("a retry completing after unmount cannot schedule another retry", async () => {
+  vi.useFakeTimers();
+  try {
+    let finish!: (value: string) => void;
+    initialize.mockResolvedValueOnce("pending").mockImplementationOnce(() => new Promise<string>(resolve => { finish = resolve; }));
+    const {unmount} = renderHook(() => useAccountTrainingSetups("a"));
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
+    expect(initialize).toHaveBeenCalledTimes(2);
+    unmount();
+    await act(async () => { finish("pending"); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(120000); });
+    expect(initialize).toHaveBeenCalledTimes(2);
+  } finally { vi.useRealTimers(); }
 });

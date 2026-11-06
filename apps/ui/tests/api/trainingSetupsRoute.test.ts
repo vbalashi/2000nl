@@ -6,7 +6,7 @@ vi.mock("@/lib/platform/serverSupabase", () => ({
   jsonNoStore: (body: unknown, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store" } }),
 }));
 vi.mock("@/lib/training/setups/server", () => ({ readAccountTrainingSetups: read }));
-import { GET, PUT } from "@/app/api/training/setups/route";
+import { GET, POST, PUT } from "@/app/api/training/setups/route";
 const snapshot = { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } };
 const request = (body: unknown = { expectedRevision: 0, document: snapshot.document }) =>
   new NextRequest("http://localhost/api/training/setups", { method: "PUT", body: JSON.stringify(body) });
@@ -56,21 +56,21 @@ test("does not mask read failures or invalid persisted data with an empty accoun
   expect((await PUT(request())).status).toBe(503);
 });
 
-test("retries pending starter setup without blocking account reads", async () => {
-  retry.mockRejectedValue(new Error("temporary database failure"));
-  const response = await GET(request());
-  expect(response.status).toBe(200);
-  expect(rpc).toHaveBeenCalledWith("retry_starter_training_v1");
-  expect(await response.json()).toEqual(snapshot);
+test("reads saved settings independently of a pending retry", async () => {
+  expect((await GET(request())).status).toBe(200);
+  expect(rpc).not.toHaveBeenCalled();
 });
-
-test("an unresponsive starter retry cannot hold the saved-training read", async () => {
-  vi.useFakeTimers();
-  try {
-    retry.mockImplementation(() => new Promise(() => {}));
-    const response = GET(request());
-    await vi.advanceTimersByTimeAsync(751);
-    expect((await response).status).toBe(200);
-    expect(read).toHaveBeenCalled();
-  } finally { vi.useRealTimers(); }
+test("initializes only for the authenticated first-party account", async () => {
+  const response = await POST(request());
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual({status:"complete"});
+  expect(rpc).toHaveBeenCalledWith("retry_starter_training_v1");
+  expect(retry).toHaveBeenCalledWith(expect.any(AbortSignal));
+  auth.mockResolvedValue({principal:{authKind:"connected_client"}});
+  expect((await POST(request())).status).toBe(403);
+});
+test("retry errors do not affect subsequent reads", async () => {
+  retry.mockRejectedValue(new Error("temporary database failure"));
+  expect((await POST(request())).status).toBe(503);
+  expect((await GET(request())).status).toBe(200);
 });

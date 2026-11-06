@@ -22,6 +22,25 @@ export async function fetchAccountTrainingSetups(
   if (!snapshot) throw new Error("Invalid training setups response");
   return snapshot;
 }
+/** Initialization is best effort and independent of displaying saved setups. */
+export async function initializeStarterTraining(userId: string, signal?: AbortSignal): Promise<"complete" | "pending" | "done"> {
+  const controller = new AbortController();
+  const cancel = () => controller.abort();
+  signal?.addEventListener("abort", cancel, { once: true });
+  if (signal?.aborted) controller.abort();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const request = authenticatedAccountRequest("/api/training/setups", userId, { method: "POST", signal: controller.signal });
+    const response = await Promise.race([request, new Promise<null>(resolve => {
+      timer = setTimeout(() => { controller.abort(); resolve(null); }, 12000);
+    })]);
+    if (!response?.ok || controller.signal.aborted) return "pending";
+    const body: unknown = await response.json();
+    if (!body || typeof body !== "object" || !("status" in body)) return "pending";
+    return body.status === "complete" ? "complete" : body.status === "superseded" || body.status === "not_applicable" ? "done" : "pending";
+  } catch { return "pending"; }
+  finally { if (timer) clearTimeout(timer); signal?.removeEventListener("abort", cancel); controller.abort(); }
+}
 export async function saveAccountTrainingSetups(
   userId: string,
   revision: number,
