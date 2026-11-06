@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, expect, test, vi } from "vitest";
-const { auth, rpc, read } = vi.hoisted(() => ({ auth: vi.fn(), rpc: vi.fn(), read: vi.fn() }));
+const { auth, rpc, retry, read } = vi.hoisted(() => ({ auth: vi.fn(), rpc: vi.fn(), retry: vi.fn(), read: vi.fn() }));
 vi.mock("@/lib/platform/serverSupabase", () => ({
   getAuthenticatedSupabase: auth,
   jsonNoStore: (body: unknown, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store" } }),
@@ -14,7 +14,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   auth.mockResolvedValue({ supabase: { rpc }, user: { id: "owned-user" }, principal: { authKind: "first_party" } });
   read.mockResolvedValue(snapshot);
-  rpc.mockResolvedValue({ data: { ...snapshot, revision: 1, conflict: false }, error: null });
+  retry.mockResolvedValue({data: "complete", error: null});
+  rpc.mockImplementation((name: string) => name === "retry_starter_training_v1" ? {abortSignal: retry} : Promise.resolve({ data: { ...snapshot, revision: 1, conflict: false }, error: null }));
 });
 test("requires authenticated first-party access before reading or writing", async () => {
   auth.mockResolvedValue(Response.json({ error: "unauthorized" }, { status: 401 }));
@@ -56,9 +57,20 @@ test("does not mask read failures or invalid persisted data with an empty accoun
 });
 
 test("retries pending starter setup without blocking account reads", async () => {
-  rpc.mockRejectedValue(new Error("temporary database failure"));
+  retry.mockRejectedValue(new Error("temporary database failure"));
   const response = await GET(request());
   expect(response.status).toBe(200);
   expect(rpc).toHaveBeenCalledWith("retry_starter_training_v1");
   expect(await response.json()).toEqual(snapshot);
+});
+
+test("an unresponsive starter retry cannot hold the saved-training read", async () => {
+  vi.useFakeTimers();
+  try {
+    retry.mockImplementation(() => new Promise(() => {}));
+    const response = GET(request());
+    await vi.advanceTimersByTimeAsync(751);
+    expect((await response).status).toBe(200);
+    expect(read).toHaveBeenCalled();
+  } finally { vi.useRealTimers(); }
 });

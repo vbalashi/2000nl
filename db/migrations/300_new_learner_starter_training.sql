@@ -46,6 +46,12 @@ BEGIN
         AND r.spelling_key=private.vocabulary_spelling_key_v1(e.headword)
       WHERE e.dictionary_id=dictionary.id AND e.language_code='nl'
     ) <> 100 THEN failure := 'dictionary_frequency_unavailable';
+    ELSIF NOT EXISTS (SELECT 1 FROM private.training_recipe_eligible_cards_v1(
+      p_user_id,ARRAY['word-to-definition'],NULL,'curated','both','auto',ARRAY[]::uuid[],ARRAY[]::text[],
+      jsonb_build_object('dictionaryScope',jsonb_build_object('mode','selected','languageCode','nl','dictionaryIds',jsonb_build_array(dictionary.id)),
+        'vocabulary',jsonb_build_object('mode','frequency','materialKinds','[]'::jsonb,'profile','spoken','from',1,'to',100,'meanings','all')),
+      false,false) WHERE intrinsic_source='new') THEN
+      failure := 'starter_cards_unavailable';
     END IF;
   END IF;
   IF failure IS NOT NULL THEN
@@ -85,7 +91,7 @@ BEGIN
   IF NOT FOUND THEN RETURN NEW; END IF;
   BEGIN
     INSERT INTO private.starter_training_initializations(user_id) VALUES(NEW.id);
-    PERFORM private.initialize_starter_training_v1(NEW.id);
+    -- Only record intent here; dictionary checks run after registration commits.
   EXCEPTION WHEN OTHERS THEN
     RAISE WARNING 'starter training initialization failed for new account: %', SQLSTATE;
     BEGIN
@@ -98,4 +104,5 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+NOTIFY pgrst, 'reload schema';
 COMMIT;

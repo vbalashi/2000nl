@@ -17,7 +17,10 @@ const state=async(c:PoolClient,id:string)=>(await c.query('select status,last_fa
 describe.skipIf(!url)('new learner starter training',()=>{
  const pool=new Pool({connectionString:url});beforeAll(()=>runMigrations(pool),120000);afterAll(()=>pool.end());
  test('persists one main recipe, survives reload and deletion',()=>withTransaction(pool,async c=>{
-  const dictionary=await configured(c),id=await account(c),first=await settings(c,id),item=first.training_setups.trainings[0];
+  const dictionary=await configured(c),id=await account(c);
+  expect(await state(c,id)).toEqual({status:'pending',last_failure:null});
+  await c.query('select private.initialize_starter_training_v1($1)',[id]);
+  const first=await settings(c,id),item=first.training_setups.trainings[0];
   expect(first.training_setups.mainTrainingId).toBe(item.id);expect(first.training_setups_revision).toBe(1);
   expect(item).toMatchObject({name:'Dilum Nederlands — Top 100',languageCode:'nl',draft:{dictionaryIds:[dictionary],modes:['word-to-definition','definition-to-word'],sessionSize:10,vocabulary:{mode:'frequency',profile:'spoken',from:1,to:100}}});
   expect(await state(c,id)).toEqual({status:'complete',last_failure:null});
@@ -30,7 +33,7 @@ describe.skipIf(!url)('new learner starter training',()=>{
   await c.query('select private.initialize_starter_training_v1($1)',[id]);expect((await settings(c,id)).training_setups.trainings).toEqual([]);
  }));
  test('registration survives missing configuration; retry repairs only untouched accounts',()=>withTransaction(pool,async c=>{
-  await c.query('update private.starter_training_config set dictionary_id=null');const id=await account(c);expect(await state(c,id)).toEqual({status:'pending',last_failure:'primary_dictionary_unavailable'});
+  await c.query('update private.starter_training_config set dictionary_id=null');const id=await account(c);await c.query('select private.initialize_starter_training_v1($1)',[id]);expect(await state(c,id)).toEqual({status:'pending',last_failure:'primary_dictionary_unavailable'});
   const other=await account(c);await c.query('update user_settings set training_setups_revision=1 where user_id=$1',[other]);await configured(c);
   expect((await c.query('select private.initialize_starter_training_v1($1) result',[id])).rows[0].result).toBe('complete');expect((await settings(c,id)).training_setups.trainings).toHaveLength(1);
   expect((await c.query('select private.initialize_starter_training_v1($1) result',[other])).rows[0].result).toBe('superseded');
@@ -41,12 +44,27 @@ describe.skipIf(!url)('new learner starter training',()=>{
  }));
  test('frequency gaps remain pending until corrected; authenticated retry is scoped to its caller',()=>withTransaction(pool,async c=>{
   await configured(c);await c.query("delete from private.vocabulary_frequency_ranks where language_code='nl' and profile='spoken' and rank=100");
-  const id=await account(c);expect(await state(c,id)).toEqual({status:'pending',last_failure:'spoken_frequency_unavailable'});
+  const id=await account(c);await c.query('select private.initialize_starter_training_v1($1)',[id]);expect(await state(c,id)).toEqual({status:'pending',last_failure:'spoken_frequency_unavailable'});
   await c.query("insert into private.vocabulary_frequency_ranks values('nl','spoken','starter100',100)");
   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[id]);
   await c.query('set local role authenticated');
   expect((await c.query('select public.retry_starter_training_v1() result')).rows[0].result).toBe('complete');
   await c.query('reset role');expect((await settings(c,id)).training_setups.trainings).toHaveLength(1);
  }));
+
+ test('unrenderable material remains pending even when all ranks match',()=>withTransaction(pool,async c=>{
+  const dictionary=await configured(c),id=await account(c);
+  await c.query('insert into private.unrenderable_ordinary_direct_entries_v1(entry_id) select id from word_entries where dictionary_id=$1 on conflict do nothing',[dictionary]);
+  expect((await c.query('select private.initialize_starter_training_v1($1) result',[id])).rows[0].result).toBe('pending');
+  expect(await state(c,id)).toEqual({status:'pending',last_failure:'starter_cards_unavailable'});
+ }));
+ test('registration does not wait for a locked dictionary configuration',async()=>{
+  const blocker=await pool.connect(),registrar=await pool.connect();
+  try {
+   await blocker.query('begin');await blocker.query('lock table private.starter_training_config in access exclusive mode');
+   await registrar.query('begin');await registrar.query("set local statement_timeout='800ms'");
+   const id=await account(registrar);expect(await state(registrar,id)).toEqual({status:'pending',last_failure:null});
+  } finally {await registrar.query('rollback');await blocker.query('rollback');registrar.release();blocker.release();}
+ });
 
 });

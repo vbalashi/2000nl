@@ -19,7 +19,15 @@ export async function GET(request: NextRequest) {
   const auth = await accountAuth(request);
   if (auth instanceof Response) return auth;
   // Retry only explicit pending registrations; failures never block reading existing setups.
-  try { await auth.supabase.rpc("retry_starter_training_v1"); } catch { /* Best effort; the pending record remains. */ }
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const retry = auth.supabase.rpc("retry_starter_training_v1").abortSignal(controller.signal);
+    await Promise.race([retry, new Promise<void>(resolve => {
+      timer = setTimeout(() => { controller.abort(); resolve(); }, 750);
+    })]);
+  } catch { /* Best effort; the pending record remains. */ }
+  finally { if (timer) clearTimeout(timer); controller.abort(); }
   const snapshot = await readAccountTrainingSetups(auth.supabase, auth.user.id);
   return snapshot ? jsonNoStore(snapshot) : jsonNoStore({ error: "training_setups_unavailable" }, 503);
 }
