@@ -83,9 +83,7 @@ test("fast pending retries are bounded while periodic recovery remains available
 
 test("leaving the card cancels pending translation rechecks", async () => {
   vi.useFakeTimers();
-  vi.mocked(loadWordContextPrompt).mockResolvedValue({
-    state: "translation-pending",
-  });
+  vi.mocked(loadWordContextPrompt).mockImplementation(() => new Promise(() => {}));
   const view = renderHook(() => useWordContextPrompt(input));
   await act(async () => {
     await vi.advanceTimersByTimeAsync(0);
@@ -199,4 +197,18 @@ test("permit arrival preserves the ready prompt and is used only by later curren
  expect(view.result.current).toEqual(ready);expect(loadWordContextPrompt).toHaveBeenCalledOnce();
  await act(async()=>{publishDictionaryTranslationReady({entryId:"entry",targetLanguageCode:"ru"});await Promise.resolve();});
  expect(vi.mocked(loadWordContextPrompt).mock.lastCall?.[0].currentCard).toEqual(permit);
+});
+
+test("a stalled context read exits loading and recovers the same member without restarting the session", async () => {
+  vi.useFakeTimers();
+  const ready = {state:"ready" as const,prompt:{text:"перевод",sourceText:"voorbeeld",contentNodeId:"node",sourceTextFingerprint:"fingerprint"}};
+  vi.mocked(loadWordContextPrompt).mockReset().mockImplementationOnce(() => new Promise(() => {})).mockResolvedValue(ready);
+  const view=renderHook(()=>useWordContextPrompt(input));
+  await act(async()=>{await vi.advanceTimersByTimeAsync(12_001);});
+  expect(view.result.current?.state).toBe("translation-unavailable");
+  expect(vi.mocked(loadWordContextPrompt).mock.calls[0][0].signal?.aborted).toBe(true);
+  await act(async()=>{await vi.advanceTimersByTimeAsync(2_000);});
+  expect(view.result.current).toEqual(ready);
+  expect(loadWordContextPrompt).toHaveBeenCalledTimes(2);
+  expect(vi.mocked(loadWordContextPrompt).mock.lastCall?.[0]).toMatchObject({entryId:input.entryId,sessionId:input.trainingSessionId});
 });
