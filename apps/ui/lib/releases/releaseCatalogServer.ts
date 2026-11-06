@@ -19,13 +19,15 @@ export async function readReleaseCatalog(
     return { items: [], nextVersion: null };
   const client = createHealthSupabaseClient();
   if (!client) return { items: [], nextVersion: null };
+  // Editorial translations have a separate DB contract from interface languages.
+  const catalogLocale = language === "ru" || language === "nl" ? language : "en";
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 3000);
   try {
     const { data, error } = await client
       .rpc("read_app_release_notes_v1", {
         p_max_version: version,
-        p_locale: language,
+        p_locale: catalogLocale,
         p_limit: limit,
         p_before_version: before,
       })
