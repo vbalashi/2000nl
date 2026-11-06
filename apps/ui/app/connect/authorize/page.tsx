@@ -1,4 +1,5 @@
 "use client";
+import {InterfaceCatalogBoundary} from "@/components/system/InterfaceCatalogBoundary";
 
 import React, { useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
@@ -37,7 +38,7 @@ function declineRedirect(redirectUri: string, state: string) {
   window.location.assign(redirect.href);
 }
 
-export default function ConnectAuthorizePage() {
+function ConnectAuthorizePageContent() {
   const language = useInterfaceLanguage();
   const copy = localizedSection("connect")[language];
   const [pageState, setPageState] = useState<PageState>({ status: "loading" });
@@ -236,3 +237,5 @@ export default function ConnectAuthorizePage() {
     </main>
   );
 }
+
+export default function ConnectAuthorizePage() {return <InterfaceCatalogBoundary><ConnectAuthorizePageContent /></InterfaceCatalogBoundary>;}

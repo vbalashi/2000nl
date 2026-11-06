@@ -12,7 +12,7 @@ Do not put prose in JSX, local string variables, column definitions, or message
 setters. Never display raw provider errors as interface copy. Run
 `npm run i18n:check` and `npm run i18n:check-registration` before submitting.
 The [localization guide](docs/interface-localization.md) includes the complete
-workflow and a settings-note example. Operator/admin localization is a separate
+workflow, runtime publication and rollback, and a settings-note example. Operator/admin localization is a separate
 scope; learning content and user-authored names are not interface translations.
 
 Selection/counting changes also require the scale, request-failure recovery and

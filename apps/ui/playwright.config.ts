@@ -26,6 +26,7 @@ export default defineConfig({
     // Version-update tests need deterministic build metadata, not the unknown dev identity.
     env: {
       NEXT_FONT_GOOGLE_MOCKED_RESPONSES: path.join(__dirname, "playwright/fixtures/next-font-google-mocked-responses.cjs"),
+      ...(process.env.PLAYWRIGHT_RUNTIME_CATALOGS === "true" ? {INTERFACE_CATALOG_DIR: process.env.INTERFACE_CATALOG_TEST_DIR ?? path.join(__dirname,"test-results/runtime-catalog-server")} : {}),
       NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321",
       NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon",
       NEXT_PUBLIC_APP_VERSION: "0.0.0-e2e",

@@ -11,7 +11,7 @@ import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import {SettingsPanel} from '@/components/practice/settings/SettingsLayout';
 import s from './onboarding.module.css';
 import settings from '@/components/practice/settings/settings.module.css';
-import {tooltipBounds} from './tooltipBounds';
+import {actionTooltipBounds,tooltipBounds} from './tooltipBounds';
 export type TourPort={prepare:(topic:TourTopic,step:number)=>void;pause:()=>void;completeCore:()=>void;enter?:(topic:TourTopic,step:number)=>void};
 const TourContext=React.createContext<ReturnType<typeof useTour>|null>(null);
 function visible(selector:string):HTMLElement|null {
@@ -55,7 +55,7 @@ function Tooltip({step,tooltipProps}:TooltipRenderProps){
  const canContinue=current.next==='continue'&&Boolean(step.data?.ready);
  return <div {...tooltipProps} data-training-hotkeys-suspended="true" className={s.tooltip}><span className={s.safeArea} aria-hidden="true"/><div className={s.top}><span>{tour.copy.tourName} · {tour.record!.step+1} / {tourFlows[tour.record!.topic].length}</span><button onClick={tour.pause}>{tour.copy.pause}</button></div><h2>{step.title}</h2><p>{step.content}</p>
  {current.id==='interface'&&<p>{tour.copy.pauseIntro}</p>}{current.id==='translation'&&<p>{tour.copy.secondaryMention}</p>}
- {current.next==='continue'?<button disabled={!canContinue} className={s.primary} onClick={tour.advance}>{current.id==='done'?tour.copy.done:tour.copy.continue}</button>:<p className={s.instruction}>{tour.copy.clickHint}</p>}
+ {current.next==='continue'?<button disabled={!canContinue} className={s.primary} onClick={tour.advance}>{current.id==='done'?tour.copy.done:tour.copy.continue}</button>:current.id!=='launch'&&<p className={s.instruction}>{tour.copy.clickHint}</p>}
  {tour.saveError&&<p role="alert">{tour.copy.storageError}</p>}</div>;
 }
 export function useOnboardingQueryLocked(){const tour=React.useContext(TourContext);return tour?.record?.status==='running'&&['collections','stats'].includes(tour.record.topic);}
@@ -81,9 +81,18 @@ function TourOverlay(){
   const parent=await state.platform.getOffsetParent?.(state.elements.floating);
   const rect=await state.platform.convertOffsetParentRelativeRectToViewportRelativeRect!({elements:state.elements,rect:{...state.rects.floating,x:state.x,y:state.y},offsetParent:parent,strategy:state.strategy});
   const desired=step?.id==='done'?{x:viewport.left+(viewport.width-rect.width)/2,y:viewport.top+(viewport.height-rect.height)/2}:{x:rect.x,y:rect.y};
-  const bounded=tooltipBounds(viewport,{width:document.documentElement.clientWidth,height:document.documentElement.clientHeight},safe,rect,desired);
+  const layout={width:document.documentElement.clientWidth,height:document.documentElement.clientHeight};
+  const reference=state.elements.reference.getBoundingClientRect();
+  const interactive=state.elements.reference instanceof HTMLElement&&(state.elements.reference.matches('button,input,a,[role=button]')||Boolean(state.elements.reference.querySelector('button,input,a,[role=button]')));
+  const bounded=(step?.next!=='continue'||interactive)&&step?.id!=='done'
+   ?actionTooltipBounds(viewport,layout,safe,rect,desired,reference)
+   :{...tooltipBounds(viewport,layout,safe,rect,desired),maxHeight:Math.min(viewport.top+viewport.height,layout.height-safe.bottom)-Math.max(viewport.top,safe.top)-24};
+  if(tooltip){
+   const limit=`${bounded.maxHeight}px`;
+   if(tooltip.style.getPropertyValue('--tour-slot-height')!==limit){tooltip.style.setProperty('--tour-slot-height',limit);return {reset:{rects:true}};}
+  }
   return {x:state.x+bounded.x-rect.x,y:state.y+bounded.y-rect.y};
- }}]};},[step?.id,viewportVersion]);
+ }}]};},[step?.id,step?.next,viewportVersion]);
  useEffect(()=>{
   setTarget(null);setWaiting(false);if(!running||!step)return;
   let cancelled=false,frame=0,previous='',stable=0,armed=false;

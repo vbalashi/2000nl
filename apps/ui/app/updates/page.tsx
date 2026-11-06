@@ -1,25 +1,27 @@
+import {getRequestInterfaceSnapshot} from "@/lib/i18n/serverSnapshot";
+import {InterfaceCatalogBoundary} from "@/components/system/InterfaceCatalogBoundary";
 import {formatUiMessage} from "@/lib/uiMessages";
 import Link from "next/link";
 import { appVersionInfo } from "@/lib/appVersion";
 import {
   readReleaseCatalog,
-  releaseLanguage,
 } from "@/lib/releases/releaseCatalogServer";
 import { releaseVersionPattern } from "@/lib/releases/appRelease";
-import { releaseCopy } from "@/lib/releases/releaseCopy";
 import { ReleaseHistory } from "@/components/releases/ReleaseUpdates";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
 import s from "@/components/releases/ReleaseUpdates.module.css";
 export const dynamic = "force-dynamic";
-export const metadata = { title: formatUiMessage(releaseCopy("en").pageTitle,{title:releaseCopy("en").updates}) };
+export async function generateMetadata() { const copy=(await getRequestInterfaceSnapshot()).catalogs.en.features.releases;return {title:formatUiMessage(copy.pageTitle,{title:copy.updates})};}
 export default async function UpdatesPage({
   searchParams,
 }: {
   searchParams: Promise<{ language?: string; before?: string }>;
 }) {
   const params = await searchParams,
-    language = releaseLanguage(params.language),
-    c = releaseCopy(language);
+    snapshot=await getRequestInterfaceSnapshot(),
+    requested=params.language?.toLowerCase().replaceAll("_","-").split("-")[0],
+    language=requested&&Object.hasOwn(snapshot.registry,requested)?requested:"en",
+    c = snapshot.catalogs[language].features.releases;
   const before =
     params.before && releaseVersionPattern.test(params.before)
       ? params.before
@@ -46,7 +48,7 @@ export default async function UpdatesPage({
         ) : !catalog.items.length ? (
           <p>{c.noHistory}</p>
         ) : (
-          <ReleaseHistory items={catalog.items} language={language} full />
+          <InterfaceCatalogBoundary><ReleaseHistory items={catalog.items} language={language} full /></InterfaceCatalogBoundary>
         )}
         {catalog?.nextVersion && (
           <a

@@ -1,20 +1,14 @@
-import { interfaceCatalogs, type MessageCatalog } from "./catalogs.generated";
-import { interfaceLanguages, type InterfaceLanguage } from "./registry";
-
-export { interfaceCatalogs };
+import { type MessageCatalog } from "./catalogs.generated";
+import { getInterfaceSnapshot, interfaceLocaleMap } from "./runtime";
+import type { InterfaceLanguage } from "./registry";
 export type { MessageCatalog };
-export function getInterfaceCatalog(language: InterfaceLanguage): MessageCatalog {
-  return interfaceCatalogs[language];
+export const interfaceCatalogs = interfaceLocaleMap(catalog=>catalog);
+export function getInterfaceCatalog(language:InterfaceLanguage):MessageCatalog {
+  const catalogs=getInterfaceSnapshot().catalogs;
+  return Object.hasOwn(catalogs,language)?catalogs[language]:catalogs.en;
 }
-
-type LocalizedFeatures = { [K in keyof MessageCatalog["features"]]: Record<InterfaceLanguage, MessageCatalog["features"][K]> };
-const features = Object.fromEntries(Object.keys(interfaceCatalogs.en.features).map(section => [section,
-  Object.fromEntries(interfaceLanguages.map(({code}) => [code, interfaceCatalogs[code].features[section as keyof MessageCatalog["features"]]])),
-])) as LocalizedFeatures;
-
-/** Compatibility adapters keep their shape; all text lives in locales/. */
-export function localizedSection<K extends keyof MessageCatalog["features"]>(section: K): LocalizedFeatures[K] {
-  return features[section];
+export function localizedSection<K extends keyof MessageCatalog["features"]>(section:K):Record<InterfaceLanguage,MessageCatalog["features"][K]> {
+  return interfaceLocaleMap(catalog=>catalog.features[section]);
 }
 
 export function formatMessage(template: string, variables: Record<string, string | number>): string {
@@ -22,7 +16,7 @@ export function formatMessage(template: string, variables: Record<string, string
 }
 
 export function mapInterfaceCatalogs<T>(select: (catalog: MessageCatalog) => T): Record<InterfaceLanguage, T> {
-  return Object.fromEntries(interfaceLanguages.map(({code}) => [code, select(getInterfaceCatalog(code))])) as Record<InterfaceLanguage, T>;
+  return interfaceLocaleMap(select);
 }
 
 export function localizedField<K extends keyof MessageCatalog["features"], P extends keyof MessageCatalog["features"][K]>(section: K, field: P): Record<InterfaceLanguage, MessageCatalog["features"][K][P]> {

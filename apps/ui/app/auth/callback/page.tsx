@@ -1,4 +1,5 @@
 "use client";
+import {InterfaceCatalogBoundary} from "@/components/system/InterfaceCatalogBoundary";
 
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -7,7 +8,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useInterfaceLanguage } from "@/lib/i18n/useInterfaceLanguage";
 import { localizedSection } from "@/lib/i18n/catalog";
 
-export default function AuthCallbackPage() {
+function AuthCallbackPageContent() {
   const language = useInterfaceLanguage();
   const router = useRouter();
 
@@ -45,3 +46,5 @@ export default function AuthCallbackPage() {
     </div>
   );
 }
+
+export default function AuthCallbackPage() {return <InterfaceCatalogBoundary><AuthCallbackPageContent /></InterfaceCatalogBoundary>;}

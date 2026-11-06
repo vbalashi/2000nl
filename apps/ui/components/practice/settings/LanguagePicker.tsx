@@ -34,7 +34,7 @@ export function LanguagePicker({
   const copy = getUiMessages(language).languagePicker;
   const [query, setQuery] = useState(""),
     [limit, setLimit] = useState(60);
-  const results = searchCatalogLanguages(query);
+  const results = searchCatalogLanguages(query, language);
   return (
     <DialogSurface
       onDismiss={onClose}

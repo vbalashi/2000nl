@@ -104,20 +104,100 @@ run it automatically to make a failing check pass. Removing an English key also
 requires removing it from the target catalogs; obsolete review entries are pruned
 by a deliberate whole-catalog acknowledgement.
 
-## Catalog delivery and updates
+## Catalog delivery without an application release
 
-Catalogs and the language registry are statically imported into the application
-bundle. A new interface language or a correction to existing wording currently
-requires rebuilding and deploying the app; replacing a JSON file in a running
-container does not update loaded browser bundles. Dictionary content is a separate
-resource and compatible dictionary data does not require an interface rebuild.
-A new dictionary format or renderer can require application changes.
+The app includes a bundled fallback, but the deployed interface is read from a
+versioned, operator-owned snapshot when `INTERFACE_CATALOG_DIR` is configured.
+After the initial deployment of this mechanism, publishing compatible wording or
+an additional language needs no rebuild, container restart or app-version change.
+A normal page reload adopts the published revision. An already open document pins
+its revision: publication never remounts an active card, clears a draft, or changes
+a running training selection. Changing the selected interface language still works
+immediately among the languages available to that document.
 
-[Runtime catalog delivery (#85)](https://github.com/vbalashi/2000nl/issues/85)
-tracks updating compatible message text and registering interface languages
-without a new application build. This is a separate follow-up; it must preserve
-version compatibility, validation, atomic publication and fallback behavior.
-New controls and new rendering logic still require application code.
+`lib/i18n` owns validation, server delivery, startup and compatibility adapters.
+Existing components continue to use the same typed message keys. Locale IDs are
+runtime values validated against the active registry, rather than a fixed union
+of the languages bundled at build time. Module-level adapters and onboarding tours
+resolve through the active snapshot instead of freezing the original translations.
+
+### Publishing or adding a language
+
+Keep one source catalog and its matching translations/review snapshots. A separate
+catalog checkout may contain data changes without changing the application image:
+
+1. Edit existing wording, or prepare/translate a complete new language. Add its
+   autonym, direction and optional formatting locale to that checkout's registry.
+2. Review translations against English. `i18n:review` also accepts `--catalog-dir`;
+   source wording edits require renewed acknowledgement of affected translations.
+3. Publish from `apps/ui`:
+
+   ```sh
+   npm run i18n:publish -- --catalog-dir /path/to/catalog-checkout --out-dir /path/to/catalog-volume
+   ```
+
+   Use `--expect-contract CONTRACT` with the target app’s reported contract to fail
+   early if the source checkout needs different application code. Publication runs
+   the catalog/review checks and validates the complete snapshot.
+   It creates an immutable `<contract>.<revision>.json` archive and atomically
+   replaces `<contract>.json`. It does not edit application code or build assets.
+4. Mount that **directory** read-only into every UI replica and set
+   `INTERFACE_CATALOG_DIR` to its in-container path. Do not bind-mount only the
+   active file: replacement can leave a container reading an old inode. Initial
+   mount/environment provisioning requires the normal deployment workflow; later
+   publications do not. Replicas must receive the same active file.
+5. Verify `/api/interface-catalog` reports the published contract/revision on the
+   target deployment. The server rechecks the file at most every five seconds.
+   Reload the app to see the new text or language.
+
+For a catalog-only checkout, publication does **not** require `i18n:sync`, new
+static imports, or a generated manifest. For changes committed to the application
+repository, continue to run `i18n:sync` so its bundled fallback remains consistent.
+Default document title/description and `/api/interface-manifest` use the same
+runtime English catalog. Interface language does not change dictionary data or
+translation targets. Historical release notes remain separate content.
+
+### Rollback and failure behavior
+
+Activate an archived, compatible revision with the same publication tool:
+
+```sh
+npm run i18n:publish -- --catalog-dir /path/to/catalog-checkout --out-dir /path/to/catalog-volume --snapshot /path/to/catalog-volume/CONTRACT.REVISION.json
+```
+
+A valid server rollback wins over a newer browser cache; revisions are content
+hashes, not a counter that could prevent rollback. Never edit an archive in place.
+Retain archives needed for rollback through the operator's normal retention policy.
+Hosted publication and volume provisioning follow the private managed operational
+workflow; this public application change does not itself deploy or change traffic.
+
+The server accepts only complete registries/catalogs with the expected format,
+message structure and interpolation parameters, and a matching SHA-256 content
+revision. A missing, truncated, incompatible or corrupted file leaves the last
+verified snapshot active in that process, or the bundled fallback on a cold start.
+File reads are bounded to 750 ms and snapshots to 8 MiB, 32 languages and 32 KiB per
+message. The browser validates the bootstrap before mounting preference readers;
+if needed it tries a bounded same-origin read, then a verified compatible local
+copy, then its bundled fallback. The browser retains at most the current and one
+previous contract cache. Blocked/full browser storage cannot block startup.
+Catalog data is rendered as text; the document bootstrap escapes script delimiters.
+Browser integrity verification uses Web Crypto (HTTPS or localhost); unsupported
+contexts retain the bundled fallback.
+
+### Mixed application versions
+
+The compatibility contract hashes message keys, structure, nulls and placeholder
+sets, **not** wording or enabled locale IDs. Existing wording and new translations
+can therefore change independently of the build. Adding a UI element or a message
+key, changing parameters, or changing rendering logic still requires code and a
+new compatible application build. Catalog publication cannot create a new button.
+
+Each binary requests `<its-contract>.json`; keep files for older contracts while
+older replicas are deployed. An old client never consumes a new incompatible
+snapshot: the endpoint returns 409 for a different requested contract and the
+client retains its compatible cache/fallback. Publishing one contract never
+removes another contract's active file. A single snapshot contains its registry and
+all languages, so a new locale cannot become selectable before its text exists.
 
 ## Preparing and enabling a new language
 
@@ -138,7 +218,8 @@ prepares Turkish, which remains disabled until explicitly registered.
    `npm run i18n:check`, `npm run typecheck` and relevant tests.
 8. Check important screens at phone and desktop widths before releasing.
 
-Draft catalogs are not imported or shown in selectors until registered. Registered
+Draft catalogs are not shown in selectors until registered and published (or included
+in the bundled fallback). Registered
 catalogs must match the English shape; the application does not silently replace
 missing translations with English. CI checks all registered languages.
 
@@ -184,10 +265,10 @@ CI also runs `npm run i18n:check-registration`: TypeScript compiles against an
 additional in-memory locale to detect fixed-language maps that ordinary checks
 would miss. This probe writes no files and does not enable a real language.
 
-The default page metadata also comes from `features.appMetadata`. The install
-manifest's name and description are generated from the English source by
-`i18n:sync`, and `i18n:check` detects drift. This metadata uses the site's default
-English locale; learner account preferences are resolved client-side. Icons,
+The default page metadata also comes from `features.appMetadata`. `i18n:sync`
+updates the bundled fallback manifest and `i18n:check` detects drift. Request-time
+metadata and the active manifest endpoint use the validated runtime English
+catalog. Learner account preferences are resolved client-side. Icons,
 brand marks and the language's own native name remain identities rather than
 translated prose. The audit also checks word-bearing CSS `content` literals and direct
 `textContent`, `innerText` and `innerHTML` writes. Current measurement labels are
