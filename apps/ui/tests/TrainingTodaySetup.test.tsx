@@ -80,17 +80,24 @@ const baseProps = {
 const calculateAndStart = async () => {fireEvent.click(await screen.findByRole("button", {name:"Start training"}));};
 const reopenCalculatedTraining = async () => {if(screen.queryByRole("button",{name:"Create training"}))fireEvent.click(screen.getAllByRole("button",{name:/^Edit /})[0]);};
 
+function openWordParts(){
+ const section=screen.queryByRole("button",{name:/^Part of speech/});
+ if(section?.getAttribute("aria-expanded")==="false")fireEvent.click(section);
+}
+
 test("the approved builder filters Dutch word families and passes them to Start", async () => {
   const onStart = vi.fn();
   render(<TrainingTodaySetup {...baseProps} userId="filters" trainingLanguageCode="nl" onStart={onStart} />);
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
+  openWordParts();
   expect(screen.getByRole("button", { name: "Verbs" })).toBeEnabled();
   expect(screen.getByRole("button", { name: "Noun subfilters" })).toBeEnabled();
+  openWordParts();
   fireEvent.click(screen.getByRole("button", { name: "Verbs" }));
   fireEvent.click(screen.getByRole("button", { name: "Noun subfilters" }));
-  fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "de" }));
-  fireEvent.click(screen.getByRole("button", { name: "Close noun subfilters" }));
+  fireEvent.click(within(screen.getByRole("menu")).getByRole("menuitem", { name: "de" }));
+  expect(screen.queryByRole("menu")).toBeNull();
   await calculateAndStart();
   expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ partOfSpeech: ["ww", "zn"], nounArticles: ["de"] }));
 });
@@ -151,6 +158,7 @@ test("a blocked start leaves the builder usable and never launches", async () =>
   render(<TrainingTodaySetup {...baseProps} userId="blocked" trainingLanguageCode="nl" startBlocked onStart={onStart} />);
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
+  openWordParts();
   expect(screen.getByRole("button", { name: "Verbs" })).toBeEnabled();
   expect(screen.getByRole("button", { name: "Start training" })).toBeDisabled();
   fireEvent.click(screen.getByRole("button", { name: "Start training" }));
@@ -185,10 +193,12 @@ test("Back discards builder edits before another training is created", async () 
   render(<TrainingTodaySetup {...baseProps} userId="back-discards" trainingLanguageCode="nl" hasOwnedSession={false} />);
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
+  openWordParts();
   fireEvent.click(screen.getByRole("button", { name: "Verbs" }));
   fireEvent.click(screen.getByRole("button", { name: "Back to Training" }));
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
+  openWordParts();
   expect(screen.getByRole("button", { name: "Verbs" })).toHaveAttribute("aria-pressed", "false");
 });
 
@@ -461,6 +471,7 @@ test("approved builder opens every section collapsed and resets when creating ag
  for(const name of ["Source","Exercises","Filters","Session"])expect(screen.getByRole("button",{name:new RegExp(`^${name} `)})).toHaveAttribute("aria-expanded","false");
  expect(screen.queryByRole("button",{name:"Nouns"})).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:/^Filters /}));
+ openWordParts();
  expect(screen.getByRole("button",{name:"Nouns"})).toBeInTheDocument();
  fireEvent.click(screen.getByRole("button",{name:"Back to Training"}));fireEvent.click(screen.getByRole("button",{name:"Create training"}));
  expect(screen.getByRole("button",{name:/^Filters /})).toHaveAttribute("aria-expanded","false");
@@ -470,8 +481,9 @@ test("approved lexical chips and noun subfilters preserve the canonical launch p
  const onStart=vi.fn();
  render(<TrainingTodaySetup {...baseProps} userId="builder-lexical" trainingLanguageCode="nl" hasOwnedSession={false} onStart={onStart}/>);
  await screen.findByRole("button",{name:"Create training"});fireEvent.click(screen.getByRole("button",{name:"Create training"}));fireEvent.click(screen.getByRole("button",{name:/^Filters /}));
+ openWordParts();
  fireEvent.click(screen.getByRole("button",{name:"Verbs"}));fireEvent.click(screen.getByRole("button",{name:"Noun subfilters"}));
- fireEvent.click(within(screen.getByRole("dialog")).getByRole("button",{name:"de"}));fireEvent.click(screen.getByRole("button",{name:"Close noun subfilters"}));
+ fireEvent.click(within(screen.getByRole("menu")).getByRole("menuitem",{name:"de"}));expect(screen.queryByRole("menu")).toBeNull();
  await calculateAndStart();
  expect(onStart).toHaveBeenCalledWith(expect.objectContaining({partOfSpeech:["ww","zn"],nounArticles:["de"]}));
 });
@@ -517,6 +529,7 @@ test("switching accounts discards an open builder draft", async () => {
   await screen.findByRole("button", { name: "Create training" });
   fireEvent.click(screen.getByRole("button", { name: "Create training" }));
   fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
+  openWordParts();
   fireEvent.click(screen.getByRole("button", { name: "Verbs" }));
   view.rerender(<TrainingTodaySetup {...props} userId="next-builder-owner" />);
   await screen.findByRole("button", { name: "Create training" });
@@ -670,6 +683,7 @@ test("empty-state recovery opens the builder with the selected word filter intac
   render(<TrainingTodaySetup {...baseProps} status="empty" initialDraft={{ ...initialDraft, partOfSpeech: ["ww"] }} />);
   fireEvent.click(screen.getByRole("button", { name: "Adjust filters" }));
   fireEvent.click(screen.getByRole("button", { name: /^Filters / }));
+  openWordParts();
   expect(screen.getByRole("button", { name: "Verbs" })).toHaveAttribute("aria-pressed", "true");
 });
 
@@ -828,6 +842,7 @@ test("editing source and session controls requests availability for the current 
  fireEvent.change(screen.getByRole("slider",{name:"Session size"}),{target:{value:"2"}});
  fireEvent.change(screen.getByRole("slider",{name:"New / review balance"}),{target:{value:"6"}});
  fireEvent.click(screen.getByRole("button",{name:/^Filters /}));
+ openWordParts();
  fireEvent.click(screen.getByRole("button",{name:"Verbs"}));
  expect(availabilityRequests.mock.calls.length).toBeGreaterThan(0);
  expect(availabilityRequests.mock.calls.at(-1)?.[0].enabled).toBe(true);

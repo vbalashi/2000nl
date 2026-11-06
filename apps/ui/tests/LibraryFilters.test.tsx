@@ -122,9 +122,9 @@ test("abbreviations and prefixes use the normal filter draft",()=>{
  fireEvent.click(screen.getByRole("button",{name:"Show results"}));
  expect(apply).toHaveBeenCalledWith({...value,parts:["abbreviation","prefix"]});
 });
-test("Other hides POS, count and Apply omit hidden restrictions, Words restores the draft",()=>{
+test("Phrases hides POS, count and Apply omit hidden restrictions, Words restores the draft",()=>{
  const apply=vi.fn(),preview=vi.fn();render(<LibraryFilters {...props} value={{...value,parts:["noun"],article:"het"}} onDraftChange={preview} onClose={()=>{}} onApply={apply}/>);
- fireEvent.click(screen.getByRole("button",{name:"Other"}));
+ fireEvent.click(screen.getByRole("button",{name:"Phrases"}));
  expect(screen.queryByRole("button",{name:"Nouns"})).not.toBeInTheDocument();
  expect(preview).toHaveBeenLastCalledWith(expect.objectContaining({parts:[],article:null,vocabulary:expect.objectContaining({materialKinds:["other"]})}));
  fireEvent.click(screen.getByRole("button",{name:"Show results"}));expect(apply).toHaveBeenLastCalledWith(expect.objectContaining({parts:[],article:null}));

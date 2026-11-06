@@ -20,7 +20,7 @@ export function PartOfSpeechSelection({value,onChange,language,languageCode, com
  return <><SegmentedControl standard label={b.partOfSpeech}>
   {VOCABULARY_PARTS.map(part=><div className={s.choice} key={part.id}>
    <BuilderChoice active={value.parts.includes(part.id)} onClick={()=>toggle(part.id)}>{b.parts[part.labelKey]}{part.id==="noun"&&value.article&&<span className={s.dot} role="img" aria-label={b.subfiltersActive}/>}</BuilderChoice>
-   {part.id==="noun"&&languageCode==="nl"&&<IconAction label={b.nounSubfilters} aria-haspopup="dialog" aria-expanded={Boolean(anchor)} className={s.disclosure} onClick={event=>{if(!value.parts.includes("noun"))onChange({...value,parts:[...value.parts,"noun"]});setAnchor(event.currentTarget);}}><ChevronDown size={15}/></IconAction>}
+   {part.id==="noun"&&languageCode==="nl"&&<IconAction label={b.nounSubfilters} aria-haspopup={compact?"menu":"dialog"} aria-expanded={Boolean(anchor)} className={s.disclosure} onClick={event=>{if(!value.parts.includes("noun"))onChange({...value,parts:[...value.parts,"noun"]});setAnchor(event.currentTarget);}}><ChevronDown size={15}/></IconAction>}
   </div>)}
  </SegmentedControl>
  {anchor&&compact&&<ActionMenu anchor={anchor} title={b.nounArticle} language={language} onClose={()=>{anchor.focus();setAnchor(null);}} items={nounArticles.map(article=>({id:article??"all",label:article??localizedSection("vocabularySelection")[language].all,trailingIcon:article===value.article?<Check size={14}/>:undefined,onSelect:()=>{onChange({...value,article});anchor.focus();setAnchor(null);}}))}/>}

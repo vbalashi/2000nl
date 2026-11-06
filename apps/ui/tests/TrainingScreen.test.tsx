@@ -1000,6 +1000,11 @@ const clickTrainingAction = async (button: HTMLElement) => {
   } else fireEvent.click(button);
 };
 
+function openWordParts(){
+ const section=screen.queryByRole("button",{name:/^Part of speech/});
+ if(section?.getAttribute("aria-expanded")==="false")fireEvent.click(section);
+}
+
 test("search action opens the dedicated dictionary search surface", async () => {
   render(<TrainingScreen user={user} />);
 
@@ -2041,6 +2046,7 @@ test("setup and the prepared card stay usable while scoped stats are pending", a
   expect(statsRequests).toHaveLength(0);
   fireEvent.click(await screen.findByRole("button", { name: "Create training" }));
   fireEvent.click(await screen.findByRole("button", { name: /^Filters / }));
+  openWordParts();
   expect(screen.getByRole("button", { name: "Verbs" })).toBeEnabled();
   const startButton = screen.getByRole("button", { name: /Calculate training|Training berekenen|Рассчитать тренировку|Start training|Training starten|Начать тренировку/ });
   await waitFor(() => expect(startButton).toBeEnabled());
@@ -2816,7 +2822,7 @@ test("superseded resume restores every still-permitted setup setting before Star
     name: /Start training|Calculate training/,
   });
   for (const section of ["Source", "Exercises", "Filters", "Session"]) {
-    fireEvent.click(await screen.findByRole("button", { name: new RegExp(section) }));
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(`^${section} `) }));
   }
   expect(screen.getAllByRole("button", { name: "Words" })[0]).toHaveAttribute(
     "aria-pressed",
@@ -2915,6 +2921,7 @@ test("pilot Setup preserves saved source and date filters until Start commits th
   fireEvent.click(await screen.findByRole("button", { name: /^Filters / }));
   expect(screen.queryByLabelText("Time window")).not.toBeInTheDocument();
   expect(screen.queryByRole("combobox", { name: "Source" })).not.toBeInTheDocument();
+  openWordParts();
   fireEvent.click(screen.getByRole("button", { name: "Verbs" }));
   expect(savedSetupAccounts.get(user.id)?.document).toEqual({
     schemaVersion: 1, trainings: [savedRecipe], mainTrainingId: savedRecipe.id,
