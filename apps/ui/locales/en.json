@@ -262,7 +262,20 @@
       "more": "More {count}",
       "loadingMore": "Loading…",
       "moreError": "Could not load more results.",
-      "foundCount": "Found: {count}"
+      "foundCount": "Found: {count}",
+      "articleCountZero": "{count} articles",
+      "articleCountOne": "{count} article",
+      "articleCountTwo": "{count} articles",
+      "articleCountFew": "{count} articles",
+      "articleCountMany": "{count} articles",
+      "articleCountOther": "{count} articles",
+      "meaningCountZero": "{count} meanings",
+      "meaningCountOne": "{count} meaning",
+      "meaningCountTwo": "{count} meanings",
+      "meaningCountFew": "{count} meanings",
+      "meaningCountMany": "{count} meanings",
+      "meaningCountOther": "{count} meanings",
+      "articleMeaningCount": "{articles} · {meanings}"
     },
     "activeTrainingCard": {
       "title": "Currently practising",

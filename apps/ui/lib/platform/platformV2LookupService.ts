@@ -198,6 +198,8 @@ export async function performPlatformV2Lookup(
   const rawPage = asRecord(lookupPayload.page);
   if ((libraryScope?.filters || libraryScope?.material) && (!Number.isSafeInteger(rawPage.totalGroups) || Number(rawPage.totalGroups) < 0))
     return { payload: { error: "library_search_contract_invalid" }, status: 409 };
+  if (rawPage.totalMeanings !== undefined && (!Number.isSafeInteger(rawPage.totalMeanings) || Number(rawPage.totalMeanings) < Number(rawPage.totalGroups) || (Number(rawPage.totalGroups) === 0 && Number(rawPage.totalMeanings) !== 0)))
+    return { payload: { error: "library_search_contract_invalid" }, status: 409 };
   const materialMatches = rawPage.matchingEntryIds;
   if (libraryScope?.material && (!Number.isSafeInteger(rawPage.unavailableEntryCount) || Number(rawPage.unavailableEntryCount) < 0))
     return { payload: { error: "library_search_contract_invalid" }, status: 409 };
@@ -206,6 +208,7 @@ export async function performPlatformV2Lookup(
   ))) return { payload: { error: "library_search_contract_invalid" }, status: 409 };
   const librarySearch = libraryScope?.filters || libraryScope?.material ? {
     totalGroups: Number(rawPage.totalGroups),
+    ...(rawPage.totalMeanings !== undefined ? { totalMeanings: Number(rawPage.totalMeanings) } : {}),
     ...(libraryScope.material ? { unavailableEntryCount: Number(rawPage.unavailableEntryCount) } : {}),
     matchingEntryIds: libraryScope.material ? materialMatches as string[] : entries.filter(entry => libraryEntryMatchesFilters(
       entry.part_of_speech, entry.gender, libraryScope.filters!,

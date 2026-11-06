@@ -1618,5 +1618,18 @@
   "features.vocabularySelection.firstMeaningsTwo": {"source":"First {count} meanings","translationHash":"cf243a307ce62953a88f6b178e8213ed839725a113030fe939970f8c849d71d9"},
   "features.vocabularySelection.firstMeaningsFew": {"source":"First {count} meanings","translationHash":"cf243a307ce62953a88f6b178e8213ed839725a113030fe939970f8c849d71d9"},
   "features.vocabularySelection.firstMeaningsMany": {"source":"First {count} meanings","translationHash":"cf243a307ce62953a88f6b178e8213ed839725a113030fe939970f8c849d71d9"},
-  "features.vocabularySelection.firstMeaningsOther": {"source":"First {count} meanings","translationHash":"cf243a307ce62953a88f6b178e8213ed839725a113030fe939970f8c849d71d9"}
+  "features.vocabularySelection.firstMeaningsOther": {"source":"First {count} meanings","translationHash":"cf243a307ce62953a88f6b178e8213ed839725a113030fe939970f8c849d71d9"},
+  "ui.librarySearch.articleCountZero": {"source":"{count} articles","translationHash":"f0bac435ffa29257614f09a771c80335ff1b7dffa0cb6299f87d2d0149d0c9a4"},
+  "ui.librarySearch.articleCountOne": {"source":"{count} article","translationHash":"daf27d2e2c30972cb1d6df7715b50c497dd6f6d3d25ef88eaf22cbfc3e457d7b"},
+  "ui.librarySearch.articleCountTwo": {"source":"{count} articles","translationHash":"f0bac435ffa29257614f09a771c80335ff1b7dffa0cb6299f87d2d0149d0c9a4"},
+  "ui.librarySearch.articleCountFew": {"source":"{count} articles","translationHash":"f0bac435ffa29257614f09a771c80335ff1b7dffa0cb6299f87d2d0149d0c9a4"},
+  "ui.librarySearch.articleCountMany": {"source":"{count} articles","translationHash":"f0bac435ffa29257614f09a771c80335ff1b7dffa0cb6299f87d2d0149d0c9a4"},
+  "ui.librarySearch.articleCountOther": {"source":"{count} articles","translationHash":"f0bac435ffa29257614f09a771c80335ff1b7dffa0cb6299f87d2d0149d0c9a4"},
+  "ui.librarySearch.meaningCountZero": {"source":"{count} meanings","translationHash":"953f2b3e89df7a55ed20c947f5f6e81f8c60f0c06e411839053910810a918421"},
+  "ui.librarySearch.meaningCountOne": {"source":"{count} meaning","translationHash":"486e400c0734561cd7324a86db37417a25b2e3f1ffb4f349626b9b94b45ad52f"},
+  "ui.librarySearch.meaningCountTwo": {"source":"{count} meanings","translationHash":"953f2b3e89df7a55ed20c947f5f6e81f8c60f0c06e411839053910810a918421"},
+  "ui.librarySearch.meaningCountFew": {"source":"{count} meanings","translationHash":"953f2b3e89df7a55ed20c947f5f6e81f8c60f0c06e411839053910810a918421"},
+  "ui.librarySearch.meaningCountMany": {"source":"{count} meanings","translationHash":"953f2b3e89df7a55ed20c947f5f6e81f8c60f0c06e411839053910810a918421"},
+  "ui.librarySearch.meaningCountOther": {"source":"{count} meanings","translationHash":"953f2b3e89df7a55ed20c947f5f6e81f8c60f0c06e411839053910810a918421"},
+  "ui.librarySearch.articleMeaningCount": {"source":"{articles} · {meanings}","translationHash":"8927592b9f4ce10542c44c0b49ddf0f1a976b9a3626497fa23e3c1ab9af12e11"}
 }

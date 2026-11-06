@@ -262,7 +262,20 @@
       "more": "Nog {count}",
       "loadingMore": "Laden…",
       "moreError": "Meer resultaten laden is mislukt.",
-      "foundCount": "Gevonden: {count}"
+      "foundCount": "Gevonden: {count}",
+      "articleCountZero": "{count} artikelen",
+      "articleCountOne": "{count} artikel",
+      "articleCountTwo": "{count} artikelen",
+      "articleCountFew": "{count} artikelen",
+      "articleCountMany": "{count} artikelen",
+      "articleCountOther": "{count} artikelen",
+      "meaningCountZero": "{count} betekenissen",
+      "meaningCountOne": "{count} betekenis",
+      "meaningCountTwo": "{count} betekenissen",
+      "meaningCountFew": "{count} betekenissen",
+      "meaningCountMany": "{count} betekenissen",
+      "meaningCountOther": "{count} betekenissen",
+      "articleMeaningCount": "{articles} · {meanings}"
     },
     "activeTrainingCard": {
       "title": "Nu aan het oefenen",

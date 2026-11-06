@@ -183,6 +183,7 @@ export function useLibrarySearchLifecycle({
       groupPageCursors: [null],
       groupHasMore: false,
       groupTotal: null,
+      meaningTotal: null,
       selectedHeadwordGroupId: null,
     }));
   }, [setState]);
@@ -209,6 +210,8 @@ export function useLibrarySearchLifecycle({
           ...current,
           wordResults: [],
           groupResults: [],
+          groupTotal: null,
+          meaningTotal: null,
           wordTotal: 0,
           groupHasMore: false,
         }));
@@ -221,6 +224,8 @@ export function useLibrarySearchLifecycle({
           ...current,
           wordResults: [],
           groupResults: [],
+          groupTotal: null,
+          meaningTotal: null,
           groupPageCursors: [null],
           groupHasMore: false,
           selectedHeadwordGroupId: null,
@@ -306,6 +311,7 @@ export function useLibrarySearchLifecycle({
               wordResults: [],
               wordTotal: result.librarySearch?.totalGroups ?? groups.length,
               groupTotal: result.librarySearch?.totalGroups ?? null,
+              meaningTotal: result.librarySearch?.totalMeanings ?? null,
               unavailableEntryCount: result.librarySearch?.unavailableEntryCount ?? 0,
               ...projectGroupSelection(current, groups),
             };

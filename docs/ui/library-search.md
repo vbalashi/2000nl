@@ -20,13 +20,21 @@ spacing, reading font, separators, hover, selection and focus behavior. Literal
 query matches use text weight, without adding a highlight color.
 
 Short category names contain no counts. A single counter sits beside the source
-line, above the categories, and describes the active result set using the same
-localized format (for example, `Found: 9`). It remains visible while results
-scroll. Filter drafts preview the same active category and use the same counter
-format. Drafts do not alter the applied main search until Apply.
+line, above the categories. Ordinary browsing, Words and A–Z show separate
+localized article and selected-meaning totals (for example, `73 articles · 115
+meanings`). Articles are dictionary article groups, not unique spellings: homonyms
+or different parts of speech can form separate articles. Meanings count the
+selected entry identities after source and vocabulary filters, before pagination;
+they do not count a complete article opened separately. Reducing meanings per
+entry can therefore change the meaning total while the article total stays the
+same. Examples and Definitions retain their loaded-match counter described below.
+The counter remains visible while results scroll. Filter drafts preview the same
+active category and use the same counter format. Drafts do not alter the applied
+main search until Apply. Older servers without a meaning total retain their
+existing single counter rather than showing a guessed value.
 
 Ordinary filter previews use one count-only request under the same authenticated
-scope. They consume the exact group total without continuing through result pages
+scope. They consume both exact totals from the same request without continuing through result pages
 or projecting articles, learning state or translations. Count requests have no
 cursor and do not change the normal 50-group result page. Examples and definitions
 retain their loaded-match counter policy below.

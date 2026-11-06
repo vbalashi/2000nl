@@ -637,7 +637,7 @@ async function setupAuthenticatedTrainingPage(page: Page) {
     const body = route.request().postDataJSON();
     const query = String(body.query).toLowerCase();
     const items = entries.filter(entry=>entry.headword.toLowerCase().includes(query)).map(entry=>({entry:{id:entry.id,headword:entry.headword},dictionary:{id:"dictionary-example",name:"ExampleDictionary Dutch"}}));
-    await route.fulfill({json:{groups:[{id:body.group,items,total:items.length,page:{hasMore:false,nextCursor:null}}]}});
+    await route.fulfill({json:{groups:[{id:body.group,items,total:items.length,...(["headwords","alphabetical"].includes(body.group)?{wordGroupCount:items.length}:{}),page:{hasMore:false,nextCursor:null}}]}});
   });
 
   await page.route(
@@ -783,7 +783,7 @@ test("the Library dictionary search surface renders @pilot", async ({ page }) =>
   await expect(headwordResult).toBeVisible();
   await expect(headwordResult).toContainText("huis");
   await expect(page.getByText("Dutch · All dictionaries")).toBeVisible();
-  await expect(page.getByText("Found: 1",{exact:true})).toBeVisible();
+  await expect(page.getByText("1 article · 1 meaning",{exact:true})).toBeVisible();
   await expect(headwordResult).toContainText("1 meaning");
   await headwordResult.click();
   await expect(page.getByText("Een gebouw waar mensen wonen.").first()).toBeVisible();

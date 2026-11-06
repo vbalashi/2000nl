@@ -262,7 +262,20 @@
       "more": "Ещё {count}",
       "loadingMore": "Загрузка…",
       "moreError": "Не удалось загрузить следующую страницу.",
-      "foundCount": "Найдено: {count}"
+      "foundCount": "Найдено: {count}",
+      "articleCountZero": "{count} статей",
+      "articleCountOne": "{count} статья",
+      "articleCountTwo": "{count} статьи",
+      "articleCountFew": "{count} статьи",
+      "articleCountMany": "{count} статей",
+      "articleCountOther": "{count} статьи",
+      "meaningCountZero": "{count} значений",
+      "meaningCountOne": "{count} значение",
+      "meaningCountTwo": "{count} значения",
+      "meaningCountFew": "{count} значения",
+      "meaningCountMany": "{count} значений",
+      "meaningCountOther": "{count} значения",
+      "articleMeaningCount": "{articles} · {meanings}"
     },
     "activeTrainingCard": {
       "title": "Сейчас в тренировке",
