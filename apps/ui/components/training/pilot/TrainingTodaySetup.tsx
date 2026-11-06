@@ -356,6 +356,7 @@ export function TrainingTodaySetup({
   };
 
   const requestStart = useCallback(async (nextDraft: TrainingSetupDraft, sessionName?: string, options?:import("./useTrainingPilotController").TrainingStartOptions) => {
+    if (account.snapshot.starterStatus === "pending" && !options?.trainingId) { setPresetMessage(accountCopy.preparingStarter); return; }
     if (isTrainingSetupPaused(nextDraft) || trainingLanguageLoading || pendingLanguage || startBlocked || !material.currentLanguageAllowed || !isTrainingSetupMaterialAvailable(nextDraft, lists, dictionaries)) return;
     if (nextDraft.family === "word-in-context" && translationTargetLanguageCode === null) return;
     if(foreignLanguage&&trainingLanguageCode){setQueuedLanguageStart({owner:userId,language:trainingLanguageCode,draft:structuredClone(nextDraft),name:sessionName,options});onTrainingLanguageChange?.(trainingLanguageCode);return;}
@@ -371,7 +372,7 @@ export function TrainingTodaySetup({
         ownerId: userId, languageCode: trainingLanguageCode});
       setScreen("today");
     }
-  }, [trainingLanguageLoading, pendingLanguage, startBlocked, material.currentLanguageAllowed, lists, dictionaries, translationTargetLanguageCode, onStart, t, userId, trainingLanguageCode,foreignLanguage,onTrainingLanguageChange]);
+  }, [account.snapshot.starterStatus, accountCopy.preparingStarter, trainingLanguageLoading, pendingLanguage, startBlocked, material.currentLanguageAllowed, lists, dictionaries, translationTargetLanguageCode, onStart, t, userId, trainingLanguageCode,foreignLanguage,onTrainingLanguageChange]);
   useEffect(()=>{
     if(!queuedLanguageStart||queuedLanguageStart.owner!==userId||queuedLanguageStart.language!==actualTrainingLanguage||trainingLanguageLoading||dictionariesLoading||startBlocked||material.status!=="ready")return;
     if(!material.currentLanguageAllowed||!isTrainingSetupMaterialAvailable(queuedLanguageStart.draft,lists,dictionaries)){setQueuedLanguageStart(null);setPresetMessage(t.materialUnavailable);return;}
@@ -531,7 +532,7 @@ export function TrainingTodaySetup({
     deletionChangesMain={Boolean(editingTraining && account.snapshot.document.mainTrainingId===editingTraining.id && account.snapshot.document.trainings.length>1)} deleteDisabled={account.pending||account.status!=="ready"}
     onBeginSave={()=>setPresetMessage("")} onStart={()=>void requestStart(draft,trainingName??undefined,editingTraining&&!hasUnsavedTrainingChanges(editingTraining,{name:trainingName??selectedList??"",languageCode:trainingLanguageCode??"nl",draft})?{trainingId:editingTraining.id}:undefined)} canSave={canSaveAccount}
     saveDisabled={account.status!=="ready"||account.pending||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
-    startDisabled={Boolean(queuedLanguageStart)||!canSaveAccount||account.status!=="ready"||account.pending||isTrainingSetupPaused(draft)||startPending||scenarioLoading||startBlocked||!material.currentLanguageAllowed||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
+    startDisabled={(account.snapshot.starterStatus==="pending" && (!editingTraining || hasUnsavedTrainingChanges(editingTraining,{name:trainingName??selectedList??"",languageCode:trainingLanguageCode??"nl",draft})))||Boolean(queuedLanguageStart)||!canSaveAccount||account.status!=="ready"||account.pending||isTrainingSetupPaused(draft)||startPending||scenarioLoading||startBlocked||!material.currentLanguageAllowed||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
     saveLabel={editingPresetId?(localizedField("trainingSetup", "saveChanges"))[interfaceLanguage]:accountCopy.save} startLabel={material.status==="loading"||scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable&&!sourceReferenceBlocked?t.materialUnavailable:(localizedField("trainingSetup", "start"))[interfaceLanguage]}
     saveNotice={presetMessage} notice={<>
       {status === "error" && <p role="alert">{localizedField("trainingSetup", "languageMaterialError")[interfaceLanguage]} <button type="button" onClick={onRetry}>{localizedField("trainingSetup", "retry")[interfaceLanguage]}</button></p>}

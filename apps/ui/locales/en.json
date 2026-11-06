@@ -413,7 +413,8 @@
       "saveFailed": "Could not save. Try again.",
       "conflict": "Training changed on another device. The list has been refreshed; your draft is kept. Review it before saving again.",
       "save": "Save training",
-      "update": "Update training"
+      "update": "Update training",
+      "preparingStarter": "Your starter training is being prepared. You can create another training now."
     },
     "navigation": {
       "primary": "Primary",

@@ -10,7 +10,7 @@ const { availabilityRequests, availabilityCounts } = vi.hoisted(() => ({ availab
 vi.mock("@/lib/training/availability/useTrainingAvailability",()=>({useTrainingAvailability:(input: { enabled: boolean })=>{availabilityRequests(input);return {status:"ready",value:{...availabilityCounts,studyDay:"2026-10-03",timezone:"Europe/Amsterdam",asOf:"2026-10-03T10:00:00Z"},refreshing:false,refreshFailed:false,reload:vi.fn()};}}));
 const { accounts, saveFailure } = vi.hoisted(() => ({ accounts: new Map<string, TrainingSetupsSnapshot>(), saveFailure: { enabled: false } }));
 vi.mock("@/lib/training/setups/client", () => ({
-  fetchAccountTrainingSetups: async (userId: string) => accounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } },
+  initializeStarterTraining: async () => "done", fetchAccountTrainingSetups: async (userId: string) => accounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } },
   saveAccountTrainingSetups: async (userId: string, revision: number, document: TrainingSetupsDocument) => {
     if (saveFailure.enabled) return { kind: "error" };
     const current = accounts.get(userId);
@@ -855,4 +855,14 @@ test('an editor catalog failure keeps its retry inside the visible editor',async
  fireEvent.click(within(message).getByRole('button',{name:'Retry'}));expect(retry).toHaveBeenCalledOnce();
  fireEvent.click(screen.getByRole('button',{name:'Back to Training'}));
  await waitFor(()=>expect(visible).toHaveBeenLastCalledWith(false));
+});
+
+test('pending starter prevents an unsaved builder start while leaving Save available', async () => {
+ const userId='new-pending';const onStart=vi.fn();
+ accounts.set(userId,{revision:0,starterStatus:'pending',document:{schemaVersion:1,trainings:[],mainTrainingId:null}});
+ render(<TrainingTodaySetup {...baseProps} userId={userId} trainingLanguageCode="nl" initialView="setup" onStart={onStart}/>);
+ const start=await screen.findByRole('button',{name:'Start training'});
+ await waitFor(()=>expect(start).toBeDisabled());
+ expect(screen.getByRole('button',{name:'Save training'})).toBeEnabled();
+ fireEvent.click(start);expect(onStart).not.toHaveBeenCalled();
 });

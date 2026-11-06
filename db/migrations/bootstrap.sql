@@ -12,3 +12,5 @@
 \i db/migrations/296_training_vocabulary_batch_selection.sql
 \i db/migrations/297_library_batch_selection.sql
 \i db/migrations/298_library_meaning_count.sql
+
+\i db/migrations/300_new_learner_starter_training.sql

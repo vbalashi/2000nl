@@ -413,7 +413,8 @@
       "saveFailed": "Kon niet bewaren. Probeer opnieuw.",
       "conflict": "De training is gewijzigd op een ander apparaat. De lijst is vernieuwd; je concept is behouden. Controleer het voordat je opnieuw bewaart.",
       "save": "Training bewaren",
-      "update": "Training bijwerken"
+      "update": "Training bijwerken",
+      "preparingStarter": "Je starttraining wordt voorbereid. Je kunt nu een andere training maken."
     },
     "navigation": {
       "primary": "Hoofdnavigatie",

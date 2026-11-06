@@ -45,7 +45,7 @@ vi.mock("@/lib/training/availability/useTrainingAvailability", () => ({
 }));
 const { savedSetupAccounts } = vi.hoisted(() => ({ savedSetupAccounts: new Map<string, { revision: number; document: unknown }>() }));
 vi.mock("@/lib/training/setups/client", () => ({
-  fetchAccountTrainingSetups: vi.fn(async (userId: string) => savedSetupAccounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } }),
+  initializeStarterTraining: async () => "done", fetchAccountTrainingSetups: vi.fn(async (userId: string) => savedSetupAccounts.get(userId) ?? { revision: 0, document: { schemaVersion: 1, trainings: [], mainTrainingId: null } }),
   saveAccountTrainingSetups: vi.fn(async (userId: string, revision: number, document: unknown) => {
     const snapshot = { revision: revision + 1, document };
     savedSetupAccounts.set(userId, snapshot);

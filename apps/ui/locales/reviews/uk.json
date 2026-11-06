@@ -1631,5 +1631,6 @@
   "ui.librarySearch.meaningCountFew": {"source":"{count} meanings","translationHash":"6f81e25425fbd287570834265fce55eafb656aa3cad214e0b6fcff4bda850901"},
   "ui.librarySearch.meaningCountMany": {"source":"{count} meanings","translationHash":"19de06a5c0d8402645ff3e847999480b167846c0fa311eaeb6fbcf2975857b32"},
   "ui.librarySearch.meaningCountOther": {"source":"{count} meanings","translationHash":"6f81e25425fbd287570834265fce55eafb656aa3cad214e0b6fcff4bda850901"},
-  "ui.librarySearch.articleMeaningCount": {"source":"{articles} · {meanings}","translationHash":"8927592b9f4ce10542c44c0b49ddf0f1a976b9a3626497fa23e3c1ab9af12e11"}
+  "ui.librarySearch.articleMeaningCount": {"source":"{articles} · {meanings}","translationHash":"8927592b9f4ce10542c44c0b49ddf0f1a976b9a3626497fa23e3c1ab9af12e11"},
+  "ui.accountTrainingSetups.preparingStarter": {"source":"Your starter training is being prepared. You can create another training now.","translationHash":"1a599fdbf0a1f54ea8cd6c0b823f8a78133e873038934e79cd387ded5d8354ab"}
 }

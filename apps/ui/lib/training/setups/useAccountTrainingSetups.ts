@@ -1,7 +1,7 @@
 "use client";
 import { useUserEventHints } from "@/lib/events/userEventHints";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchAccountTrainingSetups, saveAccountTrainingSetups } from "./client";
+import { fetchAccountTrainingSetups, initializeStarterTraining, saveAccountTrainingSetups } from "./client";
 import { emptyTrainingSetups, parseTrainingSetupsDocument, type SavedTraining, type TrainingSetupsDocument, type TrainingSetupsSnapshot } from "./model";
 export type TrainingSetupsMutationResult = "saved" | "conflict" | "error" | "unavailable";
 type State = { userId: string | undefined; status: "idle" | "loading" | "ready" | "error"; snapshot: TrainingSetupsSnapshot };
@@ -12,6 +12,10 @@ export function useAccountTrainingSetups(userId?: string) {
   const stateRef = useRef(state);
   const ownerRef = useRef(userId);
   const mutationRef = useRef(false);
+  const initializationRef = useRef<{ userId: string } | undefined>();
+  const initializationLifecycle = useRef<AbortController | undefined>();
+  const initializationTimer = useRef<ReturnType<typeof setTimeout> | undefined>();
+  const initializedOwner = useRef<string | undefined>();
   const readGeneration = useRef(0);
   const invalidateReads = useCallback(() => ++readGeneration.current, []);
   stateRef.current = state;
@@ -32,25 +36,48 @@ export function useAccountTrainingSetups(userId?: string) {
       }
     }
   }, [userId, invalidateReads]);
+  const initialize = useCallback(async () => {
+    const signal = initializationLifecycle.current?.signal;
+    if (!signal || signal.aborted || !userId || initializedOwner.current === userId || initializationRef.current?.userId === userId) return;
+    const attempt = { userId };
+    initializationRef.current = attempt;
+    try {
+      const status = await initializeStarterTraining(userId, signal);
+      if (signal?.aborted || ownerRef.current !== userId) return;
+      if (status === "complete" || status === "done") initializedOwner.current = userId;
+      if (status === "complete") await load(signal);
+      if (status === "pending") {
+        clearTimeout(initializationTimer.current);
+        initializationTimer.current = setTimeout(() => {
+          initializationTimer.current = undefined;
+          if (document.visibilityState === "visible" && ownerRef.current === userId) void initialize();
+        }, 60000);
+      }
+    } finally {
+      if (initializationRef.current === attempt) initializationRef.current = undefined;
+    }
+  }, [userId, load]);
   useEffect(() => {
     const controller = new AbortController();
+    initializationLifecycle.current = controller;
     // Invalidate reads and mutations belonging to the previous signed-in account.
     invalidateReads();
     mutationRef.current = false;
     setPending(false);
     setState({ userId, status: userId ? "loading" : "idle", snapshot: emptyTrainingSetups() });
     void load(controller.signal);
-    return () => { controller.abort(); invalidateReads(); };
-  }, [userId, load, invalidateReads]);
+    void initialize();
+    return () => { controller.abort(); if (initializationLifecycle.current === controller) initializationLifecycle.current = undefined; clearTimeout(initializationTimer.current); if (initializationRef.current?.userId === userId) initializationRef.current = undefined; if (initializedOwner.current === userId) initializedOwner.current = undefined; invalidateReads(); };
+  }, [userId, load, initialize, invalidateReads]);
   useEffect(() => {
-    const onFocus = () => { if (document.visibilityState === "visible") void load(); };
+    const onFocus = () => { if (document.visibilityState === "visible") { void load(); void initialize(); } };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onFocus);
     return () => {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onFocus);
     };
-  }, [load]);
+  }, [load, initialize]);
 
   const flushHints = useUserEventHints(userId, ["account.changed"], () => load(), () => mutationRef.current);
   const mutate = useCallback(async (change: (document: TrainingSetupsDocument) => TrainingSetupsDocument | null): Promise<TrainingSetupsMutationResult> => {

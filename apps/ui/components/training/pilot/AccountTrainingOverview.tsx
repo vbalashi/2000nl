@@ -58,11 +58,12 @@ export function AccountTrainingOverview(p:Props){
  // Session identity is independent of a preset: matching by name or equal drafts would
  // wrongly attribute a resumed run after edits or deletion on another device.
  if(p.ownedSession&&!savedSessionTraining)items.unshift({...item(sessionTraining),saved:false,sessionSize:p.ownedSession.reviewTiming==="early"&&sessionTraining.draft.sessionSize==="all-due-today"?copy.allCards:item(sessionTraining).sessionSize,canLaunch:!p.continueDisabled});
- else if(!trainings.length)items.push({...item(defaultTraining),saved:false});
+ else if(!trainings.length)items.push({...item(defaultTraining),saved:false,
+  ...(p.snapshot.starterStatus==="pending"?{canLaunch:false,unavailableReason:accountCopy.preparingStarter}:{})});
  const select=(id:string,action:"edit"|"edit-session"|"load"|"launch")=>{
   const saved=trainings.find(training=>training.id===id);
   if(saved){if(action==="load"||action==="launch"){setSelected({ownerId:p.ownerId,id});writeLastSelectedTraining(p.ownerId,id);}p.onSelect(saved,action);}
-  else if(action==="edit-session"&&p.onEditCurrentSession)p.onEditCurrentSession();else if(action==="edit"||action==="edit-session")p.onCreate();else p.onDefaultLaunch();
+  else if(action==="edit-session"&&p.onEditCurrentSession)p.onEditCurrentSession();else if(action==="edit"||action==="edit-session")p.onCreate();else if(p.snapshot.starterStatus!=="pending")p.onDefaultLaunch();
  };
  return <div className={s.viewport}><div className={s.reading}><ProductionArticleReading>
   <TrainingOverview launchPending={p.launchPending} interfaceLanguage={p.interfaceLanguage}
