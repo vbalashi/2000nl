@@ -72,11 +72,30 @@ END;
 $$;
 REVOKE ALL ON FUNCTION private.initialize_starter_training_v1(uuid) FROM PUBLIC,anon,authenticated,service_role;
 
+-- One SQL statement obtains setup and status from the same MVCC snapshot.
+CREATE FUNCTION public.read_account_starter_snapshot_v1() RETURNS jsonb
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,public,private,pg_temp AS $$
+DECLARE principal uuid := auth.uid(); result jsonb;
+BEGIN
+  IF principal IS NULL OR NOT COALESCE(private.admission_allowed(principal),false) THEN RAISE EXCEPTION 'unauthorized' USING ERRCODE='42501'; END IF;
+  SELECT jsonb_build_object(
+    'revision',COALESCE(settings.training_setups_revision,0),
+    'document',COALESCE(settings.training_setups,'{"schemaVersion":1,"trainings":[],"mainTrainingId":null}'::jsonb),
+    'starterStatus',COALESCE(initialization.status,'not_applicable'))
+  INTO result FROM (SELECT principal AS user_id) p
+  LEFT JOIN public.user_settings settings ON settings.user_id=p.user_id
+  LEFT JOIN private.starter_training_initializations initialization ON initialization.user_id=p.user_id;
+  RETURN result;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.read_account_starter_snapshot_v1() FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.read_account_starter_snapshot_v1() TO authenticated;
+
 CREATE FUNCTION public.retry_starter_training_v1() RETURNS text
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public,private,pg_temp AS $$
 DECLARE principal uuid := auth.uid();
 BEGIN
-  IF principal IS NULL THEN RAISE EXCEPTION 'unauthorized' USING ERRCODE='42501'; END IF;
+  IF principal IS NULL OR NOT COALESCE(private.admission_allowed(principal),false) THEN RAISE EXCEPTION 'unauthorized' USING ERRCODE='42501'; END IF;
   BEGIN
     RETURN private.initialize_starter_training_v1(principal);
   EXCEPTION WHEN OTHERS THEN

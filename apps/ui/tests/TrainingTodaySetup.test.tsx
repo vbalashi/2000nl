@@ -856,3 +856,13 @@ test('an editor catalog failure keeps its retry inside the visible editor',async
  fireEvent.click(screen.getByRole('button',{name:'Back to Training'}));
  await waitFor(()=>expect(visible).toHaveBeenLastCalledWith(false));
 });
+
+test('pending starter prevents an unsaved builder start while leaving Save available', async () => {
+ const userId='new-pending';const onStart=vi.fn();
+ accounts.set(userId,{revision:0,starterStatus:'pending',document:{schemaVersion:1,trainings:[],mainTrainingId:null}});
+ render(<TrainingTodaySetup {...baseProps} userId={userId} trainingLanguageCode="nl" initialView="setup" onStart={onStart}/>);
+ const start=await screen.findByRole('button',{name:'Start training'});
+ await waitFor(()=>expect(start).toBeDisabled());
+ expect(screen.getByRole('button',{name:'Save training'})).toBeEnabled();
+ fireEvent.click(start);expect(onStart).not.toHaveBeenCalled();
+});

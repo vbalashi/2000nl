@@ -74,4 +74,40 @@ describe.skipIf(!url)('new learner starter training',()=>{
   expect(await state(c,id)).toEqual({status:'pending',last_failure:'unexpected_error'});
  }));
 
+ test('atomic read distinguishes pending, completed and existing accounts',()=>withTransaction(pool,async c=>{
+  await configured(c);const id=await account(c);
+  await c.query("select set_config('request.jwt.claim.sub',$1,true)",[id]);
+  const snapshot=async()=>(await c.query('select public.read_account_starter_snapshot_v1() value')).rows[0].value;
+  expect(await snapshot()).toMatchObject({revision:0,starterStatus:'pending',document:{trainings:[]}});
+  await c.query('select public.retry_starter_training_v1()');
+  const complete=await snapshot();expect(complete.starterStatus).toBe('complete');expect(complete.document.trainings).toHaveLength(1);
+  await c.query('delete from private.starter_training_initializations where user_id=$1',[id]);
+  expect((await snapshot()).starterStatus).toBe('not_applicable');
+ }));
+
+ test('concurrent creation never combines an empty recipe with complete status',async()=>{
+  const writer=await pool.connect(),reader=await pool.connect();let id='';
+  try {
+   await writer.query('begin');id=await account(writer);await writer.query('commit');
+   await reader.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);
+   await writer.query('begin');
+   await writer.query(`update user_settings set training_setups='{"schemaVersion":1,"trainings":[{"id":"x"}],"mainTrainingId":"x"}', training_setups_revision=1 where user_id=$1`,[id]);
+   await writer.query("update private.starter_training_initializations set status='complete' where user_id=$1",[id]);
+   const before=(await reader.query('select public.read_account_starter_snapshot_v1() value')).rows[0].value;
+   expect(before).toMatchObject({starterStatus:'pending',document:{trainings:[]}});
+   await writer.query('commit');
+   const after=(await reader.query('select public.read_account_starter_snapshot_v1() value')).rows[0].value;
+   expect(after.starterStatus).toBe('complete');expect(after.document.trainings).toHaveLength(1);
+  } finally {await writer.query('rollback');await writer.query('delete from auth.users where id=$1',[id]);writer.release();reader.release();}
+ });
+ test('direct reader and retry respect admission denial',()=>withTransaction(pool,async c=>{
+  const id=await account(c);await c.query("select set_config('request.jwt.claim.sub',$1,true)",[id]);
+  await c.query("update private.admission_control set enabled=true,mode='approval-required'");
+  await c.query('set local role authenticated');
+  for(const fn of ['read_account_starter_snapshot_v1','retry_starter_training_v1']) {
+   await c.query('savepoint denied');await expect(c.query(`select public.${fn}()`)).rejects.toThrow('unauthorized');await c.query('rollback to savepoint denied');
+  }
+  await c.query('reset role');expect(await state(c,id)).toEqual({status:'pending',last_failure:null});
+ }));
+
 });
