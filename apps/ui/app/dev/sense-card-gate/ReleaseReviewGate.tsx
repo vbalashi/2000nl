@@ -27,7 +27,7 @@ export function ReleaseReviewGate() {
       <section data-review="progress" style={panel}>
         <h2 style={{fontSize:14,fontWeight:600,margin:"0 0 20px"}}>Прогресс сессии</h2>
         <TrainingInteractionPreferencesProvider userId="review" initial={defaultTrainingInteractions} repository={repository}>
-          <TrainingSessionChrome interfaceLanguage="ru" scenario="understanding" mode="word-to-definition" cardFilter="both" sessionName="VanDale 2k" approvedPresentation showProgress unlimited={unlimited} presentation={{kind:"planned",position:unlimited?42:position,total:unlimited?2661:10,fraction:unlimited?42/2661:position/10}} onClose={() => {}} />
+          <TrainingSessionChrome interfaceLanguage="ru" scenario="understanding" mode="word-to-definition" cardFilter="both" sessionName="VanDale 2k" approvedPresentation unlimited={unlimited} presentation={{kind:"planned",position:unlimited?42:position,total:unlimited?2661:10,fraction:unlimited?42/2661:position/10}} onClose={() => {}} />
         </TrainingInteractionPreferencesProvider>
       </section>
       <CardTranslationLanguagesProvider primary="ru" secondary="en">

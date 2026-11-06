@@ -27,6 +27,7 @@ export function resolveTrainingSessionLayoutPhase(
 
 export function TrainingSessionV2Layout({
   phase,
+  contentOnly = false,
   chrome,
   footer,
   notice,
@@ -36,6 +37,7 @@ export function TrainingSessionV2Layout({
   children,
 }: {
   phase: TrainingSessionLayoutPhase;
+  contentOnly?: boolean;
   chrome: React.ReactNode;
   footer: React.ReactNode;
   notice?: React.ReactNode;
@@ -46,16 +48,9 @@ export function TrainingSessionV2Layout({
 }) {
   const showFooter = phase !== "failure" && !approvedPresentation;
   const interaction = phase === "ready" ? readySurface : undefined;
-  return (
-    <>
-      <div
-        data-training-session-main
-        data-training-session-phase={phase}
-        data-authority-refreshing={authorityRefreshing || undefined}
-        className={`${styles.main} ${approvedPresentation ? styles.mainApproved : ""} ${authorityRefreshing ? styles.authorityRefreshing : ""}`}
-      >
-        <section className={styles.stack}>
-          {chrome}
+  const body = (
+      <div data-training-session-main={contentOnly || undefined} data-training-session-phase={phase} data-authority-refreshing={authorityRefreshing || undefined}
+        className={`flex min-h-0 flex-1 flex-col ${authorityRefreshing ? styles.authorityRefreshing : ""}`}>
           <div
             data-testid="training-card-scroll-region"
             className="flex min-h-0 flex-1 flex-col overflow-clip px-0"
@@ -80,9 +75,16 @@ export function TrainingSessionV2Layout({
               </div>
             </div>
           </div>
-        </section>
       </div>
-      {showFooter ? footer : null}
-    </>
   );
+  if (contentOnly) return body;
+  return <>
+    <div data-training-session-main data-training-session-phase={phase}
+      data-authority-refreshing={authorityRefreshing || undefined}
+      className={`${styles.main} ${approvedPresentation ? styles.mainApproved : ""} ${authorityRefreshing ? styles.authorityRefreshing : ""}`}>
+      <section className={styles.stack}>{chrome}{body}</section>
+    </div>
+    {showFooter ? footer : null}
+  </>;
+
 }

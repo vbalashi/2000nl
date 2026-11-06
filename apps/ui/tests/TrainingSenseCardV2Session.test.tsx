@@ -2362,6 +2362,24 @@ describe("TrainingSenseCardV2Session", () => {
     },
   );
 
+  test.each([false,true])("audio preparation leaves the card controls steady and deduplicates playback (context=%s)", async wordInContext => {
+    if(wordInContext)loadContextPrompt.mockResolvedValue({state:"ready",prompt:{text:"Example",sourceText:singleSenseEntry.contentNodes[1].text,contentNodeId:"example-1",sourceTextFingerprint:"example-fingerprint"}});
+    let release!: (url:string)=>void;
+    resolveAudio.mockImplementation(()=>new Promise<string>(resolve=>{release=resolve;}));
+    const play=vi.fn();
+    render(<TestTrainingSenseCardV2Session word={word} wordInContext={wordInContext} trainingSessionId={wordInContext?"audio-context":undefined} mode="word-to-definition" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onPlayResolvedAudio={play} onProgressActionAccepted={vi.fn()}/>);
+    const reveal=await screen.findByRole("button",{name:"Show answer"});
+    const shell=screen.getByTestId("training-sense-card-shell");
+    fireEvent.click(screen.getByRole("button",{name:"Play audio"}));
+    expect(resolveAudio).toHaveBeenCalledTimes(1);
+    expect(reveal).toBeEnabled();
+    expect(screen.getByTestId("training-sense-card-shell")).toBe(shell);
+    fireEvent.click(screen.getByRole("button",{name:"Play audio"}));
+    expect(resolveAudio).toHaveBeenCalledTimes(1);
+    await act(async()=>release("/audio/hand.mp3"));
+    expect(play).toHaveBeenCalledOnce();
+  });
+
   test("resolves and plays audio from the DTO header capability", async () => {
     const onPlayResolvedAudio = vi.fn();
 
@@ -2512,7 +2530,7 @@ describe("TrainingSenseCardV2Session", () => {
     const audioButton = screen.getByRole("button", { name: "Afspelen" });
     fireEvent.click(audioButton);
 
-    await waitFor(() => expect(audioButton).toBeDisabled());
+    expect(audioButton).toBeEnabled();
     expect(audioButton).toBeVisible();
   });
 

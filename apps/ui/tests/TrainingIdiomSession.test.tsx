@@ -1,3 +1,4 @@
+import {TrainingInteractionPreferencesProvider, defaultTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
 import { trainingLifecyclePresentationContract } from "./support/trainingLifecycleContract";
 const focusedNotes=vi.hoisted(()=>({read:vi.fn(),refresh:undefined as undefined|(()=>void|Promise<unknown>)}));
 vi.mock("@/lib/platform/entryNoteMaterialClient",()=>({readEntryNoteMaterial:focusedNotes.read}));
@@ -764,4 +765,53 @@ test('unlimited idiom session shows its exact count without dots',async()=>{
  await screen.findByText('ergens echt genoeg van hebben');
  expect(screen.getByTestId('training-session-position')).toHaveTextContent('42 / 2661');
  expect(screen.queryByRole('progressbar')).toBeNull();
+});
+
+
+test("keeps the same bead track during preparation, grading and completion", async () => {
+  let finish!: (value: Awaited<ReturnType<typeof fetchNextPlatformV2IdiomTrainingSessionExercise>>) => void;
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValueOnce(candidate).mockImplementationOnce(() => new Promise(resolve => {finish=resolve;}));
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({state:"ready",content} as never);
+  vi.mocked(performPlatformV2IdiomExerciseAction).mockResolvedValue({} as never);
+  render(<TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} />);
+  const progress=screen.getByRole("progressbar");
+  expect(progress).toHaveAttribute("aria-valuenow","0");
+  fireEvent.click(await screen.findByRole("button",{name:"Show answer"}));
+  fireEvent.click(screen.getByRole("button",{name:"Good"}));
+  await waitFor(()=>expect(fetchNextPlatformV2IdiomTrainingSessionExercise).toHaveBeenCalledTimes(2));
+  expect(screen.getByRole("progressbar")).toBe(progress);
+  await act(async()=>finish({status:"completed",sessionId:session.sessionId,completedActions:1,requestedTotal:1}));
+  await screen.findByText("Session complete");
+  expect(screen.getByRole("progressbar")).toBe(progress);
+  expect(progress).toHaveAttribute("aria-valuenow","1");
+  expect(screen.queryByTestId("training-session-position")).toBeNull();
+});
+
+
+test.each(["face","answer"])("upward audio on %s keeps the exercise and controls steady", async side => {
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValue(candidate);
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({state:"ready",content:{...content,group:{...content.group,header:{...content.group.header,audio:{audioId:"test-audio",actionId:"play-audio",contentLanguageCode:"nl"}}}}} as never);
+  let finish!: (url:string)=>void;
+  vi.mocked(resolvePlatformV2Audio).mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));
+  const play=vi.fn();
+  render(<TrainingInteractionPreferencesProvider userId="gesture" initial={{...defaultTrainingInteractions,audioSwipe:true}}>
+    <TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()} onPlayResolvedAudio={play}/>
+  </TrainingInteractionPreferencesProvider>);
+  const reveal=await screen.findByRole("button",{name:"Show answer"});
+  if(side==="answer")fireEvent.click(reveal);
+  const controls=screen.getAllByRole("button").filter(button=>!button.hasAttribute("disabled"));
+  const shell=screen.getByTestId("training-sense-card-shell"),progress=screen.getByRole("progressbar");
+  const swipe=()=>{
+    fireEvent.touchStart(shell,{touches:[{clientX:100,clientY:200}]});
+    fireEvent.touchMove(shell,{touches:[{clientX:100,clientY:140}]});
+    fireEvent.touchEnd(shell,{touches:[],changedTouches:[{clientX:100,clientY:140}]});
+  };
+  swipe();
+  await waitFor(()=>expect(resolvePlatformV2Audio).toHaveBeenCalledOnce());
+  expect(screen.getByTestId("training-sense-card-shell")).toBe(shell);
+  expect(screen.getByRole("progressbar")).toBe(progress);
+  for(const button of controls)expect(button).toBeEnabled();
+  swipe();expect(resolvePlatformV2Audio).toHaveBeenCalledOnce();
+  await act(async()=>finish("blob:exercise"));
+  expect(play).toHaveBeenCalledOnce();
 });

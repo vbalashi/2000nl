@@ -176,3 +176,24 @@ lifecycle decisions. A new owner wrapping unchanged controllers would create two
 owners. Both are rejected in favor of replacing orchestration at the existing
 controller seam. Database/FSRS, action semantics, authorization, provider jobs and
 visual redesign are outside this migration.
+
+
+## Session presentation continuity
+
+The session header and `TrainingSessionProgress` outlive individual card renderers.
+`TrainingSessionChrome` owns indicator visibility: a finite planned run retains its
+track during preparation, display-authority reads, recoverable failures, grading
+and completion. Exercise renderers cannot hide it by phase. Explicit progress-off,
+unlimited and ordinal preferences retain their count presentation. Meaning and
+Word in Context use `TrainingSessionFrame` outside the keyed card; idiom and
+sentence keep the same header in their session-owned layout. Terminal counts
+remain authoritative; continuity never exposes a card before its display permit.
+
+`useTrainingAudioPlayback` owns a separate audio request lock for all families.
+Audio preparation does not set a card-wide action/busy state. Duplicate play
+requests coalesce while pending; replacement, hidden presentation and unmount
+abort and fence old audio completions, even if the transport ignores cancellation.
+`useCardVerticalSwipe` handles upward audio in both card renderers, while respecting
+interaction preferences and leaving scrollable reading areas to native scrolling.
+Family-specific payloads, audio targets, learning actions and card layouts remain
+with their existing adapters and renderers.

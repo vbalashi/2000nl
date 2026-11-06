@@ -60,12 +60,16 @@ for (const action of ["restart", "edit"] as const) test(`@pilot finite completio
   await page.getByRole("button", {name: /^(Start training|Начать тренировку|Training starten)$/i}).click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
   const headerBefore = await page.locator("[data-training-session-main]").boundingBox();
+  const progress = page.getByTestId("training-session-progress-track");
+  await expect(progress).toBeVisible();
+  await progress.evaluate(node => node.setAttribute("data-continuity-marker", "same-session"));
   for (let index = 0; index < 3; index++) {
     await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
     const reveal = page.getByRole("button", {name: /Show answer|Показать ответ|Antwoord Tonen/i});
     if (await reveal.isVisible()) await reveal.click();
     await page.getByRole("button", {name: /^(Good|Хорошо|Goed)$/i}).click();
     await expect.poll(() => fixture.requests.progressActions.length).toBe(index + 1);
+    await expect(progress).toHaveAttribute("data-continuity-marker", "same-session");
     if (index < 2) await expect(reveal).toBeVisible();
   }
   const completed = page.getByTestId("training-usable-candidates-exhausted");
@@ -153,4 +157,45 @@ for (const viewport of [
     expect(buttonBounds!.y + buttonBounds!.height).toBeLessThanOrEqual(panelBounds!.y + panelBounds!.height + 1);
   }
   if (viewport.name === "landscape") await page.screenshot({path:testInfo.outputPath("completion-landscape-scrolled.png")});
+});
+
+
+test("@pilot upward audio swipe keeps the card controls visually steady", async ({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  await setupAuthenticatedTrainingAttributionPage(page, 0, {
+    visualProfile:"answer",devTestLogin,
+    settingsOverrides:{training_audio_swipe_enabled:true},
+  });
+  let release!:()=>void;
+  const pending=new Promise<void>(resolve=>{release=resolve;});
+  let playbackRequests=0;
+  await page.route("**/api/platform/v2/audio",async route=>{
+    if(route.request().postDataJSON().prepareOnly) {
+      await route.fulfill({json:{status:"ready"}}); return;
+    }
+    playbackRequests++;
+    await pending;
+    await route.fulfill({contentType:"audio/mpeg",body:"ID3"});
+  });
+  await page.getByRole("button",{name:/^(Start training|Начать тренировку|Training starten)$/i}).click();
+  const shell=page.getByTestId("training-sense-card-shell");
+  await expect(shell).toBeVisible();
+  const reveal=page.getByRole("button",{name:/Show answer|Показать ответ|Antwoord Tonen/i});
+  await page.evaluate(()=>{
+    HTMLMediaElement.prototype.play=function(){document.documentElement.dataset.audioPlayed="yes";return Promise.resolve();};
+  });
+  const before=await reveal.evaluate(node=>getComputedStyle(node).opacity);
+  await shell.evaluate(node=>{
+    const target=node.querySelector("h2") ?? node;
+    const touch={identifier:1,target,clientX:120,clientY:240};
+    target.dispatchEvent(new TouchEvent("touchstart",{bubbles:true,touches:[new Touch(touch)]}));
+    const end=new Touch({...touch,clientY:180});
+    target.dispatchEvent(new TouchEvent("touchmove",{bubbles:true,cancelable:true,touches:[end]}));
+    target.dispatchEvent(new TouchEvent("touchend",{bubbles:true,touches:[],changedTouches:[end]}));
+  });
+  await expect.poll(()=>playbackRequests).toBe(1);
+  await expect(reveal).toBeEnabled();
+  expect(await reveal.evaluate(node=>getComputedStyle(node).opacity)).toBe(before);
+  release();
+  await expect(page.locator("html")).toHaveAttribute("data-audio-played","yes");
 });

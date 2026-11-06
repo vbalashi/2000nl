@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import styles from "./TrainingSessionLayout.module.css";
 import approved from "../approvedTrainingCard.module.css";
 import { FooterStats, type FooterStatsProps } from "../FooterStats";
 import {
@@ -51,6 +52,24 @@ export function TrainingSessionNotice({
 
 }
 
+const SessionFrameContext = React.createContext(false);
+
+/** Session-owned shell survives the keyed card renderer and terminal states. */
+export function TrainingSessionFrame({chrome, children}: {
+  chrome?: TrainingSessionChromeProps | null;
+  children: React.ReactNode;
+}) {
+  if (!chrome) return <>{children}</>;
+  return <SessionFrameContext.Provider value={true}>
+    <div className={`${styles.main} ${styles.mainApproved}`}>
+      <section className={styles.stack}>
+        <TrainingSessionChrome {...chrome} approvedPresentation />
+        {children}
+      </section>
+    </div>
+  </SessionFrameContext.Provider>;
+}
+
 export function TrainingSessionSurface({
   phase,
   chrome,
@@ -60,16 +79,17 @@ export function TrainingSessionSurface({
   authorityRefreshing,
   children,
 }: TrainingSessionSurfaceProps) {
+  const framed = React.useContext(SessionFrameContext);
   const approvedPresentation = Boolean(chrome);
   return (
     <TrainingSessionV2Layout
       phase={phase}
+      contentOnly={framed}
       authorityRefreshing={authorityRefreshing}
-      chrome={chrome ? (
+      chrome={!framed && chrome ? (
         <TrainingSessionChrome
           {...chrome}
           approvedPresentation={approvedPresentation}
-          showProgress={phase === "ready"}
         />
       ) : null}
       footer={approvedPresentation ? null : <FooterStats {...footer} />}

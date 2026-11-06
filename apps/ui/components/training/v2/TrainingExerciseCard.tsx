@@ -10,7 +10,7 @@ import {
   type TrainingExercisePresentation,
 } from "@/lib/training/exerciseCardPresentation";
 import { areTrainingHotkeysSuspended } from "../trainingHotkeys";
-import { useTranslationSwipe } from "@/components/practice/ui/useTranslationSwipe";
+import { useCardVerticalSwipe } from "@/components/practice/ui/useTranslationSwipe";
 import { useTrainingPromptReveal } from "@/components/practice/ui/useTrainingPromptReveal";
 import { RatingControls, type Rating } from "@/components/practice/RatingControls";
 import {
@@ -95,7 +95,7 @@ export function TrainingExerciseCard({
     setTranslationVisible((v) => !v);
   };
 
-  useTranslationSwipe({root: stageRef, enabled: revealed && !actionBusy && translationAvailable, onToggle: () => void toggleTranslation()});
+  useCardVerticalSwipe({root: stageRef, enabled: revealed && !actionBusy && translationAvailable, onToggle: () => void toggleTranslation(), audioEnabled: !actionBusy && Boolean(onPlayAudio), onPlayAudio});
 
   React.useEffect(() => {
     stageRef.current?.focus();
