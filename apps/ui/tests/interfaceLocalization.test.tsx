@@ -3,6 +3,7 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { formatMessage, formatPluralMessage, getInterfaceCatalog, interfaceCatalogs } from "@/lib/i18n/catalog";
 import { interfaceLanguages, isInterfaceLanguage, matchInterfaceLanguage } from "@/lib/i18n/registry";
+import { formatUiCount, getUiMessages } from "@/lib/uiMessages";
 import { detectOnboardingLanguage, getStoredOnboardingLanguage, setOnboardingLanguage } from "@/lib/onboardingI18n";
 import { InterfaceLanguageEffect } from "@/components/system/InterfaceLanguageEffect";
 import { OfflineBanner } from "@/components/system/OfflineBanner";
@@ -53,4 +54,18 @@ test("Arabic count forms distinguish zero, one, two, few, many and other", () =>
 
 test("interpolation keeps replacement text literal and leaves unknown placeholders visible", () => {
   expect(formatMessage("Copy {word}, {word}; {missing}", {word: "$& {literal}"})).toBe("Copy $& {literal}, $& {literal}; {missing}");
+});
+
+test("Ukrainian browser preferences, stored choice and plural forms work independently of learning language", () => {
+  vi.spyOn(navigator, "languages", "get").mockReturnValue(["uk-UA", "en-GB"]);
+  expect(detectOnboardingLanguage("nl")).toBe("uk");
+  expect(matchInterfaceLanguage("UK_ua")).toBe("uk");
+  setOnboardingLanguage("uk");
+  expect(getStoredOnboardingLanguage()).toBe("uk");
+  const ui = getUiMessages("uk");
+  for (const [count, expected] of [[0,"0 карток"], [1,"1 картка"], [2,"2 картки"], [5,"5 карток"], [11,"11 карток"], [21,"21 картка"], [22,"22 картки"], [25,"25 карток"], [101,"101 картка"], [1.5,"1,5 картки"]] as const) {
+    expect(formatUiCount("uk", count, ui.collections, "card")).toBe(expected);
+  }
+  expect(formatUiCount("uk", 1.5, ui.settings, "entry")).toBe("1,5 запису");
+  expect(formatUiCount("uk", 1.5, ui.statistics, "day")).toBe("1,5 дня");
 });

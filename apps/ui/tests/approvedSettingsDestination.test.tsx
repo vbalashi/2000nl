@@ -1,3 +1,4 @@
+import { interfaceLanguages } from "@/lib/i18n/registry";
 import React from "react";
 import { afterEach, beforeAll, afterAll, expect, test, vi } from "vitest";
 import {
@@ -82,7 +83,7 @@ test("phone navigation supports return focus, app exit and a fresh menu on reope
   view.rerender(<SettingsDestination {...p} />);
   expect(screen.getByRole("button", { name: "Back to app" })).toBeTruthy();
 });
-test.each(["en", "nl", "ru"] as const)(
+test.each(interfaceLanguages.map(({code}) => code))(
   "approved sections and accessible controls follow the %s catalog",
   (language) => {
     const p = { ...props(), interfaceLanguage: language };

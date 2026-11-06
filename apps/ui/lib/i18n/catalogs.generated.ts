@@ -2,6 +2,7 @@
 import en from "@/locales/en.json";
 import ru from "@/locales/ru.json";
 import nl from "@/locales/nl.json";
+import uk from "@/locales/uk.json";
 import type { InterfaceLanguage } from "./registry";
 export type MessageCatalog = typeof en;
-export const interfaceCatalogs = { en, ru, nl } satisfies Record<InterfaceLanguage, MessageCatalog>;
+export const interfaceCatalogs = { en, ru, nl, uk } satisfies Record<InterfaceLanguage, MessageCatalog>;
