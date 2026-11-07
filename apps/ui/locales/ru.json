@@ -1903,6 +1903,26 @@
       "interjection": "межд.",
       "abbreviation": "сокр.",
       "prefix": "прист."
+    },
+    "collectionDetails": {
+      "source": "Источник",
+      "materialKind": "Вид материала",
+      "originKind": "Источник",
+      "materialTitle": "Название материала",
+      "creatorName": "Автор / канал",
+      "url": "URL",
+      "fileName": "Имя файла",
+      "publishedOn": "Дата публикации",
+      "video": "Видео",
+      "article": "Статья",
+      "text": "Текст",
+      "book": "Книга",
+      "other": "Другое",
+      "youtube": "YouTube",
+      "web": "Веб",
+      "localFile": "Локальный файл",
+      "manual": "Вручную",
+      "preview": "Макет: сведения об источнике демонстрационные и не сохраняются."
     }
   },
   "tour": {

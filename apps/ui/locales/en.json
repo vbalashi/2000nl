@@ -1903,6 +1903,26 @@
       "interjection": "interj.",
       "abbreviation": "abbr.",
       "prefix": "prefix"
+    },
+    "collectionDetails": {
+      "source": "Source",
+      "materialKind": "Material kind",
+      "originKind": "Source",
+      "materialTitle": "Material title",
+      "creatorName": "Author / channel",
+      "url": "URL",
+      "fileName": "File name",
+      "publishedOn": "Publication date",
+      "video": "Video",
+      "article": "Article",
+      "text": "Text",
+      "book": "Book",
+      "other": "Other",
+      "youtube": "YouTube",
+      "web": "Web",
+      "localFile": "Local file",
+      "manual": "Manual",
+      "preview": "Preview — source details are demonstration data; changes are not saved."
     }
   },
   "tour": {

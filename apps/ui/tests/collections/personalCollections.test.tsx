@@ -16,6 +16,9 @@ test("unlabelled projection changes only display; open keeps exact collection id
  render(<PersonalCollections {...props}/>);await screen.findByText("My lesson");
  fireEvent.click(screen.getByRole("button",{name:"Unlabelled"}));expect(screen.queryByText("My lesson")).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:"All collections"}));fireEvent.click(screen.getByRole("button",{name:"My lesson"}));
+ expect(props.onOpen).not.toHaveBeenCalled();
+ const details=screen.getByRole("complementary",{name:"My lesson"});
+ fireEvent.click(within(details).getByRole("button",{name:"View words"}));
  expect(props.onOpen).toHaveBeenCalledWith(props.collections[0]);expect(request).toHaveBeenCalledTimes(1);
 });
 test("409 preserves draft and rereads without automatic write replay",async()=>{
@@ -58,4 +61,16 @@ test("label View words preserves aggregate identity without changing assignments
  fireEvent.click(screen.getByRole("menuitem",{name:"View words"}));
  expect(onOpenLabel).toHaveBeenCalledWith(snapshot.labels[0]);
  expect(request.mock.calls.filter(call=>call[1])).toHaveLength(0);
+});
+
+test("details do not survive account change or removal from the authorized rows",async()=>{
+ const view=render(<PersonalCollections {...props}/>);await screen.findByText("My lesson");
+ fireEvent.click(screen.getByRole("button",{name:"My lesson"}));
+ expect(screen.getByRole("complementary",{name:"My lesson"})).toBeInTheDocument();
+ view.rerender(<PersonalCollections {...props} userId="another-owner"/>);
+ expect(screen.queryByRole("complementary",{name:"My lesson"})).toBeNull();
+ view.rerender(<PersonalCollections {...props}/>);await screen.findByRole("button",{name:"My lesson"});
+ fireEvent.click(screen.getByRole("button",{name:"My lesson"}));
+ view.rerender(<PersonalCollections {...props} collections={[]}/>);
+ expect(screen.queryByRole("complementary",{name:"My lesson"})).toBeNull();
 });

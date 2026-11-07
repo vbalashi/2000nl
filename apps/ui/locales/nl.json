@@ -1903,6 +1903,26 @@
       "interjection": "tsw.",
       "abbreviation": "afk.",
       "prefix": "voorv."
+    },
+    "collectionDetails": {
+      "source": "Bron",
+      "materialKind": "Soort materiaal",
+      "originKind": "Bron",
+      "materialTitle": "Titel van het materiaal",
+      "creatorName": "Auteur / kanaal",
+      "url": "URL",
+      "fileName": "Bestandsnaam",
+      "publishedOn": "Publicatiedatum",
+      "video": "Video",
+      "article": "Artikel",
+      "text": "Tekst",
+      "book": "Boek",
+      "other": "Anders",
+      "youtube": "YouTube",
+      "web": "Web",
+      "localFile": "Lokaal bestand",
+      "manual": "Handmatig",
+      "preview": "Voorbeeld: brongegevens zijn demonstratiegegevens en worden niet opgeslagen."
     }
   },
   "tour": {

@@ -1903,6 +1903,26 @@
       "interjection": "виг.",
       "abbreviation": "скор.",
       "prefix": "преф."
+    },
+    "collectionDetails": {
+      "source": "Джерело",
+      "materialKind": "Вид матеріалу",
+      "originKind": "Джерело",
+      "materialTitle": "Назва матеріалу",
+      "creatorName": "Автор / канал",
+      "url": "URL",
+      "fileName": "Ім’я файлу",
+      "publishedOn": "Дата публікації",
+      "video": "Відео",
+      "article": "Стаття",
+      "text": "Текст",
+      "book": "Книга",
+      "other": "Інше",
+      "youtube": "YouTube",
+      "web": "Веб",
+      "localFile": "Локальний файл",
+      "manual": "Вручну",
+      "preview": "Макет: відомості про джерело демонстраційні й не зберігаються."
     }
   },
   "tour": {
