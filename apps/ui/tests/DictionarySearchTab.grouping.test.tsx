@@ -1021,4 +1021,7 @@ test('an unavailable material source never renders retained article rows',async(
  await act(async()=>{render(<Harness locale="en" collection sourceRead={{collectionId:'owned-list',type:'user',status:'error',onRetry:vi.fn()}} initial={{query:'',applyListFilter:true,groupResults:buildLibraryHeadwordGroupResults([firstGroup]),groupTotal:1}}/>);});
  expect(document.querySelector('[data-group-id="group-goed-main"]')).not.toBeInTheDocument();
  expect(screen.queryByText('goed')).not.toBeInTheDocument();
+ expect(screen.queryByTestId('library-group-pagination')).not.toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:/^1 article$/})).not.toBeInTheDocument();
+ expect(screen.queryByRole('menuitem',{name:'Select articles'})).not.toBeInTheDocument();
 });
