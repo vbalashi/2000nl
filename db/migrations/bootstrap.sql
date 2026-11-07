@@ -44,3 +44,4 @@
 \i db/migrations/338_collection_composition_plans.sql
 \i db/migrations/339_collection_composition_confirmation.sql
 \i db/migrations/340_collection_plan_validation.sql
+\i db/migrations/341_collection_composition_receipts.sql

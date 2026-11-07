@@ -18,10 +18,23 @@ const url=getDbUrl();
     await c.query('rollback to savepoint invalid_plan');
    }
    const plan=(await c.query('select prepare_collection_composition_v1($1,$2) value',[list,{action:'remove',entryIds:[entry]}])).rows[0].value;
+   const outsider=randomUUID();await ensureUserWithSettings(c,outsider);
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[outsider]);
+   await c.query('set local role authenticated');
+   expect((await c.query('select read_collection_composition_plan_v1($1) value',[plan.planId])).rows[0].value).toEqual({planId:plan.planId,status:'unknown'});
+   await c.query('savepoint outsider_confirm');
+   await expect(c.query('select confirm_collection_composition_v1($1)',[plan.planId])).rejects.toThrow('collection_plan_unavailable');
+   await c.query('rollback to savepoint outsider_confirm');await c.query('reset role');
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
+
    expect((await c.query('select count(*)::int n from user_word_list_items where list_id=$1',[list])).rows[0].n).toBe(1);
+   await c.query('set local role authenticated');
+   expect((await c.query('select read_collection_composition_plan_v1($1) value',[plan.planId])).rows[0].value.status).toBe('pending');
    const receipt=(await c.query('select confirm_collection_composition_v1($1) value',[plan.planId])).rows[0].value;
    expect(receipt.status).toBe('committed');
    expect((await c.query('select confirm_collection_composition_v1($1) value',[plan.planId])).rows[0].value).toEqual(receipt);
+   expect((await c.query('select read_collection_composition_plan_v1($1) value',[plan.planId])).rows[0].value).toEqual(receipt);
+   await c.query('reset role');
    expect((await c.query('select count(*)::int n from user_word_list_items where list_id=$1',[list])).rows[0].n).toBe(0);
    await c.query('insert into user_word_list_items(list_id,word_id) values($1,$2)',[list,entry]);
    const stale=(await c.query('select prepare_collection_composition_v1($1,$2) value',[list,{action:'remove',entryIds:[entry]}])).rows[0].value;
