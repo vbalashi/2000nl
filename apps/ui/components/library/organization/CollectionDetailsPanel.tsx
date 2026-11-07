@@ -3,7 +3,7 @@ import React,{useEffect,useState} from "react";
 import {DialogSurface} from "@/components/practice/ui/DialogSurface";
 import overlays from "@/components/practice/library/libraryOverlays.module.css";
 import {localizedSection} from "@/lib/i18n/catalog";
-import {X,Share2,LockKeyhole} from "lucide-react";
+import {X,Share2,LockKeyhole,Tags,List} from "lucide-react";
 import type {CollectionDetails} from "@/lib/collections/details/model";
 import type {OnboardingLanguage} from "@/lib/onboardingI18n";
 import {formatUiCount} from "@/lib/uiMessages";
@@ -24,7 +24,7 @@ export function CollectionDetailsPanel({details,labelNames,locale,isShared,onClo
   {source&&<><h2>{copy.source}</h2><dl className={s.detailFields}>{values.filter(([,value])=>value).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{label===copy.url&&value&&/^https?:\/\//i.test(value)?<a href={value} target="_blank" rel="noreferrer">{value}</a>:label===copy.publishedOn&&value?new Intl.DateTimeFormat(locale,{year:"numeric",month:"long",day:"numeric",timeZone:"UTC"}).format(new Date(`${value}T12:00:00Z`)):value}</dd></div>)}</dl></>}
   <h2>{t.labels}</h2><div className={s.detailLabels}>{labelNames.length?labelNames.map(name=><span key={name}>{name}</span>):<p>{t.addLabels}</p>}</div>
   <p className={s.detailMetadata}>{isShared?<Share2 size={16}/>:<LockKeyhole size={16}/>} {isShared?t.shared:t.private}</p>
-  <footer>{details.capabilities.canEditLabels&&<button type="button" onClick={onLabels}>{t.assign}</button>}<button type="button" onClick={onOpen}>{t.open}</button></footer>
+  <footer className={s.detailActions}>{details.capabilities.canEditLabels&&<button type="button" onClick={onLabels}><Tags size={16} aria-hidden="true"/>{t.assign}</button>}<button type="button" onClick={onOpen}><List size={16} aria-hidden="true"/>{t.open}</button></footer>
  </section>;
 }
 

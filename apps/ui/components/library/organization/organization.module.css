@@ -94,7 +94,7 @@
 @media(max-width:700px){.collection{padding:8px 4px}.collection .viewWords{display:inline-flex;font-size:var(--practice-text-small);padding:4px}.catalogHeader>button:last-child{width:auto}.catalogHeader>button:last-child span{display:inline}.organizer .mobileScope{width:auto;max-width:60%}.catalogHeader .mobileScope{flex:1}.scopeDialog .labelPanel{overflow:hidden}.scopeDialog .labelList{overflow:auto}}
 
 .organizer .treeDisclosure{background:transparent;border:0;min-width:20px;padding:0;flex:0 0 20px}
-.organizer .sectionHeading{background:transparent;border:0;justify-content:flex-start;padding:8px 0;font-size:var(--practice-text-body-lg);font-weight:500;width:100%}
+.organizer .sectionHeading{background:transparent;border:0;justify-content:flex-start;padding:8px 0;font-size:var(--practice-text-body);font-weight:500;color:var(--practice-text-secondary);width:100%}
 .collectionSection{flex-shrink:0}.collectionSection+.collectionSection{margin-top:8px}
 
 .withDetails{grid-template-columns:240px minmax(0,1fr) minmax(280px,340px)}
@@ -119,3 +119,9 @@
 .treeSpacer{flex:0 0 20px}
 .labelList>button[aria-pressed]{padding-inline-start:32px}
 .labelRow>button:last-child,.collection>button:last-child{color:var(--practice-text-muted)}
+.collectionSection>.collection{margin-inline-start:24px}
+.editor .assignmentSearch{flex-direction:row}
+.editor .assignmentSearch input:not([type=checkbox]){border:0;padding:0;min-height:0;background:transparent;flex:1}
+.detailsPane .detailActions{border-top:1px solid var(--practice-border);padding-top:12px;justify-content:space-between;flex-wrap:wrap}
+.detailsPane .detailActions button{border-color:transparent;background:transparent;color:var(--practice-text-secondary)}
+.detailsPane .detailActions button:last-child{background:var(--practice-surface-subtle);color:var(--practice-text)}

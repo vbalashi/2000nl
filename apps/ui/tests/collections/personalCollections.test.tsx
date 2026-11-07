@@ -81,7 +81,37 @@ test("changing label scope closes details and does not reopen them on return",as
  expect(screen.getByRole("complementary",{name:"My lesson"})).toBeInTheDocument();
  fireEvent.click(screen.getByRole("button",{name:"Unlabelled"}));
  expect(screen.queryByRole("complementary",{name:"My lesson"})).toBeNull();
- fireEvent.click(screen.getByRole("button",{name:"YouTube",exact:true}));
+ fireEvent.click(screen.getByRole("button",{name:/^YouTube$/}));
  expect(screen.getByRole("button",{name:"My lesson"})).toBeInTheDocument();
  expect(screen.queryByRole("complementary",{name:"My lesson"})).toBeNull();
+});
+
+test("saving labels leaves details open even after removing the current scope label",async()=>{
+ request.mockImplementation((_signal,mutation)=>Promise.resolve(mutation?{...snapshot,revision:5,assignments:[]}:snapshot));
+ render(<PersonalCollections {...props}/>);await screen.findByRole("button",{name:"My lesson"});
+ fireEvent.click(screen.getByRole("button",{name:/^YouTube$/}));
+ fireEvent.click(screen.getByRole("button",{name:"My lesson"}));
+ fireEvent.click(within(screen.getByRole("complementary",{name:"My lesson"})).getByRole("button",{name:"Choose labels"}));
+ const dialog=screen.getByRole("dialog");
+ expect(screen.getByRole("complementary",{name:"My lesson"})).toBeInTheDocument();
+ fireEvent.click(within(dialog).getByRole("checkbox",{name:"YouTube"}));
+ fireEvent.click(within(dialog).getByRole("button",{name:"Save"}));
+ await waitFor(()=>expect(screen.queryByRole("dialog")).toBeNull());
+ expect(screen.getByRole("complementary",{name:"My lesson"})).toBeInTheDocument();
+ expect(request.mock.calls.find(call=>call[1])?.[1].operation).toMatchObject({type:"set-collection-labels",label_ids:[]});
+});
+
+test("label search preserves hidden selected assignments",async()=>{
+ const otherId="00000000-0000-4000-8000-000000000003";
+ request.mockResolvedValue({...snapshot,labels:[...snapshot.labels,{...snapshot.labels[0],id:otherId,name:"Books"}]});
+ render(<PersonalCollections {...props}/>);await screen.findByRole("button",{name:"My lesson"});
+ fireEvent.click(screen.getByRole("button",{name:"My lesson"}));
+ fireEvent.click(within(screen.getByRole("complementary",{name:"My lesson"})).getByRole("button",{name:"Choose labels"}));
+ const dialog=screen.getByRole("dialog");
+ fireEvent.change(within(dialog).getByRole("searchbox",{name:"Search labels"}),{target:{value:"Books"}});
+ expect(within(dialog).queryByRole("checkbox",{name:"YouTube"})).toBeNull();
+ fireEvent.click(within(dialog).getByRole("checkbox",{name:"Books"}));
+ fireEvent.click(within(dialog).getByRole("button",{name:"Save"}));
+ await waitFor(()=>expect(screen.queryByRole("dialog")).toBeNull());
+ expect(request.mock.calls.find(call=>call[1])?.[1].operation.label_ids).toEqual([labelId,otherId]);
 });
