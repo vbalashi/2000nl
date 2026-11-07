@@ -35,3 +35,11 @@ test('receipt must match original operation and resource',async()=>{
  expect(parseLabelShareReceipt({...receipt,action:'open'},command)).toBeNull();
  expect(parseLabelShareReceipt({...receipt,result:{...receipt.result,labelId:'22222222-2222-4222-8222-222222222222'}},command)).toBeNull();
 });
+
+test('group page cursor must identify its final unique collection',async()=>{
+ const {parseLabelShareCollectionsPage}=await import('@/lib/collections/sharing/labelSharingContract');
+ const page={labelId,collections:[{collectionId:labelId,name:'lesson'}],nextCursor:labelId};
+ expect(parseLabelShareCollectionsPage(page)).toEqual(page);
+ expect(parseLabelShareCollectionsPage({...page,collections:[...page.collections,...page.collections]})).toBeNull();
+ expect(parseLabelShareCollectionsPage({...page,nextCursor:'22222222-2222-4222-8222-222222222222'})).toBeNull();
+});

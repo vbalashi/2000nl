@@ -59,3 +59,19 @@ export async function readLabelShareState(userId:string,labelId:string,signal:Ab
  if(!parsed||parsed.labelId!==id)throw new Error('label_sharing_state_unavailable');
  return parsed;
 }
+
+import {parseLabelShareCollectionsPage,type LabelShareCollectionsPage} from './labelSharingContract';
+export async function readLabelShareCollections(userId:string,labelId:string,after:string|null,signal:AbortSignal):Promise<LabelShareCollectionsPage>{
+ if(!copyUuid(labelId)||after!==null&&!copyUuid(after))throw new Error('invalid_share_request');
+ const id=labelId.toLowerCase();const params=new URLSearchParams({labelId:id});
+ if(after)params.set('after',after.toLowerCase());
+ signal.throwIfAborted();const headers=await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const response=await platformFetchWithTimeout(`/api/library/label-sharing/collections?${params}`,{
+  method:'GET',headers,signal,credentials:'same-origin',cache:'no-store',
+ });
+ const value:unknown=response.ok?await response.json():null;
+ await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const parsed=parseLabelShareCollectionsPage(value);
+ if(!parsed||parsed.labelId!==id||after&&parsed.collections.some(row=>row.collectionId<=after.toLowerCase()))throw new Error('label_sharing_collections_unavailable');
+ return parsed;
+}

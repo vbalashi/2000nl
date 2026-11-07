@@ -56,3 +56,14 @@ export function parseLabelShareReceipt(v:unknown,expected:LabelShareCommand):Lab
  const result=parseLabelShareState(v.result);
  return result&&result.labelId===('labelId'in expected?expected.labelId:null)?v as LabelShareReceipt:null;
 }
+export type LabelShareCollectionsPage={labelId:string;collections:Array<{collectionId:string;name:string}>;nextCursor:string|null};
+export function parseLabelShareCollectionsPage(v:unknown):LabelShareCollectionsPage|null{
+ if(!record(v)||!keys(v,['labelId','collections','nextCursor'])||!copyUuid(v.labelId)||!Array.isArray(v.collections)||v.collections.length>100||v.nextCursor!==null&&!copyUuid(v.nextCursor))return null;
+ let previous='';
+ for(const row of v.collections){
+  if(!record(row)||!keys(row,['collectionId','name'])||!copyUuid(row.collectionId)||typeof row.name!=='string'||row.name.length>1000||row.collectionId<=previous)return null;
+  previous=row.collectionId;
+ }
+ if(v.nextCursor!==null&&v.nextCursor!==previous)return null;
+ return v as LabelShareCollectionsPage;
+}
