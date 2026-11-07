@@ -16,3 +16,11 @@ test('audience conflicts are actionable errors',async()=>{
  fetcher.mockResolvedValue(Response.json({error:'label_audience_changed'},{status:409}));
  await expect(confirmLabelOrganization(id,id,new AbortController().signal)).rejects.toThrow('label_audience_changed');
 });
+
+test('receipt lookup is a GET and never confirms a pending plan',async()=>{
+ const {readLabelOrganizationReceipt}=await import('@/lib/collections/sharing/labelOrganizationClient');
+ fetcher.mockResolvedValue(Response.json({planId:id,status:'pending'}));
+ expect(await readLabelOrganizationReceipt(id,id,new AbortController().signal)).toEqual({planId:id,status:'pending'});
+ expect(fetcher.mock.calls[0][1].method).toBe('GET');
+ expect(fetcher.mock.calls[0][1].body).toBeUndefined();
+});

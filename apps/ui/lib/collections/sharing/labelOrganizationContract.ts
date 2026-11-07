@@ -17,3 +17,12 @@ export function parseLabelOrganizationPlan(v:unknown):LabelOrganizationPlan|null
  if(!object(v)||!keys(v,['planId','audienceRevision','delta','copyRequired'])||!copyUuid(v.planId)||typeof v.audienceRevision!=='string'||!/^[0-9a-f]{64}$/.test(v.audienceRevision)||typeof v.copyRequired!=='boolean'||!object(v.delta)||!keys(v.delta,['added','removed','pathsChanged'])||typeof v.delta.pathsChanged!=='boolean'||!pairs(v.delta.added)||!pairs(v.delta.removed))return null;
  return v as LabelOrganizationPlan;
 }
+
+import {parseLabelsSnapshot,type CollectionLabelsSnapshot} from '@/lib/collections/labels/model';
+export type LabelOrganizationReceipt={planId:string;status:'pending'|'expired'|'unknown'}|{planId:string;status:'committed';result:CollectionLabelsSnapshot};
+export function parseLabelOrganizationReceipt(v:unknown,planId:string):LabelOrganizationReceipt|null{
+ if(!object(v)||v.planId!==planId)return null;
+ if(['pending','expired','unknown'].includes(String(v.status)))return keys(v,['planId','status'])?v as LabelOrganizationReceipt:null;
+ if(v.status!=='committed'||!keys(v,['planId','status','result']))return null;
+ const result=parseLabelsSnapshot(v.result);return result?{planId,status:'committed',result}:null;
+}

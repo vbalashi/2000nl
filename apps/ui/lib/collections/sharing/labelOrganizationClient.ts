@@ -24,3 +24,14 @@ export async function confirmLabelOrganization(userId:string,planId:string,signa
  const parsed=parseLabelsSnapshot(await request(userId,'confirm',{planId:planId.toLowerCase()},signal));
  if(!parsed)throw new Error('label_plan_contract_invalid');return parsed;
 }
+
+import {parseLabelOrganizationReceipt,type LabelOrganizationReceipt} from './labelOrganizationContract';
+export async function readLabelOrganizationReceipt(userId:string,planId:string,signal:AbortSignal):Promise<LabelOrganizationReceipt>{
+ if(!copyUuid(planId))throw new Error('invalid_label_operation');
+ const id=planId.toLowerCase();signal.throwIfAborted();
+ const headers=await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const response=await platformFetchWithTimeout(`/api/library/label-sharing/organization/receipt?planId=${encodeURIComponent(id)}`,{method:'GET',headers,signal,credentials:'same-origin',cache:'no-store'});
+ const value:unknown=response.ok?await response.json():null;
+ await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const parsed=parseLabelOrganizationReceipt(value,id);if(!parsed)throw new Error('label_plan_receipt_unavailable');return parsed;
+}

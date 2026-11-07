@@ -8,3 +8,10 @@ test('audience plans require exact, unique server projection',()=>{
  expect(parseLabelOrganizationPlan({...plan,operation:{}})).toBeNull();
  expect(parseLabelOrganizationPlan({...plan,delta:{...plan.delta,added:[pair,pair]}})).toBeNull();
 });
+
+test('receipt binds the plan and rejects payload on pending status',async()=>{
+ const {parseLabelOrganizationReceipt}=await import('@/lib/collections/sharing/labelOrganizationContract');
+ expect(parseLabelOrganizationReceipt({planId:id,status:'pending'},id)).toEqual({planId:id,status:'pending'});
+ expect(parseLabelOrganizationReceipt({planId:id,status:'pending',result:{}},id)).toBeNull();
+ expect(parseLabelOrganizationReceipt({planId:id,status:'committed',result:{revision:1,labels:[],assignments:[]}},id)?.status).toBe('committed');
+});
