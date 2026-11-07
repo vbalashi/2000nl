@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Check, FileText, Folder, Search, X } from "lucide-react";
+import { BookOpen, Check, Folder, Layers, Search, X } from "lucide-react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { getUiMessages } from "@/lib/uiMessages";
 import { type LibraryEntryFilters } from "@/lib/platform/librarySearchScope";
@@ -13,12 +13,14 @@ import {DEFAULT_VOCABULARY_SELECTION} from "@/lib/vocabulary/selection";
 import {VocabularyFilters,VocabularyFilterSummary} from "../vocabulary/VocabularyFilters";
 import {VOCABULARY_PART_LABELS} from "@/lib/vocabulary/partsOfSpeech";
 import { LibraryPresentationContext } from "./LibraryPresentationContext";
+import {SourceTypeControl,type SourceKind} from "../ui/SourceTypeControl";
+import {localizedField} from "@/lib/i18n/catalog";
 export type LibraryFilterDraft = LibraryEntryFilters & { languageCode: string; dictionaryId: string | null; applyListFilter?: boolean; collectionId?: string | null; labelId?: string | null; labelName?: string | null };
 export type LibraryFilterOption = { id: string | null; label: string };
 export const LIBRARY_PART_LABELS = VOCABULARY_PART_LABELS;
 export function LibraryFilters({ value, languageOptions, sourceOptions, locale, countContent, sourceNotice,
   canApply = true, collectionOptions = [], labelOptions = [], onDraftChange, onClose, onApply, renderSources }: {
-  renderSources?:(props:{options:LibraryFilterOption[];selected:string|null;select:(id:string|null)=>void;query:string;locale:OnboardingLanguage})=>React.ReactNode;
+  renderSources?:(props:{options:LibraryFilterOption[];selected:string|null;select:(id:string|null)=>void;query:string;locale:OnboardingLanguage;kind:SourceKind})=>React.ReactNode;
   collectionLabel?: string; collectionOptions?: LibraryFilterOption[]; labelOptions?: LibraryFilterOption[];
   value: LibraryFilterDraft; languageOptions: LibraryFilterOption[]; sourceOptions: LibraryFilterOption[];
   locale: OnboardingLanguage; countContent: React.ReactNode; sourceNotice?: React.ReactNode; canApply?: boolean;
@@ -31,6 +33,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
   const [draft, setDraft] = useState(value);
   const update = (patch: Partial<LibraryFilterDraft>) => setDraft(current => ({ ...current, ...patch }));
   const [query, setQuery] = useState("");
+  const [kind,setKind]=useState<SourceKind>("all");
   const [filtersOpen,setFiltersOpen]=useState(true);
   const [sourceOpen, setSourceOpen] = useState(inlinePanel);
   const vocabulary=draft.vocabulary??DEFAULT_VOCABULARY_SELECTION;
@@ -54,7 +57,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
     else update({ dictionaryId: id?.slice(11) ?? null, collectionId: null, applyListFilter: false, labelId: null, labelName: null });
   };
   const sourceName = draft.labelId ? labelOptions.find(option => option.id === draft.labelId)?.label ?? copy.noSources : draft.applyListFilter && draft.collectionId ? collectionOptions.find(option=>option.id===draft.collectionId)?.label ?? copy.noSources : draft.dictionaryId ? sourceOptions.find(option => option.id === draft.dictionaryId)?.label ?? copy.noSources : copy.allSources;
-  const visibleOptions = options.filter(option => `${option.id ?? ""} ${option.label}`.toLowerCase().includes(query.trim().toLowerCase()));
+  const visibleOptions = options.filter(option => kind==='all'||(kind==='dictionary'&&(!option.id||option.id.startsWith('dictionary:')))||(kind==='collection'&&(option.id?.startsWith('collection:')||option.id?.startsWith('label:')))).filter(option => `${option.id ?? ""} ${option.label}`.toLowerCase().includes(query.trim().toLowerCase()));
   // Keep word choices as a draft for returning to Words, but never submit hidden restrictions.
   const effectiveDraft = React.useMemo<LibraryFilterDraft>(() => !showParts
     ? { ...draft, parts: [], article: null } : draft, [draft, showParts]);
@@ -76,12 +79,13 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
           </div>
           <BuilderSection title={builder.source} summary={sourceName} open={sourceOpen} onToggle={() => setSourceOpen(open => !open)}>
             <div className={f.sourceToolbar}>
-              {searchOpen || options.length > 10 ? <label className={f.search}><Search size={16}/><input autoFocus={searchOpen} aria-label={copy.searchSources} placeholder={copy.sourcesPlaceholder} value={query} maxLength={200} onChange={event => setQuery([...event.target.value].slice(0,100).join(''))}/></label>
+              {searchOpen ? <label className={f.search}><Search size={16}/><input autoFocus={searchOpen} aria-label={copy.searchSources} placeholder={copy.sourcesPlaceholder} value={query} maxLength={200} onChange={event => setQuery([...event.target.value].slice(0,100).join(''))} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();setSearchOpen(false);setQuery('');}}}/></label>
                 : <button type="button" className={f.icon} aria-label={copy.searchSources} aria-expanded={searchOpen} onClick={() => setSearchOpen(true)}><Search size={16}/></button>}
+              <SourceTypeControl locale={locale} value={kind} onChange={setKind}/>
             </div>
             {sourceNotice}
-            <div className={f.sourceList}>{(renderSources??presentation?.renderSources) ? (renderSources??presentation?.renderSources)!({options, selected: selectedSource, select: selectSource, query, locale}) : visibleOptions.map(option => <button type="button" key={option.id ?? "all"} className={f.sourceOption} aria-pressed={selectedSource === option.id} onClick={() => selectSource(option.id)}>
-              <span className={f.sourceName}>{option.id?.startsWith("label:") ? <Folder size={15} aria-hidden="true"/> : option.id?.startsWith("collection:") ? <FileText size={15} aria-hidden="true"/> : null}{option.label}</span>{selectedSource === option.id && <Check size={14} aria-hidden="true"/>}
+            <div className={f.sourceList}>{(renderSources??presentation?.renderSources) ? (renderSources??presentation?.renderSources)!({options, selected: selectedSource, select: selectSource, query, locale, kind}) : visibleOptions.map(option => <button type="button" key={option.id ?? "all"} className={f.sourceOption} aria-label={option.label} aria-pressed={selectedSource === option.id} onClick={() => selectSource(option.id)}>
+              <span className={f.sourceName}>{option.id?.startsWith("label:") ? <Folder size={15} aria-hidden="true"/> : option.id?.startsWith("collection:") ? <Layers size={15} aria-hidden="true"/> : option.id ? <BookOpen size={15} aria-hidden="true"/> : null}{option.label}</span><span className={f.sourceMeta}>{selectedSource === option.id && <Check size={14} aria-hidden="true"/>}{option.id&&!option.id.startsWith("label:")&&<small>{localizedField("sourcePicker",option.id.startsWith("dictionary:")?"dictionarySingular":"collectionSingular")[locale]}</small>}</span>
             </button>)}</div>
             {!renderSources&&!presentation?.renderSources&&!visibleOptions.length && <p className={f.help}>{copy.noSources}</p>}
             {presentation?.renderSourceActions?.()}

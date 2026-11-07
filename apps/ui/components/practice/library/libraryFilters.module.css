@@ -92,3 +92,9 @@
 /* Match the inner edges of the section headings and choices. */
 .meanings { padding:24px 18px 22px; }
 @media(max-width:700px) { .meanings { padding-inline:12px; } }
+
+/* Source choices share the training picker typography and type vocabulary. */
+.sourceList{scrollbar-width:none;margin-top:8px}.sourceList::-webkit-scrollbar{display:none}
+.sourceOption{font-size:var(--practice-text-caption);min-height:40px}
+.sourceName{flex:1;min-width:0}.sourceMeta{display:inline-flex;align-items:center;gap:7px;flex:none;color:var(--practice-text-muted)}.sourceMeta small{font-size:var(--practice-text-label)}
+.sourceToolbar{justify-content:flex-start;align-items:center;gap:8px;flex-wrap:wrap}

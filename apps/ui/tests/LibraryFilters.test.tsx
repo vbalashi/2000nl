@@ -148,3 +148,18 @@ test("reset clears selection while preserving independent list sorting",()=>{
  const apply=vi.fn();render(<LibraryFilters {...props} value={{...value,sort:"spoken",parts:["noun"]}} onClose={()=>{}} onApply={apply}/>);
  fireEvent.click(screen.getByRole("button",{name:"Reset filters"}));fireEvent.click(screen.getByRole("button",{name:"Show results"}));expect(apply).toHaveBeenCalledWith({...value,sort:"spoken"});
 });
+
+test("source type navigation and search preserve a selected collection until Apply",()=>{
+ const apply=vi.fn();render(<LibraryFilters {...props} collectionOptions={[{id:"lesson",label:"My lesson"}]} onClose={()=>{}} onApply={apply}/>);
+ fireEvent.click(screen.getByRole("button",{name:/^Source/}));
+ fireEvent.click(screen.getByRole("button",{name:"My lesson"}));
+ fireEvent.click(screen.getByRole("button",{name:"Dictionaries"}));
+ expect(screen.queryByRole("button",{name:"My lesson"})).not.toBeInTheDocument();
+ expect(screen.getByRole("button",{name:"Real source"})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Collections"}));
+ expect(screen.queryByRole("button",{name:"Real source"})).not.toBeInTheDocument();
+ expect(screen.getByRole("button",{name:"My lesson"})).toHaveAttribute("aria-pressed","true");
+ expect(apply).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByRole("button",{name:"Show results"}));
+ expect(apply).toHaveBeenCalledWith(expect.objectContaining({collectionId:"lesson",applyListFilter:true}));
+});
