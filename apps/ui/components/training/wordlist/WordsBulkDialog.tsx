@@ -95,8 +95,8 @@ export function WordsBulkDialog({userId,language,lists,selection,onClose,onDone,
   const read=async()=>{const rows: {collectionId:string;isShared:boolean;subscriberCount:number}[]=[];
    for(let offset=0;offset<ids.length;offset+=200)rows.push(...await readOwnedCollectionAccessMetadata(userId,ids.slice(offset,offset+200),abort.signal));
    if(!abort.signal.aborted)setAccess({userId,rows:new Map(rows.map(row=>[row.collectionId,row]))});
-  };void read().catch(()=>{if(!abort.signal.aborted)setAccess(null);});return()=>abort.abort();
- },[userId,accessIds,preview?.planId]);
+  };void read().catch(()=>{if(!abort.signal.aborted){setAccess(null);setError(copy.failed);}});return()=>abort.abort();
+ },[userId,accessIds,preview?.planId,copy.failed]);
  const available=[...created,...lists.filter(list=>!created.some(item=>item.id===list.id))];
  const choices=available.filter(list=>list.type==='user'&&list.ownership!=='received'&&list.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
  return <><DialogSurface className={s.dialog} onDismiss={()=>{if(!action.current)onClose();}} aria-labelledby={titleId} lang={language}>
