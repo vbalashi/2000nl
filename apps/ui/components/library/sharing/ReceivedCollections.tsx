@@ -1,6 +1,7 @@
 'use client';
 import { localizedSection } from "@/lib/i18n/catalog";
 
+import type {SharedCatalogSelection} from './SharedCatalogControls';
 import {CollectionSortControl} from '@/components/library/organization/CollectionSortControl';
 import React,{useState,useRef,useEffect} from 'react';
 import {Share2,Plus,Search,MoreHorizontal} from 'lucide-react';
@@ -22,9 +23,10 @@ import {labelRows} from '@/lib/collections/labels/catalog';
 import overlays from '@/components/practice/library/libraryOverlays.module.css';
 import s from '../organization/organization.module.css';
 const copy=localizedSection("receivedCollections");
-export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=false,onChanged,catalogOverride,hasGroups=false,onOpenCollectionId}:{userId:string;active:boolean;locale:OnboardingLanguage;onOpen:(row:ReceivedCollection)=>void;onAdd:()=>void;embedded?:boolean;onChanged?:()=>void;hasGroups?:boolean;onOpenCollectionId?:(id:string)=>void;catalogOverride?:ReturnType<typeof useReceivedCatalog>}){
- const [query,setQuery]=useState('');
- const actionFocus=useRef<HTMLButtonElement|null>(null),addButton=useRef<HTMLButtonElement|null>(null),searchInput=useRef<HTMLInputElement|null>(null);
+export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=false,onChanged,catalogOverride,hasGroups=false,onOpenCollectionId,selection}:{userId:string;active:boolean;locale:OnboardingLanguage;onOpen:(row:ReceivedCollection)=>void;onAdd:()=>void;embedded?:boolean;onChanged?:()=>void;hasGroups?:boolean;selection?:SharedCatalogSelection;onOpenCollectionId?:(id:string)=>void;catalogOverride?:ReturnType<typeof useReceivedCatalog>}){
+ const [localQuery,setQuery]=useState('');
+ const actionFocus=useRef<HTMLButtonElement|null>(null),addButton=useRef<HTMLButtonElement|null>(null),localSearchInput=useRef<HTMLInputElement|null>(null);
+ const searchInput=selection?.searchInputRef??localSearchInput;
  const [menu,setMenu]=useState<{row:ReceivedCollection;anchor:HTMLButtonElement}|null>(null);
  const groupsEnabled=process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED==='true';
  const paths=useCollectionAccessPaths(userId,groupsEnabled?menu?.row.id??null:null);
@@ -32,12 +34,13 @@ export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=
  const [detail,setDetail]=useState<{userId:string;id:string}|null>(null);
  const labels=usePersonalLabels(active&&detail?.userId===userId,userId);
  const [action,setAction]=useState<{kind:'forward';row:ReceivedCollection}|{kind:'unsubscribe';row:Pick<ReceivedCollection,'id'|'name'>}|null>(null);
- useEffect(()=>{if(action||!actionFocus.current)return;const target=actionFocus.current.isConnected?actionFocus.current:addButton.current??searchInput.current;target?.focus({preventScroll:true});actionFocus.current=null;},[action]);
+ useEffect(()=>{if(action||!actionFocus.current)return;const target=actionFocus.current.isConnected?actionFocus.current:addButton.current??searchInput.current;target?.focus({preventScroll:true});actionFocus.current=null;},[action,searchInput]);
  const [dismissed,setDismissed]=useState<string|null>(null);
  const pending=active?readUnsubscribeJournal(tabUnsubscribeStore(),userId):null;
  const pendingKey=pending?JSON.stringify([userId,pending.command.operationId]):null;
  const closeUnsubscribe=()=>{const current=readUnsubscribeJournal(tabUnsubscribeStore(),userId);setDismissed(current?JSON.stringify([userId,current.command.operationId]):null);setAction(null);};
- const [sort,setSort]=useState<ReceivedCatalogQuery['sort']>('recent');
+ const [localSort,setSort]=useState<ReceivedCatalogQuery['sort']>('recent');
+ const query=selection?.query??localQuery,sort=selection?.sort??localSort;
  const connectedCatalog=useReceivedCatalog({userId,active:active&&!catalogOverride,query:{query,sort,scope:'all',labelId:null,limit:50}});
  const catalog=catalogOverride??connectedCatalog;
  const t=copy[locale],common=organizationCopy(locale),actions=receivedActionCopy(locale);
@@ -45,9 +48,9 @@ export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=
  return <section className={`${s.catalog} ${s.received}`} aria-label={t.added}>
   {!embedded&&<header className={s.catalogHeader}><h2>{t.added}</h2><button ref={addButton} type="button" onClick={onAdd}><Plus size={16}/><span>{t.add}</span></button></header>}
   {pendingKey&&pendingKey===dismissed&&<button type="button" onClick={()=>setDismissed(null)}>{actions.check}</button>}
-  <div className={s.filters}><label className={s.search}><Search size={16} aria-hidden="true"/><input ref={searchInput} aria-label={common.search} placeholder={common.search} maxLength={100} value={query} onChange={event=>setQuery(event.target.value)}/></label>
-   <CollectionSortControl locale={locale} value={sort} onChange={setSort}/></div>
-  {catalog.status==='loading'?<div className={s.state} role="status">{common.loading}</div>:catalog.status==='error'?<div className={s.state}><p role="alert">{t.error}</p><button onClick={()=>void catalog.refresh()}>{common.retry}</button></div>:catalog.status==='ready'&&catalog.collections.length===0&&(!hasGroups||Boolean(query.trim()))?<p className={s.state}>{query.trim()?common.noResults:t.empty}</p>:null}
+  {!selection&&<div className={s.filters}><label className={s.search}><Search size={16} aria-hidden="true"/><input ref={searchInput} aria-label={common.search} placeholder={common.search} maxLength={100} value={query} onChange={event=>setQuery(event.target.value)}/></label>
+   <CollectionSortControl locale={locale} value={sort} onChange={setSort}/></div>}
+  {catalog.status==='loading'?<div className={s.state} role="status">{common.loading}</div>:catalog.status==='error'?<div className={s.state}><p role="alert">{t.error}</p><button onClick={()=>void catalog.refresh()}>{common.retry}</button></div>:catalog.status==='ready'&&catalog.collections.length===0&&!hasGroups?<p className={s.state}>{query.trim()?common.noResults:t.empty}</p>:null}
   <div className={s.results}>{catalog.collections.map(row=><article className={s.collection} key={row.id}><span className={s.accessIcon} title={t.shared}><Share2 size={16}/></span><div className={s.collectionCopy}><button className={s.collectionName} onClick={()=>setDetail({userId,id:row.id})}>{row.name}</button><p>{formatUiCount(locale,row.itemCount,common,'meaning')}</p></div><button type="button" aria-label={`${common.more} · ${row.name}`} onClick={event=>setMenu({row,anchor:event.currentTarget})}><MoreHorizontal size={16} strokeWidth={1.5}/></button></article>)}</div>
   {catalog.nextCursor&&<button className={s.loadMore} disabled={catalog.loadingMore} onClick={()=>void catalog.loadMore()}>{catalog.loadingMore?common.loading:common.moreResults}</button>}
  {menu&&<ActionMenu anchor={menu.anchor} title={common.more} language={locale} onClose={()=>setMenu(null)} items={[

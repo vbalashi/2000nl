@@ -70,3 +70,17 @@ test('direct unsubscribe explains that access through a group survives',()=>{
  fireEvent.click(screen.getByRole('menuitem',{name:'Remove from my library'}));
  expect(screen.getByRole('dialog')).toHaveTextContent('Access remains through these groups: Easy Dutch.');
 });
+
+test('workspace selection controls the paginated received query and hides the nested toolbar',()=>{
+ const selection={query:'Dutch',sort:'count' as const,searchInputRef:React.createRef<HTMLInputElement>()};
+ const view=render(<ReceivedCollections {...props} embedded selection={selection}/>);
+ expect(screen.queryByRole('textbox')).toBeNull();expect(screen.queryByRole('button',{name:/^Sort:/})).toBeNull();
+ expect(mock.hook).toHaveBeenLastCalledWith(expect.objectContaining({query:{query:'Dutch',sort:'count',scope:'all',labelId:null,limit:50}}));
+ view.rerender(<ReceivedCollections {...props} userId="other" embedded selection={{...selection,query:''}}/>);
+ expect(mock.hook).toHaveBeenLastCalledWith(expect.objectContaining({userId:'other',query:expect.objectContaining({query:''})}));
+});
+test('a matching received group suppresses a false search empty state',()=>{
+ mock.hook.mockReturnValue({status:'ready',collections:[],nextCursor:null});
+ render(<ReceivedCollections {...props} embedded hasGroups selection={{query:'YouTube',sort:'recent',searchInputRef:React.createRef<HTMLInputElement>()}}/>);
+ expect(screen.queryByText('No matching collections')).toBeNull();
+});

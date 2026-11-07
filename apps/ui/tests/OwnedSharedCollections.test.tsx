@@ -40,3 +40,17 @@ test('closing management restores focus to search when the refreshed row disappe
  await waitFor(()=>expect(screen.queryByText('At the market')).not.toBeInTheDocument());
  expect(screen.getByRole('textbox')).toHaveFocus();
 });
+
+test('workspace selection drives the server query and pagination without another toolbar',()=>{
+ const more=vi.fn();mock.catalog.mockReturnValue({status:'ready',collections:[row],nextCursor:{},loadingMore:false,refresh:vi.fn(),loadMore:more});
+ const selection={query:'market',sort:'name' as const,searchInputRef:React.createRef<HTMLInputElement>()};
+ render(<OwnedSharedCollections {...props} selection={selection}/>);
+ expect(screen.queryByRole('textbox')).toBeNull();expect(screen.queryByRole('button',{name:/^Sort:/})).toBeNull();
+ expect(mock.catalog).toHaveBeenLastCalledWith(expect.objectContaining({query:{query:'market',sort:'name',limit:50}}));
+ fireEvent.click(screen.getByRole('button',{name:'Show more'}));expect(more).toHaveBeenCalledOnce();
+});
+test('a matching group suppresses the individual-collection empty message while searching',()=>{
+ mock.catalog.mockReturnValue({status:'ready',collections:[],nextCursor:null});
+ render(<OwnedSharedCollections {...props} hasGroups selection={{query:'YouTube',sort:'recent',searchInputRef:React.createRef<HTMLInputElement>()}}/>);
+ expect(screen.queryByText('No matching collections')).toBeNull();
+});
