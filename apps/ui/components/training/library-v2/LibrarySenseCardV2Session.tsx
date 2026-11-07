@@ -597,8 +597,10 @@ function SenseCardV2Session({
     if(composition.state.status==='failed')setCollectionStatus(platformV2Message(interfaceLanguage,"senseCard.collections.failed"));
   },[composition.state.status,interfaceLanguage]);
 
+  const compositionBusy=Boolean(activeCompositionTarget && !["idle","failed"].includes(composition.state.status));
+
   const handleToggleList = async (list: WordListSummary, included: boolean, targetEntryId = collectionsEntryId) => {
-    if (!targetEntryId || pendingCollectionWrites.current > 0 || (activeCompositionTarget && !["idle","failed"].includes(composition.state.status))) return;
+    if (!targetEntryId || pendingCollectionWrites.current > 0 || compositionBusy) return;
     if(process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED==='true' && userId){
       setCollectionStatus(null);setCompositionTarget({list,entryId:targetEntryId,included,userId,identity:detailIdentity,visibleMeaning:activeMeaningId});return;
     }
@@ -637,7 +639,7 @@ function SenseCardV2Session({
   };
 
   const handleCreateList = async (name: string) => {
-    if (!userId || !collectionsEntryId || (activeCompositionTarget && !["idle","failed"].includes(composition.state.status))) return;
+    if (!userId || !collectionsEntryId || compositionBusy) return;
     const isCurrent = () => detailIdentity === detailIdentityRef.current;
     pendingCollectionWrites.current++;
     setCollectionBusyListId("__new__");
@@ -909,7 +911,7 @@ function SenseCardV2Session({
         <LibrarySenseCardGroup
           recentCollections={recentCollectionIds.flatMap(id => { const list = userLists.find(item => item.id === id && item.type === "user" && item.ownership !== "received"); return list ? [list] : []; })}
           recentMemberships={membershipsByEntryId}
-          recentMembershipReady={membershipState === "ready" && !collectionBusyListId}
+          recentMembershipReady={membershipState === "ready" && !collectionBusyListId && !compositionBusy}
           onToggleRecentCollection={(meaning, list, included) => void handleToggleList(list, included, meaning.entryId)}
           currentCard={permittedCurrentCard}
           currentCardEntryId={permittedCurrentCard ? entryId : undefined}
@@ -946,7 +948,7 @@ function SenseCardV2Session({
               lists.some(list => list.listId === currentCollection.id && list.listType === currentCollection.type),
             ).map(([id]) => id)),
             editable: currentCollection.type === "user" && userLists.some(list => list.id === currentCollection.id && list.type === "user"),
-            busy: Boolean(collectionBusyListId),
+            busy: Boolean(collectionBusyListId) || compositionBusy,
           } : undefined}
           onToggleCurrentCollection={context === "library" && currentCollection ? (meaning, included) => {
             if ((process.env.NEXT_PUBLIC_COLLECTION_SHARING_ENABLED==='true'?selectedMembership.status!=='ready':membershipState!=="ready") || currentCollection.type !== "user" ||
@@ -1008,7 +1010,7 @@ function SenseCardV2Session({
             ? (membershipsByEntryId[collectionsMeaning.entryId] ?? [])
             : []
         }
-        busyListId={collectionBusyListId}
+        busyListId={collectionBusyListId ?? (compositionBusy ? activeCompositionTarget?.list.id ?? null : null)}
         membershipState={membershipState}
         onRetryMemberships={() => { setCollectionStatus(null); void refreshMemberships(); }}
         status={collectionStatus}
