@@ -26,3 +26,12 @@ test('commands bind mutations to a revision and reject collection identities',as
  expect(parseLabelShareCommand({...command,expectedRevision:undefined})).toBeNull();
  expect(parseLabelShareCommand({...command,collectionId:labelId})).toBeNull();
 });
+
+test('receipt must match original operation and resource',async()=>{
+ const {parseLabelShareReceipt}=await import('@/lib/collections/sharing/labelSharingContract');
+ const command={operationId:labelId,action:'close' as const,labelId,expectedRevision:1};
+ const receipt={operationId:labelId,status:'committed',action:'close',result:{labelId,isOpen:false,revision:2,invitationCode:null,subscriberCount:0}};
+ expect(parseLabelShareReceipt(receipt,command)).toEqual(receipt);
+ expect(parseLabelShareReceipt({...receipt,action:'open'},command)).toBeNull();
+ expect(parseLabelShareReceipt({...receipt,result:{...receipt.result,labelId:'22222222-2222-4222-8222-222222222222'}},command)).toBeNull();
+});

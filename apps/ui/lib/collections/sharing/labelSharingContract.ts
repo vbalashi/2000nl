@@ -40,3 +40,17 @@ export function parseLabelShareCommand(v:unknown):LabelShareCommand|null{
   return {operationId,action:v.action as 'open'|'rotate'|'close',labelId,expectedRevision:v.expectedRevision};
  return null;
 }
+export type LabelShareReceipt=
+ |{operationId:string;status:'unknown'}
+ |{operationId:string;status:'committed';action:'open'|'rotate'|'close';result:LabelShareState}
+ |{operationId:string;status:'committed';action:'accept';result:LabelSharePreview}
+ |{operationId:string;status:'committed';action:'unsubscribe';result:{labelId:string;subscribed:false}};
+export function parseLabelShareReceipt(v:unknown,expected:LabelShareCommand):LabelShareReceipt|null{
+ if(!record(v)||v.operationId!==expected.operationId)return null;
+ if(v.status==='unknown')return keys(v,['operationId','status'])?v as LabelShareReceipt:null;
+ if(v.status!=='committed'||v.action!==expected.action||!keys(v,['operationId','status','action','result']))return null;
+ if(v.action==='accept')return parseLabelSharePreview(v.result)?v as LabelShareReceipt:null;
+ if(v.action==='unsubscribe')return record(v.result)&&keys(v.result,['labelId','subscribed'])&&v.result.labelId===('labelId'in expected?expected.labelId:null)&&v.result.subscribed===false?v as LabelShareReceipt:null;
+ const result=parseLabelShareState(v.result);
+ return result&&result.labelId===('labelId'in expected?expected.labelId:null)?v as LabelShareReceipt:null;
+}
