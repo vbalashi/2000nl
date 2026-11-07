@@ -5,6 +5,27 @@ import {getDbUrl,runMigrations,ensureUserWithSettings,withTransaction} from './d
 const url=getDbUrl();
 (url?describe:describe.skip)('group author entry authority',()=>{
  const pool=new Pool({connectionString:url});beforeAll(()=>runMigrations(pool));afterAll(()=>pool.end());
+ test('close emits invalidation for the departed subscriber in a new transaction',async()=>{
+  const owner=randomUUID(),viewer=randomUUID(),label=randomUUID();const c=await pool.connect();
+  try{
+   await c.query('begin');
+   await ensureUserWithSettings(c,owner);await ensureUserWithSettings(c,viewer);
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
+   await c.query('insert into private.collection_labels(user_id,id,name) values($1,$2,$3)',[owner,label,'events']);
+   const opened=(await c.query("select mutate_label_share_v1($1,'open',0) value",[label])).rows[0].value;
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);
+   await c.query('select accept_label_share_v1($1)',[opened.invitationCode]);await c.query('commit');
+   await c.query('begin');
+   await c.query("delete from realtime.messages where topic=$1",['app:user:'+viewer]);
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
+   await c.query("select mutate_label_share_v1($1,'close',1)",[label]);
+   expect((await c.query("select distinct payload->>'kind' kind from realtime.messages where topic=$1 order by kind",['app:user:'+viewer])).rows)
+    .toEqual([{kind:'collections.changed'},{kind:'notes.changed'}]);
+   await c.query('rollback');
+  }finally{
+   await c.query('rollback');await c.query('delete from auth.users where id=any($1::uuid[])',[[owner,viewer]]);c.release();
+  }
+ });
  test('author entry requires an active accepted group path',async()=>{
   await withTransaction(pool,async c=>{
    const owner=randomUUID(),viewer=randomUUID(),outsider=randomUUID(),label=randomUUID(),list=randomUUID();
@@ -53,6 +74,8 @@ const url=getDbUrl();
    await c.query('insert into private.collection_sharing_roots(id,owner_user_id,collection_id,is_open,access_lifetime) values($1,$2,$3,true,$4)',[directRoot,owner,list,lifetime]);
    await c.query('insert into private.collection_sharing_subscriptions(user_id,root_id,access_lifetime) values($1,$2,$3)',[viewer,directRoot,lifetime]);
    await c.query("select mutate_label_share_v1($1,'close',1)",[label]);
+
+
    expect(await readable(viewer)).toBe(true);
    await c.query('update private.collection_sharing_subscriptions set is_active=false where user_id=$1 and root_id=$2',[viewer,directRoot]);
    expect(await readable(viewer)).toBe(false);
