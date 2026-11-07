@@ -96,3 +96,10 @@ test('does not label missing metadata private or allow a new confirmation',async
  fireEvent.click(screen.getByRole('button',{name:'Unresolved'}));await screen.findByText('Selected articles: 2. Matching meanings: 3.');
  expect(screen.queryByText('Private')).not.toBeInTheDocument();expect(screen.getByRole('button',{name:'Add meanings'})).toBeDisabled();
 });
+
+test('retries a failed badge batch before a collection is selected',async()=>{
+ access.mockRejectedValueOnce(new Error('offline')).mockResolvedValue([{collectionId:'owned',isShared:false,subscriberCount:0}]);
+ render(<WordsBulkDialog userId="account" language="en" lists={[{id:'owned',name:'Lesson',type:'user'}]} selection={selection} onClose={vi.fn()} onDone={vi.fn()}/>);
+ fireEvent.click(await screen.findByRole('button',{name:'Try again'}));
+ expect(await screen.findByText('Private')).toBeInTheDocument();expect(access).toHaveBeenCalledTimes(2);expect(receipt).not.toHaveBeenCalled();
+});
