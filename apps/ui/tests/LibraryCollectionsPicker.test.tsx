@@ -220,3 +220,8 @@ test('puts creation in the heading and keeps collection search separate',()=>{
  fireEvent.click(createButton);const name=screen.getByRole('textbox',{name:'New collection name'});expect(name).toHaveValue('');
  fireEvent.change(name,{target:{value:'New lesson'}});fireEvent.click(screen.getByRole('button',{name:'Create'}));expect(create).toHaveBeenCalledWith('New lesson');
 });
+
+test("uses the localized singular and plural meaning count",()=>{
+ render(<LibraryCollectionsPicker open headword="bank" definition="" interfaceLanguage="en" userLists={[{id:'one',name:'One',type:'user',item_count:1},{id:'two',name:'Two',type:'user',item_count:2}]} memberships={[]} busyListId={null} status={null} onClose={vi.fn()} onToggleList={vi.fn()} onCreateList={vi.fn()}/>);
+ expect(screen.getByText('1 meaning')).toBeInTheDocument();expect(screen.getByText('2 meanings')).toBeInTheDocument();
+});

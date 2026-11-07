@@ -5,7 +5,7 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
 import s from "@/components/practice/library/libraryOverlays.module.css";
-import { getUiMessages } from "@/lib/uiMessages";
+import { formatUiCount, getUiMessages } from "@/lib/uiMessages";
 import { Search, X } from "lucide-react";
 import { AddAction } from "@/components/practice/ui/AddAction";
 import type {
@@ -237,7 +237,7 @@ export function LibraryCollectionsPicker({
                       </span>
                       {typeof list.item_count === "number" ? (
                         <span className="block text-xs text-slate-500 dark:text-slate-400">
-                          {list.item_count} {t("senseCard.collections.items")}
+                          {formatUiCount(interfaceLanguage, list.item_count, getUiMessages(interfaceLanguage).librarySearch, "meaningCount")}
                         </span>
                       ) : null}
                     </label>
