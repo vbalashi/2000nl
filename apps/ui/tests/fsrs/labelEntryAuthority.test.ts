@@ -67,6 +67,13 @@ const url=getDbUrl();
    const placement=(await c.query('select set_received_collection_labels_v1($1,$2,$3) value',[list,0,[personalLabel]])).rows[0].value;
    expect(placement.labelIds).toEqual([personalLabel]);
    await c.query('reset role');
+   await c.query("select set_config('request.jwt.claim.role','service_role',true)");
+   await c.query('set local role service_role');
+   await c.query("select perform_platform_v2_card_action_as_principal($1,'start-learning',$2,'word-to-definition','untracked',null,null,null,$3,null,'first_party',null)",[viewer,entry,randomUUID()]);
+
+   await c.query('reset role');
+   const progressBefore=(await c.query('select to_jsonb(status) value from user_card_status status where user_id=$1 and entry_id=$2',[viewer,entry])).rows;
+   expect(progressBefore.length).toBeGreaterThan(0);
    expect((await c.query('select count(*)::int n from private.collection_label_assignments where user_id=$1 and collection_id=$2',[owner,list])).rows[0].n).toBe(1);
 
 
@@ -86,6 +93,7 @@ const url=getDbUrl();
    expect(await readable(viewer)).toBe(true);
    await c.query('update private.collection_sharing_subscriptions set is_active=false where user_id=$1 and root_id=$2',[viewer,directRoot]);
    expect(await readable(viewer)).toBe(false);
+   expect((await c.query('select to_jsonb(status) value from user_card_status status where user_id=$1 and entry_id=$2',[viewer,entry])).rows).toEqual(progressBefore);
    await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);
    await c.query('set local role authenticated');
    expect((await c.query('select read_received_collection_source_v1($1) value',[list])).rows[0].value).toBeNull();
