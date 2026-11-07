@@ -22,3 +22,12 @@
 \i db/migrations/306_collection_access_paths.sql
 \i db/migrations/307_label_audience_snapshot.sql
 \i db/migrations/308_label_audience_confirmation.sql
+\i db/migrations/309_group_entry_authority.sql
+\i db/migrations/310_group_membership_guard.sql
+\i db/migrations/311_label_organization_preview.sql
+\i db/migrations/312_label_author_admission.sql
+\i db/migrations/313_group_material_projections.sql
+\i db/migrations/314_received_group_label_placements.sql
+\i db/migrations/315_group_copy_snapshots.sql
+\i db/migrations/316_collection_access_capabilities.sql
+\i db/migrations/317_group_copy_admission.sql
