@@ -25,3 +25,18 @@ export function parseLabelSharingCatalog(v:unknown):LabelSharingCatalog|null{
  }
  return v as LabelSharingCatalog;
 }
+export type LabelShareCommand=
+ |{operationId:string;action:'open'|'rotate'|'close';labelId:string;expectedRevision:number}
+ |{operationId:string;action:'accept';code:string}
+ |{operationId:string;action:'unsubscribe';labelId:string};
+export function parseLabelShareCommand(v:unknown):LabelShareCommand|null{
+ if(!record(v)||!copyUuid(v.operationId))return null;
+ const operationId=v.operationId.toLowerCase();
+ if(v.action==='accept'&&keys(v,['operationId','action','code'])&&isCanonicalShareCode(v.code))return {operationId,action:'accept',code:v.code};
+ if(!copyUuid(v.labelId))return null;
+ const labelId=v.labelId.toLowerCase();
+ if(v.action==='unsubscribe'&&keys(v,['operationId','action','labelId']))return {operationId,action:'unsubscribe',labelId};
+ if(typeof v.action==='string'&&['open','rotate','close'].includes(v.action)&&keys(v,['operationId','action','labelId','expectedRevision'])&&count(v.expectedRevision)&&v.expectedRevision<=2147483645)
+  return {operationId,action:v.action as 'open'|'rotate'|'close',labelId,expectedRevision:v.expectedRevision};
+ return null;
+}

@@ -18,3 +18,11 @@ test('catalog refuses duplicate identities and private data',async()=>{
  expect(parseLabelSharingCatalog({owned:[],received:[row,row]})).toBeNull();
  expect(parseLabelSharingCatalog({owned:[],received:[{...row,invitationCode:'secret'}]})).toBeNull();
 });
+
+test('commands bind mutations to a revision and reject collection identities',async()=>{
+ const {parseLabelShareCommand}=await import('@/lib/collections/sharing/labelSharingContract');
+ const command={operationId:labelId,action:'open',labelId,expectedRevision:0};
+ expect(parseLabelShareCommand(command)).toEqual(command);
+ expect(parseLabelShareCommand({...command,expectedRevision:undefined})).toBeNull();
+ expect(parseLabelShareCommand({...command,collectionId:labelId})).toBeNull();
+});
