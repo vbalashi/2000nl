@@ -125,3 +125,12 @@
 .detailsPane .detailActions{border-top:1px solid var(--practice-border);padding-top:12px;justify-content:space-between;flex-wrap:wrap}
 .detailsPane .detailActions button{border-color:transparent;background:transparent;color:var(--practice-text-secondary)}
 .detailsPane .detailActions button:last-child{background:var(--practice-surface-subtle);color:var(--practice-text)}
+.assignmentContext{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.assignmentContext>p{min-width:0;overflow-wrap:anywhere}
+.editor .assignmentContext>button{flex:none;border:0;background:transparent;min-width:44px;min-height:44px;padding:8px}
+.ownedSharedHead,.ownedSharedRow{grid-template-columns:minmax(0,2fr) minmax(90px,.65fr) minmax(170px,1fr)}
+.invitation{font-size:var(--practice-text-small);gap:16px}
+.invitation>h2{margin:0;font-size:var(--practice-text-body-lg);font-weight:500;line-height:1.5}
+.invitation input{font:inherit}
+.invitation button{font-size:var(--practice-text-small);min-height:44px;background:transparent;border-color:transparent}
+@media(max-width:700px){.ownedSharedRow{grid-template-columns:minmax(0,1fr) 44px;gap:8px;min-height:64px}.ownedSharedActions{grid-column:2;grid-row:1;align-self:center}.ownedSharedActions>button:first-child{display:none}.desktopSubscriberCount{display:none}.ownedSharedName{align-self:center}.ownedSharedName small{display:block;line-height:1.5}.ownedSharedName>div{gap:2px}}

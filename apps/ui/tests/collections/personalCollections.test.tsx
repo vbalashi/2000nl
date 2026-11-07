@@ -108,6 +108,8 @@ test("label search preserves hidden selected assignments",async()=>{
  fireEvent.click(screen.getByRole("button",{name:"My lesson"}));
  fireEvent.click(within(screen.getByRole("complementary",{name:"My lesson"})).getByRole("button",{name:"Choose labels"}));
  const dialog=screen.getByRole("dialog");
+ expect(within(dialog).queryByRole("searchbox",{name:"Search labels"})).toBeNull();
+ fireEvent.click(within(dialog).getByRole("button",{name:"Search labels"}));
  fireEvent.change(within(dialog).getByRole("searchbox",{name:"Search labels"}),{target:{value:"Books"}});
  expect(within(dialog).queryByRole("checkbox",{name:"YouTube"})).toBeNull();
  fireEvent.click(within(dialog).getByRole("checkbox",{name:"Books"}));

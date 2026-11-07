@@ -190,7 +190,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
         <header><h2 id="organization-dialog-title">{editor.kind === "label" ? editor.existing ? t.editLabel : t.newLabel : editor.kind === "collection" ? editor.existing ? t.editCollection : t.newCollection : editor.kind === "assign" ? t.assign : t.remove}</h2><button type="button" disabled={saving} aria-label={t.close} onClick={closeEditor}><X size={20}/></button></header>
         {(editor.kind === "label" || editor.kind === "collection") && <label>{t.name}<input required autoFocus maxLength={100} value={name} onChange={event=>setName(event.target.value)} disabled={saving}/></label>}
         {editor.kind === "label" && <label>{t.parent}<select value={parent} onChange={event=>setParent(event.target.value)} disabled={saving}><option value="">{t.noParent}</option>{labelRows.filter(({label})=>label.id!==editor.id).map(({label,depth})=><option key={label.id} value={label.id}>{"— ".repeat(depth)}{label.name}</option>)}</select></label>}
-        {editor.kind === "assign" && <><p>{editor.collection.name}</p><LabelAssignmentPicker snapshot={snapshot} selected={selected} disabled={saving} locale={locale} onToggle={id=>setSelected(value=>value.includes(id)?value.filter(item=>item!==id):[...value,id])}/></>}
+        {editor.kind === "assign" && <><LabelAssignmentPicker name={editor.collection.name} snapshot={snapshot} selected={selected} disabled={saving} locale={locale} onToggle={id=>setSelected(value=>value.includes(id)?value.filter(item=>item!==id):[...value,id])}/></>}
         {(editor.kind === "delete-label" || editor.kind === "delete-collection") && <><p>{editor.kind === "delete-label" ? editor.label.name : editor.collection.name}</p><p>{editor.kind === "delete-label" ? t.deleteLabel : t.deleteCollection}</p></>}
         {(saveError || labels.error) && <p role="alert">{message(saveError ?? labels.error!)}{saveError === "uncertain" && <button type="button" onClick={()=>{void onReload();void labels.refresh();}}>{t.retry}</button>}</p>}
         <footer><button type="button" disabled={saving} onClick={closeEditor}>{t.cancel}</button><button type="submit" disabled={saving || saveError === "uncertain" || ((editor.kind === "label" || editor.kind === "collection") && !name.trim())}>{saving ? t.saving : editor.kind.startsWith("delete") ? t.remove : t.save}</button></footer>
@@ -204,7 +204,7 @@ export function PersonalCollectionRow({collection,names=[],locale,onOpen,onDetai
  const t=organizationCopy(locale);
  return <article className={s.collection}>
   <span className={s.accessIcon} title={collection.isShared?t.shared:t.private}>{collection.isShared?<Share2 size={16}/>:<LockKeyhole size={16}/>}</span><div className={s.collectionCopy}><button className={s.collectionName} onClick={onDetails??onOpen}>{collection.name}</button><p>{formatUiCount(locale,collection.item_count??0,t,"meaning")}{names.length?` · ${names.join(" / ")}`:""}</p></div>
-  <button className={s.viewWords} onClick={onOpen}>{t.open}</button><button data-onboarding="own-collection-menu" aria-label={`${t.more}: ${collection.name}`} onClick={onMore}><MoreHorizontal size={16} strokeWidth={1.5}/></button>
+  <button data-onboarding="own-collection-menu" aria-label={`${t.more}: ${collection.name}`} onClick={onMore}><MoreHorizontal size={16} strokeWidth={1.5}/></button>
  </article>;
 }
 

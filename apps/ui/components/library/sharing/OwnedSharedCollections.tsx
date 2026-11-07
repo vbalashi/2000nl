@@ -3,7 +3,7 @@ import { localizedSection } from "@/lib/i18n/catalog";
 
 import {CollectionSortControl} from '@/components/library/organization/CollectionSortControl';
 import React,{useEffect,useRef,useState} from 'react';
-import {FileText,MoreHorizontal,Search,Share2} from 'lucide-react';
+import {MoreHorizontal,Search,Share2} from 'lucide-react';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import {usePersonalLabels} from "../organization/usePersonalLabels";
 import {labelRows} from "@/lib/collections/labels/catalog";
@@ -71,15 +71,15 @@ export function OwnedSharedCollections({userId,active,locale,onOpen,onChanged,ca
    <CollectionSortControl locale={locale} value={sort} onChange={setSort}/></div>
   {notice?.key===key&&<p role="status" className={s.muted}>{notice.text}</p>}
   {catalog.status==='loading'?<div className={s.state} role="status">{common.loading}</div>:catalog.status==='error'?<div className={s.state}><p role="alert">{t.error}</p><button onClick={()=>void catalog.refresh()}>{common.retry}</button></div>:catalog.status==='ready'&&catalog.collections.length===0?<p className={s.state}>{query.trim()?common.noResults:t.empty}</p>:null}
-  {catalog.collections.length>0&&<div className={s.ownedSharedTable} role="table" aria-label={t.title}><div className={s.ownedSharedHead} role="row"><span role="columnheader">{common.collections}</span><span role="columnheader">{t.active}</span><span role="columnheader">{t.subscribers}</span><span role="columnheader">{common.more}</span></div>
+  {catalog.collections.length>0&&<div className={s.ownedSharedTable} role="table" aria-label={t.title}><div className={s.ownedSharedHead} role="row"><span role="columnheader">{common.collections}</span><span role="columnheader">{t.subscribers}</span><span role="columnheader">{common.more}</span></div>
    <div className={s.ownedSharedRows}>{catalog.collections.map(row=><div className={s.ownedSharedRow} role="row" key={row.id}>
-    <div role="cell" className={s.ownedSharedName}><FileText size={18} aria-hidden="true"/><div><button type="button" onClick={()=>setDetailsSelection({ownerId:userId,id:row.id})}>{row.name}</button><small>{formatUiCount(locale,row.itemCount,common,'meaning')} · {t.owned}</small></div></div>
-    <span role="cell" className={s.ownedSharedStatus}><Share2 size={14} aria-hidden="true"/>{t.active}</span>
-    <span role="cell"><span className={s.mobileSubscriberLabel}>{t.subscribers}: </span>{row.subscriberCount.toLocaleString(locale)}</span>
+    <div role="cell" className={s.ownedSharedName}><Share2 size={18} aria-label={t.active}/><div><button type="button" onClick={()=>setDetailsSelection({ownerId:userId,id:row.id})}>{row.name}</button><small>{formatUiCount(locale,row.itemCount,common,'meaning')}<span className={s.mobileSubscriberLabel}> · {t.subscribers}: {row.subscriberCount.toLocaleString(locale)}</span></small></div></div>
+    <span role="cell" className={s.desktopSubscriberCount}>{row.subscriberCount.toLocaleString(locale)}</span>
     <div role="cell" className={s.ownedSharedActions}><button type="button" onClick={event=>{dialogOpener.current=event.currentTarget;void copyLink(row);}}>{t.copy}</button><button type="button" aria-label={`${common.more} · ${row.name}`} onClick={event=>setMenu({ownerId:userId,row,anchor:event.currentTarget})}><MoreHorizontal size={16} strokeWidth={1.5}/></button></div>
    </div>)}</div></div>}
   {catalog.nextCursor&&<button className={s.loadMore} disabled={catalog.loadingMore} onClick={()=>void catalog.loadMore()}>{catalog.loadingMore?common.loading:common.moreResults}</button>}
   {menu?.ownerId===userId&&<ActionMenu anchor={menu.anchor} title={common.more} language={locale} onClose={()=>setMenu(null)} items={[
+   {id:'copy',label:t.copy,onSelect:()=>{dialogOpener.current=menu.anchor;void copyLink(menu.row);setMenu(null);}},
    {id:'manage',label:t.manage,onSelect:()=>{dialogOpener.current=menu.anchor;menu.anchor.focus({preventScroll:true});setDialog({ownerId:userId,row:menu.row});setMenu(null);}},
    {id:'open',label:common.open,onSelect:()=>{onOpen(menu.row);setMenu(null);}},
    {id:'stop',label:t.stop,onSelect:()=>{dialogOpener.current=menu.anchor;menu.anchor.focus({preventScroll:true});setDialog({ownerId:userId,row:menu.row,initialAction:'close'});setMenu(null);}},
