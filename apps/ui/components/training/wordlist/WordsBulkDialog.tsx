@@ -107,7 +107,7 @@ export function WordsBulkDialog({userId,language,lists,selection,onClose,onDone,
    {choices.map(list=>{const metadata=access?.userId===userId?access.rows.get(list.id):undefined;
     const shared=metadata?.isShared || (listId===list.id && Boolean(preview?.audience.length));
     const count=listId===list.id && preview ? preview.audience.length : metadata?.subscriberCount;
-    return <button type="button" key={list.id} aria-label={list.name} aria-describedby={`${titleId}-${list.id}-access`} aria-pressed={listId===list.id} disabled={busy} onClick={()=>{setPreview(null);setListId(list.id);}}>
+    return <button type="button" key={list.id} aria-label={list.name} aria-describedby={`${titleId}-${list.id}-access`} aria-pressed={listId===list.id} disabled={busy} onClick={()=>{if(listId===list.id)return;setPreview(null);setListId(list.id);}}>
      <span className={s.accessIcon}>{shared?<Share2 size={17} aria-hidden="true"/>:metadata?<Lock size={17} aria-hidden="true"/>:<span className={s.iconPlaceholder}/>}</span>
      <span className={s.collectionText}><span className={s.collectionName}>{list.name}</span><span id={`${titleId}-${list.id}-access`} className={s.collectionMeta}>{shared && count!==undefined ? formatUiCount(language,count,copy,'sharedReaders') : metadata ? copy.private : '\u00a0'}</span></span>
     </button>;})}

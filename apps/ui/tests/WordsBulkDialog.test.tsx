@@ -103,3 +103,14 @@ test('retries a failed badge batch before a collection is selected',async()=>{
  fireEvent.click(await screen.findByRole('button',{name:'Try again'}));
  expect(await screen.findByText('Private')).toBeInTheDocument();expect(access).toHaveBeenCalledTimes(2);expect(receipt).not.toHaveBeenCalled();
 });
+
+test('keeps the prepared preview when the selected collection is clicked again',async()=>{
+ request.mockResolvedValueOnce({articleCount:2,meaningCount:3,planId:'planned',audience:[]});
+ render(<WordsBulkDialog userId="account" language="en" lists={[{id:'owned',name:'Lesson',type:'user'}]} selection={selection} onClose={vi.fn()} onDone={vi.fn()}/>);
+ const choice=screen.getByRole('button',{name:'Lesson'});fireEvent.click(choice);
+ await screen.findByText('Selected articles: 2. Matching meanings: 3.');
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Add meanings'})).toBeEnabled());
+ fireEvent.click(choice);
+ expect(screen.getByText('Selected articles: 2. Matching meanings: 3.')).toBeInTheDocument();
+ expect(screen.getByRole('button',{name:'Add meanings'})).toBeEnabled();expect(request).toHaveBeenCalledOnce();
+});
