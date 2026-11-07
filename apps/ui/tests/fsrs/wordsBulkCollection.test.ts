@@ -157,6 +157,8 @@ const filters=(meanings:string|number='all',parts:string[]=[])=>({parts,article:
    await client.query("insert into user_word_lists(id,user_id,name,language_code) values($1,$2,'target','nl')",[target,viewer]);
    const group=(await client.query('select public.read_platform_v2_presentation_identity($1,$2,false) value',[viewer,[entry]])).rows[0].value.entries[0]?.headwordGroupId;
    expect(group).toBeTruthy();
+   const access=(await client.query("select public.can_access_dictionary($1,e.dictionary_id,'read') dictionary_access,private.entry_access_v1($1,e.id,'train') entry_access from private.active_word_entries e where e.id=$2",[viewer,entry])).rows[0];
+   expect(access).toEqual({dictionary_access:false,entry_access:true});
    const plan=(await client.query('select public.prepare_words_bulk_collection_v1($1,$2,$3,$4,$5,$6,$7,$8,$9) value',[[group],'','nl',null,{parts:[],article:null},{kind:'collection',collectionType:'user',id:source},target,false,'browse'])).rows[0].value;
    expect(plan.meaningCount).toBe(1);
    expect((await client.query('select public.confirm_words_bulk_collection_v1($1) value',[plan.planId])).rows[0].value).toMatchObject({status:'committed',addedCount:1});
