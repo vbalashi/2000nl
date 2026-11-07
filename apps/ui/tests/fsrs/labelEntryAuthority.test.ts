@@ -15,6 +15,7 @@ const url=getDbUrl();
    await c.query('insert into user_word_list_items(list_id,word_id) values($1,$2)',[list,entry]);
    await c.query('insert into private.collection_labels(user_id,id,name) values($1,$2,$3)',[owner,label,'group']);
    await c.query('insert into private.collection_label_assignments values($1,$2,$3)',[owner,list,label]);
+   expect((await c.query('select preflight_label_share_v1($1) value',[label])).rows[0].value).toEqual({labelId:label,collections:[]});
    const opened=(await c.query("select mutate_label_share_v1($1,'open',0) value",[label])).rows[0].value;
    const readable=async(user:string)=>(await c.query("select private.entry_access_v1($1,$2,'browse') ok",[user,entry])).rows[0].ok;
    expect(await readable(viewer)).toBe(false);expect(await readable(owner)).toBe(true);

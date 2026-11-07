@@ -87,3 +87,13 @@ export function parseCollectionAccessPaths(v:unknown):CollectionAccessPaths|null
  if(!v.isOwner&&!v.directSubscription&&!v.groups.length)return null;
  return v as CollectionAccessPaths;
 }
+export type LabelSharePreflight={labelId:string;collections:Array<{collectionId:string;name:string;borrowedCount:number}>};
+export function parseLabelSharePreflight(v:unknown):LabelSharePreflight|null{
+ if(!record(v)||!keys(v,['labelId','collections'])||!copyUuid(v.labelId)||!Array.isArray(v.collections)||v.collections.length>10000)return null;
+ const seen=new Set<string>();
+ for(const row of v.collections){
+  if(!record(row)||!keys(row,['collectionId','name','borrowedCount'])||!copyUuid(row.collectionId)||typeof row.name!=='string'||row.name.length>1000||!count(row.borrowedCount)||row.borrowedCount===0||seen.has(row.collectionId.toLowerCase()))return null;
+  seen.add(row.collectionId.toLowerCase());
+ }
+ return v as LabelSharePreflight;
+}

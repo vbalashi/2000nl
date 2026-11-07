@@ -105,3 +105,14 @@ export async function readCollectionAccessPaths(userId:string,collectionId:strin
  if(!parsed||parsed.collectionId!==id)throw new Error('collection_access_paths_unavailable');
  return parsed;
 }
+
+import {parseLabelSharePreflight,type LabelSharePreflight} from './labelSharingContract';
+export async function preflightLabelShare(userId:string,labelId:string,signal:AbortSignal):Promise<LabelSharePreflight>{
+ if(!copyUuid(labelId))throw new Error('invalid_share_request');
+ const id=labelId.toLowerCase();signal.throwIfAborted();
+ const headers=await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const response=await platformFetchWithTimeout(`/api/library/label-sharing/preflight?labelId=${encodeURIComponent(id)}`,{method:'GET',headers,signal,credentials:'same-origin',cache:'no-store'});
+ const value:unknown=response.ok?await response.json():null;
+ await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const parsed=parseLabelSharePreflight(value);if(!parsed||parsed.labelId!==id)throw new Error('label_share_preflight_unavailable');return parsed;
+}

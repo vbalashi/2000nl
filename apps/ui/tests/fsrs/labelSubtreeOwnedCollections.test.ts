@@ -63,6 +63,15 @@ describeIfDb('owned collections in a label subtree', () => {
         [collection,[own,borrowed,common]]);
       expect((await client.query('select * from private.label_subtree_borrowed_entries_v1($1,$2)', [owner,label])).rows)
         .toEqual([{collection_id:collection, entry_id:borrowed}]);
+      await client.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
+      await client.query('set local role authenticated');
+      expect((await client.query('select preflight_label_share_v1($1) value',[label])).rows[0].value)
+        .toEqual({labelId:label,collections:[{collectionId:collection,name:'collection',borrowedCount:1}]});
+      await client.query('savepoint borrowed_open');
+      await expect(client.query("select mutate_label_share_v1($1,'open',0)",[label])).rejects.toThrow('share_copy_required');
+      await client.query('rollback to savepoint borrowed_open');
+      await client.query('reset role');
+
       expect((await client.query(`select has_function_privilege('authenticated',
         'private.label_subtree_borrowed_entries_v1(uuid,uuid)','execute') as allowed`)).rows[0].allowed).toBe(false);
     });
