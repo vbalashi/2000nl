@@ -46,6 +46,9 @@ const url=getDbUrl();
    const snapshot=(await c.query('select private.independent_copy_snapshot_with_notes_v1($1,$2) value',[viewer,entry])).rows[0].value;
    expect(snapshot.content.headword).toBe('group-author-entry');
    expect(snapshot.revision).toMatch(/^[0-9a-f]{64}$/);
+   expect((await c.query("select collection_id,ownership,available_item_count::int,eligible from private.training_collection_catalog_cohort_v1($1,'',null,null,null,100,null)",[viewer])).rows)
+    .toEqual([{collection_id:list,ownership:'received',available_item_count:1,eligible:true}]);
+
 
    expect((await c.query('select entry_id from private.readable_material_entry_ids_v1($1,$2)',[viewer,{kind:'collection',collectionType:'user',id:list}])).rows)
     .toEqual([{entry_id:entry}]);
@@ -58,6 +61,7 @@ const url=getDbUrl();
    expect((await c.query('select read_collection_access_paths_v1($1) value',[list])).rows[0].value)
     .toEqual({collectionId:list,isOwner:false,directSubscription:false,groups:[{labelId:label,name:'group'}]});
    expect((await c.query('select read_received_collection_source_v1($1) value',[list])).rows[0].value.id).toBe(list);
+   expect((await c.query("select get_word_list_summary($1,$2,'user') value",[viewer,list])).rows[0].value.id).toBe(list);
    expect((await c.query('select read_selected_collection_membership_v1($1,$2) value',[list,[entry]])).rows[0].value)
     .toEqual({collectionId:list,includedEntryIds:[entry]});
    const placement=(await c.query('select set_received_collection_labels_v1($1,$2,$3) value',[list,0,[personalLabel]])).rows[0].value;
