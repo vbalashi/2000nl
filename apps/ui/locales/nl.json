@@ -1959,7 +1959,7 @@
       "title": "Label delen",
       "openNotice": "Via de uitnodiging kunnen anderen zich abonneren op je huidige en toekomstige collecties onder dit label, inclusief onderliggende labels.",
       "closeNotice": "Abonnees verliezen toegang via dit label. Onafhankelijke toegang en leervoortgang blijven behouden.",
-      "description": "Een actuele groep collecties. Nieuwe collecties onder dit label en onderliggende labels verschijnen automatisch.",
+      "description": "Deze groep bevat de collecties van de auteur met dit label of de onderliggende labels. De lijst wordt automatisch bijgewerkt.",
       "collections": "Collecties",
       "accepted": "Groep toegevoegd",
       "contents": "Inhoud van de groep",

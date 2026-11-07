@@ -2,6 +2,7 @@
 import React from 'react';
 import {FileText,ExternalLink} from 'lucide-react';
 import {DialogSurface} from '@/components/practice/ui/DialogSurface';
+import {SettingsHelp} from '@/components/practice/settings/SettingsHelp';
 import {localizedSection} from '@/lib/i18n/catalog';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import {organizationCopy} from '../organization/copy';
@@ -12,7 +13,7 @@ import s from '../organization/organization.module.css';
 export function SharedLabelContents({userId,labelId,name,locale,onClose,onOpen,onReference}:{userId:string;labelId:string;name:string;locale:OnboardingLanguage;onClose:()=>void;onOpen:(id:string)=>void;onReference?:(code:string)=>void}){
  const catalog=useLabelShareCollections(userId,labelId),common=organizationCopy(locale),group=localizedSection('labelSharing')[locale];
  return <DialogSurface className={overlays.dialog} aria-label={group.contents} onDismiss={onClose}>
-  <section className={`${s.editor} ${s.groupContents}`}><h2>{name}</h2><p>{group.description}</p>
+  <section className={`${s.editor} ${s.groupContents}`}><header><h2>{name}</h2><SettingsHelp label={group.contents} text={group.description}/></header>
    {catalog.status==='loading'?<p role="status">{common.loading}</p>:catalog.status==='error'?<>
     <p role="alert">{localizedSection('invitationPreview')[locale].unavailable}</p><button onClick={catalog.refresh}>{common.retry}</button>
    </>:<>

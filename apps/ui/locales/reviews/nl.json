@@ -1702,7 +1702,7 @@
   "features.labelSharing.title": {"source":"Share label","translationHash":"1c66bf650834acc6d1dbeb6a55980388f0234c28a70a8e07624820a488b173b6"},
   "features.labelSharing.openNotice": {"source":"Anyone with the invitation can subscribe to your current and future collections under this label, including nested labels.","translationHash":"c3667b9f1d12eddee808e103053fc21199f1a3962dbae34b3b78eb1d80e10b9b"},
   "features.labelSharing.closeNotice": {"source":"Subscribers lose access through this label. Independent access and learning progress are kept.","translationHash":"5e86f3eee7c526cb55aa2e07923ccca46ffd1262d2e5a66cff1c10c854679519"},
-  "features.labelSharing.description": {"source":"A live group of collections. New collections under this label and its nested labels appear automatically.","translationHash":"899ed0210d2c72bd5a7bc6eb2a27b6ee51685c9aca808056570026d5a0c21fa1"},
+  "features.labelSharing.description": {"source":"This group includes the author's collections under this label or its nested labels. The list updates automatically.","translationHash":"75169dce5f4f3a1fc8a2a3cd180449a10ffe6c1e7e76aed62eefc41158243825"},
   "features.labelSharing.collections": {"source":"Collections","translationHash":"50fd513a041e808c0108926d376c907b832d6fea72b1ea6ce1a3980ad43937e8"},
   "features.labelSharing.accepted": {"source":"Group added","translationHash":"ea3065cd034c2d296f839527cb9256704ad4bb599ccf86857cb07c7665459e87"},
   "features.labelSharing.contents": {"source":"Group contents","translationHash":"752edde843f8402e812d3a69fb9c99278b116d23cb92122533c5cda50a4e6b15"},
