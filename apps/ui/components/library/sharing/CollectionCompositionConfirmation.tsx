@@ -15,7 +15,7 @@ import s from '../organization/organization.module.css';
 export function CollectionCompositionConfirmation({controller,collectionName,locale}:{controller:ReturnType<typeof useCollectionComposition>;collectionName:string;locale:OnboardingLanguage}){
  const {state}=controller,t=localizedSection('labelSharing')[locale],common=organizationCopy(locale),sharing=localizedSection('collectionSharing')[locale];
  if(!['awaiting','confirming','uncertain','checking'].includes(state.status))return null;
- const busy=state.status==='confirming'||state.status==='checking',uncertain=state.status==='uncertain'||state.status==='checking';
+ const busy=state.status==='confirming'||state.status==='checking',uncertain=state.status==='uncertain'||state.status==='checking'||!state.plan;
  const audience=state.plan?.audience??[],paths=audience.flatMap(row=>row.paths),action=state.intent?.action;
  return <DialogSurface className={overlays.dialog} aria-label={t.compositionTitle} onDismiss={()=>{if(!busy)controller.cancel();}}><div className={`${s.editor} ${s.sharingAction}`}>
   <CorruptLocalRecovery scopeKey={state.key} storageKey={collectionCompositionJournalKey(state.userId,state.collectionId)} valid={raw=>Boolean(readCollectionCompositionJournal(localRecordSnapshotStore(raw),state.userId,state.collectionId))} verify={async signal=>{await requestLabels(signal,undefined,state.userId);}} trigger={state.status} locale={locale} onClose={controller.cancel} onReset={controller.resume}/>
