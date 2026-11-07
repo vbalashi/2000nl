@@ -21,7 +21,8 @@ BEGIN
         'public.read_collection_labels_v1(uuid)'::regprocedure,
         'public.mutate_collection_labels_v1(uuid,bigint,jsonb)'::regprocedure
     ] LOOP
-        IF NOT (SELECT prosecdef AND proconfig @> ARRAY['search_path=public, private, pg_temp']
+        IF NOT (SELECT prosecdef AND (proconfig @> ARRAY['search_path=public, private, pg_temp']
+                OR proconfig @> ARRAY['search_path=pg_catalog, public, private, pg_temp'])
                 FROM pg_proc WHERE oid = v_function)
            OR has_function_privilege('anon', v_function, 'EXECUTE')
            OR has_function_privilege('service_role', v_function, 'EXECUTE')
@@ -29,6 +30,13 @@ BEGIN
             RAISE EXCEPTION 'db-contract-gate: collection label RPC boundary changed: %', v_function;
         END IF;
     END LOOP;
+    IF to_regprocedure('private.mutate_collection_labels_core_v1(uuid,bigint,jsonb)') IS NOT NULL THEN
+        IF has_function_privilege('authenticated','private.mutate_collection_labels_core_v1(uuid,bigint,jsonb)','EXECUTE')
+           OR has_function_privilege('anon','private.mutate_collection_labels_core_v1(uuid,bigint,jsonb)','EXECUTE')
+           OR has_function_privilege('service_role','private.mutate_collection_labels_core_v1(uuid,bigint,jsonb)','EXECUTE') THEN
+            RAISE EXCEPTION 'db-contract-gate: internal collection label writer is exposed';
+        END IF;
+    END IF;
     IF NOT EXISTS (
         SELECT 1 FROM pg_trigger
         WHERE tgrelid = 'public.user_word_lists'::regclass
