@@ -27,3 +27,8 @@ export function parseCollectionCompositionPlan(v:unknown,collectionId:string,act
  }
  return v as CollectionCompositionPlan;
 }
+export type CollectionCompositionPlanState=CollectionCompositionReceipt|{planId:string;status:'pending'|'expired'|'unknown'};
+export function parseCollectionCompositionPlanState(v:unknown,planId:string):CollectionCompositionPlanState|null{
+ const committed=parseCollectionCompositionReceipt(v,planId);if(committed)return committed;
+ return object(v)&&keys(v,['planId','status'])&&v.planId===planId&&['pending','expired','unknown'].includes(String(v.status))?v as CollectionCompositionPlanState:null;
+}

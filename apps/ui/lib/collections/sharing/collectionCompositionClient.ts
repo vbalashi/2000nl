@@ -19,3 +19,12 @@ export async function confirmCollectionComposition(userId:string,planId:string,s
  const parsed=parseCollectionCompositionReceipt(await request(userId,'confirm',{planId:id},signal),id);
  if(!parsed)throw new Error('collection_plan_contract_invalid');return parsed;
 }
+
+import {parseCollectionCompositionPlanState,type CollectionCompositionPlanState} from './collectionCompositionContract';
+export async function readCollectionCompositionReceipt(userId:string,planId:string,signal:AbortSignal):Promise<CollectionCompositionPlanState>{
+ if(!copyUuid(planId))throw new Error('invalid_collection_operation');const id=planId.toLowerCase();
+ signal.throwIfAborted();const headers=await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const response=await platformFetchWithTimeout(`/api/library/label-sharing/composition/receipt?planId=${encodeURIComponent(id)}`,{method:'GET',headers,signal,credentials:'same-origin',cache:'no-store'});
+ const value:unknown=response.ok?await response.json():null;await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const parsed=parseCollectionCompositionPlanState(value,id);if(!parsed)throw new Error('collection_plan_receipt_unavailable');return parsed;
+}

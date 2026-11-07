@@ -16,3 +16,10 @@ test('account change rejects a completed response',async()=>{
  fetcher.mockResolvedValue(Response.json({planId:id,collectionId:id,status:'committed'}));
  await expect(confirmCollectionComposition(id,id,new AbortController().signal)).rejects.toThrow('account changed');
 });
+
+test('checking composition status never executes the plan',async()=>{
+ const {readCollectionCompositionReceipt}=await import('@/lib/collections/sharing/collectionCompositionClient');
+ fetcher.mockResolvedValue(Response.json({planId:id,status:'pending'}));
+ expect((await readCollectionCompositionReceipt(id,id,new AbortController().signal)).status).toBe('pending');
+ expect(fetcher.mock.calls[0][1].method).toBe('GET');expect(fetcher.mock.calls[0][1].body).toBeUndefined();
+});
