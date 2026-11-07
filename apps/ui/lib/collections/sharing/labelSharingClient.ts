@@ -23,14 +23,16 @@ export function createLabelShareIntent(userId:string,value:LabelShareCommand):La
  if(!userId||!command)throw new Error('invalid_share_command');
  return Object.freeze({userId,command:Object.freeze(command)});
 }
-export async function executeLabelShareIntent(intent:LabelShareIntent,signal:AbortSignal):Promise<LabelShareReceipt|null>{
+export const executeLabelShareIntent=(intent:LabelShareIntent,signal:AbortSignal)=>requestLabelShareIntent(intent,signal,false);
+export const reconcileLabelShareIntent=(intent:LabelShareIntent,signal:AbortSignal)=>requestLabelShareIntent(intent,signal,true);
+async function requestLabelShareIntent(intent:LabelShareIntent,signal:AbortSignal,reconcile:boolean):Promise<LabelShareReceipt|null>{
  const stable=createLabelShareIntent(intent.userId,intent.command);
  signal.throwIfAborted();
  const headers=await platformV2AuthenticatedJsonHeaders(stable.userId);
  signal.throwIfAborted();
  let value:unknown=null;
  try{
-  const response=await platformFetchWithTimeout('/api/library/label-sharing/commands',{
+  const response=await platformFetchWithTimeout(reconcile?'/api/library/label-sharing/reconcile':'/api/library/label-sharing/commands',{
    method:'POST',headers,signal,credentials:'same-origin',cache:'no-store',body:JSON.stringify(stable.command),
   });
   if(response.ok)value=await response.json();

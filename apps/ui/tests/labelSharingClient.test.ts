@@ -18,3 +18,9 @@ test('account changes after the request reject the result',async()=>{
  fetcher.mockResolvedValue(Response.json({operationId:id,status:'committed',action:'close',result:{labelId:id,isOpen:false,revision:2,invitationCode:null,subscriberCount:0}}));
  await expect(executeLabelShareIntent(intent(),new AbortController().signal)).rejects.toThrow('account changed');
 });
+
+test('preserves terminal revision rejections for UI conflict handling',async()=>{
+ const rejected={operationId:id,status:'rejected',action:'close',reason:'share_revision_conflict'};
+ fetcher.mockResolvedValue(Response.json(rejected));
+ expect(await executeLabelShareIntent(intent(),new AbortController().signal)).toEqual(rejected);
+});

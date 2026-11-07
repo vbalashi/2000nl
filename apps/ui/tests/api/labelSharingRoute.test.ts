@@ -15,3 +15,11 @@ test('requires first party and returns no-store validated receipt',async()=>{
  auth.mockResolvedValue({principal:{authKind:'connected_client'}});expect((await POST(request(command))).status).toBe(403);
 });
 test('rejects mismatched server receipts',async()=>{rpc.mockReturnValue({abortSignal:async()=>({data:{operationId:id,status:'committed',action:'accept',result:{}},error:null})});expect((await POST(request(command))).status).toBe(502);});
+
+test('reconciliation asks RPC for read-only receipt lookup',async()=>{
+ const {POST:reconcile}=await import('@/app/api/library/label-sharing/reconcile/route');
+ rpc.mockReturnValue({abortSignal:async()=>({data:{operationId:id,status:'unknown'},error:null})});
+ const response=await reconcile(request(command));expect(response.status).toBe(200);
+ expect(await response.json()).toEqual({operationId:id,status:'unknown'});
+ expect(rpc).toHaveBeenCalledWith('command_label_share_v1',{p_operation_id:id,p_command:{action:'close',labelId:id,expectedRevision:1},p_reconcile_only:true});
+});

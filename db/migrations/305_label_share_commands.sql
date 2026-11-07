@@ -28,11 +28,16 @@ BEGIN
   RETURN receipt.response;
  END IF;
  IF p_reconcile_only THEN RETURN jsonb_build_object('operationId',p_operation_id,'status','unknown'); END IF;
+ BEGIN
  response:=CASE action
   WHEN 'accept' THEN public.accept_label_share_v1(p_command->>'code')
   WHEN 'unsubscribe' THEN public.unsubscribe_label_share_v1((p_command->>'labelId')::uuid)
   ELSE public.mutate_label_share_v1((p_command->>'labelId')::uuid,action,(p_command->>'expectedRevision')::integer) END;
  response:=jsonb_build_object('operationId',p_operation_id,'status','committed','action',action,'result',response);
+ EXCEPTION WHEN serialization_failure OR insufficient_privilege OR invalid_parameter_value THEN
+  IF SQLERRM NOT IN('share_revision_conflict','share_copy_required','share_unavailable') THEN RAISE; END IF;
+  response:=jsonb_build_object('operationId',p_operation_id,'status','rejected','action',action,'reason',SQLERRM);
+ END;
  INSERT INTO private.label_share_command_receipts VALUES(principal,p_operation_id,p_command,response);
  RETURN response;
 END;
