@@ -1923,6 +1923,16 @@
       "localFile": "Lokaal bestand",
       "manual": "Handmatig",
       "preview": "Voorbeeld: brongegevens zijn demonstratiegegevens en worden niet opgeslagen."
+    },
+    "labelSharing": {
+      "title": "Label delen",
+      "openNotice": "Via de uitnodiging kunnen anderen zich abonneren op je huidige en toekomstige collecties onder dit label, inclusief onderliggende labels.",
+      "closeNotice": "Abonnees verliezen toegang via dit label. Onafhankelijke toegang en leervoortgang blijven behouden.",
+      "description": "Een actuele groep collecties. Nieuwe collecties onder dit label en onderliggende labels verschijnen automatisch.",
+      "collections": "Collecties",
+      "accepted": "Groep toegevoegd",
+      "contents": "Inhoud van de groep",
+      "openGroup": "Groep openen"
     }
   },
   "tour": {

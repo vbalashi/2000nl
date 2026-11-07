@@ -1923,6 +1923,16 @@
       "localFile": "Local file",
       "manual": "Manual",
       "preview": "Preview — source details are demonstration data; changes are not saved."
+    },
+    "labelSharing": {
+      "title": "Share label",
+      "openNotice": "Anyone with the invitation can subscribe to your current and future collections under this label, including nested labels.",
+      "closeNotice": "Subscribers lose access through this label. Independent access and learning progress are kept.",
+      "description": "A live group of collections. New collections under this label and its nested labels appear automatically.",
+      "collections": "Collections",
+      "accepted": "Group added",
+      "contents": "Group contents",
+      "openGroup": "Open group"
     }
   },
   "tour": {

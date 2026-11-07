@@ -1698,5 +1698,13 @@
   "features.collectionDetails.web": {"source":"Web","translationHash":"469e4187fcf02cb40cc11353d1866d65807afe1364be107bcb7cee71494fe6c0"},
   "features.collectionDetails.localFile": {"source":"Local file","translationHash":"965e8a01cfe9b2a22981a8fe1510375054b2975e942e1124e5a278e6c83046ee"},
   "features.collectionDetails.manual": {"source":"Manual","translationHash":"df60e88fafadeb97c62170a10057d675775ccf9ec73b88e2bce22bcd18bc6393"},
-  "features.collectionDetails.preview": {"source":"Preview — source details are demonstration data; changes are not saved.","translationHash":"51f8013369a2e7d651d7aae2f6148322472d357e0792e7313c1a98cd5d21b3ab"}
+  "features.collectionDetails.preview": {"source":"Preview — source details are demonstration data; changes are not saved.","translationHash":"51f8013369a2e7d651d7aae2f6148322472d357e0792e7313c1a98cd5d21b3ab"},
+  "features.labelSharing.title": {"source":"Share label","translationHash":"9b14b254b84f24419668eaa30336e9a39a7264eb8001d796c5fbe4d5b12cc0c1"},
+  "features.labelSharing.openNotice": {"source":"Anyone with the invitation can subscribe to your current and future collections under this label, including nested labels.","translationHash":"48bcd22c80c6a28ab9ccf4bb77b33c1c5441480669896cf44cc49e3703c17be3"},
+  "features.labelSharing.closeNotice": {"source":"Subscribers lose access through this label. Independent access and learning progress are kept.","translationHash":"a93b52fc3ba207a57f9e5a9814750e427c0f68e6fd495e693a11f2801c9f3cb6"},
+  "features.labelSharing.description": {"source":"A live group of collections. New collections under this label and its nested labels appear automatically.","translationHash":"2fbe23383913616a86c3b29d95616665558060943ac6955c67dec19984d8f8f0"},
+  "features.labelSharing.collections": {"source":"Collections","translationHash":"458be63d70956d894e1f3d3732ac0277797a09761bee7ebe01019ebc0f7c2d60"},
+  "features.labelSharing.accepted": {"source":"Group added","translationHash":"5f315f88d559fc2d6af17d112eb7d60a190779ab2fde3b96e21713e1d9d3d7c2"},
+  "features.labelSharing.contents": {"source":"Group contents","translationHash":"03ebd0342228d3e10799a82ba90950ba318c40cb69b9fb804cfa8706d0cb0068"},
+  "features.labelSharing.openGroup": {"source":"Open group","translationHash":"180c61948862008e1701cd25c0795726be7a1b7629ed1d2c0cb0d59b03c85595"}
 }
