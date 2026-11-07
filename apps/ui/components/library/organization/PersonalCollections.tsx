@@ -9,6 +9,8 @@ import {OwnedCollectionSharing} from '../sharing/OwnedCollectionSharing';
 import {OwnedLabelSharing} from '../sharing/OwnedLabelSharing';
 import {useLabelSharingCatalog} from '../sharing/useLabelSharingCatalog';
 import {LabelAudienceConfirmation} from '../sharing/LabelAudienceConfirmation';
+import {useCollectionComposition} from '../sharing/useCollectionComposition';
+import {CollectionCompositionConfirmation} from '../sharing/CollectionCompositionConfirmation';
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
 import { ActionMenu } from "@/components/practice/ui/ActionMenu";
 import overlays from "@/components/practice/library/libraryOverlays.module.css";
@@ -89,6 +91,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
   const ownRows = useMemo(() => collectionRows(snapshot,collections,effectiveScope,query,sort,locale),[snapshot,collections,effectiveScope,query,sort,locale]);
   const publicationEnabled=process.env.NEXT_PUBLIC_COLLECTION_SHARING_ENABLED==='true';
   const catalog=usePersonalCollectionCatalog({userId,active:active&&publicationEnabled&&Boolean(snapshot),query:{query,sort,scope:effectiveScope==='all'?'all':effectiveScope==='unlabelled'?'unlabelled':'label',labelId:['all','unlabelled'].includes(effectiveScope)?null:effectiveScope,languageCode:language,limit:50}});
+  const deletion=useCollectionComposition(userId,editor?.kind==='delete-collection'?editor.collection.id:'',()=>{setEditor(null);setDetailsSelection(null);void onReload();void labels.refresh();void catalog.refresh();void sharedLabels.refresh();});
   const rows:CatalogCollection[]=publicationEnabled?catalog.collections.map(row=>({id:row.id,name:row.name,description:collections.find(collection=>collection.id===row.id)?.description,type:'user',created_at:row.createdAt,item_count:row.itemCount,ownership:row.ownership,isShared:row.isShared,labelIds:row.labelIds})):ownRows;
   const visibleRows=publicationEnabled?rows:rows.slice(0,pageSize);
   const selectedOwnCollection=detailsSelection?.userId===userId?collections.find(row=>row.id===detailsSelection.id&&row.type==='user'&&row.ownership!=='received'):undefined;
@@ -135,6 +138,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
           const result = editor.existing ? await updateUserList({userId,listId:editor.existing.id,name:name.trim()}) : await createUserList({userId,name:name.trim(),language_code:language});
           if (!result) {if(alive.current) setSaveError("uncertain");return;}
         } else if (editor.kind === "delete-collection") {
+          if(groupSharingEnabled){await deletion.save({action:'delete'});return;}
           const result = await deleteUserList(editor.collection.id);
           if (result.error) {if(alive.current) setSaveError("failed");return;}
         }
@@ -204,9 +208,11 @@ export function PersonalCollections({active, userId, language, locale, collectio
         {editor.kind === "assign" && <><LabelAssignmentPicker name={editor.collection.name} snapshot={snapshot} selected={selected} disabled={saving} locale={locale} onToggle={id=>setSelected(value=>value.includes(id)?value.filter(item=>item!==id):[...value,id])}/></>}
         {(editor.kind === "delete-label" || editor.kind === "delete-collection") && <><p>{editor.kind === "delete-label" ? editor.label.name : editor.collection.name}</p><p>{editor.kind === "delete-label" ? t.deleteLabel : t.deleteCollection}</p></>}
         {(saveError || labels.error) && <p role="alert">{message(saveError ?? labels.error!)}{saveError === "uncertain" && <button type="button" onClick={()=>{void onReload();void labels.refresh();}}>{t.retry}</button>}</p>}
+        {groupSharingEnabled&&editor.kind==='delete-collection'&&deletion.state.status==='failed'&&<p role="alert">{deletion.state.error==='collection_audience_changed'?t.conflict:t.failed}</p>}
         <footer><button type="button" disabled={saving} onClick={closeEditor}>{t.cancel}</button><button type="submit" disabled={saving || saveError === "uncertain" || ((editor.kind === "label" || editor.kind === "collection") && !name.trim())}>{saving ? t.saving : editor.kind.startsWith("delete") ? t.remove : t.save}</button></footer>
       </form>
     </DialogSurface>}
+    {groupSharingEnabled&&editor?.kind==='delete-collection'&&<CollectionCompositionConfirmation controller={deletion} collectionName={editor.collection.name} locale={locale}/>}
     {groupSharingEnabled&&labels.audience&&['awaiting','confirming','uncertain','checking'].includes(labels.audience.state.status)&&<LabelAudienceConfirmation controller={labels.audience} collections={collections} locale={locale} onConfirm={()=>{void labels.audience.confirm().then(saved=>{if(saved){setEditor(null);void catalog.refresh();void sharedLabels.refresh();}});}} onCheck={()=>{void labels.audience.check().then(saved=>{if(saved){setEditor(null);void catalog.refresh();void sharedLabels.refresh();}});}}/>}
   </div>;
 }

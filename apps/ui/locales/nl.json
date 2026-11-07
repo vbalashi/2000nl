@@ -1948,7 +1948,13 @@
       "copySeparation": "Je bevestigt het kopiëren per collectie. Voltooide kopieën blijven behouden.",
       "copyNext": "Ga na het kopiëren terug naar de wijziging en bevestig deze.",
       "borrowedCount": "Geleende artikelen: {count}",
-      "noBorrowed": "Geen geleende artikelen"
+      "noBorrowed": "Geen geleende artikelen",
+      "compositionTitle": "Gedeelde collectie wijzigen",
+      "compositionAdd": "De toegevoegde betekenis wordt beschikbaar voor abonnees van de collectie.",
+      "compositionRemove": "Verwijderde betekenissen verdwijnen uit de collectie voor abonnees.",
+      "compositionDelete": "Na het verwijderen vervalt toegang via deze collectie. Andere collecties en de leervoortgang blijven behouden.",
+      "compositionReaders": "Betrokken abonnees: {count}",
+      "compositionPaths": "Rechtstreekse abonnementen: {direct}. Groepsabonnementen: {groups}."
     }
   },
   "tour": {

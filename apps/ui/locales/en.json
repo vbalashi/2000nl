@@ -1948,7 +1948,13 @@
       "copySeparation": "Copying is confirmed separately for each collection. Completed copies are kept.",
       "copyNext": "After copying, return to the change and confirm it.",
       "borrowedCount": "Borrowed entries: {count}",
-      "noBorrowed": "No borrowed entries"
+      "noBorrowed": "No borrowed entries",
+      "compositionTitle": "Change shared collection",
+      "compositionAdd": "Adding this meaning changes the collection for its subscribers.",
+      "compositionRemove": "Removing meanings changes the collection for its subscribers.",
+      "compositionDelete": "Deleting this collection removes access through this collection. Other collections and learning progress are kept.",
+      "compositionReaders": "Subscribers affected: {count}",
+      "compositionPaths": "Direct subscriptions: {direct}. Group subscriptions: {groups}."
     }
   },
   "tour": {

@@ -1722,5 +1722,11 @@
   "features.labelSharing.copySeparation": {"source":"Copying is confirmed separately for each collection. Completed copies are kept.","translationHash":"6e2533331ea800926ea5f2886019ce6c5b324963fc69f6b656e80810eff9401d"},
   "features.labelSharing.copyNext": {"source":"After copying, return to the change and confirm it.","translationHash":"7073f69e76e23d94096a23c87e94a326d58c75fe0445c45205118c98b31bbd16"},
   "features.labelSharing.borrowedCount": {"source":"Borrowed entries: {count}","translationHash":"5d004cde6c5ca824e76117cb991518d7fbae63ad2bfbc25d57233751ab499e05"},
-  "features.labelSharing.noBorrowed": {"source":"No borrowed entries","translationHash":"e53f570e4e8475c3e8f330fd1ca0478d1b25d120fa312d5e6a3f577f1c554a1c"}
+  "features.labelSharing.noBorrowed": {"source":"No borrowed entries","translationHash":"e53f570e4e8475c3e8f330fd1ca0478d1b25d120fa312d5e6a3f577f1c554a1c"},
+  "features.labelSharing.compositionTitle": {"source":"Change shared collection","translationHash":"87d99a2356583c345bec208e40a4ebd24e245102b7c14708d2cea80059c773be"},
+  "features.labelSharing.compositionAdd": {"source":"Adding this meaning changes the collection for its subscribers.","translationHash":"f29289ae5a24334d98f310c022142d04256cb31a25172d738df5fadc324e26db"},
+  "features.labelSharing.compositionRemove": {"source":"Removing meanings changes the collection for its subscribers.","translationHash":"db03b401af1a879da4f7eb88b02961586bd6f16fecaa7a1d88b8e48f46227641"},
+  "features.labelSharing.compositionDelete": {"source":"Deleting this collection removes access through this collection. Other collections and learning progress are kept.","translationHash":"a718ab15381fa1ab0cc200196f2b63fb4cdf287841aa632d2a23070ce8a1c9fa"},
+  "features.labelSharing.compositionReaders": {"source":"Subscribers affected: {count}","translationHash":"b6c8bcb93024d4b55b588b4105be79423707f69714ccc4e223c8a6013b9c86bc"},
+  "features.labelSharing.compositionPaths": {"source":"Direct subscriptions: {direct}. Group subscriptions: {groups}.","translationHash":"5c1b5e671bb3e5c458aa90f747c966d5d79e17d3ba477d1921b7b2a9e6fe5c1b"}
 }
