@@ -1149,7 +1149,8 @@
       "selectedShort": "Geselecteerd: {count}",
       "allShort": "Alle: {count}",
       "allExceptShort": "Alle − {count}",
-      "manualLimit": "Maximaal 200 afzonderlijk geselecteerde of uitgesloten artikelen."
+      "manualLimit": "Maximaal 200 afzonderlijk geselecteerde of uitgesloten artikelen.",
+      "retryConfirmed": "Bevestigde wijziging opnieuw proberen"
     },
     "collectionComposition": {
       "title": "Gedeelde collectie",

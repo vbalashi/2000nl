@@ -1149,7 +1149,8 @@
       "selectedShort": "Selected: {count}",
       "allShort": "All: {count}",
       "allExceptShort": "All − {count}",
-      "manualLimit": "Up to 200 individually selected or excluded articles."
+      "manualLimit": "Up to 200 individually selected or excluded articles.",
+      "retryConfirmed": "Retry confirmed change"
     },
     "collectionComposition": {
       "title": "Shared collection",

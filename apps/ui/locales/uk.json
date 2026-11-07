@@ -1149,7 +1149,8 @@
       "selectedShort": "Вибрано: {count}",
       "allShort": "Усі: {count}",
       "allExceptShort": "Усі − {count}",
-      "manualLimit": "Не більше 200 статей, вибраних або виключених вручну."
+      "manualLimit": "Не більше 200 статей, вибраних або виключених вручну.",
+      "retryConfirmed": "Повторити підтверджену дію"
     },
     "collectionComposition": {
       "title": "Спільна колекція",

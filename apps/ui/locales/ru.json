@@ -1149,7 +1149,8 @@
       "selectedShort": "Выбрано: {count}",
       "allShort": "Все: {count}",
       "allExceptShort": "Все − {count}",
-      "manualLimit": "Не более 200 статей, выбранных или исключённых вручную."
+      "manualLimit": "Не более 200 статей, выбранных или исключённых вручную.",
+      "retryConfirmed": "Повторить подтверждённое действие"
     },
     "collectionComposition": {
       "title": "Общая коллекция",

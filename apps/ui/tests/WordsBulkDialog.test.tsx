@@ -64,3 +64,20 @@ test('checks saved state before clearing a damaged local confirmation',async()=>
  await waitFor(()=>expect(clear).toBeEnabled());expect(fetchLists).toHaveBeenCalledWith('account','nl');
  fireEvent.click(clear);expect(sessionStorage.getItem('words-bulk-confirm:account')).toBeNull();expect(receipt).not.toHaveBeenCalled();
 });
+test('explicit retry reads and verifies the pending plan before repeating its confirmation',async()=>{
+ request.mockResolvedValueOnce({articleCount:2,meaningCount:3,planId:'planned',audience:[]});
+ receipt.mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce({planId:'planned',status:'pending',collectionId:'owned'}).mockResolvedValueOnce({planId:'planned',status:'committed',collectionId:'owned',addedCount:3});
+ const done=vi.fn();render(<WordsBulkDialog userId="account" language="en" lists={[{id:'owned',name:'Lesson',type:'user'}]} selection={selection} onClose={vi.fn()} onDone={done}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Lesson'}));await screen.findByText('Selected articles: 2. Matching meanings: 3.');
+ fireEvent.click(screen.getByRole('button',{name:'Add meanings'}));fireEvent.click(await screen.findByRole('button',{name:'Retry confirmed change'}));
+ await waitFor(()=>expect(done).toHaveBeenCalledWith(3));
+ expect(receipt.mock.calls.map(call=>call[2])).toEqual([true,false,true]);
+});
+test('does not retry a pending plan for a different collection',async()=>{
+ request.mockResolvedValueOnce({articleCount:2,meaningCount:3,planId:'planned',audience:[]});
+ receipt.mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce({planId:'planned',status:'pending',collectionId:'other'});
+ render(<WordsBulkDialog userId="account" language="en" lists={[{id:'owned',name:'Lesson',type:'user'}]} selection={selection} onClose={vi.fn()} onDone={vi.fn()}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Lesson'}));await screen.findByText('Selected articles: 2. Matching meanings: 3.');
+ fireEvent.click(screen.getByRole('button',{name:'Add meanings'}));fireEvent.click(await screen.findByRole('button',{name:'Retry confirmed change'}));
+ await waitFor(()=>expect(receipt).toHaveBeenCalledTimes(2));expect(receipt.mock.calls.map(call=>call[2])).toEqual([true,false]);
+});

@@ -1756,5 +1756,6 @@
   "ui.collectionComposition.audience": {"source":"Readers: {count}. They can see this change.","translationHash":"7b580ff8a75763a6ed567df94455c8a1c0f6d639feb36c85f71e531e08392375"},
   "ui.collectionComposition.failed": {"source":"Could not update this collection. Review it and try again.","translationHash":"d1d09f04ea5074f978a375aa9803c46adc06e16ece8db367ec543100a7c09673"},
   "ui.collectionComposition.storage": {"source":"Could not save the confirmation on this device. Try again.","translationHash":"753e5e01d9cb8f6124a6b3a4bafd86295deffc90b9a35986978fe98a790482b0"},
-  "ui.collectionComposition.pending": {"source":"The result is not available yet. Check again before retrying.","translationHash":"2e94d24bcc0ee0df26f0bd1ce403899b74b9500d46147532a9edd1d8d0d98dd8"}
+  "ui.collectionComposition.pending": {"source":"The result is not available yet. Check again before retrying.","translationHash":"2e94d24bcc0ee0df26f0bd1ce403899b74b9500d46147532a9edd1d8d0d98dd8"},
+  "ui.wordsBulk.retryConfirmed": {"source":"Retry confirmed change","translationHash":"9e236298824a8a61bb6706b5d21bfbd711fb3c1f72ec924796b8230dfac38517"}
 }

@@ -52,12 +52,16 @@ export function WordsBulkDialog({userId,language,lists,selection,onClose,onDone,
    .finally(()=>{if(expected===generation.current)setBusy(false);});
   return ()=>{controller.abort();tracker.current++;};
  },[userId,listId,selection,copy.failed,copy.limit,copy.changed,retry,uncertain]);
- const check=async()=>{
+ const check=async(retry=false)=>{
   if(!uncertain||action.current)return;action.current=true;setBusy(true);setError(null);const expected=generation.current;
   try{const result=await wordsBulkReceipt(userId,uncertain.planId,false);if(expected!==generation.current)return;
    if(result.status==='committed' && result.collectionId===uncertain.collectionId){sessionStorage.removeItem(journalKey);onDone(result.addedCount);}
    else if(result.status==='expired' && result.collectionId===uncertain.collectionId){setExpired(true);setError(getUiMessages(language).collectionComposition.failed);}
-   else setError(getUiMessages(language).collectionComposition.pending);
+   else if(retry && result.status==='pending' && result.collectionId===uncertain.collectionId){
+    const retried=await wordsBulkReceipt(userId,uncertain.planId,true);if(expected!==generation.current)return;
+    if(retried.status==='committed' && retried.collectionId===uncertain.collectionId){sessionStorage.removeItem(journalKey);onDone(retried.addedCount);}
+    else setError(getUiMessages(language).collectionComposition.pending);
+   } else setError(getUiMessages(language).collectionComposition.pending);
   }catch{if(expected===generation.current)setError(getUiMessages(language).collectionComposition.pending);}
   finally{action.current=false;if(expected===generation.current)setBusy(false);}
  };
@@ -95,6 +99,6 @@ export function WordsBulkDialog({userId,language,lists,selection,onClose,onDone,
   </div>
   {preview && preview.audience.length>0 && <p>{formatUiMessage(getUiMessages(language).collectionComposition.audience,{count:preview.audience.length})}</p>}
   <p role="status" className={s.status}>{busy?copy.loading:preview?formatUiMessage(copy.preview,{articles:preview.articleCount,meanings:preview.meaningCount}):error}{error && !busy && !uncertain && <button type="button" onClick={()=>setRetry(value=>value+1)}>{getUiMessages(language).library.retry}</button>}</p>
-  <div className={s.actions}><button type="button" disabled={busy && action.current} onClick={onClose}>{getUiMessages(language).builder.cancel}</button>{uncertain?<button type="button" disabled={busy} onClick={()=>{if(expired){sessionStorage.removeItem(journalKey);setUncertain(null);setExpired(false);setError(null);}else void check();}}>{expired?copy.cancel:getInterfaceCatalog(language).features.personalNote.check}</button>:<button type="button" disabled={!preview||preview.meaningCount===0||busy} onClick={()=>void submit()}>{copy.confirm}</button>}</div>
+  <div className={s.actions}><button type="button" disabled={busy && action.current} onClick={onClose}>{getUiMessages(language).builder.cancel}</button>{uncertain?<><button type="button" disabled={busy} onClick={()=>{if(expired){sessionStorage.removeItem(journalKey);setUncertain(null);setExpired(false);setError(null);}else void check();}}>{expired?copy.cancel:getInterfaceCatalog(language).features.personalNote.check}</button>{!expired && <button type="button" disabled={busy} onClick={()=>void check(true)}>{copy.retryConfirmed}</button>}</>:<button type="button" disabled={!preview||preview.meaningCount===0||busy} onClick={()=>void submit()}>{copy.confirm}</button>}</div>
  </DialogSurface><CorruptLocalRecovery scopeKey={userId} storageKey={journalKey} valid={raw=>Boolean(parseBulkJournal(raw))} verify={async signal=>{await fetchUserLists(userId,selection.language);signal.throwIfAborted();}} trigger={userId} locale={language} onClose={onClose} onReset={()=>{setUncertain(null);setError(null);}}/></>;
 }
