@@ -119,7 +119,7 @@
 .treeSpacer{flex:0 0 20px}
 .labelList>button[aria-pressed]{padding-inline-start:32px}
 .labelRow>button:last-child,.collection>button:last-child{color:var(--practice-text-muted)}
-.collectionSection>.collection{margin-inline-start:24px}
+.collectionSection>.collection{margin-inline-start:36px}
 .editor .assignmentSearch{flex-direction:row}
 .editor .assignmentSearch input:not([type=checkbox]){border:0;padding:0;min-height:0;background:transparent;flex:1}
 .detailsPane .detailActions{border-top:1px solid var(--practice-border);padding-top:12px;justify-content:space-between;flex-wrap:wrap}
