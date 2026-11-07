@@ -8,6 +8,7 @@ import {
 } from "@/components/training/wordlist/DictionarySearchTab";
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
 import type { DictionaryEntry } from "@/lib/types";
+import {buildLibraryHeadwordGroupResults} from '@/components/training/wordlist/libraryHeadwordGroupResults';
 
 const fetchGroupPage = vi.fn();
 const countLibraryGroups = vi.fn().mockResolvedValue(0);
@@ -1017,7 +1018,7 @@ test('whole-filter selection can exclude a row without a checkbox',async()=>{
  expect(screen.getByRole('button',{name:'All − 1'})).toBeInTheDocument();
 });
 test('an unavailable material source never renders retained article rows',async()=>{
- await act(async()=>{render(<Harness locale="en" collection sourceRead={{collectionId:'owned-list',type:'user',status:'error',onRetry:vi.fn()}} initial={{query:'',applyListFilter:true,groupResults:[firstGroup],groupTotal:1}}/>);});
+ await act(async()=>{render(<Harness locale="en" collection sourceRead={{collectionId:'owned-list',type:'user',status:'error',onRetry:vi.fn()}} initial={{query:'',applyListFilter:true,groupResults:buildLibraryHeadwordGroupResults([firstGroup]),groupTotal:1}}/>);});
  expect(document.querySelector('[data-group-id="group-goed-main"]')).not.toBeInTheDocument();
  expect(screen.queryByText('goed')).not.toBeInTheDocument();
 });
