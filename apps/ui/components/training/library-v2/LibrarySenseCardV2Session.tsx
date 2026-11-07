@@ -575,10 +575,11 @@ function SenseCardV2Session({
     return results.every(Boolean);
   }, [detailIdentity, loadMemberships, model, refreshSelectedMembership]);
 
-  const [compositionTarget,setCompositionTarget]=React.useState<{list:WordListSummary;entryId:string;included:boolean;userId:string;identity:string}|null>(null);
+  const [compositionTarget,setCompositionTarget]=React.useState<{list:WordListSummary;entryId:string;included:boolean;userId:string;identity:string;visibleMeaning:string}|null>(null);
+  const activeCompositionTarget=compositionTarget && compositionTarget.userId===userId && compositionTarget.identity===detailIdentity && compositionTarget.visibleMeaning===activeMeaningId ? compositionTarget : null;
   const startedComposition=React.useRef<typeof compositionTarget>(null);
-  const composition=useCollectionComposition(userId ?? '',compositionTarget?.list.id ?? '',()=>{
-    const target=compositionTarget;
+  const composition=useCollectionComposition(userId ?? '',activeCompositionTarget?.list.id ?? '',()=>{
+    const target=activeCompositionTarget;
     if(!target || target.userId!==userId || target.identity!==detailIdentityRef.current)return;
     if(!target.included)rememberCollection(target.list.id);
     void refreshMemberships().then(ready=>{if(target.identity!==detailIdentityRef.current)return;if(ready)setCollectionStatus(platformV2Message(interfaceLanguage,"senseCard.collections.saved"));});
@@ -587,19 +588,19 @@ function SenseCardV2Session({
   });
   const saveComposition=composition.save, compositionCollectionId=composition.state.collectionId;
   React.useEffect(()=>{
-    const target=compositionTarget;
-    if(!target || target.userId!==userId || target.list.id!==compositionCollectionId || startedComposition.current===target)return;
+    const target=activeCompositionTarget;
+    if(!target || target.list.id!==compositionCollectionId || startedComposition.current===target)return;
     startedComposition.current=target;
     void saveComposition(target.included?{action:'remove',entryIds:[target.entryId]}:{action:'add',entryId:target.entryId});
-  },[compositionTarget,userId,compositionCollectionId,saveComposition]);
+  },[activeCompositionTarget,compositionCollectionId,saveComposition]);
   React.useEffect(()=>{
     if(composition.state.status==='failed')setCollectionStatus(platformV2Message(interfaceLanguage,"senseCard.collections.failed"));
   },[composition.state.status,interfaceLanguage]);
 
   const handleToggleList = async (list: WordListSummary, included: boolean, targetEntryId = collectionsEntryId) => {
-    if (!targetEntryId || pendingCollectionWrites.current > 0) return;
+    if (!targetEntryId || pendingCollectionWrites.current > 0 || (activeCompositionTarget && !["idle","failed"].includes(composition.state.status))) return;
     if(process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED==='true' && userId){
-      setCollectionStatus(null);setCompositionTarget({list,entryId:targetEntryId,included,userId,identity:detailIdentity});return;
+      setCollectionStatus(null);setCompositionTarget({list,entryId:targetEntryId,included,userId,identity:detailIdentity,visibleMeaning:activeMeaningId});return;
     }
     const isCurrent = () => detailIdentity === detailIdentityRef.current;
     pendingCollectionWrites.current++;
@@ -636,7 +637,7 @@ function SenseCardV2Session({
   };
 
   const handleCreateList = async (name: string) => {
-    if (!userId || !collectionsEntryId) return;
+    if (!userId || !collectionsEntryId || (activeCompositionTarget && !["idle","failed"].includes(composition.state.status))) return;
     const isCurrent = () => detailIdentity === detailIdentityRef.current;
     pendingCollectionWrites.current++;
     setCollectionBusyListId("__new__");
@@ -649,7 +650,7 @@ function SenseCardV2Session({
       });
       if (!created?.id) throw new Error("create_list_failed");
       if(process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED==='true'){
-        if(isCurrent())setCompositionTarget({list:created,entryId:collectionsEntryId,included:false,userId,identity:detailIdentity});
+        if(isCurrent())setCompositionTarget({list:created,entryId:collectionsEntryId,included:false,userId,identity:detailIdentity,visibleMeaning:activeMeaningId});
         return;
       }
       const result = await addWordsToUserList(created.id, [collectionsEntryId]);
@@ -995,7 +996,7 @@ function SenseCardV2Session({
       {copyEntryId && userId && onOpenCopied && context === "library" ? <IndependentEntryCopyDialog key={`${detailIdentity}:copy`} entryId={copyEntryId} headword={model.headword} dictionaryName={model.dictionaryName ?? ""} contentLanguageCode={contentLanguageCode} userId={userId} language={interfaceLanguage} onClose={()=>setCopyEntryId(null)} onReviewSource={()=>{copyReviewGeneration.current++;setCopyReviewRequired(true);setCopyEntryId(null);setLookupRetry(current=>current+1);}} onOpen={copy=>{setCopyEntryId(null);onOpenCopied(copy);}}/> : null}
       {archiveEntryId && userId && context === "library" ? <AuthorEntryArchiveDialog key={detailIdentity} entryId={archiveEntryId} headword={model.headword} userId={userId} language={interfaceLanguage} onCancel={() => setArchiveEntryId(null)} onArchived={() => { setArchiveEntryId(null); onArchived?.(archiveEntryId); }} /> : null}
       {reportSnapshot ? <SenseCardReportSheet snapshot={reportSnapshot} interfaceLanguage={interfaceLanguage} onClose={() => setReportSnapshot(null)} /> : null}
-      {compositionTarget && <CollectionCompositionConfirmation controller={composition} collectionName={compositionTarget.list.name} locale={interfaceLanguage}/>}
+      {activeCompositionTarget && <CollectionCompositionConfirmation controller={composition} collectionName={activeCompositionTarget.list.name} locale={interfaceLanguage}/>}
       <LibraryCollectionsPicker
         open={Boolean(collectionsMeaning)}
         headword={model.headword}

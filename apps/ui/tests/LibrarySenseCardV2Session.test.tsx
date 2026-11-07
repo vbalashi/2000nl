@@ -568,6 +568,21 @@ describe("LibrarySenseCardV2Session", () => {
     expect(removeFromList).not.toHaveBeenCalled();vi.unstubAllEnvs();
   });
 
+  test("changing the displayed word hides a previous pending audience confirmation", async () => {
+    vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');sessionStorage.clear();compositionCalls.confirm.mockClear();
+    const list={id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',name:'Lesson',type:'user' as const};
+    let finish!:(value:unknown)=>void;compositionCalls.prepare.mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));
+    fetchMemberships.mockResolvedValue(new Map([[financeEntry.entryId,[membership(list.id)]]]));
+    const props={initialGroup:multiSenseBankGroup,headword:'bank',contentLanguageCode:'nl',translationTargetLanguageCode:null,interfaceLanguage:'en' as const,userId:'owner',userLists:[list],currentCollection:list};
+    const view=render(<LibrarySenseCardV2Session {...props} entryId={financeEntry.entryId}/>);
+    const card=await screen.findByTestId(`library-sense-card-${financeEntry.entryId}`);await waitFor(()=>expect(card).toHaveAttribute('data-current-collection','included'));
+    fireEvent.click(within(card).getByRole('button',{name:'Collections · 1'}));fireEvent.click(screen.getByRole('menuitem',{name:'Remove from “Lesson”'}));
+    await waitFor(()=>expect(compositionCalls.prepare).toHaveBeenCalled());
+    view.rerender(<LibrarySenseCardV2Session {...props} entryId={furnitureEntry.entryId}/>);
+    await act(async()=>finish({planId:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',collectionId:list.id,action:'remove',audience:[{userId:'reader',paths:[{kind:'collection'}]}]}));
+    expect(screen.queryByRole('dialog',{name:'Change shared collection'})).not.toBeInTheDocument();expect(compositionCalls.confirm).not.toHaveBeenCalled();vi.unstubAllEnvs();
+  });
+
   test("quick collection actions target the clicked meaning and refresh membership without opening the picker", async () => {
     const { addWordsToUserList } = await import("@/lib/trainingService");
     vi.mocked(addWordsToUserList).mockClear();
