@@ -139,6 +139,10 @@ const url=getDbUrl();
    expect((await c.query('select confirm_collection_composition_v1($1) value',[addPlan.planId])).rows[0].value.status).toBe('committed');
    await c.query('reset role');
    expect((await c.query('select word_id from user_word_list_items where list_id=$1',[ownCollection])).rows).toEqual([{word_id:entry}]);
+   await c.query('set local role authenticated');
+   expect((await c.query('select get_user_list_memberships_for_entries($1,$2) value',[viewer,[entry]])).rows[0].value).toEqual([{entry_id:entry,lists:[expect.objectContaining({id:ownCollection,kind:'user',editable:true})]}]);
+   expect((await c.query('select get_user_list_membership($1,$2,$3) value',[viewer,ownCollection,[entry]])).rows[0].value).toEqual([entry]);
+   await c.query('reset role');
    expect((await c.query("select can_access_dictionary($1,(select dictionary_id from word_entries where id=$2),'read') allowed",[viewer,entry])).rows[0].allowed).toBe(false);
    await c.query('insert into private.collection_label_assignments values($1,$2,$3)',[viewer,ownCollection,personalLabel]);
    expect((await c.query('select preflight_label_share_v1($1) value',[personalLabel])).rows[0].value.collections).toEqual([{collectionId:ownCollection,name:'received reference',borrowedCount:1}]);
@@ -153,12 +157,15 @@ const url=getDbUrl();
 
 
    expect(await readable(viewer)).toBe(true);
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);
+   expect((await c.query('select get_user_list_memberships_for_entries($1,$2) value',[viewer,[entry]])).rows[0].value).toEqual([{entry_id:entry,lists:[expect.objectContaining({id:ownCollection,kind:'user',editable:true})]}]);
    await c.query('update private.collection_sharing_subscriptions set is_active=false where user_id=$1 and root_id=$2',[viewer,directRoot]);
    expect(await readable(viewer)).toBe(false);
    expect((await c.query('select to_jsonb(status) value from user_card_status status where user_id=$1 and entry_id=$2',[viewer,entry])).rows).toEqual(progressBefore);
    await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);
    await c.query('set local role authenticated');
    expect((await c.query('select confirm_collection_composition_v1($1) value',[addPlan.planId])).rows[0].value.status).toBe('committed');
+   expect((await c.query('select get_user_list_memberships_for_entries($1,$2) value',[viewer,[entry]])).rows[0].value).toEqual([]);
    const deniedPlan=(await c.query('select prepare_collection_composition_v1($1,$2) value',[ownCollection,{action:'add',entryId:entry}])).rows[0].value;
    await c.query('savepoint revoked_reference');
    await expect(c.query('select confirm_collection_composition_v1($1)',[deniedPlan.planId])).rejects.toThrow('entry_not_accessible');

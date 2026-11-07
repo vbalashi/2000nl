@@ -43,5 +43,8 @@ BEGIN
    OR has_function_privilege('anon',routine,'EXECUTE') OR has_function_privilege('service_role',routine,'EXECUTE') THEN
    RAISE EXCEPTION 'db-contract-gate: group RPC boundary changed: %',routine; END IF;
  END LOOP;
+ IF strpos(pg_get_functiondef('public.get_user_list_memberships_for_entries(uuid,uuid[])'::regprocedure),
+  'private.entry_access_v1(p_user_id,entry.id,''train'')')=0 THEN
+  RAISE EXCEPTION 'db-contract-gate: exact received membership authority missing'; END IF;
 END;
 $group_contract$;

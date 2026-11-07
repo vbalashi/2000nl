@@ -62,3 +62,4 @@
 \i db/migrations/355_single_copy_author_admission.sql
 \i db/migrations/356_composition_receipt_scope.sql
 \i db/migrations/357_received_entry_collection_addition.sql
+\i db/migrations/358_received_entry_membership_read.sql
