@@ -23,7 +23,7 @@ test.each(['owned','received'] as const)('one toolbar precedes %s groups and sen
  vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');
  mock.groups.mockReturnValue({status:'ready',data:{owned:[{labelId:'1',name:'YouTube',isOpen:true},{labelId:'2',name:'Books',isOpen:true}],received:[{labelId:'3',name:'YouTube lessons'},{labelId:'4',name:'Books'}]},refresh:vi.fn()});
  const rendered=render(<SharedCollectionsWorkspace {...base} view={view}/>);
- const search=screen.getByRole('textbox',{name:'Search collections'});
+ const search=screen.getByRole('textbox',{name:'Search groups and collections'});
  expect(screen.getAllByRole('textbox')).toHaveLength(1);
  expect(search.compareDocumentPosition(screen.getByTestId('groups'))&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
  fireEvent.change(search,{target:{value:'  YOUTUBE  '}});

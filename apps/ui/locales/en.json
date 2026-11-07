@@ -1372,7 +1372,8 @@
       "owned": "Shared by me",
       "received": "Added by me",
       "add": "Add by link / code",
-      "label": "Shared sections"
+      "label": "Shared sections",
+      "search": "Search groups and collections"
     },
     "utilityNavigation": {
       "theme": "Theme",

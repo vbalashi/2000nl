@@ -1764,5 +1764,6 @@
   "ui.wordsBulk.sharedReadersTwo": {"source":"Shared · {count} subscribers","translationHash":"8c08b89a53df9cc2d149850ba6d88a5162daa73f442aeb55fde6719c77616b67"},
   "ui.wordsBulk.sharedReadersFew": {"source":"Shared · {count} subscribers","translationHash":"8c08b89a53df9cc2d149850ba6d88a5162daa73f442aeb55fde6719c77616b67"},
   "ui.wordsBulk.sharedReadersMany": {"source":"Shared · {count} subscribers","translationHash":"8368f15742efa57d0dba42222d671a21ce786ab823b3e70c147908a5e101c49a"},
-  "ui.wordsBulk.sharedReadersOther": {"source":"Shared · {count} subscribers","translationHash":"8c08b89a53df9cc2d149850ba6d88a5162daa73f442aeb55fde6719c77616b67"}
+  "ui.wordsBulk.sharedReadersOther": {"source":"Shared · {count} subscribers","translationHash":"8c08b89a53df9cc2d149850ba6d88a5162daa73f442aeb55fde6719c77616b67"},
+  "features.sharedWorkspace.search": {"source":"Search groups and collections","translationHash":"0193bcee0df15132bc0005bb834a06e52ce62d52b91501b0ed3e471cc13103ff"}
 }

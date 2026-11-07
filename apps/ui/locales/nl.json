@@ -1372,7 +1372,8 @@
       "owned": "Door mij gedeeld",
       "received": "Door mij toegevoegd",
       "add": "Toevoegen via link / code",
-      "label": "Gedeelde onderdelen"
+      "label": "Gedeelde onderdelen",
+      "search": "Groepen en collecties zoeken"
     },
     "utilityNavigation": {
       "theme": "Thema",
