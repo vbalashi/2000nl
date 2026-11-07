@@ -76,3 +76,14 @@ export function parseSharedResourcePreview(v:unknown):SharedResourcePreview|null
  if(v.kind==='collection'){const preview=parseSharePreview(v.preview);return preview?{kind:'collection',preview}:null;}
  return null;
 }
+export type CollectionAccessPaths={collectionId:string;isOwner:boolean;directSubscription:boolean;groups:Array<{labelId:string;name:string}>};
+export function parseCollectionAccessPaths(v:unknown):CollectionAccessPaths|null{
+ if(!record(v)||!keys(v,['collectionId','isOwner','directSubscription','groups'])||!copyUuid(v.collectionId)||typeof v.isOwner!=='boolean'||typeof v.directSubscription!=='boolean'||!Array.isArray(v.groups)||v.groups.length>1000)return null;
+ const seen=new Set<string>();
+ for(const group of v.groups){
+  if(!record(group)||!keys(group,['labelId','name'])||!copyUuid(group.labelId)||typeof group.name!=='string'||!group.name.trim()||[...group.name].length>100||seen.has(group.labelId.toLowerCase()))return null;
+  seen.add(group.labelId.toLowerCase());
+ }
+ if(!v.isOwner&&!v.directSubscription&&!v.groups.length)return null;
+ return v as CollectionAccessPaths;
+}

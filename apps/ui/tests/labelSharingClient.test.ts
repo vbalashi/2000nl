@@ -36,3 +36,9 @@ test('group page rejects a cursor that does not advance',async()=>{
  fetcher.mockResolvedValue(Response.json({labelId:id,collections:[{collectionId:id,name:'lesson'}],nextCursor:null}));
  await expect(readLabelShareCollections(id,id,id,new AbortController().signal)).rejects.toThrow('label_sharing_collections_unavailable');
 });
+
+test('collection paths are bound to the requested collection',async()=>{
+ const {readCollectionAccessPaths}=await import('@/lib/collections/sharing/labelSharingClient');
+ fetcher.mockResolvedValue(Response.json({collectionId:'22222222-2222-4222-8222-222222222222',isOwner:false,directSubscription:true,groups:[]}));
+ await expect(readCollectionAccessPaths(id,id,new AbortController().signal)).rejects.toThrow('collection_access_paths_unavailable');
+});

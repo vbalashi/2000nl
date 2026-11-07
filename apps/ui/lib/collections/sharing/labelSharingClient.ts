@@ -90,3 +90,18 @@ export async function previewSharedResource(userId:string,code:string,signal:Abo
  const parsed=parseSharedResourcePreview(value);if(!parsed)throw new Error('share_preview_unavailable');
  return parsed;
 }
+
+import {parseCollectionAccessPaths,type CollectionAccessPaths} from './labelSharingContract';
+export async function readCollectionAccessPaths(userId:string,collectionId:string,signal:AbortSignal):Promise<CollectionAccessPaths>{
+ if(!copyUuid(collectionId))throw new Error('invalid_share_request');
+ const id=collectionId.toLowerCase();signal.throwIfAborted();
+ const headers=await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const response=await platformFetchWithTimeout(`/api/library/label-sharing/access-paths?collectionId=${encodeURIComponent(id)}`,{
+  method:'GET',headers,signal,credentials:'same-origin',cache:'no-store',
+ });
+ const value:unknown=response.ok?await response.json():null;
+ await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const parsed=parseCollectionAccessPaths(value);
+ if(!parsed||parsed.collectionId!==id)throw new Error('collection_access_paths_unavailable');
+ return parsed;
+}

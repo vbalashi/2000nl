@@ -50,3 +50,10 @@ test('resource preview discriminator must match its payload',async()=>{
  expect(parseSharedResourcePreview({kind:'label',preview})).toEqual({kind:'label',preview});
  expect(parseSharedResourcePreview({kind:'collection',preview})).toBeNull();
 });
+
+test('access paths reject a viewer without any live path',async()=>{
+ const {parseCollectionAccessPaths}=await import('@/lib/collections/sharing/labelSharingContract');
+ const paths={collectionId:labelId,isOwner:false,directSubscription:false,groups:[]};
+ expect(parseCollectionAccessPaths(paths)).toBeNull();
+ expect(parseCollectionAccessPaths({...paths,groups:[{labelId,name:'group'}]})).not.toBeNull();
+});
