@@ -97,3 +97,13 @@ export function parseLabelSharePreflight(v:unknown):LabelSharePreflight|null{
  }
  return v as LabelSharePreflight;
 }
+export type LabelShareReferences={labelId:string;references:Array<{collectionId:string;name:string;invitationCode:string}>};
+export function parseLabelShareReferences(v:unknown):LabelShareReferences|null{
+ if(!record(v)||!keys(v,['labelId','references'])||!copyUuid(v.labelId)||!Array.isArray(v.references))return null;
+ const seen=new Set<string>();
+ for(const row of v.references){
+  if(!record(row)||!keys(row,['collectionId','name','invitationCode'])||!copyUuid(row.collectionId)||typeof row.name!=='string'||row.name.length>1000||!isCanonicalShareCode(row.invitationCode)||seen.has(row.collectionId.toLowerCase()))return null;
+  seen.add(row.collectionId.toLowerCase());
+ }
+ return v as LabelShareReferences;
+}

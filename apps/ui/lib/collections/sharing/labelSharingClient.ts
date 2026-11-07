@@ -116,3 +116,14 @@ export async function preflightLabelShare(userId:string,labelId:string,signal:Ab
  await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
  const parsed=parseLabelSharePreflight(value);if(!parsed||parsed.labelId!==id)throw new Error('label_share_preflight_unavailable');return parsed;
 }
+
+import {parseLabelShareReferences,type LabelShareReferences} from './labelSharingContract';
+export async function readLabelShareReferences(userId:string,labelId:string,signal:AbortSignal):Promise<LabelShareReferences>{
+ if(!copyUuid(labelId))throw new Error('invalid_share_request');
+ const id=labelId.toLowerCase();signal.throwIfAborted();
+ const headers=await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const response=await platformFetchWithTimeout(`/api/library/label-sharing/references?labelId=${encodeURIComponent(id)}`,{method:'GET',headers,signal,credentials:'same-origin',cache:'no-store'});
+ const value:unknown=response.ok?await response.json():null;
+ await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const parsed=parseLabelShareReferences(value);if(!parsed||parsed.labelId!==id)throw new Error('label_share_references_unavailable');return parsed;
+}

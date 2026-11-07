@@ -57,3 +57,10 @@ test('access paths reject a viewer without any live path',async()=>{
  expect(parseCollectionAccessPaths(paths)).toBeNull();
  expect(parseCollectionAccessPaths({...paths,groups:[{labelId,name:'group'}]})).not.toBeNull();
 });
+
+test('foreign references require an original canonical invitation',async()=>{
+ const {parseLabelShareReferences}=await import('@/lib/collections/sharing/labelSharingContract');
+ const row={collectionId:labelId,name:'original',invitationCode:'0'.repeat(26)};
+ expect(parseLabelShareReferences({labelId,references:[row]})).not.toBeNull();
+ expect(parseLabelShareReferences({labelId,references:[{...row,invitationCode:'https://youtube.com'}]})).toBeNull();
+});
