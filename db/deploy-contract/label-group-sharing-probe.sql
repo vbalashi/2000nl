@@ -18,6 +18,7 @@ BEGIN
    RAISE EXCEPTION 'db-contract-gate: group storage exposed: %',relation; END IF;
  END LOOP;
  FOREACH routine IN ARRAY ARRAY[
+ 'private.lock_collection_entry_addition_v1(uuid,uuid)'::regprocedure,
  'private.mutate_collection_labels_core_v1(uuid,bigint,jsonb)'::regprocedure,
  'private.add_entry_to_user_list_core_v1(uuid,uuid,uuid)'::regprocedure,
  'private.remove_entries_from_user_list_core_v1(uuid,uuid,uuid[])'::regprocedure,

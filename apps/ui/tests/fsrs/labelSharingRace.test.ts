@@ -26,16 +26,9 @@ const url=getDbUrl();
    expect((await closing).rows[0].value.isOpen).toBe(false);await b.query('commit');
   }finally{await a.query('rollback');await b.query('rollback');await a.query('delete from auth.users where id=$1',[owner]);a.release();b.release();}
  });
- test('accept cannot introduce an unconfirmed audience while legacy add waits on its source',async()=>{
+ test('source contention fails safely and an accepted audience still requires confirmation on retry',async()=>{
   const owner=randomUUID(),viewer=randomUUID(),label=randomUUID(),list=randomUUID();
   const a=await pool.connect(),b=await pool.connect(),c=await pool.connect();let entry:string|undefined;
-  const waiting=async(pid:number)=>{
-   for(let n=0;n<100;n++) {
-    if((await pool.query('select cardinality(pg_blocking_pids($1))>0 blocked',[pid])).rows[0].blocked)return;
-    await new Promise(resolve=>setTimeout(resolve,10));
-   }
-   throw new Error('expected authority contention');
-  };
   try {
    await a.query('begin');await ensureUserWithSettings(a,owner);await ensureUserWithSettings(a,viewer);
    await a.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
@@ -46,13 +39,15 @@ const url=getDbUrl();
    const opened=(await a.query("select mutate_label_share_v1($1,'open',0) value",[label])).rows[0].value;
    await a.query('commit');await a.query('begin');await a.query('select id from word_entries where id=$1 for update',[entry]);
    await b.query('begin');await b.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);await b.query('set local role authenticated');
-   const bPid=(await b.query('select pg_backend_pid() pid')).rows[0].pid;
-   const adding=b.query('select add_entry_to_user_list($1,$2,$3)',[owner,list,entry]);await waiting(bPid);
+   await expect(b.query('select add_entry_to_user_list($1,$2,$3)',[owner,list,entry])).rejects.toThrow('collection_audience_changed');
+   await b.query('rollback');
    await c.query('begin');await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);await c.query('set local role authenticated');
-   const cPid=(await c.query('select pg_backend_pid() pid')).rows[0].pid;
-   const accepting=c.query('select accept_label_share_v1($1)',[opened.invitationCode]);await waiting(cPid);
-   expect((await pool.query('select $1=any(pg_blocking_pids($2)) correct',[bPid,cPid])).rows[0].correct).toBe(true);
-   await a.query('commit');await adding;await b.query('commit');await accepting;await c.query('commit');
+   await c.query('select accept_label_share_v1($1)',[opened.invitationCode]);await c.query('commit');
+   await a.query('commit');
+   await b.query('begin');await b.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);await b.query('set local role authenticated');
+   await expect(b.query('select add_entry_to_user_list($1,$2,$3)',[owner,list,entry])).rejects.toThrow('collection_audience_confirmation_required');
+   await b.query('rollback');
+   expect((await a.query('select count(*)::int n from user_word_list_items where list_id=$1',[list])).rows[0].n).toBe(0);
    const audience=(await a.query('select private.collection_audience_recipients_v1($1,$2) value',[owner,list])).rows[0].value;
    expect(audience.map((row:{userId:string})=>row.userId)).toEqual([viewer]);
   } finally {
