@@ -137,7 +137,7 @@
 .invitation>h2{margin:0;font-size:var(--practice-text-body-lg);font-weight:500;line-height:1.5}
 .invitation input{font:inherit}
 .invitation button{font-size:var(--practice-text-small);min-height:44px;background:transparent;border-color:transparent}
-@media(max-width:700px){.ownedSharedRow{grid-template-columns:minmax(0,1fr) 44px;gap:8px;min-height:64px}.ownedSharedActions{grid-column:2;grid-row:1;align-self:center}.ownedSharedActions>button:first-child{display:none}.desktopSubscriberCount{display:none}.ownedSharedName{align-self:center}.ownedSharedName small{display:block;line-height:1.5}.ownedSharedName>div{gap:2px}}
+@media(max-width:700px){.ownedSharedRow{grid-template-columns:minmax(0,1fr) 44px;gap:8px;min-height:64px}.ownedSharedActions{grid-column:2;grid-row:1;align-self:center}.ownedSharedActions>button:not(:last-child){display:none}.desktopSubscriberCount{display:none}.ownedSharedName{align-self:center}.ownedSharedName small{display:block;line-height:1.5}.ownedSharedName>div{gap:2px}}
 .groupContents{max-height:85dvh;overflow-y:auto}
 .groupContents header>button{width:44px;min-width:44px}
 .groupContents ul{list-style:none;margin:0;padding:0}
