@@ -1708,5 +1708,6 @@
   "features.labelSharing.contents": {"source":"Group contents","translationHash":"752edde843f8402e812d3a69fb9c99278b116d23cb92122533c5cda50a4e6b15"},
   "features.labelSharing.openGroup": {"source":"Open group","translationHash":"cd07262af5582b42d1cab0a5c2691f5785e090c36e5b4db083c4e330de5eaf5c"},
   "features.labelSharing.leaveNotice": {"source":"The group will leave your library. Independently granted access and learning progress are kept.","translationHash":"6305d574ffe9435103a9a785841dd789481e2d06139469d21fa9875a5e436295"},
-  "features.labelSharing.groups": {"source":"Collection groups","translationHash":"21912bda69bf2c077f5d2a6004bb4d213d62a55240b6a2ba2179e943ea9f1c36"}
+  "features.labelSharing.groups": {"source":"Collection groups","translationHash":"21912bda69bf2c077f5d2a6004bb4d213d62a55240b6a2ba2179e943ea9f1c36"},
+  "features.labelSharing.accessRemains": {"source":"Access remains through these groups: {groups}.","translationHash":"17da7dcf1e55ef120f06e18ead2673c006269cf8c9af9220dbf75c0c947807c6"}
 }

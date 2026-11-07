@@ -26,7 +26,7 @@ export function SharedCollectionsWorkspace(props:WorkspaceProps){
  const groupRows=(view:'owned'|'received')=>enabled?<>{groups.status==='error'&&<p role="alert">{organizationCopy(props.locale).sharingStatusError} <button onClick={()=>void groups.refresh()}>{organizationCopy(props.locale).retry}</button></p>}<SharedLabelGroups userId={props.userId} locale={props.locale} view={view} groups={view==='owned'?owned:received} onChanged={changed} onOpenCollection={id=>props.onOpenGroupCollection?.(id,view)}/></>:null;
  return <SharedCollectionsWorkspaceView {...props} counts={overview.data?{sharedByMe:overview.data.sharedByMe+owned.length,addedByMe:overview.data.addedByMe+received.length}:undefined}
   owned={<>{groupRows('owned')}<OwnedSharedCollections userId={props.userId} active={props.active} locale={props.locale} hasGroups={owned.length>0} onOpen={props.onOpenOwned} onChanged={changed}/></>}
-  received={<>{groupRows('received')}<ReceivedCollections userId={props.userId} active={props.active} locale={props.locale} hasGroups={received.length>0} embedded onOpen={props.onOpenReceived} onAdd={props.onAdd} onChanged={changed}/></>}/>;
+  received={<>{groupRows('received')}<ReceivedCollections userId={props.userId} active={props.active} locale={props.locale} hasGroups={received.length>0} onOpenCollectionId={id=>props.onOpenGroupCollection?.(id,'received')} embedded onOpen={props.onOpenReceived} onAdd={props.onAdd} onChanged={changed}/></>}/>;
 }
 export function SharedCollectionsWorkspaceView({locale,view,onViewChange,onAdd,counts,owned,received}:WorkspaceProps&{counts?:{sharedByMe:number;addedByMe:number};owned:React.ReactNode;received:React.ReactNode}){
  const t=copy[locale];

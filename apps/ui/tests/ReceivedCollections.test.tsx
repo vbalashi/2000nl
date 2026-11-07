@@ -1,15 +1,19 @@
 import React from 'react';
 import {fireEvent,render,screen} from '@testing-library/react';
-import {beforeEach,expect,test,vi} from 'vitest';
+import {beforeEach,afterEach,expect,test,vi} from 'vitest';
 vi.mock('@/lib/collections/sharing/shareCommandClient',async original=>({...await original<typeof import('@/lib/collections/sharing/shareCommandClient')>(),executeShareIntent:vi.fn(async()=>({state:'uncertain'}))}));
-const mock=vi.hoisted(()=>({hook:vi.fn(),refresh:vi.fn(),more:vi.fn()}));
+const mock=vi.hoisted(()=>({hook:vi.fn(),refresh:vi.fn(),more:vi.fn(),paths:vi.fn()}));
 vi.mock('@/components/library/organization/useReceivedCatalog',()=>({useReceivedCatalog:mock.hook}));
+vi.mock('@/components/library/sharing/useCollectionAccessPaths',()=>({useCollectionAccessPaths:mock.paths}));
+vi.mock('@/components/library/organization/usePersonalLabels',()=>({usePersonalLabels:()=>({snapshot:null})}));
 import {ReceivedCollections} from '@/components/library/sharing/ReceivedCollections';
-const row={id:'75600000-0000-4000-8000-000000000001',name:'Lesson',itemCount:10,ownerUserId:'private-account-id'};
+const row={id:'75600000-0000-4000-8000-000000000001',name:'Lesson',itemCount:10,ownerUserId:'private-account-id',labelIds:[]};
 const props={active:true,userId:'reader',locale:'en' as const,onOpen:vi.fn(),onAdd:vi.fn()};
-beforeEach(()=>{window.sessionStorage.clear();vi.clearAllMocks();mock.hook.mockReturnValue({status:'ready',collections:[row],nextCursor:null,loadingMore:false,refresh:mock.refresh,loadMore:mock.more});});
+beforeEach(()=>{window.sessionStorage.clear();vi.clearAllMocks();mock.paths.mockReturnValue({status:'ready',data:{collectionId:row.id,isOwner:false,directSubscription:true,groups:[]},refresh:vi.fn()});mock.hook.mockReturnValue({status:'ready',collections:[row],nextCursor:null,loadingMore:false,refresh:mock.refresh,loadMore:mock.more});});
+afterEach(()=>{vi.unstubAllEnvs();});
 test('opens exact collection and does not expose internal owner identity',()=>{
  render(<ReceivedCollections {...props}/>);expect(screen.queryByText(row.ownerUserId)).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Lesson'}));
  fireEvent.click(screen.getByRole('button',{name:'View words'}));expect(props.onOpen).toHaveBeenCalledWith(row);
 });
 test('search and sort are sent to the paginated query, rather than filtering one loaded page',()=>{
@@ -48,4 +52,21 @@ test('a fresh lost-response operation stays dismissed until explicit resume',asy
  await screen.findByRole('button',{name:'Check result'});
  fireEvent.click(screen.getByRole('button',{name:'Cancel'}));expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
  fireEvent.click(screen.getByRole('button',{name:'Check result'}));expect(await screen.findByRole('dialog')).toBeInTheDocument();
+});
+
+test('group-only access offers the group and never a misleading direct unsubscribe',()=>{
+ vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');
+ mock.paths.mockReturnValue({status:'ready',data:{collectionId:row.id,isOwner:false,directSubscription:false,groups:[{labelId:'22222222-2222-4222-8222-222222222222',name:'Easy Dutch'}]},refresh:vi.fn()});
+ render(<ReceivedCollections {...props}/>);
+ fireEvent.click(screen.getByRole('button',{name:'More actions · Lesson'}));
+ expect(screen.queryByRole('menuitem',{name:'Remove from my library'})).toBeNull();
+ expect(screen.getByRole('menuitem',{name:'Easy Dutch'})).toBeInTheDocument();
+});
+test('direct unsubscribe explains that access through a group survives',()=>{
+ vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');
+ mock.paths.mockReturnValue({status:'ready',data:{collectionId:row.id,isOwner:false,directSubscription:true,groups:[{labelId:'22222222-2222-4222-8222-222222222222',name:'Easy Dutch'}]},refresh:vi.fn()});
+ render(<ReceivedCollections {...props}/>);
+ fireEvent.click(screen.getByRole('button',{name:'More actions · Lesson'}));
+ fireEvent.click(screen.getByRole('menuitem',{name:'Remove from my library'}));
+ expect(screen.getByRole('dialog')).toHaveTextContent('Access remains through these groups: Easy Dutch.');
 });

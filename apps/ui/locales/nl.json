@@ -1934,7 +1934,8 @@
       "contents": "Inhoud van de groep",
       "openGroup": "Groep openen",
       "leaveNotice": "De groep verdwijnt uit je bibliotheek. Onafhankelijk verleende toegang en leervoortgang blijven behouden.",
-      "groups": "Collectiegroepen"
+      "groups": "Collectiegroepen",
+      "accessRemains": "Toegang blijft behouden via deze groepen: {groups}."
     }
   },
   "tour": {
