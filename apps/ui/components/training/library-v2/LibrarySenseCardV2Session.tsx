@@ -141,6 +141,17 @@ function SenseCardV2Session({
   const [membershipsByEntryId, setMembershipsByEntryId] = React.useState<
     Record<string, EntryLearningListMembership[]>
   >({});
+  const [recentState, setRecentState] = React.useState<{userId:string; ids:string[]} | null>(null);
+  const recentCollectionIds = recentState && recentState.userId === userId ? recentState.ids : [];
+  React.useEffect(() => {
+    if (!userId) { setRecentState(null); return; }
+    try { const value = JSON.parse(localStorage.getItem(`2000nl:recent-collections:${userId}`) ?? "[]"); setRecentState({userId, ids:Array.isArray(value) ? value.filter((id): id is string => typeof id === "string").slice(0, 3) : []}); }
+    catch { setRecentState({userId, ids:[]}); }
+  }, [userId]);
+  const rememberCollection = (id: string) => {
+    if (!userId) return;
+    setRecentState(previous => { const next = [id, ...(previous?.userId === userId ? previous.ids : []).filter(item => item !== id)].slice(0, 3); try { localStorage.setItem(`2000nl:recent-collections:${userId}`, JSON.stringify(next)); } catch {} return {userId, ids:next}; });
+  };
   const [membershipState, setMembershipState] = React.useState<"loading" | "ready" | "failed">("loading");
   const [collectionsEntryId, setCollectionsEntryId] = React.useState<
     string | null
@@ -573,6 +584,7 @@ function SenseCardV2Session({
         ? await removeWordsFromUserList(list.id, [targetEntryId])
         : await addWordsToUserList(list.id, [targetEntryId]);
       if (result.error) throw result.error;
+      if (!included && isCurrent()) rememberCollection(list.id);
       const membershipsReady = await refreshMemberships();
       if (!isCurrent()) return;
       // List counts elsewhere may refresh after the saved membership is shown.
@@ -612,6 +624,7 @@ function SenseCardV2Session({
       if (!created?.id) throw new Error("create_list_failed");
       const result = await addWordsToUserList(created.id, [collectionsEntryId]);
       if (result.error) throw result.error;
+      if (isCurrent()) rememberCollection(created.id);
       const membershipsReady = await refreshMemberships();
       if (!isCurrent()) return;
       await onListsUpdated?.();
@@ -863,6 +876,10 @@ function SenseCardV2Session({
       {userId && context === "library" ? <TrainingExclusionUndoNotice userId={userId} language={interfaceLanguage}/> : null}
       <div className="min-h-0 flex-1">
         <LibrarySenseCardGroup
+          recentCollections={recentCollectionIds.flatMap(id => { const list = userLists.find(item => item.id === id && item.type === "user" && item.ownership !== "received"); return list ? [list] : []; })}
+          recentMemberships={membershipsByEntryId}
+          recentMembershipReady={membershipState === "ready" && !collectionBusyListId}
+          onToggleRecentCollection={(meaning, list, included) => void handleToggleList(list, included, meaning.entryId)}
           currentCard={permittedCurrentCard}
           currentCardEntryId={permittedCurrentCard ? entryId : undefined}
           contentLanguage={group?.dictionary.sourceLanguageCode ?? contentLanguageCode}
@@ -968,7 +985,7 @@ function SenseCardV2Session({
         onCreateList={(name) => void handleCreateList(name)}
         onOpenListMembership={onOpenListMembership}
       />
-      {context === "library" && currentCollection && !collectionsMeaning && collectionStatus ? <p
+      {context === "library" && !collectionsMeaning && collectionStatus ? <p
         role={collectionStatus === platformV2Message(interfaceLanguage, "senseCard.collections.failed") ? "alert" : "status"}
         className={collectionStatus === platformV2Message(interfaceLanguage, "senseCard.collections.failed") ? "px-4 py-2 text-sm text-[var(--practice-text-muted)]" : "sr-only"}>{collectionStatus}</p> : null}
       {savedReviewMessageKey && !errorNotice ? <p role="status" aria-live="polite" aria-atomic="true"

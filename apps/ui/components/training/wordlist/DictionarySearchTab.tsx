@@ -3,6 +3,7 @@ import {formatLibraryCounts} from "@/lib/platform/libraryCountLabel";
 import { languageAutonym } from "@/lib/languages/languageDisplayName";
 import { localizedField } from "@/lib/i18n/catalog";
 
+import {ActionMenu} from "@/components/practice/ui/ActionMenu";
 import {IconAction} from "@/components/practice/ui/IconAction";
 import {LibrarySortControl} from "@/components/practice/library/LibrarySortControl";
 import {librarySelectionToTraining,type LibraryTrainingHandoff} from "@/lib/vocabulary/libraryTrainingHandoff";
@@ -182,6 +183,8 @@ export function DictionarySearchTab({
   const selectedSourceRead=collectionSourceRead?.collectionId===viewedListId?collectionSourceRead:undefined;
   const viewedListName = viewedList?.name ?? (searchState.collectionId ? '' : defaultViewedListName);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [countAnchor, setCountAnchor] = useState<HTMLButtonElement | null>(null);
+  const [scopeAnchor, setScopeAnchor] = useState<HTMLButtonElement | null>(null);
   const [availableLanguages, setAvailableLanguages] = useState<
     AvailableLearningLanguage[]
   >([]);
@@ -591,31 +594,30 @@ export function DictionarySearchTab({
 
         <div className={workspace.scopeRow}>
           <div className={workspace.scopeSummary}>
-            <div className={workspace.scope}>
+            <button type="button" className={`${workspace.scope} ${workspace.scopeButton}`} title={copy.filters} aria-haspopup="menu" aria-expanded={Boolean(scopeAnchor)} onClick={event => setScopeAnchor(scopeAnchor ? null : event.currentTarget)}>
               {languageDisplayName(interfaceLanguage, searchLanguage)} ·{" "}
               {searchState.labelId ? <Folder size={14} aria-hidden="true" className="inline align-text-bottom"/> : useViewedListFilter ? <FileText size={14} aria-hidden="true" className="inline align-text-bottom"/> : null}{" "}{resultScopeLabel}
               {searchState.entryFilters?.parts.map(part=>
                 <React.Fragment key={part}> · {getUiMessages(interfaceLanguage).builder.parts[LIBRARY_PART_LABELS[part]]}
                   {part === "noun" && searchState.entryFilters?.article ? ` (${searchState.entryFilters.article})` : ""}
                 </React.Fragment>)}
-            </div>
-            {onTrainSelection && searchMaterialReady && (
-              <IconAction
-                className={workspace.trainSelection}
-                label={localizedField("libraryWordSelection", "train")[interfaceLanguage]}
-                title={localizedField("libraryWordSelection", "setup")[interfaceLanguage]}
-                onClick={() => onTrainSelection(librarySelectionToTraining({
+            </button>
+
+          </div>
+          {scopeAnchor && <ActionMenu anchor={scopeAnchor} title={copy.filters} language={interfaceLanguage} onClose={() => setScopeAnchor(null)} items={[
+            {id:"filters",label:copy.filters,icon:<SlidersHorizontal size={14}/>,onSelect:()=>{setScopeAnchor(null);setFiltersOpen(true);}},
+            {id:"reset",label:copy.resetFilters,onSelect:()=>{setScopeAnchor(null);updateSearchState({labelId:null,labelName:null,dictionaryId:null,applyListFilter:false,collectionId:null,entryFilters:{...EMPTY_LIBRARY_ENTRY_FILTERS,sort:searchState.entryFilters?.sort},page:1,groupPageCursors:[null],groupHasMore:false,groupTotal:null,meaningTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});refreshSearch();}},
+          ]}/>}
+          {categorySearchActive && onTrainSelection && searchMaterialReady && <IconAction className={workspace.trainSelection} label={localizedField("libraryWordSelection", "train")[interfaceLanguage]} title={localizedField("libraryWordSelection", "setup")[interfaceLanguage]} onClick={() => onTrainSelection(librarySelectionToTraining({languageCode:searchLanguage,filters:searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS,dictionaryId,labelId:searchState.labelId,labelName:searchState.labelName,collection:useViewedListFilter && viewedList ? {id:viewedList.id,type:viewedList.type} : undefined,query,category:searchState.searchCategory ?? "headwords"}))}><Play size={14} aria-hidden="true"/></IconAction>}
+          {categorySearchActive && <span ref={setCategoryCountHost} className={workspace.scope}/> }
+          {!categorySearchActive && hasCurrentResults && (!groupedSearchActive || groupTotal != null) && <button type="button" className={`${workspace.scope} ${workspace.countTrigger}`} aria-haspopup="menu" aria-expanded={Boolean(countAnchor)} onClick={event => setCountAnchor(countAnchor ? null : event.currentTarget)}>{formatUiCount(interfaceLanguage, !groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length), getUiMessages(interfaceLanguage).librarySearch, "articleCount")}</button>}
+          {countAnchor && <ActionMenu anchor={countAnchor} title={formatLibraryCounts(interfaceLanguage,!groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length),groupedSearchActive ? meaningTotal : undefined)} language={interfaceLanguage} notice={formatLibraryCounts(interfaceLanguage,!groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length),groupedSearchActive ? meaningTotal : undefined)} onClose={() => setCountAnchor(null)} items={onTrainSelection && searchMaterialReady ? [{id:"train",label:localizedField("libraryWordSelection", "setup")[interfaceLanguage],icon:<Play size={14}/>,onSelect:()=>{setCountAnchor(null);onTrainSelection(librarySelectionToTraining({
                   languageCode: searchLanguage,
                   filters: searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS,
                   dictionaryId, labelId: searchState.labelId, labelName: searchState.labelName,
                   collection: useViewedListFilter && viewedList ? {id:viewedList.id,type:viewedList.type} : undefined,
                   query, category: categorySearchActive ? searchState.searchCategory ?? "headwords" : undefined,
-                }))}
-              ><Play size={14} aria-hidden="true"/></IconAction>
-            )}
-          </div>
-          {categorySearchActive && <span ref={setCategoryCountHost} className={workspace.scope}/> }
-          {!categorySearchActive && hasCurrentResults && <span className={workspace.scope}>{formatLibraryCounts(interfaceLanguage,!groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length),groupedSearchActive ? meaningTotal : undefined)}</span>}
+                }));}}] : []}/> }
         </div>
 
         {categorySearchActive && <div ref={setCategoryTabsHost}/> }

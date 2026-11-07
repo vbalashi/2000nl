@@ -52,7 +52,7 @@
 .part>button{border:0;background:none;color:inherit;min-height:32px;padding:0 11px;font-size:var(--practice-text-small);display:flex;align-items:center;gap:7px}
 .part.selected,.chip[data-selected=true]{background:var(--practice-canvas);border-color:var(--practice-control-border);color:var(--practice-accent)}
 .part .chipDisclosure{width:30px;padding:0;justify-content:center;border-left:1px solid var(--practice-border)}
-.action{border:1px solid var(--practice-border);border-radius:9px;min-height:38px;padding:8px 14px;font-size:var(--practice-text-small);font-weight:600;background:var(--practice-surface);color:var(--practice-text-secondary);white-space:nowrap}
+.action{border:1px solid var(--practice-border);border-radius:9px;min-height:36px;padding:6px 11px;font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui);background:var(--practice-surface);color:var(--practice-text-secondary);white-space:nowrap}
 .primary{background:var(--practice-accent);border-color:var(--practice-accent);color:var(--practice-on-accent)}
 .primary:hover{background:var(--practice-accent-hover)}
 .chip{border:1px solid var(--practice-border);background:var(--practice-surface);border-radius:8px;padding:5px 11px;min-height:32px;font-size:var(--practice-text-small);line-height:1.5;color:var(--practice-text-secondary)}

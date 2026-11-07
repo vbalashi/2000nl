@@ -795,6 +795,7 @@ test("approved Library browses immediately with server totals and cursor paging"
   render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:""}}/></AccountMaterialProvider>);
   await screen.findByTestId("library-headword-group-group-goed-homograph");
   expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({query:"",cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}}}));
+  fireEvent.click(screen.getByRole("button", {name:"42 articles"}));
   expect(screen.getByText("Found: 42")).toBeInTheDocument();
   expect(screen.getByText("1 / 1")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button",{name:"Next"}));
@@ -965,6 +966,7 @@ test('applied counter uses selected meaning totals and discards old-scope late t
  const oldRead=deferred<unknown>();
  fetchGroupPage.mockReset().mockResolvedValueOnce({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:73,totalMeanings:191,matchingEntryIds:[]}}).mockReturnValueOnce(oldRead.promise).mockResolvedValueOnce({groups:[nextPageGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:73,totalMeanings:115,matchingEntryIds:[]}});
  const view=render(<Harness locale="en" initial={{query:'goed'}}/>);
+ fireEvent.click(await screen.findByRole('button',{name:'73 articles'}));
  await screen.findByText('73 articles · 191 meanings');
  fireEvent.change(screen.getByRole('textbox',{name:'Search words'}),{target:{value:'old'}});
  await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalledTimes(2));
