@@ -2,8 +2,9 @@
 import React from "react";
 import {Search} from "lucide-react";
 import {getInterfaceCatalog} from "@/lib/i18n/catalog";
+import {CorruptLocalRecovery} from "@/components/library/sharing/CorruptLocalRecovery";
 import {AddAction} from "@/components/practice/ui/AddAction";
-import {createUserList} from "@/lib/training/listService";
+import {createUserList,fetchUserLists} from "@/lib/training/listService";
 import {platformV2Message} from "@/lib/platform/platformV2ClientI18n";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
 import { getUiMessages, formatUiMessage } from "@/lib/uiMessages";
@@ -12,6 +13,12 @@ import type { WordListSummary } from "@/lib/types";
 import { wordsBulkCollection, wordsBulkReceipt, type WordsBulkRequest, type WordsBulkResult } from "@/lib/platform/wordsBulkClient";
 import s from "./wordsBulk.module.css";
 
+const journalUuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function parseBulkJournal(raw:string):{planId:string;collectionId:string}|null {
+ try {const value:unknown=JSON.parse(raw);if(!value||typeof value!=="object"||Array.isArray(value))return null;
+  const row=value as Record<string,unknown>;return Object.keys(row).length===2 && typeof row.planId==="string" && journalUuid.test(row.planId) && typeof row.collectionId==="string" && journalUuid.test(row.collectionId) ? {planId:row.planId,collectionId:row.collectionId} : null;
+ } catch{return null;}
+}
 export function WordsBulkDialog({userId,language,lists,selection,onClose,onDone,onListsUpdated}:{
  userId:string;language:OnboardingLanguage;lists:WordListSummary[];selection:Omit<WordsBulkRequest,"listId">;
  onClose:()=>void;onDone:(count:number)=>void;onListsUpdated?:()=>void;
@@ -27,7 +34,7 @@ export function WordsBulkDialog({userId,language,lists,selection,onClose,onDone,
  const [uncertain,setUncertain]=React.useState<{planId:string;collectionId:string}|null>(null);
  const [expired,setExpired]=React.useState(false);
  const journalKey=`words-bulk-confirm:${encodeURIComponent(userId)}`;
- React.useEffect(()=>{try{const raw=sessionStorage.getItem(journalKey);if(!raw){setUncertain(null);return;} const value=JSON.parse(raw);if(!value || typeof value.planId!=="string" || typeof value.collectionId!=="string")throw new Error("journal");setUncertain(value);}catch{setError(getUiMessages(language).collectionComposition.storage);}},[journalKey,language]);
+ React.useEffect(()=>{try{const raw=sessionStorage.getItem(journalKey);if(!raw){setUncertain(null);return;} const value=parseBulkJournal(raw);if(!value)throw new Error("journal");setUncertain(value);}catch{setError(getUiMessages(language).collectionComposition.storage);}},[journalKey,language]);
  const [retry,setRetry]=React.useState(0);
  const [error,setError]=React.useState<string|null>(null);
  const action=React.useRef(false);
@@ -78,7 +85,7 @@ export function WordsBulkDialog({userId,language,lists,selection,onClose,onDone,
  };
  const available=[...created,...lists.filter(list=>!created.some(item=>item.id===list.id))];
  const choices=available.filter(list=>list.type==='user'&&list.ownership!=='received'&&list.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
- return <DialogSurface className={s.dialog} onDismiss={()=>{if(!action.current)onClose();}} aria-labelledby={titleId} lang={language}>
+ return <><DialogSurface className={s.dialog} onDismiss={()=>{if(!action.current)onClose();}} aria-labelledby={titleId} lang={language}>
   <header className={s.header}><h2 id={titleId}>{copy.choose}</h2><AddAction aria-label={getUiMessages(language).collections.new} title={getUiMessages(language).collections.new} disabled={busy} onClick={()=>setCreating(value=>!value)}><span className={s.createLabel}>{platformV2Message(language,'senseCard.collections.create')}</span></AddAction></header>
   <label className={s.search}><Search size={16} aria-hidden="true"/><input value={query} onChange={event=>setQuery(event.target.value)} aria-label={getUiMessages(language).collections.search} placeholder={getUiMessages(language).collections.search}/></label>
   {creating && <form className={s.create} onSubmit={event=>{event.preventDefault();void create();}}><input autoFocus value={newName} onChange={event=>setNewName(event.target.value)} aria-label={platformV2Message(language,'senseCard.collections.createPlaceholder')} placeholder={platformV2Message(language,'senseCard.collections.createPlaceholder')}/><button type="submit" disabled={!newName.trim()||busy}>{platformV2Message(language,'senseCard.collections.create')}</button></form>}
@@ -89,5 +96,5 @@ export function WordsBulkDialog({userId,language,lists,selection,onClose,onDone,
   {preview && preview.audience.length>0 && <p>{formatUiMessage(getUiMessages(language).collectionComposition.audience,{count:preview.audience.length})}</p>}
   <p role="status" className={s.status}>{busy?copy.loading:preview?formatUiMessage(copy.preview,{articles:preview.articleCount,meanings:preview.meaningCount}):error}{error && !busy && !uncertain && <button type="button" onClick={()=>setRetry(value=>value+1)}>{getUiMessages(language).library.retry}</button>}</p>
   <div className={s.actions}><button type="button" disabled={busy && action.current} onClick={onClose}>{getUiMessages(language).builder.cancel}</button>{uncertain?<button type="button" disabled={busy} onClick={()=>{if(expired){sessionStorage.removeItem(journalKey);setUncertain(null);setExpired(false);setError(null);}else void check();}}>{expired?copy.cancel:getInterfaceCatalog(language).features.personalNote.check}</button>:<button type="button" disabled={!preview||preview.meaningCount===0||busy} onClick={()=>void submit()}>{copy.confirm}</button>}</div>
- </DialogSurface>;
+ </DialogSurface><CorruptLocalRecovery scopeKey={userId} storageKey={journalKey} valid={raw=>Boolean(parseBulkJournal(raw))} verify={async signal=>{await fetchUserLists(userId,selection.language);signal.throwIfAborted();}} trigger={userId} locale={language} onClose={onClose} onReset={()=>{setUncertain(null);setError(null);}}/></>;
 }

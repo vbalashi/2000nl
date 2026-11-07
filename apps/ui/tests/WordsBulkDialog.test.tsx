@@ -1,12 +1,12 @@
 import React from 'react';
 import {beforeEach,expect,test,vi} from 'vitest';
-import {fireEvent,render,screen,waitFor} from '@testing-library/react';
+import {fireEvent,render,screen,waitFor,within} from '@testing-library/react';
 import type {WordsBulkRequest} from '@/lib/platform/wordsBulkClient';
 import {WordsBulkDialog} from '@/components/training/wordlist/WordsBulkDialog';
-const {request,receipt,create}=vi.hoisted(()=>({request:vi.fn(),receipt:vi.fn(),create:vi.fn()}));
+const {request,receipt,create,fetchLists}=vi.hoisted(()=>({request:vi.fn(),receipt:vi.fn(),create:vi.fn(),fetchLists:vi.fn()}));
 vi.mock('@/lib/platform/wordsBulkClient',()=>({wordsBulkCollection:request,wordsBulkReceipt:receipt}));
-vi.mock('@/lib/training/listService',()=>({createUserList:create}));
-beforeEach(()=>{sessionStorage.clear();request.mockReset();receipt.mockReset();create.mockReset();Object.defineProperty(HTMLDialogElement.prototype,'showModal',{configurable:true,value(){this.setAttribute('open','');}});Object.defineProperty(HTMLDialogElement.prototype,'close',{configurable:true,value(){this.removeAttribute('open');}});});
+vi.mock('@/lib/training/listService',()=>({createUserList:create,fetchUserLists:fetchLists}));
+beforeEach(()=>{sessionStorage.clear();request.mockReset();receipt.mockReset();create.mockReset();fetchLists.mockReset();Object.defineProperty(HTMLDialogElement.prototype,'showModal',{configurable:true,value(){this.setAttribute('open','');}});Object.defineProperty(HTMLDialogElement.prototype,'close',{configurable:true,value(){this.removeAttribute('open');}});});
 const selection:Omit<WordsBulkRequest,'listId'>={groups:['article-a','article-b'],all:false,category:'browse',query:'',language:'nl',dictionaryIds:null,filters:{parts:[],article:null}};
 test('previews matching meanings and confirms exactly the previewed selection',async()=>{
  request.mockResolvedValueOnce({articleCount:2,meaningCount:3,planId:'abc',audience:[]});receipt.mockResolvedValueOnce({status:'committed',collectionId:'owned',addedCount:2});
@@ -54,4 +54,13 @@ test('shows shared audience and checks an uncertain result without repeating the
  fireEvent.click(screen.getByRole('button',{name:'Check result'}));
  await waitFor(()=>expect(done).toHaveBeenCalledWith(3));
  expect(sessionStorage.getItem('words-bulk-confirm:account')).toBeNull();
+});
+
+test('checks saved state before clearing a damaged local confirmation',async()=>{
+ sessionStorage.setItem('words-bulk-confirm:account','damaged');fetchLists.mockResolvedValue([]);
+ render(<WordsBulkDialog userId="account" language="en" lists={[]} selection={selection} onClose={vi.fn()} onDone={vi.fn()}/>);
+ const recovery=await screen.findByRole('dialog',{name:'Local recovery'});
+ const clear=await within(recovery).findByRole('button',{name:'Clear local record'});
+ await waitFor(()=>expect(clear).toBeEnabled());expect(fetchLists).toHaveBeenCalledWith('account','nl');
+ fireEvent.click(clear);expect(sessionStorage.getItem('words-bulk-confirm:account')).toBeNull();expect(receipt).not.toHaveBeenCalled();
 });
