@@ -1,6 +1,6 @@
 'use client';
 import React,{useCallback,useEffect,useRef,useState} from 'react';
-import {readLabelShareState} from '@/lib/collections/sharing/labelSharingClient';
+import {readLabelShareState,preflightLabelShare} from '@/lib/collections/sharing/labelSharingClient';
 import type {LabelShareState} from '@/lib/collections/sharing/labelSharingContract';
 import {labelSharingJournalKey,readLabelSharingJournal} from '@/lib/collections/sharing/labelSharingJournal';
 import {localRecordSnapshotStore} from '@/lib/collections/sharing/corruptLocalRecord';
@@ -8,6 +8,8 @@ import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import {CorruptLocalRecovery} from './CorruptLocalRecovery';
 import {LabelSharingDialog,type LabelSharingController} from './LabelSharingDialog';
 import {useLabelShareOperation} from './useLabelShareOperation';
+import {BorrowedCollectionCopies} from './BorrowedCollectionCopies';
+import type {WordListSummary} from '@/lib/types';
 
 export function useOwnedLabelSharing(userId:string,labelId:string){
  const key=JSON.stringify([userId,labelId]),scope='owner:'+labelId;
@@ -29,9 +31,19 @@ export function useOwnedLabelSharing(userId:string,labelId:string){
   run:(action:'open'|'rotate'|'close')=>{if(data&&status==='ready')void operation.execute({operationId:crypto.randomUUID(),action,labelId,expectedRevision:data.revision});}};
 }
 
-export function OwnedLabelSharing({userId,labelId,name,locale,onClose}:{userId:string;labelId:string;name:string;locale:OnboardingLanguage;onClose:()=>void}){
+export function OwnedLabelSharing({userId,labelId,name,collections=[],locale,onClose}:{userId:string;labelId:string;name:string;collections?:WordListSummary[];locale:OnboardingLanguage;onClose:()=>void}){
  const controller=useOwnedLabelSharing(userId,labelId),scope='owner:'+labelId;
- return <><LabelSharingDialog name={name} locale={locale} controller={controller} onClose={onClose}/>
+ const [copies,setCopies]=useState(false),[checking,setChecking]=useState<'loading'|'error'|null>(null),request=useRef<AbortController|null>(null);
+ useEffect(()=>()=>request.current?.abort(),[userId,labelId]);
+ const run=async(action:'open'|'rotate'|'close')=>{
+  if(action!=='open'){controller.run(action);return;}
+  if(checking==='loading')return;
+  request.current?.abort();const abort=new AbortController();request.current=abort;setChecking('loading');
+  try{const result=await preflightLabelShare(userId,labelId,abort.signal);if(abort.signal.aborted)return;setChecking(null);if(result.collections.length)setCopies(true);else controller.run(action);}
+  catch{if(!abort.signal.aborted)setChecking('error');}
+ };
+ return <><LabelSharingDialog name={name} locale={locale} controller={{...controller,status:checking??controller.status,run:action=>{void run(action);},refresh:()=>{setChecking(null);controller.refresh();}}} onClose={onClose}/>
+  {copies&&<BorrowedCollectionCopies userId={userId} scope={{kind:'label',id:labelId}} name={name} collections={collections} locale={locale} onClose={()=>{setCopies(false);controller.refresh();}}/>}
   <CorruptLocalRecovery scopeKey={JSON.stringify([userId,labelId])} storageKey={labelSharingJournalKey(userId,scope)}
    valid={raw=>Boolean(readLabelSharingJournal(localRecordSnapshotStore(raw),userId,scope))}
    verify={async signal=>{await readLabelShareState(userId,labelId,signal);}} trigger={controller.status} locale={locale} onClose={onClose} onReset={controller.refresh}/>

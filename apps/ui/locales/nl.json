@@ -1943,7 +1943,12 @@
       "pathsChanged": "Toegangspaden veranderen. Onafhankelijke abonnementen blijven behouden.",
       "copyRequired": "Voor publicatie van deze wijziging zijn onafhankelijke kopieën van geleende artikelen nodig.",
       "saveUncertain": "Je hebt deze wijziging bevestigd, maar het resultaat kon nog niet worden gecontroleerd.",
-      "retrySave": "Bevestigde wijziging opnieuw opslaan"
+      "retrySave": "Bevestigde wijziging opnieuw opslaan",
+      "copyTitle": "Onafhankelijke kopieën voorbereiden",
+      "copySeparation": "Je bevestigt het kopiëren per collectie. Voltooide kopieën blijven behouden.",
+      "copyNext": "Ga na het kopiëren terug naar de wijziging en bevestig deze.",
+      "borrowedCount": "Geleende artikelen: {count}",
+      "noBorrowed": "Geen geleende artikelen"
     }
   },
   "tour": {

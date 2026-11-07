@@ -1943,7 +1943,12 @@
       "pathsChanged": "Access paths change. Independent subscriptions are kept.",
       "copyRequired": "Independent copies of borrowed entries are needed before this change can be published.",
       "saveUncertain": "You confirmed this change, but its result could not be verified.",
-      "retrySave": "Retry the confirmed change"
+      "retrySave": "Retry the confirmed change",
+      "copyTitle": "Prepare independent copies",
+      "copySeparation": "Copying is confirmed separately for each collection. Completed copies are kept.",
+      "copyNext": "After copying, return to the change and confirm it.",
+      "borrowedCount": "Borrowed entries: {count}",
+      "noBorrowed": "No borrowed entries"
     }
   },
   "tour": {

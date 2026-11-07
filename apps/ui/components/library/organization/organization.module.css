@@ -144,3 +144,8 @@
 .sharedGroups .collection{align-items:center;padding:12px 4px}
 .sharedGroups .collectionName{color:var(--practice-text);cursor:pointer}
 .sharedGroups .collectionCopy p{font-size:var(--practice-text-caption);color:var(--practice-text-muted);margin:2px 0 0}
+.copyPreparation{max-height:85dvh;overflow-y:auto}
+.copyCollection{display:flex;flex-direction:column;gap:8px;padding-block:12px;border-block:1px solid var(--practice-border)}
+.copyCollection h3{margin:0;font-family:var(--practice-font-ui);font-size:var(--practice-text-body);font-weight:500}
+.copyCollection>button{align-self:flex-start}
+.copyCollection>div{display:flex;flex-wrap:wrap;gap:8px}

@@ -4,6 +4,7 @@ import { localizedSection, localizedField } from "@/lib/i18n/catalog";
 import React from 'react';
 import {Plus} from 'lucide-react';
 import {SegmentedControl} from '@/components/practice/ui/SegmentedControl';
+import type {WordListSummary} from '@/lib/types';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import type {ReceivedCollection} from '@/lib/collections/sharing/receivedCatalogContract';
 import type {OwnedSharedCollection} from '@/lib/collections/sharing/ownedCatalogContract';
@@ -16,14 +17,14 @@ import {organizationCopy} from '../organization/copy';
 import s from '../organization/organization.module.css';
 
 const copy=localizedSection("sharedWorkspace");
-type WorkspaceProps={userId:string;active:boolean;locale:OnboardingLanguage;view:'owned'|'received';onViewChange:(view:'owned'|'received')=>void;onOpenOwned:(row:OwnedSharedCollection)=>void;onOpenReceived:(row:ReceivedCollection)=>void;onOpenGroupCollection?:(id:string,ownership:'owned'|'received')=>void;onAdd:()=>void};
+type WorkspaceProps={userId:string;active:boolean;locale:OnboardingLanguage;ownCollections?:WordListSummary[];view:'owned'|'received';onViewChange:(view:'owned'|'received')=>void;onOpenOwned:(row:OwnedSharedCollection)=>void;onOpenReceived:(row:ReceivedCollection)=>void;onOpenGroupCollection?:(id:string,ownership:'owned'|'received')=>void;onAdd:()=>void};
 export function SharedCollectionsWorkspace(props:WorkspaceProps){
  const overview=useSharingOverview(props.userId,props.active);
  const enabled=process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED==='true';
  const groups=useLabelSharingCatalog(props.userId,props.active&&enabled);
  const owned=groups.data?.owned.filter(row=>row.isOpen)??[],received=groups.data?.received??[];
  const changed=()=>{void overview.refresh();void groups.refresh();};
- const groupRows=(view:'owned'|'received')=>enabled?<>{groups.status==='error'&&<p role="alert">{organizationCopy(props.locale).sharingStatusError} <button onClick={()=>void groups.refresh()}>{organizationCopy(props.locale).retry}</button></p>}<SharedLabelGroups userId={props.userId} locale={props.locale} view={view} groups={view==='owned'?owned:received} onChanged={changed} onOpenCollection={id=>props.onOpenGroupCollection?.(id,view)}/></>:null;
+ const groupRows=(view:'owned'|'received')=>enabled?<>{groups.status==='error'&&<p role="alert">{organizationCopy(props.locale).sharingStatusError} <button onClick={()=>void groups.refresh()}>{organizationCopy(props.locale).retry}</button></p>}<SharedLabelGroups userId={props.userId} locale={props.locale} view={view} collections={props.ownCollections} groups={view==='owned'?owned:received} onChanged={changed} onOpenCollection={id=>props.onOpenGroupCollection?.(id,view)}/></>:null;
  return <SharedCollectionsWorkspaceView {...props} counts={overview.data?{sharedByMe:overview.data.sharedByMe+owned.length,addedByMe:overview.data.addedByMe+received.length}:undefined}
   owned={<>{groupRows('owned')}<OwnedSharedCollections userId={props.userId} active={props.active} locale={props.locale} hasGroups={owned.length>0} onOpen={props.onOpenOwned} onChanged={changed}/></>}
   received={<>{groupRows('received')}<ReceivedCollections userId={props.userId} active={props.active} locale={props.locale} hasGroups={received.length>0} onOpenCollectionId={id=>props.onOpenGroupCollection?.(id,'received')} embedded onOpen={props.onOpenReceived} onAdd={props.onAdd} onChanged={changed}/></>}/>;

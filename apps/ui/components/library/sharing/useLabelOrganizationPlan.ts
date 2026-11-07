@@ -13,6 +13,7 @@ const terminal=new Set(['label_audience_changed','label_catalog_conflict','share
 export function useLabelOrganizationPlan(userId:string,onSaved:(snapshot:CollectionLabelsSnapshot)=>void){
  const current=useRef({userId,onSaved});current.current={userId,onSaved};
  const [state,setState]=useState<State>(()=>idle(userId)),latest=useRef(state),busy=useRef(false),request=useRef<AbortController|null>(null);
+ const preparedOperation=useRef<{userId:string;operation:CollectionLabelOperation}|null>(null);
  const commit=useCallback((value:State)=>{latest.current=value;setState(value);},[]);
  const resume=useCallback(()=>{
   const owner=current.current.userId,planId=readLabelOrganizationJournal(labelSharingStore(),owner);
@@ -53,6 +54,7 @@ export function useLabelOrganizationPlan(userId:string,onSaved:(snapshot:Collect
    const plan=await prepareLabelOrganization(owner,{expectedRevision,operation},abort.signal);
    if(abort.signal.aborted||current.current.userId!==owner)return false;
    if(plan.copyRequired||plan.delta.pathsChanged||plan.delta.added.length||plan.delta.removed.length){
+    preparedOperation.current={userId:owner,operation};
     commit({userId:owner,status:'awaiting',plan,planId:plan.planId,error:null});return false;
    }
    return await persist(plan.planId,plan,owner);
@@ -86,5 +88,5 @@ export function useLabelOrganizationPlan(userId:string,onSaved:(snapshot:Collect
   }catch{if(valid())commit({...base,status:'uncertain',error:'receipt_unavailable'});return false;}
   finally{if(current.current.userId===owner)busy.current=false;}
  },[commit]);
- return {state:state.userId===userId?state:idle(userId),hasPending:Boolean(readLabelOrganizationJournal(labelSharingStore(),userId)),save,confirm,check,resume,cancel:()=>{if(!busy.current)commit(idle(current.current.userId));}};
+ return {state:state.userId===userId?state:idle(userId),preparedOperation:preparedOperation.current?.userId===userId?preparedOperation.current.operation:null,hasPending:Boolean(readLabelOrganizationJournal(labelSharingStore(),userId)),save,confirm,check,resume,cancel:()=>{if(!busy.current)commit(idle(current.current.userId));}};
 }

@@ -1,0 +1,31 @@
+import {act,renderHook,waitFor} from '@testing-library/react';
+import {beforeEach,it,expect,vi} from 'vitest';
+import * as client from '@/lib/collections/sharing/collectionBorrowedCopyClient';
+import {useCollectionBorrowedCopy} from '@/components/library/sharing/useCollectionBorrowedCopy';
+import {collectionCopyJournalKey,readCollectionCopyJournal} from '@/lib/collections/sharing/collectionCopyJournal';
+const storage=vi.hoisted(()=>({blocked:false}));
+vi.mock('@/lib/collections/sharing/labelSharingJournal',async()=>({...await vi.importActual('@/lib/collections/sharing/labelSharingJournal'),labelSharingStore:()=>({getItem:(key:string)=>sessionStorage.getItem(key),setItem:(key:string,value:string)=>{if(storage.blocked)throw Error('blocked');sessionStorage.setItem(key,value);},removeItem:(key:string)=>sessionStorage.removeItem(key)})}));
+vi.mock('@/lib/collections/sharing/collectionBorrowedCopyClient',async()=>({...await vi.importActual<typeof client>('@/lib/collections/sharing/collectionBorrowedCopyClient'),previewCollectionBorrowedCopy:vi.fn(),submitCollectionBorrowedCopy:vi.fn(),reconcileCollectionBorrowedCopy:vi.fn()}));
+const id='22222222-2222-4222-8222-222222222222',preview={listId:id,revision:'a'.repeat(64),canCopy:true,borrowedCount:1};
+beforeEach(()=>{sessionStorage.clear();vi.clearAllMocks();storage.blocked=false;vi.mocked(client.previewCollectionBorrowedCopy).mockResolvedValue(preview);});
+it('loads without copying, then restores the exact submitted operation after a lost response',async()=>{
+ vi.mocked(client.submitCollectionBorrowedCopy).mockResolvedValue(null);
+ const first=renderHook(()=>useCollectionBorrowedCopy('owner',id));
+ await waitFor(()=>expect(first.result.current.state.status).toBe('ready'));
+ expect(client.submitCollectionBorrowedCopy).not.toHaveBeenCalled();
+ await act(()=>first.result.current.start());const command=readCollectionCopyJournal(sessionStorage,'owner')!;
+ expect(first.result.current.state.status).toBe('uncertain');first.unmount();
+ const restored=renderHook(()=>useCollectionBorrowedCopy('owner',id));
+ await waitFor(()=>expect(restored.result.current.state.status).toBe('uncertain'));
+ vi.mocked(client.reconcileCollectionBorrowedCopy).mockResolvedValue({...command,status:'completed',copiedCount:1});
+ await act(()=>restored.result.current.check());
+ expect(client.submitCollectionBorrowedCopy).toHaveBeenCalledTimes(1);
+ expect(client.reconcileCollectionBorrowedCopy).toHaveBeenCalledWith('owner',command,expect.any(AbortSignal));
+ expect(restored.result.current.state.status).toBe('completed');
+ expect(sessionStorage.getItem(collectionCopyJournalKey('owner'))).toBeNull();
+});
+it('cannot send a copy when command storage is blocked',async()=>{
+ const hook=renderHook(()=>useCollectionBorrowedCopy('owner',id));await waitFor(()=>expect(hook.result.current.state.status).toBe('ready'));
+ storage.blocked=true;
+ await act(()=>hook.result.current.start());expect(client.submitCollectionBorrowedCopy).not.toHaveBeenCalled();expect(hook.result.current.state.status).toBe('storage-error');
+});

@@ -1717,5 +1717,10 @@
   "features.labelSharing.pathsChanged": {"source":"Access paths change. Independent subscriptions are kept.","translationHash":"983bd97c81a48eaaeba146efdb857c95cf99d40802af2bbd7cec3f9b2128b033"},
   "features.labelSharing.copyRequired": {"source":"Independent copies of borrowed entries are needed before this change can be published.","translationHash":"3933c9b42b9719faf6345d95617558f3c02ebc51ac76bd1ef2104719a0cda5b8"},
   "features.labelSharing.saveUncertain": {"source":"You confirmed this change, but its result could not be verified.","translationHash":"b1f141d43663b5091aca67e8e2ced3dc6d7f15001b77e3d7122d47bea0166550"},
-  "features.labelSharing.retrySave": {"source":"Retry the confirmed change","translationHash":"7e1377ed2682efbf42fb591ed423ff4bc7373ca6c066260918cd500c882a151f"}
+  "features.labelSharing.retrySave": {"source":"Retry the confirmed change","translationHash":"7e1377ed2682efbf42fb591ed423ff4bc7373ca6c066260918cd500c882a151f"},
+  "features.labelSharing.copyTitle": {"source":"Prepare independent copies","translationHash":"daffadc54fed889dca435426cc1e76c6660ec4ced54244cd11f3708016e53a1f"},
+  "features.labelSharing.copySeparation": {"source":"Copying is confirmed separately for each collection. Completed copies are kept.","translationHash":"2bd161dde28fa510ef229ed357eb904f151207f0147d3824d2cf2f12900e28c9"},
+  "features.labelSharing.copyNext": {"source":"After copying, return to the change and confirm it.","translationHash":"b9a2323eec5ab948ffd4f71003ba6358372702be13188915e37942d8e889609a"},
+  "features.labelSharing.borrowedCount": {"source":"Borrowed entries: {count}","translationHash":"83b2e84f3ea64a9bab496018deeff1cddc59e6554361034265bd0c78d425e64f"},
+  "features.labelSharing.noBorrowed": {"source":"No borrowed entries","translationHash":"15e33af80c7adae06e0f4c6b0394f30b6b79ce85cd7205e37a9ec182e47d06ec"}
 }
