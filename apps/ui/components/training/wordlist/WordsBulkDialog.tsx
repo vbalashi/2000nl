@@ -101,7 +101,10 @@ export function WordsBulkDialog({userId,language,lists,selection,onClose,onDone,
  const choices=available.filter(list=>list.type==='user'&&list.ownership!=='received'&&list.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
  return <><DialogSurface className={s.dialog} onDismiss={()=>{if(!action.current)onClose();}} aria-labelledby={titleId} lang={language}>
   <header className={s.header}><h2 id={titleId}>{copy.choose}</h2><AddAction aria-label={getUiMessages(language).collections.new} title={getUiMessages(language).collections.new} disabled={busy} onClick={()=>setCreating(value=>!value)}><span className={s.createLabel}>{platformV2Message(language,'senseCard.collections.create')}</span></AddAction></header>
-  <label className={s.search}><Search size={16} aria-hidden="true"/><input value={query} onChange={event=>setQuery(event.target.value)} aria-label={getUiMessages(language).collections.search} placeholder={getUiMessages(language).collections.search}/></label>
+  <label className={s.search}><Search size={16} aria-hidden="true"/><input disabled={busy && action.current} value={query} onChange={event=>{const value=event.target.value;setQuery(value);
+   const selected=[...created,...lists].find(list=>list.id===listId);
+   if(listId && (!selected || !selected.name.toLocaleLowerCase().includes(value.trim().toLocaleLowerCase()))){generation.current++;setListId(null);setPreview(null);setBusy(false);setError(null);}
+  }} aria-label={getUiMessages(language).collections.search} placeholder={getUiMessages(language).collections.search}/></label>
   {creating && <form className={s.create} onSubmit={event=>{event.preventDefault();void create();}}><input autoFocus value={newName} onChange={event=>setNewName(event.target.value)} aria-label={platformV2Message(language,'senseCard.collections.createPlaceholder')} placeholder={platformV2Message(language,'senseCard.collections.createPlaceholder')}/><button type="submit" disabled={!newName.trim()||busy}>{platformV2Message(language,'senseCard.collections.create')}</button></form>}
   <div className={s.choices} role="group" aria-label={copy.choose}>
    {choices.map(list=>{const metadata=access?.userId===userId?access.rows.get(list.id):undefined;

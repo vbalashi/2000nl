@@ -1,6 +1,6 @@
 import React from 'react';
 import {beforeEach,expect,test,vi} from 'vitest';
-import {fireEvent,render,screen,waitFor,within} from '@testing-library/react';
+import {act,fireEvent,render,screen,waitFor,within} from '@testing-library/react';
 import type {WordsBulkRequest} from '@/lib/platform/wordsBulkClient';
 import {WordsBulkDialog} from '@/components/training/wordlist/WordsBulkDialog';
 const {request,receipt,create,fetchLists,access}=vi.hoisted(()=>({request:vi.fn(),receipt:vi.fn(),create:vi.fn(),fetchLists:vi.fn(),access:vi.fn()}));
@@ -113,4 +113,22 @@ test('keeps the prepared preview when the selected collection is clicked again',
  fireEvent.click(choice);
  expect(screen.getByText('Articles: 2 · meanings: 3')).toBeInTheDocument();
  expect(screen.getByRole('button',{name:'Add meanings'})).toBeEnabled();expect(request).toHaveBeenCalledOnce();
+});
+
+test('clears a hidden selected destination and ignores its late preparation result',async()=>{
+ let finish!:(value:unknown)=>void;request.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;})).mockResolvedValueOnce({articleCount:2,meaningCount:3,planId:'b-plan',audience:[]});
+ render(<WordsBulkDialog userId="account" language="en" lists={[{id:'a',name:'Alpha',type:'user'},{id:'b',name:'Beta',type:'user'}]} selection={selection} onClose={vi.fn()} onDone={vi.fn()}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Alpha'}));
+ fireEvent.change(screen.getByRole('textbox'),{target:{value:'Beta'}});
+ await act(async()=>finish({articleCount:2,meaningCount:3,planId:'a-plan',audience:[]}));
+ expect(screen.getByRole('button',{name:'Add meanings'})).toBeDisabled();
+ expect(screen.queryByText('Articles: 2 · meanings: 3')).not.toBeInTheDocument();
+ expect(screen.getByRole('button',{name:'Beta'})).toHaveAttribute('aria-pressed','false');
+ fireEvent.click(screen.getByRole('button',{name:'Beta'}));
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Add meanings'})).toBeEnabled());
+ expect(request.mock.calls[1][1].listId).toBe('b');
+ fireEvent.change(screen.getByRole('textbox'),{target:{value:'Alpha'}});
+ expect(screen.getByRole('button',{name:'Add meanings'})).toBeDisabled();
+ expect(screen.queryByText('Articles: 2 · meanings: 3')).not.toBeInTheDocument();
+ await act(async()=>{});
 });
