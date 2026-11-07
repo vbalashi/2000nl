@@ -76,7 +76,7 @@ export function OwnedSharedCollections({userId,active,locale,onOpen,onChanged,ca
     <div role="cell" className={s.ownedSharedName}><FileText size={18} aria-hidden="true"/><div><button type="button" onClick={()=>setDetailsSelection({ownerId:userId,id:row.id})}>{row.name}</button><small>{formatUiCount(locale,row.itemCount,common,'meaning')} · {t.owned}</small></div></div>
     <span role="cell" className={s.ownedSharedStatus}><Share2 size={14} aria-hidden="true"/>{t.active}</span>
     <span role="cell"><span className={s.mobileSubscriberLabel}>{t.subscribers}: </span>{row.subscriberCount.toLocaleString(locale)}</span>
-    <div role="cell" className={s.ownedSharedActions}><button type="button" onClick={event=>{dialogOpener.current=event.currentTarget;void copyLink(row);}}>{t.copy}</button><button type="button" aria-label={`${common.more} · ${row.name}`} onClick={event=>setMenu({ownerId:userId,row,anchor:event.currentTarget})}><MoreHorizontal size={18}/></button></div>
+    <div role="cell" className={s.ownedSharedActions}><button type="button" onClick={event=>{dialogOpener.current=event.currentTarget;void copyLink(row);}}>{t.copy}</button><button type="button" aria-label={`${common.more} · ${row.name}`} onClick={event=>setMenu({ownerId:userId,row,anchor:event.currentTarget})}><MoreHorizontal size={16} strokeWidth={1.5}/></button></div>
    </div>)}</div></div>}
   {catalog.nextCursor&&<button className={s.loadMore} disabled={catalog.loadingMore} onClick={()=>void catalog.loadMore()}>{catalog.loadingMore?common.loading:common.moreResults}</button>}
   {menu?.ownerId===userId&&<ActionMenu anchor={menu.anchor} title={common.more} language={locale} onClose={()=>setMenu(null)} items={[

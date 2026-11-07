@@ -101,7 +101,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
     const open=()=>collection.ownership==='received'?onOpenReceived?.(collection):onOpen(collection);
     return <PersonalCollectionRow key={collection.id} collection={collection} names={names} locale={locale} onOpen={open} onDetails={()=>setDetails(collection)} onMore={event=>setMenu({anchor:event.currentTarget,collection})}/>;
   };
-  const changeScope = (id:string) => {setScope(id);setPageSize(20);setScopeOpen(false);};
+  const changeScope = (id:string) => {setDetailsSelection(null);setScope(id);setPageSize(20);setScopeOpen(false);};
   const begin = (next:Editor) => {
     editorFocus.current = menu?.anchor ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
     setMenu(null); setScopeOpen(false);setSaveError(null);
@@ -145,9 +145,9 @@ export function PersonalCollections({active, userId, language, locale, collectio
       <button type="button" aria-pressed={effectiveScope === "all"} onClick={()=>changeScope("all")}><Folders size={18}/><span>{t.all}</span></button>
       <button type="button" aria-pressed={effectiveScope === "unlabelled"} onClick={()=>changeScope("unlabelled")}><FileText size={18}/><span>{t.unlabelled}</span></button>
       {filteredLabels.map(({label,depth,path,parents})=><div className={s.labelRow} key={label.id} style={{paddingInlineStart:Math.min(depth,4)*12}}>
-        {snapshot?.labels.some(row=>row.parent_id===label.id)&&<button className={s.treeDisclosure} type="button" aria-label={label.name} aria-expanded={!collapsedLabels.has(label.id)} onClick={()=>toggleCollapsed(setCollapsedLabels,label.id)}>{collapsedLabels.has(label.id)?<ChevronRight size={14}/>:<ChevronDown size={14}/>}</button>}
+        {snapshot?.labels.some(row=>row.parent_id===label.id)?<button className={s.treeDisclosure} type="button" aria-label={label.name} aria-expanded={!collapsedLabels.has(label.id)} onClick={()=>toggleCollapsed(setCollapsedLabels,label.id)}>{collapsedLabels.has(label.id)?<ChevronRight size={14}/>:<ChevronDown size={14}/>}</button>:<span className={s.treeSpacer} aria-hidden="true"/>}
         <button type="button" aria-pressed={effectiveScope === label.id} title={path} onClick={()=>changeScope(label.id)}><Folder size={18}/><span>{label.name}{labelQuery.trim() && parents ? ` · ${parents}` : ""}</span></button>
-        <button type="button" aria-label={`${t.more}: ${label.name}`} onClick={event=>setMenu({anchor:event.currentTarget,label})}><MoreHorizontal size={18}/></button>
+        <button type="button" aria-label={`${t.more}: ${label.name}`} onClick={event=>setMenu({anchor:event.currentTarget,label})}><MoreHorizontal size={16} strokeWidth={1.5}/></button>
       </div>)}
       {!labelRows.length && <p className={s.muted}>{t.noLabels}</p>}
     </div>
@@ -202,7 +202,7 @@ export function PersonalCollectionRow({collection,names=[],locale,onOpen,onDetai
  const t=organizationCopy(locale);
  return <article className={s.collection}>
   <span className={s.accessIcon} title={collection.isShared?t.shared:t.private}>{collection.isShared?<Share2 size={16}/>:<LockKeyhole size={16}/>}</span><div className={s.collectionCopy}><button className={s.collectionName} onClick={onDetails??onOpen}>{collection.name}</button><p>{formatUiCount(locale,collection.item_count??0,t,"meaning")}{names.length?` · ${names.join(" / ")}`:""}</p></div>
-  <button className={s.viewWords} onClick={onOpen}>{t.open}</button><button data-onboarding="own-collection-menu" aria-label={`${t.more}: ${collection.name}`} onClick={onMore}><MoreHorizontal size={18}/></button>
+  <button className={s.viewWords} onClick={onOpen}>{t.open}</button><button data-onboarding="own-collection-menu" aria-label={`${t.more}: ${collection.name}`} onClick={onMore}><MoreHorizontal size={16} strokeWidth={1.5}/></button>
  </article>;
 }
 

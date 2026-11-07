@@ -74,3 +74,14 @@ test("details do not survive account change or removal from the authorized rows"
  view.rerender(<PersonalCollections {...props} collections={[]}/>);
  expect(screen.queryByRole("complementary",{name:"My lesson"})).toBeNull();
 });
+
+test("changing label scope closes details and does not reopen them on return",async()=>{
+ render(<PersonalCollections {...props}/>);await screen.findByRole("button",{name:"My lesson"});
+ fireEvent.click(screen.getByRole("button",{name:"My lesson"}));
+ expect(screen.getByRole("complementary",{name:"My lesson"})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Unlabelled"}));
+ expect(screen.queryByRole("complementary",{name:"My lesson"})).toBeNull();
+ fireEvent.click(screen.getByRole("button",{name:"YouTube",exact:true}));
+ expect(screen.getByRole("button",{name:"My lesson"})).toBeInTheDocument();
+ expect(screen.queryByRole("complementary",{name:"My lesson"})).toBeNull();
+});

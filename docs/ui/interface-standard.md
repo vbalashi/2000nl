@@ -7,7 +7,7 @@ Use existing presentation components and semantic theme roles before adding scre
 - `apps/ui/components/practice/ui/practiceTheme.module.css`: semantic typography, palette, surfaces, borders, focus and radii; resolved account preferences supply their values.
 - `apps/ui/lib/reading/textScale.ts`: account text-size scaling. Use semantic roles instead of fixed pixel sizes.
 - `SegmentedControl standard`: existing shared choices, including Settings and Shared collection sections. Use `navigation` only for primary app navigation.
-- `CollectionSortControl`: one sort trigger for personal, owned-shared and received collections; uses the Settings `ActionMenu` for the popup and sizes itself to the longest localized option.
+- `CollectionSortControl`: one compact `IconAction` for personal, owned-shared and received collections, matching Library sorting; uses the Settings `ActionMenu` for the popup and exposes the current order in its accessible label and tooltip.
 - `SettingsLayout`, `SettingsPanel`, `SettingsRow`, `SettingsOptions`: settings structure and choices.
 - `DialogSurface`, `ActionMenu`, `IconAction`, `AddAction`: reuse the appropriate existing interaction primitive rather than recreating its behavior per screen.
 
