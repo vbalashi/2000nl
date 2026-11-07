@@ -978,3 +978,41 @@ test('applied counter uses selected meaning totals and discards old-scope late t
  expect(screen.getByText('73 articles · 115 meanings')).toBeInTheDocument();
  view.unmount();
 });
+
+test('bulk article choices persist across pages and page selection stays page-scoped',async()=>{
+ const {AccountMaterialProvider}=await import('@/components/practice/material/AccountMaterialProvider');
+ readableSources.mockReset().mockResolvedValue([source(scopeB,'Enabled B')]);
+ fetchGroupPage.mockReset().mockImplementation(async(input:{cursor:string|null})=>input.cursor
+  ? {groups:[nextPageGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:51,totalMeanings:51,matchingEntryIds:['entry-goed-next']}}
+  : {groups:[firstGroup],selectedTierComplete:false,nextGroupCursor:'page-two',librarySearch:{totalGroups:51,totalMeanings:51,matchingEntryIds:['entry-goed-bn']}});
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:''}}/></AccountMaterialProvider>);
+ const first=await screen.findByTestId('library-headword-group-group-goed-main');
+ fireEvent.click(screen.getByRole('button',{name:'51 articles'}));
+ fireEvent.click(screen.getByRole('menuitem',{name:'Select articles'}));
+ fireEvent.click(first);
+ expect(screen.getByRole('button',{name:'Selected: 1'})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Next'}));
+ await screen.findByTestId('library-headword-group-group-goed-next-page');
+ fireEvent.click(screen.getByRole('button',{name:'Selected: 1'}));
+ fireEvent.click(screen.getByRole('menuitem',{name:'Select this page'}));
+ expect(screen.getByRole('button',{name:'Selected: 2'})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Selected: 2'}));
+ fireEvent.click(screen.getByRole('menuitem',{name:'Clear this page'}));
+ expect(screen.getByRole('button',{name:'Selected: 1'})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Previous'}));
+ expect(await screen.findByTestId('library-headword-group-group-goed-main')).toHaveAttribute('aria-pressed','true');
+});
+
+test('whole-filter selection can exclude a row without a checkbox',async()=>{
+ const {AccountMaterialProvider}=await import('@/components/practice/material/AccountMaterialProvider');
+ readableSources.mockReset().mockResolvedValue([source(scopeB,'Enabled B')]);
+ fetchGroupPage.mockReset().mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:1,totalMeanings:2,matchingEntryIds:['entry-goed-bn']}});
+ const view=render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:''}}/></AccountMaterialProvider>);
+ const row=await screen.findByTestId('library-headword-group-group-goed-main');
+ fireEvent.click(screen.getByRole('button',{name:'1 article'}));
+ fireEvent.click(screen.getByRole('menuitem',{name:'Select all in this filter (1)'}));
+ expect(row).toHaveAttribute('aria-pressed','true');
+ expect(view.container.querySelector('input[type=checkbox]')).toBeNull();
+ fireEvent.click(row);expect(row).toHaveAttribute('aria-pressed','false');
+ expect(screen.getByRole('button',{name:'All − 1'})).toBeInTheDocument();
+});

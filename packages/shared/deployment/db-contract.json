@@ -169,6 +169,11 @@
       "sha256": "8cd673dddbbe250021744e67319cf3e58c7c381104dcd1faee7321b40b95237a"
     },
     {
+      "migrationId": 320,
+      "file": "db/migrations/320_words_bulk_selection.sql",
+      "sha256": "501e6b6914e6fa4ce2f3746ccfafea65854ee67f6bdb8decd59e14342a4a6e4e"
+    },
+    {
       "migrationId": 330,
       "file": "db/migrations/330_label_share_preflight.sql",
       "sha256": "1b24d3eaa1a6004e27347e35010bbab82e6aeb955782e55d10108d990d4ca324"
@@ -307,6 +312,6 @@
   "postflightProbe": "db/deploy-contract/postflight-356.sql",
   "readOnlyPostflightProbe": {
     "file": "db/deploy-contract/read-only-postflight-356.sql",
-    "sha256": "62ed6310d23f6f91e8624f411dbccb34ee8f994f6bd869233908180090d6ae5a"
+    "sha256": "98a193c2e83c1b47ad0aa6056acf29b37333bce60a52a2a0ce98a2abdf482f32"
   }
 }

@@ -944,7 +944,9 @@
       "matchingGroupZero": "{count} passende artikelen",
       "matchingGroupTwo": "{count} passende artikelen",
       "referenceZero": "{count} verwijzingen",
-      "referenceTwo": "{count} verwijzingen"
+      "referenceTwo": "{count} verwijzingen",
+      "recentSearch": "Recent",
+      "scopeActions": "Zoekgeschiedenis en filters"
     },
     "collections": {
       "title": "Collecties",
@@ -1127,6 +1129,34 @@
     "common": {
       "closePanel": "{title} sluiten",
       "unknownLanguage": "Onbekende taal"
+    },
+    "wordsBulk": {
+      "select": "Artikelen selecteren",
+      "cancel": "Selectie annuleren",
+      "selectPage": "Deze pagina selecteren",
+      "clearPage": "Selectie op deze pagina wissen",
+      "add": "Aan collectie toevoegen",
+      "choose": "Kies een collectie",
+      "preview": "Geselecteerde artikelen: {articles}. Passende betekenissen: {meanings}.",
+      "confirm": "Betekenissen toevoegen",
+      "loading": "Betekenissen controleren…",
+      "failed": "De actie is mislukt. Probeer het opnieuw.",
+      "empty": "Maak eerst een collectie.",
+      "success": "Toegevoegd: {count}",
+      "changed": "De passende betekenissen zijn gewijzigd. Controleer het nieuwe aantal.",
+      "selectAll": "Alles in dit filter selecteren ({count})",
+      "limit": "U kunt maximaal 2.500 artikelen en 100.000 betekenissen tegelijk toevoegen.",
+      "selectedShort": "Geselecteerd: {count}",
+      "allShort": "Alle: {count}",
+      "allExceptShort": "Alle − {count}",
+      "manualLimit": "Maximaal 200 afzonderlijk geselecteerde of uitgesloten artikelen."
+    },
+    "collectionComposition": {
+      "title": "Gedeelde collectie",
+      "audience": "Lezers: {count}. Zij kunnen deze wijziging zien.",
+      "failed": "De collectie kon niet worden bijgewerkt. Controleer en probeer opnieuw.",
+      "storage": "De bevestiging kon niet op dit apparaat worden bewaard. Probeer opnieuw.",
+      "pending": "Het resultaat is nog niet beschikbaar. Controleer opnieuw voordat u het opnieuw probeert."
     }
   },
   "wordDetails": {

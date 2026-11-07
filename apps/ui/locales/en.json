@@ -944,7 +944,9 @@
       "matchingGroupZero": "{count} matching articles",
       "matchingGroupTwo": "{count} matching articles",
       "referenceZero": "{count} references",
-      "referenceTwo": "{count} references"
+      "referenceTwo": "{count} references",
+      "recentSearch": "Recent",
+      "scopeActions": "Search history and filters"
     },
     "collections": {
       "title": "Collections",
@@ -1127,6 +1129,34 @@
     "common": {
       "closePanel": "Close {title}",
       "unknownLanguage": "Unknown language"
+    },
+    "wordsBulk": {
+      "select": "Select articles",
+      "cancel": "Cancel selection",
+      "selectPage": "Select this page",
+      "clearPage": "Clear this page",
+      "add": "Add to collection",
+      "choose": "Choose a collection",
+      "preview": "Selected articles: {articles}. Matching meanings: {meanings}.",
+      "confirm": "Add meanings",
+      "loading": "Checking meanings…",
+      "failed": "Could not complete this action. Please try again.",
+      "empty": "Create a collection first.",
+      "success": "Added: {count}",
+      "changed": "The matching meanings changed. Review the updated count.",
+      "selectAll": "Select all in this filter ({count})",
+      "limit": "At most 2,500 articles and 100,000 meanings can be added at once.",
+      "selectedShort": "Selected: {count}",
+      "allShort": "All: {count}",
+      "allExceptShort": "All − {count}",
+      "manualLimit": "Up to 200 individually selected or excluded articles."
+    },
+    "collectionComposition": {
+      "title": "Shared collection",
+      "audience": "Readers: {count}. They can see this change.",
+      "failed": "Could not update this collection. Review it and try again.",
+      "storage": "Could not save the confirmation on this device. Try again.",
+      "pending": "The result is not available yet. Check again before retrying."
     }
   },
   "wordDetails": {

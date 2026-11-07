@@ -64,6 +64,7 @@ export function LibraryResultRow({
   selected,
   onSelect,
   onExpandAll,
+  disabled = false,
   preview,
   testId,
 }: {
@@ -80,6 +81,7 @@ export function LibraryResultRow({
   selected: boolean;
   onSelect: () => void;
   onExpandAll?: () => void;
+  disabled?: boolean;
   preview?: string;
   testId?: string;
 }) {
@@ -94,6 +96,7 @@ export function LibraryResultRow({
       type="button"
       className={s.row}
       aria-pressed={selected}
+      disabled={disabled}
       data-testid={testId}
       onClick={onSelect}
       onDoubleClick={onExpandAll}

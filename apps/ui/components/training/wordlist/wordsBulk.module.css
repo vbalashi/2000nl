@@ -1,0 +1,11 @@
+.actions button,.choices button,.create button{border:1px solid var(--practice-control-border);border-radius:8px;background:var(--practice-surface);color:var(--practice-text-secondary);padding:6px 10px;min-height:36px;font:inherit;cursor:pointer}
+.actions button:disabled,.choices button:disabled,.create button:disabled{opacity:.5;cursor:default}
+.row{position:relative}.row>button{padding-right:38px}.mark{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--practice-accent);pointer-events:none}
+.dialog{width:min(480px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:20px;border:1px solid var(--practice-border);border-radius:16px;background:var(--practice-surface);color:var(--practice-text);font:400 var(--practice-text-small)/1.5 var(--practice-font-ui);box-shadow:0 20px 70px var(--practice-shadow);box-sizing:border-box}
+.dialog::backdrop{background:var(--practice-backdrop)}.header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}.dialog h2{margin:0;min-width:0;font:500 var(--practice-text-body-lg)/1.4 var(--practice-font-ui)}
+.create{display:flex;align-items:center;gap:8px}.search{display:flex;align-items:center;gap:8px;flex:1;min-width:0;box-sizing:border-box;border:1px solid var(--practice-control-border);border-radius:8px;background:var(--practice-surface);color:var(--practice-text-muted);padding:8px}.search input,.create input{min-width:0;flex:1;border:0;outline:none;background:transparent;color:var(--practice-text);font:inherit}.create{margin-top:10px}.create input{border:1px solid var(--practice-control-border);border-radius:8px;padding:8px}
+.choices{display:grid;gap:4px;max-height:40dvh;overflow:auto;margin-top:10px}.choices button{text-align:left;border-color:transparent}.choices button[aria-pressed=true]{background:var(--practice-surface-hover);border-color:var(--practice-control-border)}
+.status{min-height:2.8em;color:var(--practice-text-muted)}.actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}.actions button:last-child{background:var(--practice-accent);color:var(--practice-on-accent)}
+.dialog :focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}
+
+@media(max-width:360px){.createLabel{display:none}}

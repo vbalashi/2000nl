@@ -6,6 +6,8 @@ import {
   LibraryResultList,
   LibraryResultRow,
 } from "@/components/practice/library/LibraryResultList";
+import {Check} from "lucide-react";
+import bulk from "./wordsBulk.module.css";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
 import type { LibraryHeadwordGroupResult } from "./libraryHeadwordGroupResults";
@@ -16,6 +18,11 @@ type Props = {
   results: LibraryHeadwordGroupResult[];
   selectedHeadwordGroupId: string | null;
   onSelect: (result: LibraryHeadwordGroupResult) => void;
+  bulkSelected?: ReadonlySet<string>;
+  bulkLocked?: boolean;
+  bulkAll?: boolean;
+  bulkExcludedCount?: number;
+  onBulkSelect?: (id:string, selected:boolean) => void;
 };
 
 function coreVocabularyLabel(
@@ -33,7 +40,7 @@ export function LibraryHeadwordGroupResultsList({
   appearance,
   interfaceLanguage = "nl",
   selectedHeadwordGroupId,
-  onSelect,
+  onSelect, bulkSelected, bulkLocked, bulkAll, bulkExcludedCount, onBulkSelect,
 }: Props) {
   return (
       <div className={theme.theme} data-colour-mode="app">
@@ -51,6 +58,7 @@ export function LibraryHeadwordGroupResultsList({
             <div
               key={result.headwordGroupId}
               data-testid="library-headword-group-row"
+              className={onBulkSelect ? bulk.row : undefined}
             >
               <LibraryResultRow
                 testId={`library-headword-group-${result.headwordGroupId}`}
@@ -64,9 +72,11 @@ export function LibraryHeadwordGroupResultsList({
                 homographNumber={result.homographNumber}
                 contentLanguage={result.group.dictionary.sourceLanguageCode}
                 language={interfaceLanguage}
-                selected={result.headwordGroupId === selectedHeadwordGroupId}
-                onSelect={() => onSelect(result)}
+                selected={onBulkSelect ? Boolean(bulkSelected?.has(result.headwordGroupId)) : result.headwordGroupId === selectedHeadwordGroupId}
+                disabled={Boolean(onBulkSelect && (bulkLocked || result.meaningCount===0 || (bulkAll ? Boolean(bulkSelected?.has(result.headwordGroupId)) && (bulkExcludedCount ?? 0)>=200 : !bulkSelected?.has(result.headwordGroupId) && (bulkSelected?.size ?? 0)>=200)))}
+                onSelect={() => onBulkSelect ? onBulkSelect(result.headwordGroupId,!bulkSelected?.has(result.headwordGroupId)) : onSelect(result)}
               />
+              {onBulkSelect && bulkSelected?.has(result.headwordGroupId) && <Check className={bulk.mark} size={16} aria-hidden="true"/>}
             </div>
           ))}
         </LibraryResultList>
