@@ -1,3 +1,5 @@
+const compositionCalls=vi.hoisted(()=>({prepare:vi.fn(),confirm:vi.fn(),read:vi.fn()}));
+vi.mock('@/lib/collections/sharing/collectionCompositionClient',()=>({prepareCollectionComposition:compositionCalls.prepare,confirmCollectionComposition:compositionCalls.confirm,readCollectionCompositionReceipt:compositionCalls.read}));
 const selectedRead=vi.hoisted(()=>vi.fn());
 vi.mock('@/lib/collections/sharing/selectedMembership',()=>({readSelectedMembership:selectedRead}));
 const noteHintRead=vi.hoisted(()=>({refresh:undefined as undefined|(()=>void|Promise<unknown>),blocked:undefined as undefined|(()=>boolean)}));
@@ -544,6 +546,26 @@ describe("LibrarySenseCardV2Session", () => {
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(screen.queryByRole("button", { name: "Train next" })).not.toBeInTheDocument();
     expect(trainNext).not.toHaveBeenCalled();
+  });
+
+  test("shared collection changes ask for confirmation before saving", async () => {
+    vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');sessionStorage.clear();
+    const list={id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',name:'Lesson',type:'user' as const};
+    const planId='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    compositionCalls.prepare.mockResolvedValue({planId,collectionId:list.id,action:'remove',audience:[{userId:'reader',paths:[{kind:'collection'}]}]});
+    compositionCalls.confirm.mockResolvedValue({planId,collectionId:list.id,status:'committed'});
+    fetchMemberships.mockResolvedValueOnce(new Map([[financeEntry.entryId,[membership(list.id)]]])).mockResolvedValue(new Map());
+    const updated=vi.fn();render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} initialGroup={multiSenseBankGroup} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" userId="owner" userLists={[list]} currentCollection={list} onListsUpdated={updated}/>);
+    const card=await screen.findByTestId(`library-sense-card-${financeEntry.entryId}`);
+    await waitFor(()=>expect(card).toHaveAttribute('data-current-collection','included'));
+    fireEvent.click(within(card).getByRole('button',{name:'Collections · 1'}));
+    fireEvent.click(screen.getByRole('menuitem',{name:'Remove from “Lesson”'}));
+    const dialog=await screen.findByRole('dialog',{name:'Change shared collection'});
+    expect(compositionCalls.confirm).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole('button',{name:'Confirm'}));
+    await waitFor(()=>expect(compositionCalls.confirm).toHaveBeenCalledOnce());
+    await waitFor(()=>expect(updated).toHaveBeenCalled());
+    expect(removeFromList).not.toHaveBeenCalled();vi.unstubAllEnvs();
   });
 
   test("quick collection actions target the clicked meaning and refresh membership without opening the picker", async () => {

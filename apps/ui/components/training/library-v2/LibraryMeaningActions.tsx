@@ -79,8 +79,8 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
     {!activeTraining && resumeBlocked && blocked ? <p className={s.status}>{protectionCopy.headwordHint}</p> : null}
     <div data-testid="library-service-actions" className={s.row}>
       {onCollections ? <button data-onboarding="meaning-collections" ref={collectionTrigger} type="button" className={s.quiet}
-        aria-haspopup="menu" aria-expanded={Boolean(collectionAnchor)}
-        onClick={event => collectionAnchor ? closeCollections() : setCollectionAnchor(event.currentTarget)}>
+        aria-haspopup={collectionItems.length>1 ? "menu" : "dialog"} aria-expanded={Boolean(collectionAnchor)}
+        onClick={event => collectionItems.length===1 ? onCollections() : collectionAnchor ? closeCollections() : setCollectionAnchor(event.currentTarget)}>
         <List size={14} aria-hidden="true"/>{t("senseCard.collections.label")}{collectionCount > 0 ? ` · ${new Intl.NumberFormat(language).format(collectionCount)}` : ""}
       </button> : null}
       <span className={s.spacer}/>
