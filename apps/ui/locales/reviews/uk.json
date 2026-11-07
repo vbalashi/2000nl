@@ -1728,5 +1728,7 @@
   "features.labelSharing.compositionRemove": {"source":"Removing meanings changes the collection for its subscribers.","translationHash":"11491da504b0587c08d533e1cd0cc770d94d967e45f0d7d3784a2bb7634b5fac"},
   "features.labelSharing.compositionDelete": {"source":"Deleting this collection removes access through this collection. Other collections and learning progress are kept.","translationHash":"f5f156d7479fa25b88393c9de65beb1dd7707b035fb343317558d06590510e31"},
   "features.labelSharing.compositionReaders": {"source":"Subscribers affected: {count}","translationHash":"41847a516ac94e6685b8268b84597e118763907faa76726f8f412cfe6953ee6a"},
-  "features.labelSharing.compositionPaths": {"source":"Direct subscriptions: {direct}. Group subscriptions: {groups}.","translationHash":"4318f8d9814f46905145ac2e48963a5d4b942670bc67f27cc27a173924fdbf8c"}
+  "features.labelSharing.compositionPaths": {"source":"Direct subscriptions: {direct}. Group subscriptions: {groups}.","translationHash":"4318f8d9814f46905145ac2e48963a5d4b942670bc67f27cc27a173924fdbf8c"},
+  "features.labelSharing.originalCollections": {"source":"Original collections","translationHash":"c7fa9a75f481970c83662b9a93e48e71ce492ba588b40daf39080a38e543ae88"},
+  "features.labelSharing.referenceNotice": {"source":"These collections belong to other authors. Open an invitation and add each collection separately.","translationHash":"f7aeacc9c87c1ddb4c853bfab0da9bd74c8d250eb659cf6638883273ee6f2ad0"}
 }

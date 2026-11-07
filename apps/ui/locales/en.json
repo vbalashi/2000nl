@@ -1954,7 +1954,9 @@
       "compositionRemove": "Removing meanings changes the collection for its subscribers.",
       "compositionDelete": "Deleting this collection removes access through this collection. Other collections and learning progress are kept.",
       "compositionReaders": "Subscribers affected: {count}",
-      "compositionPaths": "Direct subscriptions: {direct}. Group subscriptions: {groups}."
+      "compositionPaths": "Direct subscriptions: {direct}. Group subscriptions: {groups}.",
+      "originalCollections": "Original collections",
+      "referenceNotice": "These collections belong to other authors. Open an invitation and add each collection separately."
     }
   },
   "tour": {

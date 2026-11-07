@@ -9,6 +9,7 @@ import {shareInvitationUrl} from '@/lib/collections/sharing/shareCode';
 import {organizationCopy} from '../organization/copy';
 import overlays from '@/components/practice/library/libraryOverlays.module.css';
 import s from '../organization/organization.module.css';
+import {ShareInvitationFields,ShareManagementMenu} from './ShareInvitationFields';
 
 export type LabelSharingController={
  status:'loading'|'ready'|'saving'|'error'|'uncertain';
@@ -31,7 +32,7 @@ export function LabelSharingDialog({name,locale,controller,onClose}:{name:string
  const copy=async(value:string)=>{try{await navigator.clipboard.writeText(value);setNotice(t.copied);}catch{setNotice(t.copyFailed);}};
  return <DialogSurface className={overlays.dialog} aria-label={group.title} onDismiss={()=>{if(status!=='saving')onClose();}}>
   <div className={`${s.editor} ${s.sharingAction}`}>
-   <h2>{group.title}</h2><p>{name}</p>
+   <header><h2>{group.title}</h2>{status==='ready'&&data?.isOpen&&!confirmation&&<ShareManagementMenu locale={locale} onAction={setConfirmation}/>}</header><p>{name}</p>
    {controller.rejected&&<p role="alert">{t.rejected}</p>}
    {status==='loading'?<p role="status">{common.loading}</p>:status==='saving'?<p role="status">{common.saving}</p>:status==='error'?<>
     <p role="alert">{t.readError}</p><button onClick={controller.refresh}>{common.retry}</button>
@@ -43,9 +44,7 @@ export function LabelSharingDialog({name,locale,controller,onClose}:{name:string
    </>:<>
     <p>{group.description}</p><p>{t.view} · {t.subscribers}: {data.subscriberCount.toLocaleString(locale)}</p>
     {data.isOpen?link&&data.invitationCode?<>
-     <label>{t.copyLink}<input readOnly value={link}/></label><button onClick={()=>void copy(link)}>{t.copyLink}</button>
-     <label>{t.copyCode}<input readOnly value={data.invitationCode}/></label><button onClick={()=>void copy(data.invitationCode!)}>{t.copyCode}</button>
-     <button onClick={()=>setConfirmation('rotate')}>{t.rotate}</button><button onClick={()=>setConfirmation('close')}>{t.close}</button>
+     <ShareInvitationFields link={link} code={data.invitationCode} locale={locale} onCopy={value=>void copy(value)}/>
     </>:null:<button onClick={()=>setConfirmation('open')}>{t.open}</button>}
    </>:null}
    {notice&&<p role="status">{notice}</p>}

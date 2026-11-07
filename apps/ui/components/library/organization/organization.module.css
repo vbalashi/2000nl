@@ -57,6 +57,10 @@
 .received select{background:var(--practice-surface);color:var(--practice-text);border:1px solid var(--practice-border);border-radius:10px;padding:8px;font:inherit}
 .received :is(button,select):focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}
 .sharingAction footer{flex-wrap:wrap}.sharingAction button{max-width:100%;overflow-wrap:anywhere}.sharingAction input{width:100%;min-width:0}
+.invitationFields{display:grid;gap:12px;min-width:0}
+.editor .invitationField{display:flex;align-items:center;min-width:0;border:1px solid var(--practice-border);border-radius:10px;background:var(--practice-surface);overflow:hidden}
+.editor .invitationField input:not([type=checkbox]){flex:1;width:0;border:0;border-radius:0;background:transparent;font-size:var(--practice-text-small)}
+.editor .invitationField button{flex:none;border:0;border-radius:0;background:transparent;width:44px;padding:8px}
 
 .sharedWorkspace{display:flex;flex:1;min-width:0;min-height:0;overflow:hidden;flex-direction:column;gap:16px;padding:0;background:transparent;font-family:var(--practice-font-ui);color:var(--practice-text)}
 .sharedTop{display:flex;align-items:center;justify-content:space-between;gap:16px}.sharedSwitcher{display:flex;gap:8px;flex-wrap:wrap}

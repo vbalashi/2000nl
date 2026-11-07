@@ -20,7 +20,7 @@ import overlays from '@/components/practice/library/libraryOverlays.module.css';
 import s from '../organization/organization.module.css';
 
 type Group=LabelSharingCatalog['received'][number];
-export function SharedLabelGroups({userId,locale,groups,view,onChanged,onOpenCollection,collections=[]}:{userId:string;locale:OnboardingLanguage;groups:Group[];collections?:WordListSummary[];view:'owned'|'received';onChanged:()=>void;onOpenCollection:(id:string)=>void}){
+export function SharedLabelGroups({userId,locale,groups,view,onChanged,onOpenCollection,onReference,collections=[]}:{userId:string;locale:OnboardingLanguage;groups:Group[];collections?:WordListSummary[];view:'owned'|'received';onChanged:()=>void;onOpenCollection:(id:string)=>void;onReference?:(code:string)=>void}){
  const t=localizedSection('labelSharing')[locale],common=organizationCopy(locale);
  const [menu,setMenu]=useState<{key:string;row:Group;anchor:HTMLButtonElement}|null>(null);
  const [dialog,setDialog]=useState<{key:string;row:Group;kind:'manage'|'contents'|'leave'}|null>(null);
@@ -36,7 +36,7 @@ export function SharedLabelGroups({userId,locale,groups,view,onChanged,onOpenCol
    {id:'contents',label:t.openGroup,onSelect:()=>{setDialog({key,row:menu.row,kind:'contents'});setMenu(null);}},
    view==='owned'?{id:'manage',label:localizedSection('ownedSharedCollections')[locale].manage,onSelect:()=>{setDialog({key,row:menu.row,kind:'manage'});setMenu(null);}}:{id:'leave',label:localizedSection('receivedCollectionActions')[locale].leave,onSelect:()=>{setDialog({key,row:menu.row,kind:'leave'});setMenu(null);}},
   ]}/>}
-  {dialog?.key===key&&(dialog.kind==='manage'?<OwnedLabelSharing userId={userId} labelId={dialog.row.labelId} name={dialog.row.name} collections={collections} locale={locale} onClose={()=>{setDialog(null);onChanged();}}/>:dialog.kind==='contents'?<SharedLabelContents userId={userId} labelId={dialog.row.labelId} name={dialog.row.name} locale={locale} onClose={()=>setDialog(null)} onOpen={id=>{setDialog(null);onOpenCollection(id);}}/>:<LeaveSharedLabel userId={userId} row={dialog.row} locale={locale} onClose={()=>setDialog(null)} onDone={()=>{setDialog(null);onChanged();}}/>)}
+  {dialog?.key===key&&(dialog.kind==='manage'?<OwnedLabelSharing userId={userId} labelId={dialog.row.labelId} name={dialog.row.name} collections={collections} locale={locale} onClose={()=>{setDialog(null);onChanged();}}/>:dialog.kind==='contents'?<SharedLabelContents userId={userId} labelId={dialog.row.labelId} name={dialog.row.name} locale={locale} onClose={()=>setDialog(null)} onReference={code=>{setDialog(null);onReference?.(code);}} onOpen={id=>{setDialog(null);onOpenCollection(id);}}/>:<LeaveSharedLabel userId={userId} row={dialog.row} locale={locale} onClose={()=>setDialog(null)} onDone={()=>{setDialog(null);onChanged();}}/>)}
  </section>;
 }
 

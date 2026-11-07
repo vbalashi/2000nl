@@ -1954,7 +1954,9 @@
       "compositionRemove": "Verwijderde betekenissen verdwijnen uit de collectie voor abonnees.",
       "compositionDelete": "Na het verwijderen vervalt toegang via deze collectie. Andere collecties en de leervoortgang blijven behouden.",
       "compositionReaders": "Betrokken abonnees: {count}",
-      "compositionPaths": "Rechtstreekse abonnementen: {direct}. Groepsabonnementen: {groups}."
+      "compositionPaths": "Rechtstreekse abonnementen: {direct}. Groepsabonnementen: {groups}.",
+      "originalCollections": "Collecties van andere auteurs",
+      "referenceNotice": "Deze collecties zijn van andere auteurs. Open een uitnodiging en voeg elke collectie afzonderlijk toe."
     }
   },
   "tour": {
