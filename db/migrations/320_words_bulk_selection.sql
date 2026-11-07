@@ -176,7 +176,7 @@ BEGIN
   RAISE EXCEPTION 'selection_changed' USING ERRCODE='40001'; END IF;
  FOR entry_row IN SELECT e.id,e.dictionary_id FROM private.active_word_entries e WHERE e.id=ANY(ids) ORDER BY e.id FOR SHARE NOWAIT LOOP
   locked:=locked+1;
-  IF entry_row.dictionary_id IS NOT NULL AND NOT public.can_access_dictionary(principal,entry_row.dictionary_id,'read') THEN RAISE EXCEPTION 'entry_not_accessible' USING ERRCODE='42501'; END IF;
+  IF NOT private.entry_access_v1(principal,entry_row.id,'train') THEN RAISE EXCEPTION 'entry_not_accessible' USING ERRCODE='42501'; END IF;
  END LOOP;
  IF locked<>cardinality(ids) THEN RAISE EXCEPTION 'selection_changed' USING ERRCODE='40001'; END IF;
  INSERT INTO public.user_word_list_items(list_id,word_id) SELECT plan.collection_id,selected FROM unnest(ids) selected ON CONFLICT(list_id,word_id) DO NOTHING;

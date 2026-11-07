@@ -171,7 +171,7 @@
     {
       "migrationId": 320,
       "file": "db/migrations/320_words_bulk_selection.sql",
-      "sha256": "501e6b6914e6fa4ce2f3746ccfafea65854ee67f6bdb8decd59e14342a4a6e4e"
+      "sha256": "fdcf5fb4ca3c99b1f99bb69829aac9b7cecf1e5190df2aca01bb851f77263142"
     },
     {
       "migrationId": 330,

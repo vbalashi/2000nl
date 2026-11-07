@@ -144,6 +144,31 @@ const filters=(meanings:string|number='all',parts:string[]=[])=>({parts,article:
    expect(all.articleCount).toBe(54);expect(all.entryIds).toHaveLength(57);expect(except.articleCount).toBe(53);expect(except.entryIds).toHaveLength(56);
   });
  });
+ test('adds a group-shared author entry by reference while access is live',async()=>{
+  await withTransaction(pool,async client=>{
+   if(!(await client.query("select to_regprocedure('private.collection_audience_recipients_v1(uuid,uuid)') is not null present")).rows[0].present)return;
+   const owner=randomUUID(),viewer=randomUUID(),label=randomUUID(),source=randomUUID(),target=randomUUID();
+   await ensureUserWithSettings(client,owner);await ensureUserWithSettings(client,viewer);await client.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
+   const entry=(await client.query('select create_user_dictionary_entry($1,null,$2) id',[owner,{headword:'bulksharedtest',languageCode:'nl',definition:'shared source'}])).rows[0].id;
+   await client.query("insert into user_word_lists(id,user_id,name,language_code) values($1,$2,'source','nl')",[source,owner]);await client.query('insert into user_word_list_items(list_id,word_id) values($1,$2)',[source,entry]);
+   await client.query("insert into private.collection_labels(id,user_id,name) values($1,$2,'group')",[label,owner]);await client.query('insert into private.collection_label_assignments values($1,$2,$3)',[owner,source,label]);
+   const opened=(await client.query("select mutate_label_share_v1($1,'open',0) value",[label])).rows[0].value;
+   await client.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);await client.query('select accept_label_share_v1($1)',[opened.invitationCode]);
+   await client.query("insert into user_word_lists(id,user_id,name,language_code) values($1,$2,'target','nl')",[target,viewer]);
+   const group=(await client.query('select public.read_platform_v2_presentation_identity($1,$2,false) value',[viewer,[entry]])).rows[0].value.entries[0]?.headwordGroupId;
+   expect(group).toBeTruthy();
+   const plan=(await client.query('select public.prepare_words_bulk_collection_v1($1,$2,$3,$4,$5,$6,$7,$8,$9) value',[[group],'','nl',null,{parts:[],article:null},{kind:'collection',collectionType:'user',id:source},target,false,'browse'])).rows[0].value;
+   expect(plan.meaningCount).toBe(1);
+   expect((await client.query('select public.confirm_words_bulk_collection_v1($1) value',[plan.planId])).rows[0].value).toMatchObject({status:'committed',addedCount:1});
+   expect((await client.query('select word_id from user_word_list_items where list_id=$1',[target])).rows).toEqual([{word_id:entry}]);
+   const second=randomUUID();await client.query("insert into user_word_lists(id,user_id,name,language_code) values($1,$2,'second','nl')",[second,viewer]);
+   const stale=(await client.query('select public.prepare_words_bulk_collection_v1($1,$2,$3,$4,$5,$6,$7,$8,$9) value',[[group],'','nl',null,{parts:[],article:null},{kind:'collection',collectionType:'user',id:source},second,false,'browse'])).rows[0].value;
+   await client.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);await client.query("select mutate_label_share_v1($1,'close',1)",[label]);
+   await client.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);await client.query('savepoint revoked');
+   await expect(client.query('select public.confirm_words_bulk_collection_v1($1)',[stale.planId])).rejects.toThrow();await client.query('rollback to savepoint revoked');
+   expect((await client.query('select count(*)::int n from user_word_list_items where list_id=$1',[second])).rows[0].n).toBe(0);
+  });
+ });
  test('prepares and confirms a frozen selection when audience authority is installed',async()=>{
   await withTransaction(pool,async client=>{
    const present=(await client.query("select to_regprocedure('private.collection_audience_recipients_v1(uuid,uuid)') is not null present")).rows[0].present;
