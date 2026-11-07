@@ -1150,7 +1150,14 @@
       "allShort": "All: {count}",
       "allExceptShort": "All − {count}",
       "manualLimit": "Up to 200 individually selected or excluded articles.",
-      "retryConfirmed": "Retry confirmed change"
+      "retryConfirmed": "Retry confirmed change",
+      "private": "Private",
+      "sharedReadersZero": "Shared · {count} subscribers",
+      "sharedReadersOne": "Shared · {count} subscriber",
+      "sharedReadersTwo": "Shared · {count} subscribers",
+      "sharedReadersFew": "Shared · {count} subscribers",
+      "sharedReadersMany": "Shared · {count} subscribers",
+      "sharedReadersOther": "Shared · {count} subscribers"
     },
     "collectionComposition": {
       "title": "Shared collection",

@@ -1,17 +1,18 @@
 "use client";
 import React from "react";
-import {Search} from "lucide-react";
+import {Search,Lock,Share2} from "lucide-react";
 import {getInterfaceCatalog} from "@/lib/i18n/catalog";
 import {CorruptLocalRecovery} from "@/components/library/sharing/CorruptLocalRecovery";
 import {AddAction} from "@/components/practice/ui/AddAction";
 import {createUserList,fetchUserLists} from "@/lib/training/listService";
 import {platformV2Message} from "@/lib/platform/platformV2ClientI18n";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
-import { getUiMessages, formatUiMessage } from "@/lib/uiMessages";
+import { getUiMessages, formatUiMessage, formatUiCount } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import type { WordListSummary } from "@/lib/types";
 import { wordsBulkCollection, wordsBulkReceipt, type WordsBulkRequest, type WordsBulkResult } from "@/lib/platform/wordsBulkClient";
 import s from "./wordsBulk.module.css";
+import {readOwnedCollectionAccessMetadata} from "@/lib/collections/sharing/ownedAccessMetadataClient";
 
 const journalUuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function parseBulkJournal(raw:string):{planId:string;collectionId:string}|null {
@@ -83,10 +84,19 @@ export function WordsBulkDialog({userId,language,lists,selection,onClose,onDone,
   action.current=true;setBusy(true);setError(null);const expected=generation.current;
   try {const list=await createUserList({userId,name,language_code:selection.language});
    if(!list)throw new Error('create_failed');
-   if(expected===generation.current){setCreated(previous=>[list,...previous]);setCreating(false);setNewName('');setQuery('');setListId(list.id);onListsUpdated?.();}
+   if(expected===generation.current){setCreated(previous=>[list,...previous]);setCreating(false);setNewName('');setQuery('');setPreview(null);setListId(list.id);onListsUpdated?.();}
   } catch {if(expected===generation.current)setError(copy.failed);}
   finally {action.current=false;if(expected===generation.current)setBusy(false);}
  };
+ const [access,setAccess]=React.useState<{userId:string;rows:Map<string,{isShared:boolean;subscriberCount:number}>}|null>(null);
+ const accessIds=JSON.stringify([...new Set([...created,...lists].filter(list=>list.type==='user'&&list.ownership!=='received').map(list=>list.id))].sort());
+ React.useEffect(()=>{
+  const abort=new AbortController();const ids=JSON.parse(accessIds) as string[];
+  const read=async()=>{const rows: {collectionId:string;isShared:boolean;subscriberCount:number}[]=[];
+   for(let offset=0;offset<ids.length;offset+=200)rows.push(...await readOwnedCollectionAccessMetadata(userId,ids.slice(offset,offset+200),abort.signal));
+   if(!abort.signal.aborted)setAccess({userId,rows:new Map(rows.map(row=>[row.collectionId,row]))});
+  };void read().catch(()=>{if(!abort.signal.aborted)setAccess(null);});return()=>abort.abort();
+ },[userId,accessIds,preview?.planId]);
  const available=[...created,...lists.filter(list=>!created.some(item=>item.id===list.id))];
  const choices=available.filter(list=>list.type==='user'&&list.ownership!=='received'&&list.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
  return <><DialogSurface className={s.dialog} onDismiss={()=>{if(!action.current)onClose();}} aria-labelledby={titleId} lang={language}>
@@ -94,11 +104,16 @@ export function WordsBulkDialog({userId,language,lists,selection,onClose,onDone,
   <label className={s.search}><Search size={16} aria-hidden="true"/><input value={query} onChange={event=>setQuery(event.target.value)} aria-label={getUiMessages(language).collections.search} placeholder={getUiMessages(language).collections.search}/></label>
   {creating && <form className={s.create} onSubmit={event=>{event.preventDefault();void create();}}><input autoFocus value={newName} onChange={event=>setNewName(event.target.value)} aria-label={platformV2Message(language,'senseCard.collections.createPlaceholder')} placeholder={platformV2Message(language,'senseCard.collections.createPlaceholder')}/><button type="submit" disabled={!newName.trim()||busy}>{platformV2Message(language,'senseCard.collections.create')}</button></form>}
   <div className={s.choices} role="group" aria-label={copy.choose}>
-   {choices.map(list=><button type="button" key={list.id} aria-pressed={listId===list.id} disabled={busy} onClick={()=>setListId(list.id)}>{list.name}</button>)}
+   {choices.map(list=>{const metadata=access?.userId===userId?access.rows.get(list.id):undefined;
+    const shared=metadata?.isShared || (listId===list.id && Boolean(preview?.audience.length));
+    const count=listId===list.id && preview ? preview.audience.length : metadata?.subscriberCount;
+    return <button type="button" key={list.id} aria-label={list.name} aria-describedby={`${titleId}-${list.id}-access`} aria-pressed={listId===list.id} disabled={busy} onClick={()=>{setPreview(null);setListId(list.id);}}>
+     <span className={s.accessIcon}>{shared?<Share2 size={17} aria-hidden="true"/>:metadata?<Lock size={17} aria-hidden="true"/>:<span className={s.iconPlaceholder}/>}</span>
+     <span className={s.collectionText}><span className={s.collectionName}>{list.name}</span><span id={`${titleId}-${list.id}-access`} className={s.collectionMeta}>{shared && count!==undefined ? formatUiCount(language,count,copy,'sharedReaders') : metadata ? copy.private : '\u00a0'}</span></span>
+    </button>;})}
    {!choices.length&&<p>{available.some(list=>list.type==='user'&&list.ownership!=='received') ? getUiMessages(language).collections.empty : copy.empty}</p>}
   </div>
-  {preview && preview.audience.length>0 && <p>{formatUiMessage(getUiMessages(language).collectionComposition.audience,{count:preview.audience.length})}</p>}
-  <p role="status" className={s.status}>{busy?copy.loading:preview?formatUiMessage(copy.preview,{articles:preview.articleCount,meanings:preview.meaningCount}):error}{error && !busy && !uncertain && <button type="button" onClick={()=>setRetry(value=>value+1)}>{getUiMessages(language).library.retry}</button>}</p>
-  <div className={s.actions}><button type="button" disabled={busy && action.current} onClick={onClose}>{getUiMessages(language).builder.cancel}</button>{uncertain?<><button type="button" disabled={busy} onClick={()=>{if(expired){sessionStorage.removeItem(journalKey);setUncertain(null);setExpired(false);setError(null);}else void check();}}>{expired?copy.cancel:getInterfaceCatalog(language).features.personalNote.check}</button>{!expired && <button type="button" disabled={busy} onClick={()=>void check(true)}>{copy.retryConfirmed}</button>}</>:<button type="button" disabled={!preview||preview.meaningCount===0||busy} onClick={()=>void submit()}>{copy.confirm}</button>}</div>
+  <p role="status" className={s.status}>{busy?copy.loading:error?error:preview?formatUiMessage(copy.preview,{articles:preview.articleCount,meanings:preview.meaningCount}):error}{error && !busy && !uncertain && <button type="button" onClick={()=>setRetry(value=>value+1)}>{getUiMessages(language).library.retry}</button>}</p>
+  <div className={s.actions}><button type="button" disabled={busy && action.current} onClick={onClose}>{getUiMessages(language).builder.cancel}</button>{uncertain?<><button type="button" disabled={busy} onClick={()=>{if(expired){sessionStorage.removeItem(journalKey);setUncertain(null);setExpired(false);setError(null);}else void check();}}>{expired?copy.cancel:getInterfaceCatalog(language).features.personalNote.check}</button>{!expired && <button type="button" disabled={busy} onClick={()=>void check(true)}>{copy.retryConfirmed}</button>}</>:<button type="button" disabled={!preview||preview.meaningCount===0||busy||access?.userId!==userId||!listId||!access.rows.has(listId)} onClick={()=>void submit()}>{copy.confirm}</button>}</div>
  </DialogSurface><CorruptLocalRecovery scopeKey={userId} storageKey={journalKey} valid={raw=>Boolean(parseBulkJournal(raw))} verify={async signal=>{await fetchUserLists(userId,selection.language);signal.throwIfAborted();}} trigger={userId} locale={language} onClose={onClose} onReset={()=>{setUncertain(null);setError(null);}}/></>;
 }

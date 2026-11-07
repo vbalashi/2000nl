@@ -1150,7 +1150,14 @@
       "allShort": "Усі: {count}",
       "allExceptShort": "Усі − {count}",
       "manualLimit": "Не більше 200 статей, вибраних або виключених вручну.",
-      "retryConfirmed": "Повторити підтверджену дію"
+      "retryConfirmed": "Повторити підтверджену дію",
+      "private": "Особиста",
+      "sharedReadersZero": "Спільна · {count} підписників",
+      "sharedReadersOne": "Спільна · {count} підписник",
+      "sharedReadersTwo": "Спільна · {count} підписники",
+      "sharedReadersFew": "Спільна · {count} підписники",
+      "sharedReadersMany": "Спільна · {count} підписників",
+      "sharedReadersOther": "Спільна · {count} підписника"
     },
     "collectionComposition": {
       "title": "Спільна колекція",

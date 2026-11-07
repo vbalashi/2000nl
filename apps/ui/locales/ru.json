@@ -1150,7 +1150,14 @@
       "allShort": "Все: {count}",
       "allExceptShort": "Все − {count}",
       "manualLimit": "Не более 200 статей, выбранных или исключённых вручную.",
-      "retryConfirmed": "Повторить подтверждённое действие"
+      "retryConfirmed": "Повторить подтверждённое действие",
+      "private": "Личная",
+      "sharedReadersZero": "Общая · {count} подписчиков",
+      "sharedReadersOne": "Общая · {count} подписчик",
+      "sharedReadersTwo": "Общая · {count} подписчика",
+      "sharedReadersFew": "Общая · {count} подписчика",
+      "sharedReadersMany": "Общая · {count} подписчиков",
+      "sharedReadersOther": "Общая · {count} подписчика"
     },
     "collectionComposition": {
       "title": "Общая коллекция",

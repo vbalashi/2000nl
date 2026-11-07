@@ -1150,7 +1150,14 @@
       "allShort": "Alle: {count}",
       "allExceptShort": "Alle − {count}",
       "manualLimit": "Maximaal 200 afzonderlijk geselecteerde of uitgesloten artikelen.",
-      "retryConfirmed": "Bevestigde wijziging opnieuw proberen"
+      "retryConfirmed": "Bevestigde wijziging opnieuw proberen",
+      "private": "Privé",
+      "sharedReadersZero": "Gedeeld · {count} abonnees",
+      "sharedReadersOne": "Gedeeld · {count} abonnee",
+      "sharedReadersTwo": "Gedeeld · {count} abonnees",
+      "sharedReadersFew": "Gedeeld · {count} abonnees",
+      "sharedReadersMany": "Gedeeld · {count} abonnees",
+      "sharedReadersOther": "Gedeeld · {count} abonnees"
     },
     "collectionComposition": {
       "title": "Gedeelde collectie",

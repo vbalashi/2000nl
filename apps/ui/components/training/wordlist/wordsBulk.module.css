@@ -9,3 +9,13 @@
 .dialog :focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}
 
 @media(max-width:360px){.createLabel{display:none}}
+/* The list and result slot keep their dimensions while metadata and plans load. */
+.dialog{display:flex;flex-direction:column;overflow:hidden}
+.choices{height:clamp(144px,36dvh,280px);min-height:0;max-height:none;flex:none;align-content:start;scrollbar-gutter:stable}
+.choices button{display:flex;align-items:center;gap:10px;min-height:62px;box-sizing:border-box}
+.accessIcon{display:flex;align-items:center;justify-content:center;flex:0 0 20px;color:var(--practice-text-muted)}
+.iconPlaceholder{width:17px;height:17px}
+.collectionText{min-width:0;display:flex;flex-direction:column}.collectionName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.collectionMeta{font-size:.85em;line-height:1.4;color:var(--practice-text-muted);min-height:1.4em}
+.status{height:4.5em;min-height:4.5em;flex:none;overflow:auto;margin:10px 0;font-size:.9em;scrollbar-gutter:stable}
+.actions{flex:none}.header,.search{flex:none}
+@media(max-height:500px){.choices{height:100px}.dialog{overflow:auto}}
