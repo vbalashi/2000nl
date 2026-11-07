@@ -6,10 +6,11 @@ vi.mock('@/components/library/sharing/useOwnedSharedCatalog',()=>({useOwnedShare
 vi.mock('@/lib/collections/sharing/shareManagementClient',()=>({readCollectionShareManagement:mock.management}));
 vi.mock('@/lib/collections/sharing/ownerShareJournal',()=>({ownerShareStore:()=>null,readOwnerShareJournal:()=>null}));
 vi.mock('@/components/practice/ui/ActionMenu',()=>({ActionMenu:({items}:{items:Array<{label:string;onSelect:()=>void}>})=><div>{items.map(item=><button key={item.label} onClick={item.onSelect}>{item.label}</button>)}</div>}));
+vi.mock('@/components/library/sharing/OwnedLabelSharing',()=>({OwnedLabelSharing:({name,onClose}:{name:string;onClose:()=>void})=><div data-testid="group-management">{name}<button onClick={onClose}>Close group management</button></div>}));
 vi.mock('@/components/library/sharing/OwnedCollectionSharing',()=>({OwnedCollectionSharing:(props:{onClose:()=>void})=>{mock.dialog(props);return <div data-testid="owner-dialog"><button onClick={props.onClose}>Close management</button></div>;}}));
 import {OwnedSharedCollections} from '@/components/library/sharing/OwnedSharedCollections';
 const id='75600000-0000-4000-8000-000000000001',code='A'.repeat(26);
-const row={id,name:'At the market',createdAt:'2026-01-01T00:00:00Z',itemCount:3,subscriberCount:12};
+const row={id,name:'At the market',createdAt:'2026-01-01T00:00:00Z',itemCount:3,subscriberCount:12,directPublication:true,groups:[]};
 const props={userId:'owner',active:true,locale:'en' as const,onOpen:vi.fn(),onChanged:vi.fn()};
 beforeEach(()=>{
  vi.clearAllMocks();mock.catalog.mockReturnValue({status:'ready',collections:[row],nextCursor:null,loadingMore:false,refresh:vi.fn(),loadMore:vi.fn()});
@@ -53,4 +54,39 @@ test('a matching group suppresses the individual-collection empty message while 
  mock.catalog.mockReturnValue({status:'ready',collections:[],nextCursor:null});
  render(<OwnedSharedCollections {...props} hasGroups selection={{query:'YouTube',sort:'recent',searchInputRef:React.createRef<HTMLInputElement>()}}/>);
  expect(screen.queryByText('No matching collections')).toBeNull();
+});
+
+test('group-only publication exposes group management instead of a nonexistent direct link',()=>{
+ const group={labelId:'75600000-0000-4000-8000-000000000011',name:'Easy Dutch'};
+ mock.catalog.mockReturnValue({status:'ready',collections:[{...row,directPublication:false,groups:[group]}],nextCursor:null,refresh:vi.fn()});
+ render(<OwnedSharedCollections {...props}/>);
+ expect(screen.queryByRole('button',{name:'Copy link'})).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'More actions · At the market'}));
+ expect(screen.queryByRole('button',{name:'Stop sharing'})).toBeNull();
+ expect(screen.queryByRole('button',{name:'Link and code'})).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'Link and code: Easy Dutch'}));
+ expect(screen.getByTestId('group-management')).toHaveTextContent('Easy Dutch');
+ expect(mock.management).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByRole('button',{name:'Close group management'}));
+ expect(screen.getByRole('button',{name:'More actions · At the market'})).toHaveFocus();
+});
+test('direct and group publications retain both independent management paths',()=>{
+ mock.catalog.mockReturnValue({status:'ready',collections:[{...row,groups:[{labelId:'75600000-0000-4000-8000-000000000011',name:'Easy Dutch'}]}],nextCursor:null});
+ render(<OwnedSharedCollections {...props}/>);
+ fireEvent.click(screen.getByRole('button',{name:'More actions · At the market'}));
+ expect(screen.getByRole('button',{name:'Stop sharing'})).toBeInTheDocument();
+ expect(screen.getByRole('button',{name:'Link and code: Easy Dutch'})).toBeInTheDocument();
+});
+
+test('an open owner menu follows the latest authorized access paths',()=>{
+ const view=render(<OwnedSharedCollections {...props}/>);
+ fireEvent.click(screen.getByRole('button',{name:'More actions · At the market'}));
+ expect(screen.getByRole('button',{name:'Stop sharing'})).toBeInTheDocument();
+ mock.catalog.mockReturnValue({status:'ready',collections:[{...row,directPublication:false,groups:[{labelId:'75600000-0000-4000-8000-000000000011',name:'Easy Dutch'}]}],nextCursor:null});
+ view.rerender(<OwnedSharedCollections {...props}/>);
+ expect(screen.queryByRole('button',{name:'Stop sharing'})).toBeNull();
+ expect(screen.getByRole('button',{name:'Link and code: Easy Dutch'})).toBeInTheDocument();
+ mock.catalog.mockReturnValue({status:'ready',collections:[],nextCursor:null});
+ view.rerender(<OwnedSharedCollections {...props}/>);
+ expect(screen.queryByRole('button',{name:'Link and code: Easy Dutch'})).toBeNull();
 });
