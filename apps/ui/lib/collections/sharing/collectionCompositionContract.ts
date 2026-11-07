@@ -27,8 +27,19 @@ export function parseCollectionCompositionPlan(v:unknown,collectionId:string,act
  }
  return v as CollectionCompositionPlan;
 }
-export type CollectionCompositionPlanState=CollectionCompositionReceipt|{planId:string;status:'pending'|'expired'|'unknown'};
+export type CollectionCompositionPlanState=CollectionCompositionReceipt
+ |{planId:string;status:'unknown'}
+ |{planId:string;collectionId:string;action:CollectionCompositionOperation['action'];status:'pending'|'expired'};
 export function parseCollectionCompositionPlanState(v:unknown,planId:string):CollectionCompositionPlanState|null{
  const committed=parseCollectionCompositionReceipt(v,planId);if(committed)return committed;
- return object(v)&&keys(v,['planId','status'])&&v.planId===planId&&['pending','expired','unknown'].includes(String(v.status))?v as CollectionCompositionPlanState:null;
+ if(!object(v)||v.planId!==planId)return null;
+ if(keys(v,['planId','status'])&&v.status==='unknown')return v as CollectionCompositionPlanState;
+ return keys(v,['planId','collectionId','action','status'])&&copyUuid(v.collectionId)
+  &&['add','remove','delete'].includes(String(v.action))&&['pending','expired'].includes(String(v.status))
+  ?v as CollectionCompositionPlanState:null;
+}
+// Restored journals may retry only after this immutable server scope matches.
+export function collectionCompositionPlanMatchesScope(state:CollectionCompositionPlanState,collectionId:string,action:CollectionCompositionOperation['action']):boolean{
+ return state.status!=='unknown'&&state.collectionId===collectionId
+  &&(state.status==='committed'||state.action===action);
 }

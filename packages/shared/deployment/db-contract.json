@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-355",
+  "contractId": "2000nl-db-356",
   "baseline": {
     "migrationId": 287,
     "file": "db/migrations/287_initial_schema.sql",
@@ -297,11 +297,16 @@
       "migrationId": 355,
       "file": "db/migrations/355_single_copy_author_admission.sql",
       "sha256": "a766184161e8fb075af16ac6020351a0289d30efe615a18cfd0e9df2b0a54330"
+    },
+    {
+      "migrationId": 356,
+      "file": "db/migrations/356_composition_receipt_scope.sql",
+      "sha256": "dc2c3c6dddae00a332aa255f626da2f0b4498dab916736f75b302e391fd5e7a8"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-355.sql",
+  "postflightProbe": "db/deploy-contract/postflight-356.sql",
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-355.sql",
+    "file": "db/deploy-contract/read-only-postflight-356.sql",
     "sha256": "62ed6310d23f6f91e8624f411dbccb34ee8f994f6bd869233908180090d6ae5a"
   }
 }

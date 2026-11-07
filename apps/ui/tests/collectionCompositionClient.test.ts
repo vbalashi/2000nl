@@ -19,7 +19,7 @@ test('account change rejects a completed response',async()=>{
 
 test('checking composition status never executes the plan',async()=>{
  const {readCollectionCompositionReceipt}=await import('@/lib/collections/sharing/collectionCompositionClient');
- fetcher.mockResolvedValue(Response.json({planId:id,status:'pending'}));
+ fetcher.mockResolvedValue(Response.json({planId:id,collectionId:id,action:'remove',status:'pending'}));
  expect((await readCollectionCompositionReceipt(id,id,new AbortController().signal)).status).toBe('pending');
  expect(fetcher.mock.calls[0][1].method).toBe('GET');expect(fetcher.mock.calls[0][1].body).toBeUndefined();
 });

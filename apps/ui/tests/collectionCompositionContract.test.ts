@@ -15,3 +15,14 @@ test('composition preview cannot switch target or action',async()=>{
  expect(parseCollectionCompositionPlan(plan,id,'add')).toBeNull();
  expect(parseCollectionCompositionPlan({...plan,privatePlan:{}},id,'delete')).toBeNull();
 });
+
+test('restored composition receipts require immutable target and action before retry',async()=>{
+ const {parseCollectionCompositionPlanState,collectionCompositionPlanMatchesScope}=await import('@/lib/collections/sharing/collectionCompositionContract');
+ const receipt={planId:id,collectionId:id,action:'remove' as const,status:'pending' as const};
+ expect(parseCollectionCompositionPlanState(receipt,id)).toEqual(receipt);
+ expect(parseCollectionCompositionPlanState({planId:id,status:'pending'},id)).toBeNull();
+ expect(collectionCompositionPlanMatchesScope(receipt,id,'remove')).toBe(true);
+ expect(collectionCompositionPlanMatchesScope(receipt,id,'delete')).toBe(false);
+ expect(collectionCompositionPlanMatchesScope(receipt,'22222222-2222-4222-8222-222222222222','remove')).toBe(false);
+ expect(collectionCompositionPlanMatchesScope({planId:id,status:'unknown'},id,'remove')).toBe(false);
+});

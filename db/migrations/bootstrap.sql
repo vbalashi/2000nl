@@ -59,3 +59,4 @@
 \i db/migrations/353_group_membership_planning_boundary.sql
 \i db/migrations/354_training_scheduler_compilation_bound.sql
 \i db/migrations/355_single_copy_author_admission.sql
+\i db/migrations/356_composition_receipt_scope.sql

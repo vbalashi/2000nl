@@ -34,7 +34,7 @@ const url=getDbUrl();
      expect((await c.query('select has_table_privilege(current_user,$1,$2) allowed',[table,privilege])).rows[0].allowed).toBe(false);
     }
    }
-   expect((await c.query('select read_collection_composition_plan_v1($1) value',[plan.planId])).rows[0].value.status).toBe('pending');
+   expect((await c.query('select read_collection_composition_plan_v1($1) value',[plan.planId])).rows[0].value).toEqual({planId:plan.planId,collectionId:list,action:'remove',status:'pending'});
    const receipt=(await c.query('select confirm_collection_composition_v1($1) value',[plan.planId])).rows[0].value;
    expect(receipt.status).toBe('committed');
    expect((await c.query('select confirm_collection_composition_v1($1) value',[plan.planId])).rows[0].value).toEqual(receipt);
