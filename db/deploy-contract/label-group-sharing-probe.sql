@@ -44,6 +44,9 @@ BEGIN
    OR has_function_privilege('anon',routine,'EXECUTE') OR has_function_privilege('service_role',routine,'EXECUTE') THEN
    RAISE EXCEPTION 'db-contract-gate: group RPC boundary changed: %',routine; END IF;
  END LOOP;
+ IF strpos(pg_get_functiondef('public.read_owned_shared_collection_catalog_v1(text,text,jsonb,integer)'::regprocedure),'private.label_sharing_roots')=0
+  OR strpos(pg_get_functiondef('public.read_received_collection_catalog_v1(text,text,text,uuid,jsonb,integer)'::regprocedure),'private.collection_access_paths_for_user_v1(principal)')=0 THEN
+  RAISE EXCEPTION 'db-contract-gate: group-aware searchable catalog missing'; END IF;
  IF strpos(pg_get_functiondef('public.get_user_list_memberships_for_entries(uuid,uuid[])'::regprocedure),
   'private.entry_access_v1(p_user_id,entry.id,''train'')')=0 THEN
   RAISE EXCEPTION 'db-contract-gate: exact received membership authority missing'; END IF;

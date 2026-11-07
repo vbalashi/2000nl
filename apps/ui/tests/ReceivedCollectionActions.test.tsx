@@ -7,7 +7,7 @@ vi.mock('@/lib/events/userEventHints',()=>({useUserEventHints:(_u:unknown,_k:unk
 vi.mock('@/components/practice/ui/DialogSurface',()=>({DialogSurface:({children}:{children:React.ReactNode})=><div role="dialog">{children}</div>}));
 import {ForwardCollection} from '@/components/library/sharing/ReceivedCollectionActions';
 const id='75600000-0000-4000-8000-000000000001',code='A'.repeat(26);
-const row={id,name:'Lesson',createdAt:'2026-01-01T00:00:00Z',addedAt:'2026-01-01T00:00:00Z',ownerUserId:id,role:'viewer' as const,itemCount:2,labelIds:[]};
+const row={id,name:'Lesson',createdAt:'2026-01-01T00:00:00Z',addedAt:'2026-01-01T00:00:00Z',ownerUserId:id,role:'viewer' as const,itemCount:2,labelIds:[],directSubscription:true,groups:[]};
 const props={userId:'reader',row,locale:'en' as const,onClose:vi.fn()};
 beforeEach(()=>{vi.clearAllMocks();mock.read.mockResolvedValue({collectionId:id,canForward:true,invitationCode:code});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:mock.clipboard}});mock.clipboard.mockResolvedValue(undefined);});
 test('forwards one original code in both link and standalone form, never minting an owner code',async()=>{

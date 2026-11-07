@@ -1,8 +1,9 @@
+import {parseSharedCatalogGroups,type SharedCatalogGroup} from './sharedCatalogPathContract';
 import {copyUuid} from '@/lib/platform/independentEntryCopyContract';
 import {parseReceivedCatalogCursor,type ReceivedCatalogCursor} from './receivedCatalogContract';
 
 export type OwnedCatalogQuery={query:string;sort:'recent'|'name'|'count';cursor:ReceivedCatalogCursor|null;limit:number};
-export type OwnedSharedCollection={id:string;name:string;createdAt:string;itemCount:number;subscriberCount:number};
+export type OwnedSharedCollection={id:string;name:string;createdAt:string;itemCount:number;subscriberCount:number;directPublication:boolean;groups:SharedCatalogGroup[]};
 export type OwnedCatalogPage={collections:OwnedSharedCollection[];nextCursor:ReceivedCatalogCursor|null};
 export type SharingOverview={sharedByMe:number;addedByMe:number};
 const record=(value:unknown):value is Record<string,unknown>=>Boolean(value)&&typeof value==='object'&&!Array.isArray(value);
@@ -22,8 +23,9 @@ export function parseOwnedCatalogPage(value:unknown,limit:number):OwnedCatalogPa
  if(!Number.isInteger(limit)||limit<1||limit>100||!record(value)||!exact(value,['collections','nextCursor'])||!Array.isArray(value.collections)||value.collections.length>limit)return null;
  const ids=new Set<string>(),collections:OwnedSharedCollection[]=[];
  for(const row of value.collections){
-  if(!record(row)||!exact(row,['id','name','createdAt','itemCount','subscriberCount'])||!copyUuid(row.id)||ids.has(row.id.toLowerCase())||!text(row.name,1000)||!timestamp(row.createdAt)||
-   !Number.isSafeInteger(row.itemCount)||Number(row.itemCount)<0||!Number.isSafeInteger(row.subscriberCount)||Number(row.subscriberCount)<0)return null;
+  if(!record(row)||!exact(row,['id','name','createdAt','itemCount','subscriberCount','directPublication','groups'])||!copyUuid(row.id)||ids.has(row.id.toLowerCase())||!text(row.name,1000)||!timestamp(row.createdAt)||
+   !Number.isSafeInteger(row.itemCount)||Number(row.itemCount)<0||!Number.isSafeInteger(row.subscriberCount)||Number(row.subscriberCount)<0||typeof row.directPublication!=='boolean'||!parseSharedCatalogGroups(row.groups)
+   ||(!row.directPublication&&(row.groups as unknown[]).length===0))return null;
   ids.add(row.id.toLowerCase());collections.push({...row,id:row.id.toLowerCase()} as OwnedSharedCollection);
  }
  const nextCursor=value.nextCursor===null?null:parseReceivedCatalogCursor(value.nextCursor);

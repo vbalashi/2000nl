@@ -5,7 +5,7 @@ vi.mock('@/lib/platform/platformFetchWithTimeout',()=>({platformFetchWithTimeout
 import {readOwnedSharedCatalog,readSharingOverview} from '@/lib/collections/sharing/ownedCatalogClient';
 import {parseOwnedCatalogPage,parseOwnedCatalogQuery,parseSharingOverview} from '@/lib/collections/sharing/ownedCatalogContract';
 const user='75600000-0000-4000-8000-000000000001',id='75600000-0000-4000-8000-000000000002';
-const row={id,name:'Lesson',createdAt:'2026-01-01T00:00:00Z',itemCount:1,subscriberCount:2},page={collections:[row],nextCursor:null},query=parseOwnedCatalogQuery({})!;
+const row={id,name:'Lesson',createdAt:'2026-01-01T00:00:00Z',itemCount:1,subscriberCount:2,directPublication:true,groups:[]},page={collections:[row],nextCursor:null},query=parseOwnedCatalogQuery({})!;
 beforeEach(()=>{vi.resetAllMocks();mock.headers.mockResolvedValue({authorization:'Bearer test'});mock.fetch.mockResolvedValue(Response.json(page));});
 test('owner page and overview check account after response, without caching',async()=>{
  expect(await readOwnedSharedCatalog(user,query,new AbortController().signal)).toEqual(page);
@@ -28,4 +28,13 @@ test('closed response guards reject injected codes, duplicate rows and malformed
 test.each([{sort:null},{query:null},{sort:['recent']},{query:'x'.repeat(101)},{limit:0},{cursor:{id,key:'x',scope:'secret'}},{userId:user}])('invalid owner query %# never reaches the network',async value=>{
  expect(parseOwnedCatalogQuery(value)).toBeNull();
  await expect(readOwnedSharedCatalog(user,value as never,new AbortController().signal)).rejects.toThrow('invalid_catalog_request');expect(mock.fetch).not.toHaveBeenCalled();
+});
+
+test('owned group-only rows require explicit path metadata',()=>{
+ const group={labelId:'22222222-2222-4222-8222-222222222222',name:'Shared label'};
+ expect(parseOwnedCatalogPage({...page,collections:[{...row,directPublication:false,groups:[group]}]},50)).not.toBeNull();
+ expect(parseOwnedCatalogPage({...page,collections:[{...row,directPublication:false,groups:[]}]},50)).toBeNull();
+ expect(parseOwnedCatalogPage({...page,collections:[{...row,groups:[group,group]}]},50)).toBeNull();
+ const {directPublication, ...missing}=row;
+ expect(parseOwnedCatalogPage({...page,collections:[missing]},50)).toBeNull();
 });

@@ -5,7 +5,7 @@ vi.mock('@/lib/platform/platformFetchWithTimeout',()=>({platformFetchWithTimeout
 import { readReceivedCatalog } from '@/lib/collections/sharing/receivedCatalogClient';
 import { parseReceivedCatalogQuery,parseReceivedCatalogPage } from '@/lib/collections/sharing/receivedCatalogContract';
 const viewer='75600000-0000-4000-8000-000000000002',id='75600000-0000-4000-8000-000000000003';
-const row={id,name:'Lesson',createdAt:'2026-01-01T00:00:00Z',addedAt:'2026-01-02T00:00:00Z',ownerUserId:'75600000-0000-4000-8000-000000000001',role:'viewer',itemCount:1,labelIds:[]};
+const row={id,name:'Lesson',createdAt:'2026-01-01T00:00:00Z',addedAt:'2026-01-02T00:00:00Z',ownerUserId:'75600000-0000-4000-8000-000000000001',role:'viewer',itemCount:1,labelIds:[],directSubscription:true,groups:[]};
 const page={revision:0,collections:[row],nextCursor:null},query=parseReceivedCatalogQuery({})!;
 beforeEach(()=>{vi.resetAllMocks();mock.headers.mockResolvedValue({authorization:'Bearer test'});mock.fetch.mockResolvedValue(Response.json(page));});
 test('queries exact scope without caching and verifies the account before returning',async()=>{
@@ -31,4 +31,13 @@ test('response guard rejects duplicates, unknown owner material and incomplete-p
  expect(parseReceivedCatalogPage({...page,collections:[row,row]},50,viewer)).toBeNull();
  expect(parseReceivedCatalogPage({...page,collections:[{...row,labelIds:[id,id]}]},50,viewer)).toBeNull();
  expect(parseReceivedCatalogPage({...page,nextCursor:{id,key:'lesson',scope:'a'.repeat(64)}},50,viewer)).toBeNull();
+});
+
+test('received group-only rows cannot imply a direct subscription',()=>{
+ const group={labelId:'22222222-2222-4222-8222-222222222222',name:'Shared label'};
+ expect(parseReceivedCatalogPage({...page,collections:[{...row,directSubscription:false,groups:[group]}]},50)).not.toBeNull();
+ expect(parseReceivedCatalogPage({...page,collections:[{...row,directSubscription:false,groups:[]}]},50)).toBeNull();
+ expect(parseReceivedCatalogPage({...page,collections:[{...row,groups:[group,group]}]},50)).toBeNull();
+ const {directSubscription, ...missing}=row;
+ expect(parseReceivedCatalogPage({...page,collections:[missing]},50)).toBeNull();
 });

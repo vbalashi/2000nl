@@ -13,7 +13,7 @@ export function incomingPreview(language:OnboardingLanguage,name=incomingName(la
   samples:[{headword:"de bank",definition:"een zitmeubel voor meerdere mensen"},{headword:"de bank",definition:"een bedrijf dat geld bewaart, leent en betalingen regelt"}]};
 }
 export function incomingRow(language:OnboardingLanguage,name=incomingName(language)):ReceivedCollection {
- return {id:incomingId,name,createdAt:"2026-01-01T00:00:00Z",addedAt:"2026-01-01T00:00:00Z",ownerUserId:"00000000-0000-4000-8000-000000000021",role:"viewer",itemCount:2,labelIds:[]};
+ return {id:incomingId,name,createdAt:"2026-01-01T00:00:00Z",addedAt:"2026-01-01T00:00:00Z",ownerUserId:"00000000-0000-4000-8000-000000000021",role:"viewer",itemCount:2,labelIds:[],directSubscription:true,groups:[]};
 }
 export function acceptIncoming(journey:Journey,language:OnboardingLanguage):Journey {
  if(journey.collections.some(collection=>collection.id===incomingId))return journey;
