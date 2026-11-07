@@ -210,3 +210,13 @@ test("membership refresh keeps focus in the dialog and restores the toggled chec
   expect(checkbox).not.toBeChecked();
   expect(done).toHaveFocus();
 });
+test('puts creation in the heading and keeps collection search separate',()=>{
+ Object.defineProperty(HTMLDialogElement.prototype,'showModal',{configurable:true,value(){this.setAttribute('open','');}});
+ Object.defineProperty(HTMLDialogElement.prototype,'close',{configurable:true,value(){this.removeAttribute('open');}});
+ const create=vi.fn();render(<LibraryCollectionsPicker open headword="bank" definition="" interfaceLanguage="en" userLists={[{id:'one',name:'First lesson',type:'user'}]} memberships={[]} busyListId={null} status={null} onClose={vi.fn()} onToggleList={vi.fn()} onCreateList={create}/>);
+ const heading=screen.getByRole('heading',{name:'Collections'}).closest('header')!;
+ const createButton=within(heading).getByRole('button',{name:'New collection'});
+ const search=screen.getByRole('textbox',{name:'Search collections'});fireEvent.change(search,{target:{value:'First'}});
+ fireEvent.click(createButton);const name=screen.getByRole('textbox',{name:'New collection name'});expect(name).toHaveValue('');
+ fireEvent.change(name,{target:{value:'New lesson'}});fireEvent.click(screen.getByRole('button',{name:'Create'}));expect(create).toHaveBeenCalledWith('New lesson');
+});
