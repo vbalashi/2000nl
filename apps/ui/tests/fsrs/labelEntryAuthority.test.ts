@@ -21,6 +21,10 @@ const url=getDbUrl();
    await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);await c.query('set local role authenticated');
    await c.query('select accept_label_share_v1($1)',[opened.invitationCode]);await c.query('reset role');
    expect(await readable(viewer)).toBe(true);expect(await readable(outsider)).toBe(false);
+   const snapshot=(await c.query('select private.independent_copy_snapshot_with_notes_v1($1,$2) value',[viewer,entry])).rows[0].value;
+   expect(snapshot.content.headword).toBe('group-author-entry');
+   expect(snapshot.revision).toMatch(/^[0-9a-f]{64}$/);
+
    expect((await c.query('select entry_id from private.readable_material_entry_ids_v1($1,$2)',[viewer,{kind:'collection',collectionType:'user',id:list}])).rows)
     .toEqual([{entry_id:entry}]);
    await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);
@@ -44,7 +48,12 @@ const url=getDbUrl();
    await c.query('rollback to savepoint borrowed_member');
 
    await c.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
+   const directRoot=randomUUID(),lifetime=randomUUID();
+   await c.query('insert into private.collection_sharing_roots(id,owner_user_id,collection_id,is_open,access_lifetime) values($1,$2,$3,true,$4)',[directRoot,owner,list,lifetime]);
+   await c.query('insert into private.collection_sharing_subscriptions(user_id,root_id,access_lifetime) values($1,$2,$3)',[viewer,directRoot,lifetime]);
    await c.query("select mutate_label_share_v1($1,'close',1)",[label]);
+   expect(await readable(viewer)).toBe(true);
+   await c.query('update private.collection_sharing_subscriptions set is_active=false where user_id=$1 and root_id=$2',[viewer,directRoot]);
    expect(await readable(viewer)).toBe(false);
   });
  });
