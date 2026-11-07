@@ -13,6 +13,7 @@ import s from '../organization/organization.module.css';
 export type LabelSharingController={
  status:'loading'|'ready'|'saving'|'error'|'uncertain';
  data:LabelShareState|null;
+ rejected?:boolean;
  refresh:()=>void;
  run:(action:'open'|'rotate'|'close')=>void;
  reconcile:()=>void;
@@ -31,6 +32,7 @@ export function LabelSharingDialog({name,locale,controller,onClose}:{name:string
  return <DialogSurface className={overlays.dialog} aria-label={group.title} onDismiss={()=>{if(status!=='saving')onClose();}}>
   <div className={`${s.editor} ${s.sharingAction}`}>
    <h2>{group.title}</h2><p>{name}</p>
+   {controller.rejected&&<p role="alert">{t.rejected}</p>}
    {status==='loading'?<p role="status">{common.loading}</p>:status==='saving'?<p role="status">{common.saving}</p>:status==='error'?<>
     <p role="alert">{t.readError}</p><button onClick={controller.refresh}>{common.retry}</button>
    </>:status==='uncertain'?<>
