@@ -57,6 +57,9 @@ const url=getDbUrl();
    await c.query('set local role authenticated');
    expect((await c.query('select read_collection_access_paths_v1($1) value',[list])).rows[0].value)
     .toEqual({collectionId:list,isOwner:false,directSubscription:false,groups:[{labelId:label,name:'group'}]});
+   expect((await c.query('select read_received_collection_source_v1($1) value',[list])).rows[0].value.id).toBe(list);
+   expect((await c.query('select read_selected_collection_membership_v1($1,$2) value',[list,[entry]])).rows[0].value)
+    .toEqual({collectionId:list,includedEntryIds:[entry]});
    const placement=(await c.query('select set_received_collection_labels_v1($1,$2,$3) value',[list,0,[personalLabel]])).rows[0].value;
    expect(placement.labelIds).toEqual([personalLabel]);
    await c.query('reset role');
@@ -79,6 +82,10 @@ const url=getDbUrl();
    expect(await readable(viewer)).toBe(true);
    await c.query('update private.collection_sharing_subscriptions set is_active=false where user_id=$1 and root_id=$2',[viewer,directRoot]);
    expect(await readable(viewer)).toBe(false);
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);
+   await c.query('set local role authenticated');
+   expect((await c.query('select read_received_collection_source_v1($1) value',[list])).rows[0].value).toBeNull();
+   expect((await c.query('select read_selected_collection_membership_v1($1,$2) value',[list,[entry]])).rows[0].value).toBeNull();
   });
  });
 });
