@@ -16,3 +16,5 @@
 \i db/migrations/300_training_availability_totals.sql
 \i db/migrations/301_vocabulary_meaning_limits.sql
 \i db/migrations/302_new_learner_starter_training.sql
+\i db/migrations/303_label_subtree_owned_collections.sql
+\i db/migrations/304_label_group_sharing.sql
