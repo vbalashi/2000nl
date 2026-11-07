@@ -12,12 +12,26 @@ const url=getDbUrl();
    const entry=await insertWord(c,'composition');
    await c.query('insert into user_word_lists(id,user_id,name) values($1,$2,$3)',[list,owner,'collection']);
    await c.query('insert into user_word_list_items(list_id,word_id) values($1,$2)',[list,entry]);
+   for(const operation of [{action:'delete',userId:owner},{action:'remove',entryIds:[]}]){
+    await c.query('savepoint invalid_plan');
+    await expect(c.query('select prepare_collection_composition_v1($1,$2)',[list,operation])).rejects.toThrow('invalid_collection_operation');
+    await c.query('rollback to savepoint invalid_plan');
+   }
    const plan=(await c.query('select prepare_collection_composition_v1($1,$2) value',[list,{action:'remove',entryIds:[entry]}])).rows[0].value;
    expect((await c.query('select count(*)::int n from user_word_list_items where list_id=$1',[list])).rows[0].n).toBe(1);
    const receipt=(await c.query('select confirm_collection_composition_v1($1) value',[plan.planId])).rows[0].value;
    expect(receipt.status).toBe('committed');
    expect((await c.query('select confirm_collection_composition_v1($1) value',[plan.planId])).rows[0].value).toEqual(receipt);
    expect((await c.query('select count(*)::int n from user_word_list_items where list_id=$1',[list])).rows[0].n).toBe(0);
+   await c.query('insert into user_word_list_items(list_id,word_id) values($1,$2)',[list,entry]);
+   const stale=(await c.query('select prepare_collection_composition_v1($1,$2) value',[list,{action:'remove',entryIds:[entry]}])).rows[0].value;
+   const second=await insertWord(c,'intervening');
+   await c.query('insert into user_word_list_items(list_id,word_id) values($1,$2)',[list,second]);
+   await c.query('savepoint stale_composition');
+   await expect(c.query('select confirm_collection_composition_v1($1)',[stale.planId])).rejects.toThrow('collection_audience_changed');
+   await c.query('rollback to savepoint stale_composition');
+   expect((await c.query('select count(*)::int n from user_word_list_items where list_id=$1',[list])).rows[0].n).toBe(2);
+
   });
  });
 });
