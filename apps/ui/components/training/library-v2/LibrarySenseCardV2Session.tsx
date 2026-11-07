@@ -585,12 +585,13 @@ function SenseCardV2Session({
     void Promise.resolve(onListsUpdated?.()).catch(()=>undefined);
     setCompositionTarget(null);
   });
+  const saveComposition=composition.save, compositionCollectionId=composition.state.collectionId;
   React.useEffect(()=>{
     const target=compositionTarget;
-    if(!target || target.userId!==userId || target.list.id!==composition.state.collectionId || startedComposition.current===target)return;
+    if(!target || target.userId!==userId || target.list.id!==compositionCollectionId || startedComposition.current===target)return;
     startedComposition.current=target;
-    void composition.save(target.included?{action:'remove',entryIds:[target.entryId]}:{action:'add',entryId:target.entryId});
-  },[compositionTarget,userId,composition.state.collectionId,composition.save]);
+    void saveComposition(target.included?{action:'remove',entryIds:[target.entryId]}:{action:'add',entryId:target.entryId});
+  },[compositionTarget,userId,compositionCollectionId,saveComposition]);
   React.useEffect(()=>{
     if(composition.state.status==='failed')setCollectionStatus(platformV2Message(interfaceLanguage,"senseCard.collections.failed"));
   },[composition.state.status,interfaceLanguage]);
