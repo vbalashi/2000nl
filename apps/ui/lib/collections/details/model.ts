@@ -6,6 +6,8 @@ export type CollectionSourceDetails = {
   creatorName: string | null;
   url: string | null;
   fileName: string | null;
+  /** Calendar publication date (YYYY-MM-DD), never collection creation/import time. */
+  publishedOn: string | null;
 };
 
 export type CollectionDetails = {
