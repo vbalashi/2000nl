@@ -19,3 +19,4 @@
 \i db/migrations/303_label_subtree_owned_collections.sql
 \i db/migrations/304_label_group_sharing.sql
 \i db/migrations/305_label_share_commands.sql
+\i db/migrations/306_collection_access_paths.sql

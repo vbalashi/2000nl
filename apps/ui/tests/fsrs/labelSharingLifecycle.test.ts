@@ -41,6 +41,9 @@ const url=getDbUrl();
    await c.query('insert into private.collection_label_assignments values($1,$2,$3)',[owner,list,child]);
    const scope=async()=>(await c.query('select collection_id from private.live_label_sharing_collections_v1 where user_id=$1',[viewer])).rows;
    expect(await scope()).toEqual([{collection_id:list}]);
+   expect((await c.query('select collection_id,root_kind from private.live_collection_access_paths_v1 where user_id=$1',[viewer])).rows)
+    .toEqual([{collection_id:list,root_kind:'label'}]);
+
    await as(viewer);
    expect((await c.query('select read_label_share_collections_v1($1) value',[label])).rows[0].value.collections).toEqual([{collectionId:list,name:'future'}]);
    await c.query('reset role');
@@ -51,6 +54,10 @@ const url=getDbUrl();
    expect(await scope()).toEqual([]);
    await c.query('update private.collection_labels set parent_id=$1 where id=$2',[label,child]);
    expect(await scope()).toEqual([{collection_id:list}]);
+   const directRoot=randomUUID(),directLifetime=randomUUID();
+   await c.query('insert into private.collection_sharing_roots(id,owner_user_id,collection_id,is_open,access_lifetime) values($1,$2,$3,true,$4)',[directRoot,owner,list,directLifetime]);
+   await c.query('insert into private.collection_sharing_subscriptions(user_id,root_id,access_lifetime) values($1,$2,$3)',[viewer,directRoot,directLifetime]);
+   expect((await c.query('select count(*)::int n from private.live_collection_access_paths_v1 where user_id=$1 and collection_id=$2',[viewer,list])).rows[0].n).toBe(2);
    await as(owner);const rotated=await mutate('rotate',1);expect(rotated.invitationCode).not.toBe(opened.invitationCode);expect(rotated.subscriberCount).toBe(1);
    await as(viewer);
    await c.query('savepoint stale_invitation');
@@ -65,6 +72,10 @@ const url=getDbUrl();
    await c.query('rollback to savepoint stale_revision');
    expect((await c.query('select read_label_share_v1($1) value',[label])).rows[0].value.subscriberCount).toBe(1);
    const closed=await mutate('close',2);expect(closed.subscriberCount).toBe(0);
+   await c.query('reset role');
+   expect((await c.query('select root_kind from private.live_collection_access_paths_v1 where user_id=$1 and collection_id=$2',[viewer,list])).rows).toEqual([{root_kind:'collection'}]);
+   await as(owner);
+
    const reopened=await mutate('open',3);expect(reopened.invitationCode).not.toBe(rotated.invitationCode);expect(reopened.subscriberCount).toBe(0);
    await as(viewer);expect((await c.query('select preview_label_share_v1($1) value',[reopened.invitationCode])).rows[0].value.alreadyAdded).toBe(false);
    await c.query('select accept_label_share_v1($1)',[reopened.invitationCode]);
