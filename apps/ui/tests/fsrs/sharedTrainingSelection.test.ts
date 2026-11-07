@@ -76,7 +76,7 @@ async function fixture(c:PoolClient){
  }));
  test('source deletion preserves received selection identity and helper grants stay closed',async()=>withTransaction(pool,async c=>{
   const f=await fixture(c);await select(c,f.viewer,f.shared);await principal(c,f.owner);
-  await c.query('select delete_user_word_list($1,$2)',[f.owner,f.shared]);await principal(c,f.viewer);
+  const plan=(await c.query('select prepare_collection_composition_v1($1,$2) payload',[f.shared,{action:'delete'}])).rows[0].payload;await c.query('select confirm_collection_composition_v1($1)',[plan.planId]);await principal(c,f.viewer);
   expect(await summary(c,f.viewer,f.shared)).toBeNull();
   expect(await selected(c,f.viewer)).toMatchObject({active_list_id:f.shared,is_valid:false,active_list_ownership:'received',unavailable_reason:'shared_collection_unavailable'});
   await c.query('reset role');
@@ -203,9 +203,12 @@ async function fixture(c:PoolClient){
    await deleter.query('begin');await principal(deleter,f.owner);await deleter.query('set local role authenticated');
    const selectorPid=(await selector.query('select pg_backend_pid() pid')).rows[0].pid,blockerPid=(await blocker.query('select pg_backend_pid() pid')).rows[0].pid,deleterPid=(await deleter.query('select pg_backend_pid() pid')).rows[0].pid;
    selecting=select(selector,f.viewer,f.shared);await waitsFor(pool,selectorPid,blockerPid);
-   deleting=deleter.query('select delete_user_word_list($1,$2)',[f.owner,f.shared]);await waitsFor(pool,deleterPid,selectorPid);
+   const plan=(await deleter.query('select prepare_collection_composition_v1($1,$2) payload',[f.shared,{action:'delete'}])).rows[0].payload;
+   await deleter.query('savepoint parent_busy');
+   await expect(deleter.query('select confirm_collection_composition_v1($1)',[plan.planId])).rejects.toThrow('collection_audience_changed');
+   await deleter.query('rollback to savepoint parent_busy');
    await blocker.query('commit');expect(await selecting).toMatchObject({active_list_id:f.shared,active_list_ownership:'received',is_valid:true});
-   await selector.query('commit');await deleting;await deleter.query('commit');
+   await selector.query('commit');await deleter.query('select confirm_collection_composition_v1($1)',[plan.planId]);await deleter.query('commit');
    await selector.query('begin');await principal(selector,f.viewer);await selector.query('set local role authenticated');
    expect(await selected(selector,f.viewer)).toMatchObject({active_list_id:f.shared,active_list_ownership:'received',is_valid:false,unavailable_reason:'shared_collection_unavailable'});
   }finally{

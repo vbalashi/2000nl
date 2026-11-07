@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-302",
+  "contractId": "2000nl-db-355",
   "baseline": {
     "migrationId": 287,
     "file": "db/migrations/287_initial_schema.sql",
@@ -82,11 +82,226 @@
       "migrationId": 302,
       "file": "db/migrations/302_new_learner_starter_training.sql",
       "sha256": "9322e7104166b8082cc319b4953a056dc055585e09943f5c7dd862abd98ed8c5"
+    },
+    {
+      "migrationId": 303,
+      "file": "db/migrations/303_label_subtree_owned_collections.sql",
+      "sha256": "79e80f1c2889a13098c69145b9ac8f409949894639640477b57f0d9c580170e3"
+    },
+    {
+      "migrationId": 304,
+      "file": "db/migrations/304_label_group_sharing.sql",
+      "sha256": "ab94eb7399a9acf1f026d25a447827ce989022560299091bc1e5fdcf3d1e86b9"
+    },
+    {
+      "migrationId": 305,
+      "file": "db/migrations/305_label_share_commands.sql",
+      "sha256": "6ce07b1878abf22b8d1deb6b472d234901ff94a0fb9ee3d04151d6562e37d0fc"
+    },
+    {
+      "migrationId": 306,
+      "file": "db/migrations/306_collection_access_paths.sql",
+      "sha256": "356710a36192222aa05ab710a6abbcb65c4c082941292f45c5c8007a3445ee57"
+    },
+    {
+      "migrationId": 307,
+      "file": "db/migrations/307_label_audience_snapshot.sql",
+      "sha256": "9c420e6494e1860406ee0f6dbd92738e39d21d2697c188ed07c8394fe92e744c"
+    },
+    {
+      "migrationId": 308,
+      "file": "db/migrations/308_label_audience_confirmation.sql",
+      "sha256": "aa1ff357eae88d458b39c53cf43188f0c69ae43d20a1bc9174dd7f25ecd83033"
+    },
+    {
+      "migrationId": 309,
+      "file": "db/migrations/309_group_entry_authority.sql",
+      "sha256": "9bbfe5d5661dce655052d7d303b588e4693a7ee9d60bfdc4727bf95658cbb78a"
+    },
+    {
+      "migrationId": 310,
+      "file": "db/migrations/310_group_membership_guard.sql",
+      "sha256": "d7200a74d56c7b23ac12e0a5c371f5834efaa72552988b377ee016d8052e87f2"
+    },
+    {
+      "migrationId": 311,
+      "file": "db/migrations/311_label_organization_preview.sql",
+      "sha256": "3de9cd31cddb675ad9289a4e0329246da6fa6c2fd734d802f90c0de18bf13e7a"
+    },
+    {
+      "migrationId": 312,
+      "file": "db/migrations/312_label_author_admission.sql",
+      "sha256": "05bfd4dc12c16fa459315488900a3a9744b0c37da6055971054ce9c649f2837a"
+    },
+    {
+      "migrationId": 313,
+      "file": "db/migrations/313_group_material_projections.sql",
+      "sha256": "69b1525a6730121f5c09a1e385998f5ff969e1838072aa9c9b307a67dcb58e6c"
+    },
+    {
+      "migrationId": 314,
+      "file": "db/migrations/314_received_group_label_placements.sql",
+      "sha256": "b71d452ffaa54f7973385f4cd05de4b8d2724d63e50bd115a65317bfdbdce7d9"
+    },
+    {
+      "migrationId": 315,
+      "file": "db/migrations/315_group_copy_snapshots.sql",
+      "sha256": "44198150e5073dfde908daf4b21846996b057e7604e116ec67d68a9d062d345a"
+    },
+    {
+      "migrationId": 316,
+      "file": "db/migrations/316_collection_access_capabilities.sql",
+      "sha256": "80470cbc46ec54cc4c664d9fb334ac61d6720039fcb45bd3425bc5b1fe272211"
+    },
+    {
+      "migrationId": 317,
+      "file": "db/migrations/317_group_copy_admission.sql",
+      "sha256": "cc6e4e728cd6b589b7667c52a5b7fdf5474bfafa151f723d737a77b149636fd6"
+    },
+    {
+      "migrationId": 318,
+      "file": "db/migrations/318_label_organization_plans.sql",
+      "sha256": "e5767d1fb2ecd2b82919448528e67aadd64cf859e59585fedfb732332eb23225"
+    },
+    {
+      "migrationId": 319,
+      "file": "db/migrations/319_label_organization_enforcement.sql",
+      "sha256": "8cd673dddbbe250021744e67319cf3e58c7c381104dcd1faee7321b40b95237a"
+    },
+    {
+      "migrationId": 330,
+      "file": "db/migrations/330_label_share_preflight.sql",
+      "sha256": "1b24d3eaa1a6004e27347e35010bbab82e6aeb955782e55d10108d990d4ca324"
+    },
+    {
+      "migrationId": 331,
+      "file": "db/migrations/331_label_plan_receipt.sql",
+      "sha256": "cb2a11faa002486e1cd76bd979f77bff86df04a0642785450a2d51a67a73a4af"
+    },
+    {
+      "migrationId": 332,
+      "file": "db/migrations/332_group_authority_events.sql",
+      "sha256": "a3d0ca98db56d865e46ec6be1574beffda63c893489f29cb3c26e2a8db4b3b47"
+    },
+    {
+      "migrationId": 333,
+      "file": "db/migrations/333_group_forward_references.sql",
+      "sha256": "244d01eeab7cf15b4e2922ebd82db08218a5292ee0daaf4872b56299612ea3db"
+    },
+    {
+      "migrationId": 334,
+      "file": "db/migrations/334_group_selected_material_reads.sql",
+      "sha256": "146a2e03ebdbeb87b435436519bef8291971f38cf702b538ed70fe8283bdac0a"
+    },
+    {
+      "migrationId": 335,
+      "file": "db/migrations/335_group_projection_planning_fence.sql",
+      "sha256": "2755deeeb3b392d4d10e45285183719d4bcb673a3c1af4eb809557bcf87fa556"
+    },
+    {
+      "migrationId": 336,
+      "file": "db/migrations/336_group_publication_badges.sql",
+      "sha256": "2a6a3bd61db2765e2cad985d36228113dfafd4bf44b7f55c42c69099f5d2e89f"
+    },
+    {
+      "migrationId": 337,
+      "file": "db/migrations/337_collection_audience_recipients.sql",
+      "sha256": "c8d0a511eb2d6644ac8204fe86e13d9c77b4c7973dfb652172e3334abb68509b"
+    },
+    {
+      "migrationId": 338,
+      "file": "db/migrations/338_collection_composition_plans.sql",
+      "sha256": "de26be2adc66a1b23e8bb97a0befc117f1991297d318cbfc99138ff62d37d62f"
+    },
+    {
+      "migrationId": 339,
+      "file": "db/migrations/339_collection_composition_confirmation.sql",
+      "sha256": "9a76cb8edde4fa76b305e573f0cc5a468cbe049678073b9174bd7550ca1982f7"
+    },
+    {
+      "migrationId": 340,
+      "file": "db/migrations/340_collection_plan_validation.sql",
+      "sha256": "236fb405b1c7dc6a50f7c049b2cf51b2a6da9300582d15ba98d106b5cdfd6bad"
+    },
+    {
+      "migrationId": 341,
+      "file": "db/migrations/341_collection_composition_receipts.sql",
+      "sha256": "ec6a83506771d1af2694aa44949d285138103a8dab02b669cedd69c7c8d81e70"
+    },
+    {
+      "migrationId": 342,
+      "file": "db/migrations/342_collection_audience_revision_assertion.sql",
+      "sha256": "acecf2cf5a4bb6e050af9a70ace27cea2fdd3f8fe41b967ce6ec07eba5680b57"
+    },
+    {
+      "migrationId": 343,
+      "file": "db/migrations/343_close_collection_table_writes.sql",
+      "sha256": "1f25f22f3852084824ea3554a331fcd3d3ca4b11329c31b58d73c3e539669c18"
+    },
+    {
+      "migrationId": 344,
+      "file": "db/migrations/344_composition_author_first.sql",
+      "sha256": "b42ef8f84816656ff0365911e78d576e75575dd0c54f535a5f3ca3e47beec7b2"
+    },
+    {
+      "migrationId": 345,
+      "file": "db/migrations/345_group_member_delete_admission.sql",
+      "sha256": "c8569fabc1dca96c0f4c55b07354cbf7546609ee68e713b2efb38eda21c5fcbf"
+    },
+    {
+      "migrationId": 346,
+      "file": "db/migrations/346_group_training_card_issuance.sql",
+      "sha256": "24d56b4af82841a2a51e4ba40e1666cb6413563b7ac6e0da6d96bc81e8025e9a"
+    },
+    {
+      "migrationId": 347,
+      "file": "db/migrations/347_legacy_composition_audience_admission.sql",
+      "sha256": "453ec3605658a840b3d206b017b8ce98cee2910902ab0b7b081d38ed0142728e"
+    },
+    {
+      "migrationId": 348,
+      "file": "db/migrations/348_group_active_training_selection.sql",
+      "sha256": "eca4ea17399e43b3e85c048977b82f70181bdf75c371b670b6a8b2cb16c59b56"
+    },
+    {
+      "migrationId": 349,
+      "file": "db/migrations/349_group_subscriber_lookup_index.sql",
+      "sha256": "6735e1d1fb8ca5a5dab54dae9c75e921a6527a51014d7ee0b46e5be07ea50114"
+    },
+    {
+      "migrationId": 350,
+      "file": "db/migrations/350_composition_preview_admission.sql",
+      "sha256": "6c41cd03885e0b54bab36c2505aafee782cacf9280a55c603ff166b94df6960a"
+    },
+    {
+      "migrationId": 351,
+      "file": "db/migrations/351_legacy_label_audience_admission.sql",
+      "sha256": "e0bf79ed2d9a85d35b806881cb4cb16fba65b9a6d5b44d2dfe8f65e7ca120832"
+    },
+    {
+      "migrationId": 352,
+      "file": "db/migrations/352_group_material_invalidation.sql",
+      "sha256": "ade5e16f7cbfea37bf0d285cc90281577481005f7d336080815ea085a9e406d8"
+    },
+    {
+      "migrationId": 353,
+      "file": "db/migrations/353_group_membership_planning_boundary.sql",
+      "sha256": "f89494577688c77d9c738723a2c1683b36b1f56bb72fff20cd9ef1b3db239b1b"
+    },
+    {
+      "migrationId": 354,
+      "file": "db/migrations/354_training_scheduler_compilation_bound.sql",
+      "sha256": "f0236fb4a71d014706506bb0b3283f063259dd5b15e4e30b6399437889fc3bca"
+    },
+    {
+      "migrationId": 355,
+      "file": "db/migrations/355_single_copy_author_admission.sql",
+      "sha256": "a766184161e8fb075af16ac6020351a0289d30efe615a18cfd0e9df2b0a54330"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-302.sql",
+  "postflightProbe": "db/deploy-contract/postflight-355.sql",
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-302.sql",
-    "sha256": "6c8b163f2853ec735dfb7113a9c499ec38cf3bc890936b769378a3ddb80c7118"
+    "file": "db/deploy-contract/read-only-postflight-355.sql",
+    "sha256": "62ed6310d23f6f91e8624f411dbccb34ee8f994f6bd869233908180090d6ae5a"
   }
 }

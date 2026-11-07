@@ -5,7 +5,7 @@ import {afterAll,beforeAll,describe,expect,test} from "vitest";
 import {ensureUserWithSettings,getDbUrl,runMigrations} from "./dbTestUtils";
 const url=getDbUrl();
 async function principal(c:PoolClient,id:string) { await c.query("select set_config('request.jwt.claim.sub',$1,true)",[id]); }
-async function fixture(pool:Pool) {
+async function fixture(pool:Pool,authority="collection") {
   const c=await pool.connect();
   try {
     await c.query("begin");
@@ -15,10 +15,19 @@ async function fixture(pool:Pool) {
     const entry=(await c.query("select create_user_dictionary_entry($1,null,$2) id",[owner,{headword:randomUUID(),languageCode:"nl",definition:"shared race meaning"}])).rows[0].id;
     const list=(await c.query("insert into user_word_lists(user_id,name) values($1,'permit race') returning id",[owner])).rows[0].id;
     await c.query("insert into user_word_list_items(list_id,word_id) values($1,$2)",[list,entry]);
-    const code=(await c.query("select private.mutate_collection_share_v1($1,'open',$2,0) payload",[randomUUID(),list])).rows[0].payload.invitationCode;
-    await principal(c,viewer); await c.query("select private.accept_collection_share_v1($1,$2)",[randomUUID(),code]);
+    const label=authority==='label'?randomUUID():null;
+    if(label) {
+      await c.query("insert into private.collection_labels(id,user_id,name) values($1,$2,'group race')",[label,owner]);
+      await c.query('insert into private.collection_label_assignments values($1,$2,$3)',[owner,list,label]);
+    }
+    const code=label
+      ?(await c.query("select mutate_label_share_v1($1,'open',0) payload",[label])).rows[0].payload.invitationCode
+      :(await c.query("select private.mutate_collection_share_v1($1,'open',$2,0) payload",[randomUUID(),list])).rows[0].payload.invitationCode;
+    await principal(c,viewer);
+    if(label) await c.query('select accept_label_share_v1($1)',[code]);
+    else await c.query("select private.accept_collection_share_v1($1,$2)",[randomUUID(),code]);
     const run=(await c.query("select start_training_session($1,array['word-to-definition'],$2,'user','new','{}','5',$3) payload",[viewer,list,randomUUID()])).rows[0].payload.sessionId;
-    await c.query("commit"); return {owner,viewer,entry,list,run};
+    await c.query("commit"); return {owner,viewer,entry,list,run,label};
   } catch(error) { await c.query("rollback"); throw error; } finally { c.release(); }
 }
 type Fixture=Awaited<ReturnType<typeof fixture>>;
@@ -49,23 +58,30 @@ async function acknowledge(c:PoolClient,f:Fixture) {
   return (await c.query("select acknowledge_current_training_card_v1($1,$2,$3,'word-to-definition',1,'untracked') payload",[f.viewer,f.run,f.entry])).rows[0].payload;
 }
 async function revoke(c:PoolClient,f:Fixture,kind:string) {
-  if(kind==="close") await c.query("select private.mutate_collection_share_v1($1,'close',$2,1)",[randomUUID(),f.list]);
+  if(kind==="close" && f.label) await c.query("select mutate_label_share_v1($1,'close',1)",[f.label]);
+  else if(kind==="close") await c.query("select private.mutate_collection_share_v1($1,'close',$2,1)",[randomUUID(),f.list]);
   else if(kind==="unsubscribe") {
     await principal(c,f.viewer);
-    await c.query("select private.unsubscribe_collection_share_v1($1,$2)",[randomUUID(),f.list]);
+    if(f.label) await c.query('select unsubscribe_label_share_v1($1)',[f.label]);
+    else await c.query("select private.unsubscribe_collection_share_v1($1,$2)",[randomUUID(),f.list]);
   } else if(kind==="delete") {
     await c.query("set local role authenticated");
-    await c.query("select delete_user_word_list($1,$2)",[f.owner,f.list]);
-  } else await c.query("delete from user_word_list_items where list_id=$1 and word_id=$2",[f.list,f.entry]);
+    const plan=(await c.query("select prepare_collection_composition_v1($1,'{\"action\":\"delete\"}') payload",[f.list])).rows[0].payload;
+    await c.query("select confirm_collection_composition_v1($1)",[plan.planId]);
+  } else {
+    await c.query("set local role authenticated");
+    const plan=(await c.query('select prepare_collection_composition_v1($1,$2) payload',[f.list,{action:'remove',entryIds:[f.entry]}])).rows[0].payload;
+    await c.query("select confirm_collection_composition_v1($1)",[plan.planId]);
+  }
 }
-(url?describe:describe.skip)("shared displayed-card issuance serialization",()=>{
+(url?describe:describe.skip).each(["collection","label"])("%s displayed-card issuance serialization",(authority)=>{
   const pool=new Pool({connectionString:url});beforeAll(async()=>{
     await runMigrations(pool);
     if(process.env.SHARED_MUTATION_EXPECT_JIT) expect((await pool.query("show jit")).rows[0].jit).toBe(process.env.SHARED_MUTATION_EXPECT_JIT);
     if(process.env.SHARED_MUTATION_RUNTIME_EVIDENCE_PATH) writeFileSync(process.env.SHARED_MUTATION_RUNTIME_EVIDENCE_PATH,JSON.stringify((await pool.query("select name,setting from pg_settings where name in ('server_version','jit','jit_above_cost','jit_provider','max_parallel_workers_per_gather','shared_preload_libraries','session_preload_libraries','plan_cache_mode') order by name")).rows,null,2));
   });afterAll(()=>pool.end());
   for(const kind of ["close","remove","delete","unsubscribe"]) for(const first of ["ack","revoke"]) test(`${kind}: ${first} commits first`,async()=>{
-    const f=await fixture(pool),a=await pool.connect(),b=await pool.connect();
+    const f=await fixture(pool,authority),a=await pool.connect(),b=await pool.connect();
     try {
       await a.query("begin");await b.query("begin");
       await principal(a,f.viewer);await a.query("set local role authenticated");await principal(b,f.owner);
@@ -89,7 +105,7 @@ async function revoke(c:PoolClient,f:Fixture,kind:string) {
     }
   });
   test("a newly accepted unlocked path cannot replace the revoked path while ACK waits",async()=>{
-    const f=await fixture(pool),a=await pool.connect(),b=await pool.connect(),third=await pool.connect();
+    const f=await fixture(pool,authority),a=await pool.connect(),b=await pool.connect(),third=await pool.connect();
     try {
       await third.query("begin");await principal(third,f.owner);
       const list=(await third.query("insert into user_word_lists(user_id,name) values($1,'new path') returning id",[f.owner])).rows[0].id;
@@ -116,7 +132,7 @@ async function revoke(c:PoolClient,f:Fixture,kind:string) {
   });
 
   for(const kind of ["close","remove","delete","unsubscribe"]) for(const first of ["action","revoke"]) for(const action of ["v2","legacy","exclude","resume"]) test(`${kind}: ${action} mutation, ${first} first`,async()=>{
-    const f=await fixture(pool),a=await pool.connect(),b=await pool.connect();
+    const f=await fixture(pool,authority),a=await pool.connect(),b=await pool.connect();
     try {
       await a.query("begin");await principal(a,f.viewer);
       const revision=(await a.query("select get_meaning_learning_progress_v1($1) payload",[f.entry])).rows[0].payload.revision;
@@ -146,10 +162,11 @@ async function revoke(c:PoolClient,f:Fixture,kind:string) {
   });
 
   test("different learners share author admission without serializing their progress writes",async()=>{
-    const f=await fixture(pool),other=randomUUID(),a=await pool.connect(),b=await pool.connect();
+    const f=await fixture(pool,authority),other=randomUUID(),a=await pool.connect(),b=await pool.connect();
     try {
       await b.query("begin");await ensureUserWithSettings(b,other);
-      await b.query("insert into private.collection_sharing_subscriptions(user_id,root_id,access_lifetime) select $1,id,access_lifetime from private.collection_sharing_roots where collection_id=$2",[other,f.list]);await b.query("commit");
+      if(f.label) await b.query("insert into private.label_sharing_subscriptions(user_id,root_id,access_lifetime) select $1,id,access_lifetime from private.label_sharing_roots where label_id=$2",[other,f.label]);
+      else await b.query("insert into private.collection_sharing_subscriptions(user_id,root_id,access_lifetime) select $1,id,access_lifetime from private.collection_sharing_roots where collection_id=$2",[other,f.list]);await b.query("commit");
       for(const [c,id] of [[a,f.viewer],[b,other]] as const) {
         await c.query("begin");await principal(c,id);await c.query("select set_config('request.jwt.claim.role','service_role',true)");await c.query("set local role service_role");
       }
@@ -164,7 +181,7 @@ async function revoke(c:PoolClient,f:Fixture,kind:string) {
     }
   });
   test("unsupported service-role legacy calls reject without corrupting the connection",async()=>{
-    const f=await fixture(pool),c=await pool.connect();
+    const f=await fixture(pool,authority),c=await pool.connect();
     try {
       await c.query("begin");await principal(c,f.viewer);await c.query("set local role service_role");
       await c.query("savepoint rejected_role");
@@ -179,7 +196,7 @@ async function revoke(c:PoolClient,f:Fixture,kind:string) {
     }
   });
   test("Known resume and session actions share run-before-source ordering",async()=>{
-    const f=await fixture(pool),a=await pool.connect(),b=await pool.connect(),holder=await pool.connect();
+    const f=await fixture(pool,authority),a=await pool.connect(),b=await pool.connect(),holder=await pool.connect();
     let pendingA:Promise<any>|undefined,pendingB:Promise<any>|undefined;
     const aPid=(await a.query("select pg_backend_pid() pid")).rows[0].pid;
     const bPid=(await b.query("select pg_backend_pid() pid")).rows[0].pid;

@@ -29,6 +29,11 @@ const url=getDbUrl();
 
    expect((await c.query('select count(*)::int n from user_word_list_items where list_id=$1',[list])).rows[0].n).toBe(1);
    await c.query('set local role authenticated');
+   for (const table of ['user_word_lists','user_word_list_items']) {
+    for (const privilege of ['INSERT','UPDATE','DELETE','TRUNCATE']) {
+     expect((await c.query('select has_table_privilege(current_user,$1,$2) allowed',[table,privilege])).rows[0].allowed).toBe(false);
+    }
+   }
    expect((await c.query('select read_collection_composition_plan_v1($1) value',[plan.planId])).rows[0].value.status).toBe('pending');
    const receipt=(await c.query('select confirm_collection_composition_v1($1) value',[plan.planId])).rows[0].value;
    expect(receipt.status).toBe('committed');

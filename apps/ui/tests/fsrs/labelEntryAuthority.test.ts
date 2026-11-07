@@ -28,6 +28,38 @@ const url=getDbUrl();
    await c.query('rollback');await c.query('delete from auth.users where id=any($1::uuid[])',[[owner,viewer]]);c.release();
   }
  });
+ test('group-only material changes invalidate the subscriber after setup committed',async()=>{
+  const owner=randomUUID(),viewer=randomUUID(),label=randomUUID(),list=randomUUID();const c=await pool.connect();
+  let entry:string|undefined;
+  try {
+   await c.query('begin');
+   await ensureUserWithSettings(c,owner);await ensureUserWithSettings(c,viewer);
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
+   entry=(await c.query('select create_user_dictionary_entry($1,null,$2) id',[owner,{headword:randomUUID(),languageCode:'nl',definition:'event source'}])).rows[0].id;
+   await c.query("insert into user_word_lists(id,user_id,name) values($1,$2,'events')",[list,owner]);
+   await c.query('insert into user_word_list_items(list_id,word_id) values($1,$2)',[list,entry]);
+   await c.query("insert into private.collection_labels(id,user_id,name) values($1,$2,'events')",[label,owner]);
+   await c.query('insert into private.collection_label_assignments values($1,$2,$3)',[owner,list,label]);
+   const opened=(await c.query("select mutate_label_share_v1($1,'open',0) value",[label])).rows[0].value;
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);
+   await c.query('select accept_label_share_v1($1)',[opened.invitationCode]);await c.query('commit');
+   for(const change of ['rename','remove','note','source']) {
+    await c.query('begin');await c.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
+    await c.query('delete from realtime.messages where topic=$1',['app:user:'+viewer]);
+    if(change==='rename') await c.query("update user_word_lists set name='renamed' where id=$1",[list]);
+    else if(change==='remove') {
+     const plan=(await c.query('select prepare_collection_composition_v1($1,$2) value',[list,{action:'remove',entryIds:[entry]}])).rows[0].value;
+     await c.query('select confirm_collection_composition_v1($1)',[plan.planId]);
+    } else if(change==='note') await c.query("select write_entry_note_v1($1,0,'new note')",[entry]);
+    else await c.query("update word_entries set headword=headword||' edited' where id=$1",[entry]);
+    const kinds=(await c.query("select distinct payload->>'kind' kind from realtime.messages where topic=$1",['app:user:'+viewer])).rows.map(row=>row.kind);
+    expect(kinds,change).toContain('notes.changed');if(change!=='note')expect(kinds,change).toContain('collections.changed');
+    await c.query('rollback');
+   }
+  } finally {
+   await c.query('rollback');try { if(entry) await c.query('delete from word_entries where id=$1',[entry]);await c.query('delete from auth.users where id=any($1::uuid[])',[[owner,viewer]]); } finally { c.release(); }
+  }
+ });
  test('author entry requires an active accepted group path',async()=>{
   await withTransaction(pool,async c=>{
    const owner=randomUUID(),viewer=randomUUID(),outsider=randomUUID(),label=randomUUID(),list=randomUUID();
@@ -79,7 +111,10 @@ const url=getDbUrl();
     .toEqual({collectionId:list,includedEntryIds:[entry]});
    const placement=(await c.query('select set_received_collection_labels_v1($1,$2,$3) value',[list,0,[personalLabel]])).rows[0].value;
    expect(placement.labelIds).toEqual([personalLabel]);
+   expect((await c.query("select update_active_training_scope($1,'nl',$2,'user') value",[viewer,list])).rows[0].value).toMatchObject({active_list_id:list,active_list_ownership:'received',is_valid:true});
+   expect((await c.query("select get_active_training_scope($1,'nl') value",[viewer])).rows[0].value).toMatchObject({active_list_id:list,active_list_ownership:'received',is_valid:true});
    await c.query('reset role');
+   expect((await c.query("select private.received_collection_training_available_v1($1,$2,'nl') available",[viewer,list])).rows[0].available).toBe(true);
    await c.query("select set_config('request.jwt.claim.role','service_role',true)");
    await c.query('set local role service_role');
    await c.query("select perform_platform_v2_card_action_as_principal($1,'start-learning',$2,'word-to-definition','untracked',null,null,null,$3,null,'first_party',null)",[viewer,entry,randomUUID()]);
@@ -110,6 +145,7 @@ const url=getDbUrl();
    await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);
    await c.query('set local role authenticated');
    expect((await c.query('select read_received_collection_source_v1($1) value',[list])).rows[0].value).toBeNull();
+   expect((await c.query("select get_active_training_scope($1,'nl') value",[viewer])).rows[0].value).toMatchObject({active_list_id:list,is_valid:false,unavailable_reason:'shared_collection_unavailable'});
    expect((await c.query('select read_selected_collection_membership_v1($1,$2) value',[list,[entry]])).rows[0].value).toBeNull();
   });
  });

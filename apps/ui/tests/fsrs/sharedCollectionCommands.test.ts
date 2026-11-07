@@ -32,9 +32,7 @@ const accept = async (c:PoolClient, code:string, operation=randomUUID()) =>
   const pool=new Pool({connectionString:url});
   beforeAll(async()=>{
     await runMigrations(pool);
-    // Retained Supabase242 grants these raw-table privileges; plain Postgres
-    // does not. Exercise the actual RLS surface, not an accidental ACL denial.
-    await pool.query("grant select,insert,update,delete on public.user_word_lists,public.user_word_list_items to authenticated");
+
   });
   afterAll(()=>pool.end());
 
@@ -229,7 +227,7 @@ const accept = async (c:PoolClient, code:string, operation=randomUUID()) =>
       await c.query("set local role authenticated");
       for(const list of [f.list,closed,randomUUID()]) {
         await rejected(c,"insert into user_word_list_items(list_id,word_id) values($1,$2)",[list,ownEntry],
-          'new row violates row-level security policy for table "user_word_list_items"');
+          'permission denied for table user_word_list_items');
       }
     });
   });
@@ -242,7 +240,7 @@ const accept = async (c:PoolClient, code:string, operation=randomUUID()) =>
       await copier.query("begin"); await asUser(copier,f.owner);
       await copier.query("select 1 from user_word_lists where id=$1 for update",[f.list]);
       await deleter.query("begin"); await asUser(deleter,f.owner);
-      await deleter.query("set local role authenticated");
+      // Trusted maintenance deliberately exercises inverse tuple order.
       await deleter.query("select 1 from user_word_list_items where list_id=$1 and word_id=$2 for update",[f.list,f.entry]);
       // Admission now refuses the inverse member→list wait immediately. Release
       // the list before the deletion proceeds; no successful partial plan exists.

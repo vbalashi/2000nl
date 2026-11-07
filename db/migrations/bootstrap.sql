@@ -46,3 +46,16 @@
 \i db/migrations/340_collection_plan_validation.sql
 \i db/migrations/341_collection_composition_receipts.sql
 \i db/migrations/342_collection_audience_revision_assertion.sql
+\i db/migrations/343_close_collection_table_writes.sql
+\i db/migrations/344_composition_author_first.sql
+\i db/migrations/345_group_member_delete_admission.sql
+\i db/migrations/346_group_training_card_issuance.sql
+\i db/migrations/347_legacy_composition_audience_admission.sql
+\i db/migrations/348_group_active_training_selection.sql
+\i db/migrations/349_group_subscriber_lookup_index.sql
+\i db/migrations/350_composition_preview_admission.sql
+\i db/migrations/351_legacy_label_audience_admission.sql
+\i db/migrations/352_group_material_invalidation.sql
+\i db/migrations/353_group_membership_planning_boundary.sql
+\i db/migrations/354_training_scheduler_compilation_bound.sql
+\i db/migrations/355_single_copy_author_admission.sql

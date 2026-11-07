@@ -1,0 +1,31 @@
+import {randomUUID} from 'node:crypto';
+import {Pool} from 'pg';
+import {beforeAll,afterAll,describe,test,expect} from 'vitest';
+import {getDbUrl,runMigrations,ensureUserWithSettings,withTransaction} from './dbTestUtils';
+const url=getDbUrl();
+(url?describe:describe.skip)('group projection scale',()=>{
+ const pool=new Pool({connectionString:url});beforeAll(()=>runMigrations(pool));afterAll(()=>pool.end());
+ test('deduplicates nested assignments and bounds a point membership read to one recipient',async()=>{
+  await withTransaction(pool,async c=>{
+   const owner=randomUUID(),root=randomUUID(),child=randomUUID(),viewers=Array.from({length:50},()=>randomUUID());
+   await ensureUserWithSettings(c,owner);
+   for(const viewer of viewers)await ensureUserWithSettings(c,viewer);
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
+   const entry=(await c.query('select create_user_dictionary_entry($1,null,$2) id',[owner,{headword:randomUUID(),languageCode:'nl',definition:'scale'}])).rows[0].id;
+   await c.query("insert into private.collection_labels(id,user_id,name) values($1,$2,'root')",[root,owner]);
+   await c.query("insert into private.collection_labels(id,user_id,name,parent_id) values($1,$2,'child',$3)",[child,owner,root]);
+   const collections=(await c.query("insert into user_word_lists(user_id,name) select $1,'lesson '||n from generate_series(1,200) n returning id",[owner])).rows.map(row=>row.id);
+   await c.query('insert into user_word_list_items(list_id,word_id) select unnest($1::uuid[]),$2',[collections,entry]);
+   await c.query('insert into private.collection_label_assignments(user_id,collection_id,label_id) select $1,id,label from unnest($2::uuid[]) id cross join unnest($3::uuid[]) label',[owner,collections,[root,child]]);
+   await c.query("select mutate_label_share_v1($1,'open',0)",[root]);
+   await c.query('insert into private.label_sharing_subscriptions(user_id,root_id,access_lifetime) select viewer,id,access_lifetime from private.label_sharing_roots cross join unnest($1::uuid[]) viewer where label_id=$2',[viewers,root]);
+   await c.query("set local statement_timeout='5s'");
+   expect((await c.query('select count(*)::int n from private.live_label_sharing_collections_v1 where owner_user_id=$1',[owner])).rows[0].n).toBe(10000);
+   expect((await c.query('select count(*)::int n from private.collection_access_paths_for_user_v1($1)',[viewers[0]])).rows[0].n).toBe(200);
+   const plan=(await c.query('explain (analyze,format json) select * from private.shared_author_entry_memberships_v1 where user_id=$1 and entry_id=$2',[viewers[0],entry])).rows[0]['QUERY PLAN'][0].Plan;
+   const scans:any[]=[];const visit=(node:any)=>{if(node['Function Name']==='collection_access_paths_for_user_v1')scans.push(node);for(const child of node.Plans??[])visit(child);};visit(plan);
+   expect(scans).toHaveLength(1);expect(scans[0]['Actual Loops']).toBe(1);
+   expect((await c.query('select count(*)::int n from private.shared_author_entry_memberships_v1 where user_id=$1 and entry_id=$2',[viewers[0],entry])).rows[0].n).toBe(200);
+  });
+ },20000);
+});

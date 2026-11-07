@@ -26,4 +26,40 @@ const url=getDbUrl();
    expect((await closing).rows[0].value.isOpen).toBe(false);await b.query('commit');
   }finally{await a.query('rollback');await b.query('rollback');await a.query('delete from auth.users where id=$1',[owner]);a.release();b.release();}
  });
+ test('accept cannot introduce an unconfirmed audience while legacy add waits on its source',async()=>{
+  const owner=randomUUID(),viewer=randomUUID(),label=randomUUID(),list=randomUUID();
+  const a=await pool.connect(),b=await pool.connect(),c=await pool.connect();let entry:string|undefined;
+  const waiting=async(pid:number)=>{
+   for(let n=0;n<100;n++) {
+    if((await pool.query('select cardinality(pg_blocking_pids($1))>0 blocked',[pid])).rows[0].blocked)return;
+    await new Promise(resolve=>setTimeout(resolve,10));
+   }
+   throw new Error('expected authority contention');
+  };
+  try {
+   await a.query('begin');await ensureUserWithSettings(a,owner);await ensureUserWithSettings(a,viewer);
+   await a.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
+   entry=(await a.query('select create_user_dictionary_entry($1,null,$2) id',[owner,{headword:randomUUID(),languageCode:'nl',definition:'race'}])).rows[0].id;
+   await a.query("insert into user_word_lists(id,user_id,name) values($1,$2,'race')",[list,owner]);
+   await a.query("insert into private.collection_labels(id,user_id,name) values($1,$2,'race')",[label,owner]);
+   await a.query('insert into private.collection_label_assignments values($1,$2,$3)',[owner,list,label]);
+   const opened=(await a.query("select mutate_label_share_v1($1,'open',0) value",[label])).rows[0].value;
+   await a.query('commit');await a.query('begin');await a.query('select id from word_entries where id=$1 for update',[entry]);
+   await b.query('begin');await b.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);await b.query('set local role authenticated');
+   const bPid=(await b.query('select pg_backend_pid() pid')).rows[0].pid;
+   const adding=b.query('select add_entry_to_user_list($1,$2,$3)',[owner,list,entry]);await waiting(bPid);
+   await c.query('begin');await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);await c.query('set local role authenticated');
+   const cPid=(await c.query('select pg_backend_pid() pid')).rows[0].pid;
+   const accepting=c.query('select accept_label_share_v1($1)',[opened.invitationCode]);await waiting(cPid);
+   expect((await pool.query('select $1=any(pg_blocking_pids($2)) correct',[bPid,cPid])).rows[0].correct).toBe(true);
+   await a.query('commit');await adding;await b.query('commit');await accepting;await c.query('commit');
+   const audience=(await a.query('select private.collection_audience_recipients_v1($1,$2) value',[owner,list])).rows[0].value;
+   expect(audience.map((row:{userId:string})=>row.userId)).toEqual([viewer]);
+  } finally {
+   await a.query('rollback');await b.query('rollback');await c.query('rollback');
+   try {if(entry)await a.query('delete from word_entries where id=$1',[entry]);await a.query('delete from auth.users where id=any($1::uuid[])',[[owner,viewer]]);}
+   finally{a.release();b.release();c.release();}
+  }
+ });
+
 });

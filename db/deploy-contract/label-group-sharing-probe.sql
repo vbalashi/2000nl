@@ -2,6 +2,11 @@
 DO $group_contract$
 DECLARE relation regclass; routine regprocedure;
 BEGIN
+ FOREACH relation IN ARRAY ARRAY['public.user_word_lists'::regclass,'public.user_word_list_items'::regclass] LOOP
+  IF has_table_privilege('authenticated',relation,'INSERT,UPDATE,DELETE,TRUNCATE')
+   OR has_table_privilege('anon',relation,'INSERT,UPDATE,DELETE,TRUNCATE') THEN
+   RAISE EXCEPTION 'db-contract-gate: collection composition bypass exposed: %',relation; END IF;
+ END LOOP;
  FOREACH relation IN ARRAY ARRAY[
  'private.label_sharing_roots'::regclass,'private.label_sharing_subscriptions'::regclass,
  'private.label_share_command_receipts'::regclass,'private.label_organization_plans'::regclass,
