@@ -1,6 +1,6 @@
 'use client';
 import React,{useEffect,useRef,useState} from 'react';
-import {MoreHorizontal,Share2} from 'lucide-react';
+import {Folder,MoreHorizontal} from 'lucide-react';
 import {ActionMenu} from '@/components/practice/ui/ActionMenu';
 import {DialogSurface} from '@/components/practice/ui/DialogSurface';
 import {IconAction} from '@/components/practice/ui/IconAction';
@@ -26,9 +26,8 @@ export function SharedLabelGroups({userId,locale,groups,view,onChanged,onOpenCol
  const [dialog,setDialog]=useState<{key:string;row:Group;kind:'manage'|'contents'|'leave'}|null>(null);
  const key=JSON.stringify([userId,view]);
  return <section className={s.sharedGroups} aria-label={t.groups}>
-  {groups.length>0&&<h2>{t.groups}</h2>}
   {groups.map(row=><article key={row.labelId} className={s.collection}>
-   <span className={s.accessIcon} title={common.shared}><Share2 size={16}/></span>
+   <span className={s.accessIcon} title={t.groups}><Folder size={18} aria-hidden="true"/></span>
    <div className={s.collectionCopy}><button className={s.collectionName} onClick={()=>setDialog({key,row,kind:'contents'})}>{row.name}</button><p>{t.collections}: {row.collectionCount.toLocaleString(locale)}</p></div>
    <IconAction label={`${common.more}: ${row.name}`} onClick={event=>setMenu({key,row,anchor:event.currentTarget})}><MoreHorizontal size={16} strokeWidth={1.5}/></IconAction>
   </article>)}
