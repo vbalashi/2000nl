@@ -32,3 +32,4 @@
 \i db/migrations/316_collection_access_capabilities.sql
 \i db/migrations/317_group_copy_admission.sql
 \i db/migrations/318_label_organization_plans.sql
+\i db/migrations/319_label_organization_enforcement.sql

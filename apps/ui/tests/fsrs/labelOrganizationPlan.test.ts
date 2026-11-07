@@ -23,6 +23,14 @@ const url=getDbUrl();
    await expect(c.query('select confirm_label_organization_v1($1)',[pending.planId])).rejects.toThrow('label_audience_changed');
    await c.query('rollback to savepoint changed_plan');
    expect((await c.query('select name from private.collection_labels where id=$1',[label])).rows[0].name).toBe('intervening');
+   await c.query("select mutate_label_share_v1($1,'open',0)",[label]);
+   await c.query('set local role authenticated');
+   await c.query('savepoint bypass');
+   await expect(c.query('select mutate_collection_labels_v1($1,$2,$3)',[owner,2,{type:'update',id:label,name:'bypass'}])).rejects.toThrow('label_audience_confirmation_required');
+   await c.query('rollback to savepoint bypass');
+   await c.query('reset role');
+   expect((await c.query("select has_function_privilege('authenticated','private.mutate_collection_labels_core_v1(uuid,bigint,jsonb)','execute') allowed")).rows[0].allowed).toBe(false);
+
 
   });
  });
