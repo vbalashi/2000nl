@@ -10,7 +10,7 @@ import s from '../organization/organization.module.css';
 export function ShareInvitationFields({link,code,locale,onCopy}:{link:string;code:string;locale:OnboardingLanguage;onCopy:(value:string,kind:'link'|'code')=>void}){
  const t=localizedSection('collectionSharing')[locale];
  return <div className={s.invitationFields}>{([{kind:'link',label:t.copyLink,value:link},{kind:'code',label:t.copyCode,value:code}] as const).map(field=><label key={field.kind}>
-  <span>{field.label}</span><span className={s.invitationField}><input readOnly value={field.value}/><button type="button" data-onboarding={`copy-${field.kind}`} aria-label={field.label} title={field.label} onClick={()=>onCopy(field.value,field.kind)}><Copy size={16} strokeWidth={1.5}/></button></span>
+  <span>{field.label}</span><span className={s.invitationField}><input readOnly aria-label={field.label} value={field.value}/><button type="button" data-onboarding={`copy-${field.kind}`} aria-label={field.label} title={field.label} onClick={()=>onCopy(field.value,field.kind)}><Copy size={16} strokeWidth={1.5}/></button></span>
  </label>)}</div>;
 }
 export function ShareManagementMenu({locale,onAction}:{locale:OnboardingLanguage;onAction:(action:'rotate'|'close')=>void}){

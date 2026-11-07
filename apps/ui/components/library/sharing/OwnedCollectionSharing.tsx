@@ -7,7 +7,7 @@ import {readCollectionShareManagement} from '@/lib/collections/sharing/shareMana
 
 import {CorruptLocalRecovery} from './CorruptLocalRecovery';
 import {signalOnboarding} from '@/lib/onboarding/signals';
-import React,{useEffect,useState} from 'react';
+import React,{useEffect,useState,useRef} from 'react';
 import {DialogSurface} from '@/components/practice/ui/DialogSurface';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import {shareInvitationUrl} from '@/lib/collections/sharing/shareCode';
@@ -16,11 +16,25 @@ import {useOwnedCollectionSharing} from './useOwnedCollectionSharing';
 import overlays from '@/components/practice/library/libraryOverlays.module.css';
 import s from '../organization/organization.module.css';
 import {ShareInvitationFields,ShareManagementMenu} from './ShareInvitationFields';
+import {previewCollectionBorrowedCopy} from '@/lib/collections/sharing/collectionBorrowedCopyClient';
+import {BorrowedCollectionCopies} from './BorrowedCollectionCopies';
 const copy=localizedSection("collectionSharing");
 type SharingProps={userId:string;collectionId:string;name:string;locale:OnboardingLanguage;onClose:()=>void;initialAction?:'close'|null;onCopied?:(kind:'link'|'code')=>void};
 export function OwnedCollectionSharing(props:SharingProps){
  const controller=useOwnedCollectionSharing(props.userId,props.collectionId);
- return <OwnedCollectionSharingView {...props} controller={controller}/>;
+ const [copies,setCopies]=useState(false),[checking,setChecking]=useState<'loading'|'error'|null>(null),request=useRef<AbortController|null>(null);
+ useEffect(()=>{setChecking(null);setCopies(false);return()=>request.current?.abort();},[props.userId,props.collectionId]);
+ const run=async(action:Parameters<typeof controller.run>[0])=>{
+  if(action!=='open'||process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED!=='true'){await controller.run(action);return;}
+  if(checking==='loading')return;
+  request.current?.abort();const abort=new AbortController();request.current=abort;setChecking('loading');
+  try{
+   const preview=await previewCollectionBorrowedCopy(props.userId,props.collectionId,abort.signal);if(abort.signal.aborted)return;
+   setChecking(null);if(preview.borrowedCount)setCopies(true);else await controller.run('open');
+  }catch{if(!abort.signal.aborted)setChecking('error');}
+ };
+ const viewController={...controller,run,refresh:async()=>{setChecking(null);await controller.refresh();},state:checking?{key:controller.state.key,status:checking,data:null}:controller.state};
+ return <><OwnedCollectionSharingView {...props} controller={viewController}/>{copies&&<BorrowedCollectionCopies userId={props.userId} scope={{kind:'collection',id:props.collectionId}} name={props.name} collections={[{id:props.collectionId,name:props.name,type:'user'}]} locale={props.locale} onClose={()=>{setCopies(false);void controller.refresh();}}/>}</>;
 }
 /** Same production dialog with its data/commands supplied by the caller. */
 export function OwnedCollectionSharingView({userId,collectionId,name,locale,onClose,initialAction=null,controller,onCopied}:SharingProps&{controller:ReturnType<typeof useOwnedCollectionSharing>}){

@@ -560,7 +560,7 @@ describe("LibrarySenseCardV2Session", () => {
     await waitFor(()=>expect(card).toHaveAttribute('data-current-collection','included'));
     fireEvent.click(within(card).getByRole('button',{name:'Collections · 1'}));
     fireEvent.click(screen.getByRole('menuitem',{name:'Remove from “Lesson”'}));
-    const dialog=await screen.findByRole('dialog',{name:'Change shared collection'});
+    const dialog=await screen.findByRole('dialog',{name:'Change collection'});
     expect(compositionCalls.confirm).not.toHaveBeenCalled();
     fireEvent.click(within(dialog).getByRole('button',{name:'Confirm'}));
     await waitFor(()=>expect(compositionCalls.confirm).toHaveBeenCalledOnce());
@@ -580,7 +580,7 @@ describe("LibrarySenseCardV2Session", () => {
     await waitFor(()=>expect(compositionCalls.prepare).toHaveBeenCalled());
     view.rerender(<LibrarySenseCardV2Session {...props} entryId={furnitureEntry.entryId}/>);
     await act(async()=>finish({planId:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',collectionId:list.id,action:'remove',audience:[{userId:'reader',paths:[{kind:'collection'}]}]}));
-    expect(screen.queryByRole('dialog',{name:'Change shared collection'})).not.toBeInTheDocument();expect(compositionCalls.confirm).not.toHaveBeenCalled();vi.unstubAllEnvs();
+    expect(screen.queryByRole('dialog',{name:'Change collection'})).not.toBeInTheDocument();expect(compositionCalls.confirm).not.toHaveBeenCalled();vi.unstubAllEnvs();
   });
 
   test("quick collection actions target the clicked meaning and refresh membership without opening the picker", async () => {

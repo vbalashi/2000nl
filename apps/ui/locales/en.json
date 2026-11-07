@@ -1979,7 +1979,7 @@
       "copyNext": "After copying, return to the change and confirm it.",
       "borrowedCount": "Borrowed entries: {count}",
       "noBorrowed": "No borrowed entries",
-      "compositionTitle": "Change shared collection",
+      "compositionTitle": "Change collection",
       "compositionAdd": "Adding this meaning changes the collection for its subscribers.",
       "compositionRemove": "Removing meanings changes the collection for its subscribers.",
       "compositionDelete": "Deleting this collection removes access through this collection. Other collections and learning progress are kept.",

@@ -1723,7 +1723,7 @@
   "features.labelSharing.copyNext": {"source":"After copying, return to the change and confirm it.","translationHash":"e246bf2445c666a59344ea533a944f89aa0e2313baca0b2f54dba5e1ac02dc0b"},
   "features.labelSharing.borrowedCount": {"source":"Borrowed entries: {count}","translationHash":"3771b06e99a392f4094ddb1a2df7c6f0f2553c0b0017d4deaae36272f10e0916"},
   "features.labelSharing.noBorrowed": {"source":"No borrowed entries","translationHash":"0874e0c6c3243afb7267f9f14300775fbe4d90874148a348481e615f6fcc71bf"},
-  "features.labelSharing.compositionTitle": {"source":"Change shared collection","translationHash":"9dec78bd38ac57aae547182f11735ebc58bcabdefc8490c64c1acf18185d4dd0"},
+  "features.labelSharing.compositionTitle": {"source":"Change collection","translationHash":"69ca40536d4b7f458fc437e68fc5202852eccc9f58a5cc90c2ff848ef7ab7135"},
   "features.labelSharing.compositionAdd": {"source":"Adding this meaning changes the collection for its subscribers.","translationHash":"e50b0f033b6277ebb9da3d598ded2954a6acc8d44188344343d2de4d2d1e3943"},
   "features.labelSharing.compositionRemove": {"source":"Removing meanings changes the collection for its subscribers.","translationHash":"6e28e6156c4614d213cf489bbd94b6138aaa31c9cbde4279fd32139c617010a5"},
   "features.labelSharing.compositionDelete": {"source":"Deleting this collection removes access through this collection. Other collections and learning progress are kept.","translationHash":"a15d892aca418945b529ef19c260da5e0f25f305f556d679c5be100e1ad901d4"},
