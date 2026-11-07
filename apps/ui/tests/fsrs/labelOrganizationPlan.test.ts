@@ -17,6 +17,13 @@ const url=getDbUrl();
    expect(result.revision).toBe(1);
    expect((await c.query('select confirm_label_organization_v1($1) value',[plan.planId])).rows[0].value).toEqual(result);
    expect((await c.query('select name from private.collection_labels where id=$1',[label])).rows[0].name).toBe('planned');
+   const pending=(await c.query('select prepare_label_organization_v1($1,$2) value',[1,{type:'update',id:label,name:'pending'}])).rows[0].value;
+   await c.query('select mutate_collection_labels_v1($1,$2,$3)',[owner,1,{type:'update',id:label,name:'intervening'}]);
+   await c.query('savepoint changed_plan');
+   await expect(c.query('select confirm_label_organization_v1($1)',[pending.planId])).rejects.toThrow('label_audience_changed');
+   await c.query('rollback to savepoint changed_plan');
+   expect((await c.query('select name from private.collection_labels where id=$1',[label])).rows[0].name).toBe('intervening');
+
   });
  });
 });
