@@ -20,7 +20,12 @@ export function usePersonalCollectionCatalog(input:{userId:string;active:boolean
   const abort=new AbortController();request.current=abort;
   const valid=()=>!abort.signal.aborted&&current.current.key===scope.key&&sequence.current===generation;
   const cursor=append?base.nextCursor:null;
-  if(append){cursors.current.add(JSON.stringify(cursor));commit({...base,loadingMore:true});}else{cursors.current.clear();commit(empty(scope.key,'loading'));}
+  if(append){cursors.current.add(JSON.stringify(cursor));commit({...base,loadingMore:true});}else{
+   cursors.current.clear();
+   // Reconcile the same visible scope without replacing its rows with Loading.
+   // A new scope and any failed authoritative read still clear the old content.
+   commit(base.key===scope.key&&base.status==='ready'?{...base,loadingMore:false}:empty(scope.key,'loading'));
+  }
   try{
    const page=await readPersonalCatalog(scope.userId,{...scope.query,cursor},abort.signal);if(!valid())return;
    if(append&&page.revision!==base.revision){await run(false);return;}
