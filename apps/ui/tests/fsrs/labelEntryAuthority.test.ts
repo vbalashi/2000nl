@@ -13,6 +13,8 @@ const url=getDbUrl();
    await c.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
    await c.query('insert into private.collection_labels(user_id,id,name) values($1,$2,$3)',[owner,label,'events']);
    const opened=(await c.query("select mutate_label_share_v1($1,'open',0) value",[label])).rows[0].value;
+
+
    await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);
    await c.query('select accept_label_share_v1($1)',[opened.invitationCode]);await c.query('commit');
    await c.query('begin');
@@ -38,6 +40,9 @@ const url=getDbUrl();
    await c.query('insert into private.collection_label_assignments values($1,$2,$3)',[owner,list,label]);
    expect((await c.query('select preflight_label_share_v1($1) value',[label])).rows[0].value).toEqual({labelId:label,collections:[]});
    const opened=(await c.query("select mutate_label_share_v1($1,'open',0) value",[label])).rows[0].value;
+   const ownerCatalog=(await c.query('select read_personal_collection_catalog_v1() value')).rows[0].value;
+   expect(ownerCatalog.collections.find((row:{id:string})=>row.id===list).isShared).toBe(true);
+
    const readable=async(user:string)=>(await c.query("select private.entry_access_v1($1,$2,'browse') ok",[user,entry])).rows[0].ok;
    expect(await readable(viewer)).toBe(false);expect(await readable(owner)).toBe(true);
    await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);await c.query('set local role authenticated');

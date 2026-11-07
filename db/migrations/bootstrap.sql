@@ -38,3 +38,5 @@
 \i db/migrations/332_group_authority_events.sql
 \i db/migrations/333_group_forward_references.sql
 \i db/migrations/334_group_selected_material_reads.sql
+\i db/migrations/335_group_projection_planning_fence.sql
+\i db/migrations/336_group_publication_badges.sql
