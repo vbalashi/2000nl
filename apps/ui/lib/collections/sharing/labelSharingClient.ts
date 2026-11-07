@@ -75,3 +75,18 @@ export async function readLabelShareCollections(userId:string,labelId:string,aft
  if(!parsed||parsed.labelId!==id||after&&parsed.collections.some(row=>row.collectionId<=after.toLowerCase()))throw new Error('label_sharing_collections_unavailable');
  return parsed;
 }
+
+import {isCanonicalShareCode} from './shareCode';
+import {parseSharedResourcePreview,type SharedResourcePreview} from './labelSharingContract';
+export async function previewSharedResource(userId:string,code:string,signal:AbortSignal):Promise<SharedResourcePreview>{
+ if(!isCanonicalShareCode(code))throw new Error('invalid_share_request');
+ signal.throwIfAborted();const headers=await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const response=await platformFetchWithTimeout('/api/library/label-sharing/preview',{
+  method:'POST',headers,signal,credentials:'same-origin',cache:'no-store',body:JSON.stringify({code}),
+ });
+ const value:unknown=response.ok?await response.json():null;
+ await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ if(response.status===404)throw new Error('share_preview_not_found');
+ const parsed=parseSharedResourcePreview(value);if(!parsed)throw new Error('share_preview_unavailable');
+ return parsed;
+}

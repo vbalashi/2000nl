@@ -67,3 +67,12 @@ export function parseLabelShareCollectionsPage(v:unknown):LabelShareCollectionsP
  if(v.nextCursor!==null&&v.nextCursor!==previous)return null;
  return v as LabelShareCollectionsPage;
 }
+
+import {parseSharePreview,type SharePreview} from './shareCommandContract';
+export type SharedResourcePreview={kind:'label';preview:LabelSharePreview}|{kind:'collection';preview:SharePreview};
+export function parseSharedResourcePreview(v:unknown):SharedResourcePreview|null{
+ if(!record(v)||!keys(v,['kind','preview']))return null;
+ if(v.kind==='label'){const preview=parseLabelSharePreview(v.preview);return preview?{kind:'label',preview}:null;}
+ if(v.kind==='collection'){const preview=parseSharePreview(v.preview);return preview?{kind:'collection',preview}:null;}
+ return null;
+}

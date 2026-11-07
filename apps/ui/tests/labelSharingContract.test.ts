@@ -43,3 +43,10 @@ test('group page cursor must identify its final unique collection',async()=>{
  expect(parseLabelShareCollectionsPage({...page,collections:[...page.collections,...page.collections]})).toBeNull();
  expect(parseLabelShareCollectionsPage({...page,nextCursor:'22222222-2222-4222-8222-222222222222'})).toBeNull();
 });
+
+test('resource preview discriminator must match its payload',async()=>{
+ const {parseSharedResourcePreview}=await import('@/lib/collections/sharing/labelSharingContract');
+ const preview={labelId,name:'group',collectionCount:1,alreadyAdded:false,role:null};
+ expect(parseSharedResourcePreview({kind:'label',preview})).toEqual({kind:'label',preview});
+ expect(parseSharedResourcePreview({kind:'collection',preview})).toBeNull();
+});

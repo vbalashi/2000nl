@@ -23,3 +23,16 @@ test('reconciliation asks RPC for read-only receipt lookup',async()=>{
  expect(await response.json()).toEqual({operationId:id,status:'unknown'});
  expect(rpc).toHaveBeenCalledWith('command_label_share_v1',{p_operation_id:id,p_command:{action:'close',labelId:id,expectedRevision:1},p_reconcile_only:true});
 });
+
+test('unified preview keeps the invitation code out of URL parameters',async()=>{
+ const {POST:preview}=await import('@/app/api/library/label-sharing/preview/route');
+ const code='0123456789ABCDEFGHJKMNPQRS';
+ const actual='0123456789ABCDEFGHJKMNPQRSTV';
+ const payload={kind:'label',preview:{labelId:id,name:'group',collectionCount:0,alreadyAdded:false,role:null}};
+ rpc.mockReturnValue({abortSignal:async()=>({data:payload,error:null})});
+ const response=await preview(request({code:actual}));expect(response.status).toBe(200);
+ expect(await response.json()).toEqual(payload);
+ expect(rpc).toHaveBeenCalledWith('preview_shared_resource_v1',{p_code:actual});
+ const bad=new NextRequest(`http://localhost/api/library/label-sharing/preview?code=${code}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code:actual})});
+ expect((await preview(bad)).status).toBe(400);
+});
