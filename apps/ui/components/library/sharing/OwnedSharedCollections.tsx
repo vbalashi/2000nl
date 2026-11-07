@@ -24,7 +24,7 @@ import s from '../organization/organization.module.css';
 
 const copy=localizedSection("ownedSharedCollections");
 type Dialog={ownerId:string;row:Pick<OwnedSharedCollection,'id'|'name'>;initialAction?:'close'};
-export function OwnedSharedCollections({userId,active,locale,onOpen,onChanged,catalogOverride}:{userId:string;active:boolean;locale:OnboardingLanguage;onOpen:(row:OwnedSharedCollection)=>void;onChanged:()=>void;catalogOverride?:ReturnType<typeof useOwnedSharedCatalog>}){
+export function OwnedSharedCollections({userId,active,locale,onOpen,onChanged,catalogOverride,hasGroups=false}:{userId:string;active:boolean;locale:OnboardingLanguage;onOpen:(row:OwnedSharedCollection)=>void;onChanged:()=>void;hasGroups?:boolean;catalogOverride?:ReturnType<typeof useOwnedSharedCatalog>}){
  const [detailsSelection,setDetailsSelection]=useState<{ownerId:string;id:string}|null>(null);
  const [query,setQuery]=useState(''),[sort,setSort]=useState<OwnedCatalogQuery['sort']>('recent');
  const connectedCatalog=useOwnedSharedCatalog({userId,active:active&&!catalogOverride,query:{query,sort,limit:50}});
@@ -70,7 +70,7 @@ export function OwnedSharedCollections({userId,active,locale,onOpen,onChanged,ca
   <div className={s.filters}><label className={s.search}><Search size={16} aria-hidden="true"/><input ref={searchInput} aria-label={common.search} placeholder={common.search} maxLength={100} value={query} onChange={event=>setQuery(event.target.value)}/></label>
    <CollectionSortControl locale={locale} value={sort} onChange={setSort}/></div>
   {notice?.key===key&&<p role="status" className={s.muted}>{notice.text}</p>}
-  {catalog.status==='loading'?<div className={s.state} role="status">{common.loading}</div>:catalog.status==='error'?<div className={s.state}><p role="alert">{t.error}</p><button onClick={()=>void catalog.refresh()}>{common.retry}</button></div>:catalog.status==='ready'&&catalog.collections.length===0?<p className={s.state}>{query.trim()?common.noResults:t.empty}</p>:null}
+  {catalog.status==='loading'?<div className={s.state} role="status">{common.loading}</div>:catalog.status==='error'?<div className={s.state}><p role="alert">{t.error}</p><button onClick={()=>void catalog.refresh()}>{common.retry}</button></div>:catalog.status==='ready'&&catalog.collections.length===0&&(!hasGroups||Boolean(query.trim()))?<p className={s.state}>{query.trim()?common.noResults:t.empty}</p>:null}
   {catalog.collections.length>0&&<div className={s.ownedSharedTable} role="table" aria-label={t.title}><div className={s.ownedSharedHead} role="row"><span role="columnheader">{common.collections}</span><span role="columnheader">{t.subscribers}</span><span role="columnheader">{common.more}</span></div>
    <div className={s.ownedSharedRows}>{catalog.collections.map(row=><div className={s.ownedSharedRow} role="row" key={row.id}>
     <div role="cell" className={s.ownedSharedName}><Share2 size={18} aria-label={t.active}/><div><button type="button" onClick={()=>setDetailsSelection({ownerId:userId,id:row.id})}>{row.name}</button><small>{formatUiCount(locale,row.itemCount,common,'meaning')}<span className={s.mobileSubscriberLabel}> · {t.subscribers}: {row.subscriberCount.toLocaleString(locale)}</span></small></div></div>

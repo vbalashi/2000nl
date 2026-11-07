@@ -13,7 +13,7 @@ import {useReceivedCatalog} from '../organization/useReceivedCatalog';
 import {organizationCopy} from '../organization/copy';
 import s from '../organization/organization.module.css';
 const copy=localizedSection("receivedCollections");
-export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=false,onChanged,catalogOverride}:{userId:string;active:boolean;locale:OnboardingLanguage;onOpen:(row:ReceivedCollection)=>void;onAdd:()=>void;embedded?:boolean;onChanged?:()=>void;catalogOverride?:ReturnType<typeof useReceivedCatalog>}){
+export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=false,onChanged,catalogOverride,hasGroups=false}:{userId:string;active:boolean;locale:OnboardingLanguage;onOpen:(row:ReceivedCollection)=>void;onAdd:()=>void;embedded?:boolean;onChanged?:()=>void;hasGroups?:boolean;catalogOverride?:ReturnType<typeof useReceivedCatalog>}){
  const [query,setQuery]=useState('');
  const actionFocus=useRef<HTMLButtonElement|null>(null),addButton=useRef<HTMLButtonElement|null>(null),searchInput=useRef<HTMLInputElement|null>(null);
  const [menu,setMenu]=useState<{row:ReceivedCollection;anchor:HTMLButtonElement}|null>(null);
@@ -33,7 +33,7 @@ export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=
   {pendingKey&&pendingKey===dismissed&&<button type="button" onClick={()=>setDismissed(null)}>{actions.check}</button>}
   <div className={s.filters}><label className={s.search}><Search size={16} aria-hidden="true"/><input ref={searchInput} aria-label={common.search} placeholder={common.search} maxLength={100} value={query} onChange={event=>setQuery(event.target.value)}/></label>
    <CollectionSortControl locale={locale} value={sort} onChange={setSort}/></div>
-  {catalog.status==='loading'?<div className={s.state} role="status">{common.loading}</div>:catalog.status==='error'?<div className={s.state}><p role="alert">{t.error}</p><button onClick={()=>void catalog.refresh()}>{common.retry}</button></div>:catalog.status==='ready'&&catalog.collections.length===0?<p className={s.state}>{query.trim()?common.noResults:t.empty}</p>:null}
+  {catalog.status==='loading'?<div className={s.state} role="status">{common.loading}</div>:catalog.status==='error'?<div className={s.state}><p role="alert">{t.error}</p><button onClick={()=>void catalog.refresh()}>{common.retry}</button></div>:catalog.status==='ready'&&catalog.collections.length===0&&(!hasGroups||Boolean(query.trim()))?<p className={s.state}>{query.trim()?common.noResults:t.empty}</p>:null}
   <div className={s.results}>{catalog.collections.map(row=><article className={s.collection} key={row.id}><FileText size={20} aria-hidden="true"/><div className={s.collectionCopy}><button className={s.collectionName} onClick={()=>onOpen(row)}>{row.name}</button><p><Eye size={14} aria-hidden="true"/>{t.shared} · {row.itemCount.toLocaleString(locale)}</p></div><button type="button" onClick={()=>onOpen(row)}>{common.open}</button><button type="button" aria-label={`${common.more} · ${row.name}`} onClick={event=>setMenu({row,anchor:event.currentTarget})}><MoreHorizontal size={18}/></button></article>)}</div>
   {catalog.nextCursor&&<button className={s.loadMore} disabled={catalog.loadingMore} onClick={()=>void catalog.loadMore()}>{catalog.loadingMore?common.loading:common.moreResults}</button>}
  {menu&&<ActionMenu anchor={menu.anchor} title={common.more} language={locale} onClose={()=>setMenu(null)} items={[

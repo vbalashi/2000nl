@@ -1932,7 +1932,9 @@
       "collections": "Collections",
       "accepted": "Group added",
       "contents": "Group contents",
-      "openGroup": "Open group"
+      "openGroup": "Open group",
+      "leaveNotice": "The group will leave your library. Independently granted access and learning progress are kept.",
+      "groups": "Collection groups"
     }
   },
   "tour": {

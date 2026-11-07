@@ -1706,5 +1706,7 @@
   "features.labelSharing.collections": {"source":"Collections","translationHash":"458be63d70956d894e1f3d3732ac0277797a09761bee7ebe01019ebc0f7c2d60"},
   "features.labelSharing.accepted": {"source":"Group added","translationHash":"5f315f88d559fc2d6af17d112eb7d60a190779ab2fde3b96e21713e1d9d3d7c2"},
   "features.labelSharing.contents": {"source":"Group contents","translationHash":"03ebd0342228d3e10799a82ba90950ba318c40cb69b9fb804cfa8706d0cb0068"},
-  "features.labelSharing.openGroup": {"source":"Open group","translationHash":"180c61948862008e1701cd25c0795726be7a1b7629ed1d2c0cb0d59b03c85595"}
+  "features.labelSharing.openGroup": {"source":"Open group","translationHash":"180c61948862008e1701cd25c0795726be7a1b7629ed1d2c0cb0d59b03c85595"},
+  "features.labelSharing.leaveNotice": {"source":"The group will leave your library. Independently granted access and learning progress are kept.","translationHash":"2be39209f6ab3047b3bad8dcaa4e1b4a913d6477fecf65b4cecccf39cc83839d"},
+  "features.labelSharing.groups": {"source":"Collection groups","translationHash":"f869f10581dc34aa2b517a3e74078441661cab852c804522748ebdf437f3ac80"}
 }

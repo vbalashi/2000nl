@@ -134,3 +134,13 @@
 .invitation input{font:inherit}
 .invitation button{font-size:var(--practice-text-small);min-height:44px;background:transparent;border-color:transparent}
 @media(max-width:700px){.ownedSharedRow{grid-template-columns:minmax(0,1fr) 44px;gap:8px;min-height:64px}.ownedSharedActions{grid-column:2;grid-row:1;align-self:center}.ownedSharedActions>button:first-child{display:none}.desktopSubscriberCount{display:none}.ownedSharedName{align-self:center}.ownedSharedName small{display:block;line-height:1.5}.ownedSharedName>div{gap:2px}}
+.groupContents{max-height:85dvh;overflow-y:auto}
+.groupContents ul{list-style:none;margin:0;padding:0}
+.groupContents li{border-bottom:1px solid var(--practice-border)}
+.groupContents li>button{display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;min-height:52px;border:0;background:transparent;text-align:start;font-size:var(--practice-text-body);font-weight:400}
+.groupContents li>button>svg{flex:none}
+.groupContents li>button>span{min-width:0;overflow-wrap:anywhere}
+.sharedGroups h2{margin:0;font-family:var(--practice-font-ui);font-size:var(--practice-text-small);font-weight:500;color:var(--practice-text-muted)}
+.sharedGroups .collection{align-items:center;padding:12px 4px}
+.sharedGroups .collectionName{color:var(--practice-text);cursor:pointer}
+.sharedGroups .collectionCopy p{font-size:var(--practice-text-caption);color:var(--practice-text-muted);margin:2px 0 0}

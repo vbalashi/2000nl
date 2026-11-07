@@ -6,6 +6,8 @@ import React, { useMemo, useState } from "react";
 import { FileText, Folder, Folders, Share2, LockKeyhole, MoreHorizontal, Plus, Search, Tags, X, ChevronDown, ChevronRight } from "lucide-react";
 import {readOwnerShareJournal,ownerShareStore} from '@/lib/collections/sharing/ownerShareJournal';
 import {OwnedCollectionSharing} from '../sharing/OwnedCollectionSharing';
+import {OwnedLabelSharing} from '../sharing/OwnedLabelSharing';
+import {useLabelSharingCatalog} from '../sharing/useLabelSharingCatalog';
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
 import { ActionMenu } from "@/components/practice/ui/ActionMenu";
 import overlays from "@/components/practice/library/libraryOverlays.module.css";
@@ -42,6 +44,10 @@ export function PersonalCollections({active, userId, language, locale, collectio
   const [pageSize, setPageSize] = useState(20);
   const [scopeOpen, setScopeOpen] = useState(false);
   const [sharing,setSharing]=useState<{ownerId:string;collection:WordListSummary}|null>(null);
+  const [sharingLabel,setSharingLabel]=useState<{ownerId:string;label:CollectionLabel}|null>(null);
+  const groupSharingEnabled=process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED==='true';
+  const sharedLabels=useLabelSharingCatalog(userId,active&&groupSharingEnabled);
+  const isSharedLabel=(id:string)=>sharedLabels.data?.owned.some(row=>row.labelId===id&&row.isOpen)===true;
   const dismissedSharing=React.useRef(new Set<string>()),sharingWasActive=React.useRef(false);
   React.useEffect(()=>{
     if(process.env.NEXT_PUBLIC_COLLECTION_SHARING_ENABLED!=='true'||!active){sharingWasActive.current=false;return;}
@@ -148,7 +154,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
       <button type="button" aria-pressed={effectiveScope === "unlabelled"} onClick={()=>changeScope("unlabelled")}><FileText size={18}/><span>{t.unlabelled}</span></button>
       {filteredLabels.map(({label,depth,path,parents})=><div className={s.labelRow} key={label.id} style={{paddingInlineStart:Math.min(depth,4)*12}}>
         {snapshot?.labels.some(row=>row.parent_id===label.id)?<button className={s.treeDisclosure} type="button" aria-label={label.name} aria-expanded={!collapsedLabels.has(label.id)} onClick={()=>toggleCollapsed(setCollapsedLabels,label.id)}>{collapsedLabels.has(label.id)?<ChevronRight size={14}/>:<ChevronDown size={14}/>}</button>:<span className={s.treeSpacer} aria-hidden="true"/>}
-        <button type="button" aria-pressed={effectiveScope === label.id} title={path} onClick={()=>changeScope(label.id)}><Folder size={18}/><span>{label.name}{labelQuery.trim() && parents ? ` · ${parents}` : ""}</span></button>
+        <button type="button" aria-pressed={effectiveScope === label.id} title={path} onClick={()=>changeScope(label.id)}>{isSharedLabel(label.id)?<Share2 size={18} aria-label={t.shared}/>:<Folder size={18}/>}<span>{label.name}{labelQuery.trim() && parents ? ` · ${parents}` : ""}</span></button>
         <button type="button" aria-label={`${t.more}: ${label.name}`} onClick={event=>setMenu({anchor:event.currentTarget,label})}><MoreHorizontal size={16} strokeWidth={1.5}/></button>
       </div>)}
       {!labelRows.length && <p className={s.muted}>{t.noLabels}</p>}
@@ -161,6 +167,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
       <header className={s.catalogHeader}><button type="button" className={s.mobileScope} onClick={()=>setScopeOpen(true)}><Folder size={18}/><span>{scopeTitle}</span><ChevronDown size={16}/></button><h2>{scopeTitle}</h2><button type="button" aria-label={t.newCollection} onClick={()=>begin({kind:"collection"})}><Plus size={18}/><span>{t.newCollection}</span></button></header>
       <div className={s.filters}><label className={s.search}><Search size={16} aria-hidden="true"/><input aria-label={t.search} placeholder={t.search} maxLength={200} value={query} onChange={event=>{setQuery(Array.from(event.target.value).slice(0,100).join(''));setPageSize(20);}}/></label><CollectionSortControl locale={locale} value={sort} onChange={value=>{setSort(value);setPageSize(20);}}/></div>
       {labels.error && !editor && <p role="alert">{message(labels.error)} <button onClick={()=>void labels.refresh()} disabled={labels.busy}>{t.retry}</button></p>}
+      {groupSharingEnabled&&sharedLabels.status==='error'&&<p role="alert">{t.sharingStatusError} <button onClick={()=>void sharedLabels.refresh()}>{t.retry}</button></p>}
       {publicationEnabled&&catalog.status==='error'&&<p role="alert">{t.unavailable} <button onClick={()=>void catalog.refresh()}>{t.retry}</button></p>}
       <div className={s.results} aria-busy={labels.loading||publicationEnabled&&catalog.status==='loading'}>
         {publicationEnabled&&catalog.status==='loading'?<p role="status">{t.loading}</p>:!rows.length&&(!publicationEnabled||catalog.status==='ready')&&<p className={s.state}>{query.trim()||effectiveScope!=='all'?t.noResults:t.empty}</p>}
@@ -173,6 +180,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
     {scopeOpen && <DialogSurface className={overlays.dialog} aria-label={t.chooseScope} onDismiss={()=>setScopeOpen(false)}><div className={s.scopeDialog}><button className={s.dismiss} aria-label={t.close} onClick={()=>setScopeOpen(false)}><X size={20}/></button>{scopePicker}</div></DialogSurface>}
     {menu && <ActionMenu anchor={menu.anchor} title={t.more} language={locale} onClose={()=>setMenu(null)} items={menu.label ? [
       ...(onOpenLabel ? [{id:"open",label:t.open,onSelect:()=>{onOpenLabel(menu.label!);setMenu(null);}}] : []),
+      ...(groupSharingEnabled?[{id:'share',label:localizedField('personalCollections','share')[locale],icon:<Share2 size={16}/>,onSelect:()=>{menu.anchor.focus({preventScroll:true});setSharingLabel({ownerId:userId,label:menu.label!});setMenu(null);}}]:[]),
       {id:"edit",label:t.editLabel,onSelect:()=>begin({kind:"label",id:menu.label!.id,existing:menu.label})},
       {id:"child",label:t.newLabel,onSelect:()=>{begin({kind:"label",id:crypto.randomUUID()});setParent(menu.label!.id);}},
       {id:"delete",label:t.remove,onSelect:()=>begin({kind:"delete-label",label:menu.label!})},
@@ -184,6 +192,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
       onShare:()=>{menu.anchor.focus({preventScroll:true});setSharing({ownerId:userId,collection:menu.collection!});setMenu(null);},
       onRename:()=>begin({kind:"collection",existing:menu.collection}),onDelete:()=>begin({kind:"delete-collection",collection:menu.collection!})}) : []}/>}
     {sharing?.ownerId===userId&&<OwnedCollectionSharing key={`${userId}:${sharing.collection.id}`} userId={userId} collectionId={sharing.collection.id} name={sharing.collection.name} locale={locale} onClose={closeSharing}/>}
+    {sharingLabel?.ownerId===userId&&groupSharingEnabled&&<OwnedLabelSharing key={`${userId}:${sharingLabel.label.id}`} userId={userId} labelId={sharingLabel.label.id} name={sharingLabel.label.name} locale={locale} onClose={()=>{setSharingLabel(null);void sharedLabels.refresh();void catalog.refresh();}}/>}
     {receivedEditor?.ownerId===userId&&<ReceivedCollectionLabels key={`${userId}:${receivedEditor.collection.id}`} userId={userId} collectionId={receivedEditor.collection.id} name={receivedEditor.collection.name} locale={locale} onClose={()=>setReceivedEditor(null)} onSaved={()=>{setReceivedEditor(null);void catalog.refresh();void labels.refresh();}}/>}
     {editor && <DialogSurface className={overlays.dialog} aria-labelledby="organization-dialog-title" onDismiss={closeEditor}>
       <form className={s.editor} onSubmit={submit}>

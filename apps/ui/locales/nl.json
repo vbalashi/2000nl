@@ -1932,7 +1932,9 @@
       "collections": "Collecties",
       "accepted": "Groep toegevoegd",
       "contents": "Inhoud van de groep",
-      "openGroup": "Groep openen"
+      "openGroup": "Groep openen",
+      "leaveNotice": "De groep verdwijnt uit je bibliotheek. Onafhankelijk verleende toegang en leervoortgang blijven behouden.",
+      "groups": "Collectiegroepen"
     }
   },
   "tour": {
