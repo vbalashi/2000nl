@@ -1,5 +1,7 @@
 "use client";
 import { useCardLoadDiagnostics } from "@/lib/diagnostics/useCardLoadDiagnostics";
+import {useCollectionComposition} from '@/components/library/sharing/useCollectionComposition';
+import {CollectionCompositionConfirmation} from '@/components/library/sharing/CollectionCompositionConfirmation';
 import {useSelectedMembership} from '@/components/library/sharing/useSelectedMembership';
 import {clearPlatformNoteMaterial} from "@/lib/platform/noteMaterialPresentation";
 
@@ -573,8 +575,31 @@ function SenseCardV2Session({
     return results.every(Boolean);
   }, [detailIdentity, loadMemberships, model, refreshSelectedMembership]);
 
+  const [compositionTarget,setCompositionTarget]=React.useState<{list:WordListSummary;entryId:string;included:boolean;userId:string;identity:string}|null>(null);
+  const startedComposition=React.useRef<typeof compositionTarget>(null);
+  const composition=useCollectionComposition(userId ?? '',compositionTarget?.list.id ?? '',()=>{
+    const target=compositionTarget;
+    if(!target || target.userId!==userId || target.identity!==detailIdentityRef.current)return;
+    if(!target.included)rememberCollection(target.list.id);
+    void refreshMemberships().then(ready=>{if(target.identity!==detailIdentityRef.current)return;if(ready)setCollectionStatus(platformV2Message(interfaceLanguage,"senseCard.collections.saved"));});
+    void Promise.resolve(onListsUpdated?.()).catch(()=>undefined);
+    setCompositionTarget(null);
+  });
+  React.useEffect(()=>{
+    const target=compositionTarget;
+    if(!target || target.userId!==userId || target.list.id!==composition.state.collectionId || startedComposition.current===target)return;
+    startedComposition.current=target;
+    void composition.save(target.included?{action:'remove',entryIds:[target.entryId]}:{action:'add',entryId:target.entryId});
+  },[compositionTarget,userId,composition.state.collectionId,composition.save]);
+  React.useEffect(()=>{
+    if(composition.state.status==='failed')setCollectionStatus(platformV2Message(interfaceLanguage,"senseCard.collections.failed"));
+  },[composition.state.status,interfaceLanguage]);
+
   const handleToggleList = async (list: WordListSummary, included: boolean, targetEntryId = collectionsEntryId) => {
     if (!targetEntryId || pendingCollectionWrites.current > 0) return;
+    if(process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED==='true' && userId){
+      setCollectionStatus(null);setCompositionTarget({list,entryId:targetEntryId,included,userId,identity:detailIdentity});return;
+    }
     const isCurrent = () => detailIdentity === detailIdentityRef.current;
     pendingCollectionWrites.current++;
     setCollectionBusyListId(list.id);
@@ -622,6 +647,10 @@ function SenseCardV2Session({
         language_code: contentLanguageCode,
       });
       if (!created?.id) throw new Error("create_list_failed");
+      if(process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED==='true'){
+        if(isCurrent())setCompositionTarget({list:created,entryId:collectionsEntryId,included:false,userId,identity:detailIdentity});
+        return;
+      }
       const result = await addWordsToUserList(created.id, [collectionsEntryId]);
       if (result.error) throw result.error;
       if (isCurrent()) rememberCollection(created.id);
@@ -965,6 +994,7 @@ function SenseCardV2Session({
       {copyEntryId && userId && onOpenCopied && context === "library" ? <IndependentEntryCopyDialog key={`${detailIdentity}:copy`} entryId={copyEntryId} headword={model.headword} dictionaryName={model.dictionaryName ?? ""} contentLanguageCode={contentLanguageCode} userId={userId} language={interfaceLanguage} onClose={()=>setCopyEntryId(null)} onReviewSource={()=>{copyReviewGeneration.current++;setCopyReviewRequired(true);setCopyEntryId(null);setLookupRetry(current=>current+1);}} onOpen={copy=>{setCopyEntryId(null);onOpenCopied(copy);}}/> : null}
       {archiveEntryId && userId && context === "library" ? <AuthorEntryArchiveDialog key={detailIdentity} entryId={archiveEntryId} headword={model.headword} userId={userId} language={interfaceLanguage} onCancel={() => setArchiveEntryId(null)} onArchived={() => { setArchiveEntryId(null); onArchived?.(archiveEntryId); }} /> : null}
       {reportSnapshot ? <SenseCardReportSheet snapshot={reportSnapshot} interfaceLanguage={interfaceLanguage} onClose={() => setReportSnapshot(null)} /> : null}
+      {compositionTarget && <CollectionCompositionConfirmation controller={composition} collectionName={compositionTarget.list.name} locale={interfaceLanguage}/>}
       <LibraryCollectionsPicker
         open={Boolean(collectionsMeaning)}
         headword={model.headword}
