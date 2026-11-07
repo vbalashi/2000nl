@@ -45,3 +45,4 @@
 \i db/migrations/339_collection_composition_confirmation.sql
 \i db/migrations/340_collection_plan_validation.sql
 \i db/migrations/341_collection_composition_receipts.sql
+\i db/migrations/342_collection_audience_revision_assertion.sql

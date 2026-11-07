@@ -1,10 +1,12 @@
+import {readFileSync} from 'node:fs';
+import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {Pool} from 'pg';
 import {beforeAll,afterAll,describe,test,expect} from 'vitest';
 import {getDbUrl,runMigrations,ensureUserWithSettings,withTransaction} from './dbTestUtils';
 const url=getDbUrl();
 (url?describe:describe.skip)('label organization confirmation plan',()=>{
- const pool=new Pool({connectionString:url});beforeAll(()=>runMigrations(pool));afterAll(()=>pool.end());
+ const pool=new Pool({connectionString:url});beforeAll(async()=>{await runMigrations(pool);await pool.query(readFileSync(path.resolve(process.cwd(),'../../db/deploy-contract/label-group-sharing-probe.sql'),'utf8'));});afterAll(()=>pool.end());
  test('preview rolls back organization and confirm is replayable',async()=>{
   await withTransaction(pool,async c=>{
    const owner=randomUUID(),label=randomUUID();await ensureUserWithSettings(c,owner);
