@@ -35,3 +35,4 @@
 \i db/migrations/319_label_organization_enforcement.sql
 \i db/migrations/330_label_share_preflight.sql
 \i db/migrations/331_label_plan_receipt.sql
+\i db/migrations/332_group_authority_events.sql
