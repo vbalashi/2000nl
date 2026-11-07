@@ -1016,3 +1016,8 @@ test('whole-filter selection can exclude a row without a checkbox',async()=>{
  fireEvent.click(row);expect(row).toHaveAttribute('aria-pressed','false');
  expect(screen.getByRole('button',{name:'All − 1'})).toBeInTheDocument();
 });
+test('an unavailable material source never renders retained article rows',async()=>{
+ await act(async()=>{render(<Harness locale="en" collection sourceRead={{collectionId:'owned-list',type:'user',status:'error',onRetry:vi.fn()}} initial={{query:'',applyListFilter:true,groupResults:[firstGroup],groupTotal:1}}/>);});
+ expect(document.querySelector('[data-group-id="group-goed-main"]')).not.toBeInTheDocument();
+ expect(screen.queryByText('goed')).not.toBeInTheDocument();
+});

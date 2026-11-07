@@ -301,7 +301,7 @@ function SenseCardV2Session({
             (expectedTranslationSession == null || expectedTranslationSession === translationSession.current) &&
             (!expectedDetailIdentity || expectedDetailIdentity === detailIdentityRef.current)) {
           setLoading(false);
-          if (!(error && typeof error === "object" && "name" in error && error.name === "AbortError")) setLookupError("unavailable");
+          if (!(error && typeof error === "object" && "name" in error && error.name === "AbortError")) { setGroup(null); setNoteAuthority(null); setLookupError("unavailable"); }
         }
         throw error;
       }

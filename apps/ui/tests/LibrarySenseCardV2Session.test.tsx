@@ -288,6 +288,19 @@ describe("LibrarySenseCardV2Session", () => {
     if(outcome==="updated")expect(screen.getByText("Updated note")).toBeInTheDocument();else expect(screen.queryByText("Current note")).not.toBeInTheDocument();
     expect(performAction).not.toHaveBeenCalled();
   });
+  test("a denied refresh removes the cached card and a fresh authorized lookup restores it",async()=>{
+    fetchGroup.mockResolvedValueOnce(multiSenseBankGroup);
+    render(<LibrarySenseCardV2Session userId="reader" entryId={financeEntry.entryId} initialGroup={multiSenseBankGroup} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
+    await waitFor(()=>expect(fetchGroup).toHaveBeenCalledOnce());
+    expect(screen.getByTestId('library-sense-card-group')).toBeInTheDocument();
+    fetchGroup.mockRejectedValueOnce(new Error('lookup_http_403'));
+    await act(async()=>{await noteHintRead.refresh!();});
+    expect(screen.queryByTestId('library-sense-card-group')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button',{name:'Learn'})).not.toBeInTheDocument();
+    fetchGroup.mockResolvedValueOnce(multiSenseBankGroup);
+    fireEvent.click(screen.getByRole('button',{name:'Retry'}));
+    expect(await screen.findByTestId('library-sense-card-group')).toBeInTheDocument();
+  });
   test("account switch hides the old note and discards a late previous-account response",async()=>{
     const withNotes=(text:string):PlatformHeadwordGroupV2=>({...multiSenseBankGroup,entries:multiSenseBankGroup.entries.map(e=>e.kind==="sense-card"&&e.entryId===furnitureEntry.entryId?{...e,noteMaterial:[{noteId:"teacher-note",ownerUserId:"teacher",text,revision:"1",isOwn:false}]}:e)});
     fetchGroup.mockResolvedValueOnce(withNotes("First account note"));
@@ -376,11 +389,11 @@ describe("LibrarySenseCardV2Session", () => {
     fireEvent.click(within(card).getByRole("button",{name:"Good"}));
     expect(await screen.findByRole("alert")).toHaveTextContent("Saved. Could not reload");
     expect(screen.queryByText("Review saved: Good")).not.toBeInTheDocument();
-    expect(within(card).getByRole("button",{name:"Good"})).toBeDisabled();
+    expect(screen.queryByTestId(`library-sense-card-${furnitureEntry.entryId}`)).not.toBeInTheDocument();
     expect(performAction).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole("button",{name:"Retry"}));
     await waitFor(()=>expect(screen.queryByRole("alert")).not.toBeInTheDocument());
-    expect(within(card).getByRole("button",{name:"Good"})).toBeEnabled();
+    expect(within(screen.getByTestId(`library-sense-card-${furnitureEntry.entryId}`)).getByRole("button",{name:"Good"})).toBeEnabled();
     expect(performAction).toHaveBeenCalledOnce();
   });
 
@@ -1842,7 +1855,7 @@ test("copy stays unavailable during failed article review and returns only after
   fireEvent.click(screen.getByRole("button",{name:"Simulate source changed"}));await waitFor(()=>expect(fetchGroup).toHaveBeenCalledTimes(2));
   openMenu();expect(screen.queryByRole("menuitem",{name:"Copy to my dictionary"})).not.toBeInTheDocument();fireEvent.keyDown(document,{key:"Escape"});
   await act(async()=>refresh.reject(new Error("offline")));
-  openMenu();expect(screen.queryByRole("menuitem",{name:"Copy to my dictionary"})).not.toBeInTheDocument();fireEvent.keyDown(document,{key:"Escape"});
+  expect(screen.queryByTestId(`library-sense-card-${financeEntry.entryId}`)).not.toBeInTheDocument();
   fetchGroup.mockResolvedValueOnce(multiSenseBankGroup);fireEvent.click(screen.getByRole("button",{name:"Retry"}));
   await waitFor(()=>expect(fetchGroup).toHaveBeenCalledTimes(3));await act(async()=>{});
   openMenu();expect(screen.getByRole("menuitem",{name:"Copy to my dictionary"})).toBeInTheDocument();

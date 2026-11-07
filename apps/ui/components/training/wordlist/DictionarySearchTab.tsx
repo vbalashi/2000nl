@@ -811,7 +811,7 @@ export function DictionarySearchTab({
           workspace.results
         }
       >
-        {categorySearchActive ? <LibraryCategoryResults onWordResults={applyCategoryWordResults} onWordCount={setCategoryBulkCount} onSearchComplete={rememberHistory}
+        {unresolvedSource ? null : categorySearchActive ? <LibraryCategoryResults onWordResults={applyCategoryWordResults} onWordCount={setCategoryBulkCount} onSearchComplete={rememberHistory}
           bulkSelected={bulkMode ? (bulkAll ? new Set(pageIds.filter(id=>!currentBulk.articleIds.has(id))) : currentBulk.articleIds) : undefined} bulkAll={bulkAll} bulkExcludedCount={currentBulk.articleIds.size} onBulkSelect={bulkMode ? (id,selected)=>{if(bulkAll && !selected && currentBulk.articleIds.size>=200)return;setSelected([id],selected);} : undefined} appearance={categoryAppearance} userId={userId} onSelectGroup={openGroupDetail} tabsHost={categoryTabsHost} countHost={categoryCountHost}
           interfaceLanguage={interfaceLanguage} query={query} languageCode={searchLanguage} dictionaryId={dictionaryId}
           filters={searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS} material={categoryMaterial}
@@ -833,7 +833,7 @@ export function DictionarySearchTab({
             </button>
           </div>
         ) : null}
-        {searchError && !hasCurrentResults ? null : searchLoading ? (
+        {unresolvedSource ? null : searchError && !hasCurrentResults ? null : searchLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 6 }).map((_, index) => (
               <div
