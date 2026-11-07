@@ -59,6 +59,7 @@ const url=getDbUrl();
    await c.query('insert into private.collection_sharing_subscriptions(user_id,root_id,access_lifetime) values($1,$2,$3)',[viewer,directRoot,directLifetime]);
    expect((await c.query('select count(*)::int n from private.live_collection_access_paths_v1 where user_id=$1 and collection_id=$2',[viewer,list])).rows[0].n).toBe(2);
    const beforeAudience=(await c.query('select private.label_audience_snapshot_v1($1) value',[owner])).rows[0].value;
+   const audienceRevision=(await c.query('select private.label_audience_revision_v1($1) value',[owner])).rows[0].value;
    expect(beforeAudience.paths).toHaveLength(2);
 
    await as(owner);const rotated=await mutate('rotate',1);expect(rotated.invitationCode).not.toBe(opened.invitationCode);expect(rotated.subscriberCount).toBe(1);
@@ -84,6 +85,11 @@ const url=getDbUrl();
    const afterAudience=(await c.query('select private.label_audience_snapshot_v1($1) value',[owner])).rows[0].value;
    expect(afterAudience).not.toEqual(beforeAudience);
    expect(afterAudience.paths).toHaveLength(1);
+   await c.query('savepoint stale_audience');
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
+   await expect(c.query('select commit_label_organization_v1($1,$2,$3)',[0,{type:'update',id:label,name:'changed'},audienceRevision])).rejects.toThrow('label_audience_changed');
+   await c.query('rollback to savepoint stale_audience');
+
    expect((await c.query('select private.label_audience_delta_v1($1,$2) value',[beforeAudience,afterAudience])).rows[0].value)
     .toEqual({added:[],removed:[],pathsChanged:true});
 

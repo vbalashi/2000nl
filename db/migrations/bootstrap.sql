@@ -21,3 +21,4 @@
 \i db/migrations/305_label_share_commands.sql
 \i db/migrations/306_collection_access_paths.sql
 \i db/migrations/307_label_audience_snapshot.sql
+\i db/migrations/308_label_audience_confirmation.sql
