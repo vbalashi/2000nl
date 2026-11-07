@@ -40,3 +40,6 @@
 \i db/migrations/334_group_selected_material_reads.sql
 \i db/migrations/335_group_projection_planning_fence.sql
 \i db/migrations/336_group_publication_badges.sql
+\i db/migrations/337_collection_audience_recipients.sql
+\i db/migrations/338_collection_composition_plans.sql
+\i db/migrations/339_collection_composition_confirmation.sql

@@ -48,9 +48,17 @@ const url=getDbUrl();
    await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);await c.query('set local role authenticated');
    await c.query('select accept_label_share_v1($1)',[opened.invitationCode]);await c.query('reset role');
    expect(await readable(viewer)).toBe(true);expect(await readable(outsider)).toBe(false);
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
+   const removalPlan=(await c.query('select prepare_collection_composition_v1($1,$2) value',[list,{action:'remove',entryIds:[entry]}])).rows[0].value;
+   expect(removalPlan.audience.map((row:{userId:string})=>row.userId)).toEqual([viewer]);
+   await c.query('savepoint unconfirmed_membership');
+   await expect(c.query('select remove_entries_from_user_list($1,$2,$3)',[owner,list,[entry]])).rejects.toThrow('collection_audience_confirmation_required');
+   await c.query('rollback to savepoint unconfirmed_membership');
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);
    const snapshot=(await c.query('select private.independent_copy_snapshot_with_notes_v1($1,$2) value',[viewer,entry])).rows[0].value;
    expect(snapshot.content.headword).toBe('group-author-entry');
    expect(snapshot.revision).toMatch(/^[0-9a-f]{64}$/);
+   expect((await c.query('select private.collection_audience_recipients_v1($1,$2) value',[owner,list])).rows[0].value.map((row:{userId:string})=>row.userId)).toEqual([viewer]);
    expect((await c.query("select collection_id,ownership,available_item_count::int,eligible from private.training_collection_catalog_cohort_v1($1,'',null,null,null,100,null)",[viewer])).rows)
     .toEqual([{collection_id:list,ownership:'received',available_item_count:1,eligible:true}]);
 
