@@ -63,3 +63,4 @@
 \i db/migrations/356_composition_receipt_scope.sql
 \i db/migrations/357_received_entry_collection_addition.sql
 \i db/migrations/358_received_entry_membership_read.sql
+\i db/migrations/359_owned_collection_access_metadata.sql

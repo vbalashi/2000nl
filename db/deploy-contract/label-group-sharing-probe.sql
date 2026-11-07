@@ -28,6 +28,7 @@ BEGIN
    RAISE EXCEPTION 'db-contract-gate: internal group writer exposed: %',routine; END IF;
  END LOOP;
  FOREACH routine IN ARRAY ARRAY[
+ 'public.read_owned_collection_access_metadata_v1(uuid[])'::regprocedure,
  'public.read_label_share_v1(uuid)'::regprocedure,
  'public.command_label_share_v1(uuid,jsonb,boolean)'::regprocedure,
  'public.preview_shared_resource_v1(text)'::regprocedure,
