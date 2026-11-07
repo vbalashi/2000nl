@@ -1137,7 +1137,7 @@
       "clearPage": "Clear this page",
       "add": "Add to collection",
       "choose": "Choose a collection",
-      "preview": "Selected articles: {articles}. Matching meanings: {meanings}.",
+      "preview": "Articles: {articles} · meanings: {meanings}",
       "confirm": "Add meanings",
       "loading": "Checking meanings…",
       "failed": "Could not complete this action. Please try again.",

@@ -1737,7 +1737,7 @@
   "ui.wordsBulk.clearPage": {"source":"Clear this page","translationHash":"81496aeb900c74081581a18ee96cc67313b3b4c2c2278a5d406af2516d1b18bc"},
   "ui.wordsBulk.add": {"source":"Add to collection","translationHash":"73db7dff7c8d91846dbfa37f6c3667c87f8329649c9ae5ad860d69e390cfc190"},
   "ui.wordsBulk.choose": {"source":"Choose a collection","translationHash":"f996ab370338fd1a13c72c9249764b5ad7c7d983eb8234ad0826ad88554c60ca"},
-  "ui.wordsBulk.preview": {"source":"Selected articles: {articles}. Matching meanings: {meanings}.","translationHash":"c0382af0b26e46754622b5ea7ff73c117e44f9c802c20b8dae7c6caa8f8fd54f"},
+  "ui.wordsBulk.preview": {"source":"Articles: {articles} · meanings: {meanings}","translationHash":"dd9d2c98fc8c3a7c8a94c2a974f04b99d11625bd27930938058b54eff9f038f7"},
   "ui.wordsBulk.confirm": {"source":"Add meanings","translationHash":"e6527164342b8080d8e1b5d5ca2d65d9fcc243b39d1ffad74b625b12789a467f"},
   "ui.wordsBulk.loading": {"source":"Checking meanings…","translationHash":"4503b362b1d5dbf7ffa898536c14de2af49677b2df934c5b7f318a0b30b3198d"},
   "ui.wordsBulk.failed": {"source":"Could not complete this action. Please try again.","translationHash":"c07f61b5dc55e764670b9c8cc7b05c01b6990a9420b1bd48a76ea40dc6ea205b"},
