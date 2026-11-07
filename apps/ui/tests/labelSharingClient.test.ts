@@ -24,3 +24,9 @@ test('preserves terminal revision rejections for UI conflict handling',async()=>
  fetcher.mockResolvedValue(Response.json(rejected));
  expect(await executeLabelShareIntent(intent(),new AbortController().signal)).toEqual(rejected);
 });
+
+test('state reads reject a response for another label',async()=>{
+ const {readLabelShareState}=await import('@/lib/collections/sharing/labelSharingClient');
+ fetcher.mockResolvedValue(Response.json({labelId:'22222222-2222-4222-8222-222222222222',isOpen:false,revision:0,invitationCode:null,subscriberCount:0}));
+ await expect(readLabelShareState(id,id,new AbortController().signal)).rejects.toThrow('label_sharing_state_unavailable');
+});

@@ -43,3 +43,19 @@ async function requestLabelShareIntent(intent:LabelShareIntent,signal:AbortSigna
  signal.throwIfAborted();
  return parseLabelShareReceipt(value,stable.command);
 }
+
+import {copyUuid} from '@/lib/platform/independentEntryCopyContract';
+import {parseLabelShareState,type LabelShareState} from './labelSharingContract';
+export async function readLabelShareState(userId:string,labelId:string,signal:AbortSignal):Promise<LabelShareState>{
+ if(!copyUuid(labelId))throw new Error('invalid_share_request');
+ const id=labelId.toLowerCase();signal.throwIfAborted();
+ const headers=await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const response=await platformFetchWithTimeout(`/api/library/label-sharing/state?labelId=${encodeURIComponent(id)}`,{
+  method:'GET',headers,signal,credentials:'same-origin',cache:'no-store',
+ });
+ const value:unknown=response.ok?await response.json():null;
+ await platformV2AuthenticatedJsonHeaders(userId);signal.throwIfAborted();
+ const parsed=parseLabelShareState(value);
+ if(!parsed||parsed.labelId!==id)throw new Error('label_sharing_state_unavailable');
+ return parsed;
+}
