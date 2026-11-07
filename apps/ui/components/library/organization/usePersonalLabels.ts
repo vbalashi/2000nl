@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LabelsRequestError, requestLabels } from "@/lib/collections/labels/client";
 import type { CollectionLabelOperation, CollectionLabelsSnapshot } from "@/lib/collections/labels/model";
+import {useLabelOrganizationPlan} from '../sharing/useLabelOrganizationPlan';
 
 /** Mounted under the account-keyed Library; old account responses never commit. */
 export function usePersonalLabels(active: boolean, userId: string) {
@@ -9,6 +10,8 @@ export function usePersonalLabels(active: boolean, userId: string) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
+  const applyPlan=useCallback((next:CollectionLabelsSnapshot)=>{setSnapshot(next);setError(null);},[]);
+  const audience=useLabelOrganizationPlan(userId,applyPlan);
   const controller = useRef<AbortController>();
   const writeLock = useRef(false);
   const mounted = useRef(true);
@@ -51,6 +54,7 @@ export function usePersonalLabels(active: boolean, userId: string) {
       if (operation.type === "create" && latest.current.labels.some(label => label.id === operation.id)) {
         setError("conflict"); return false;
       }
+      if(process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED==='true')return await audience.save(latest.current.revision,operation);
       const next = await requestLabels(request.signal, {expectedRevision: latest.current.revision, operation}, userId);
       if (mounted.current && !request.signal.aborted) { setSnapshot(next); return true; }
       return false;
@@ -69,5 +73,7 @@ export function usePersonalLabels(active: boolean, userId: string) {
       if (mounted.current) setBusy(false);
     }
   };
-  return {snapshot, error, loading, busy, refresh, mutate};
+  useEffect(()=>{if(audience.state.status==='failed'&&['label_audience_changed','label_catalog_conflict'].includes(audience.state.error??''))void refresh();},[audience.state.status,audience.state.error,refresh]);
+  const planError=audience.state.error&&(audience.state.status==='failed'||audience.state.error==='storage')?['label_audience_changed','label_catalog_conflict'].includes(audience.state.error)?'conflict':audience.state.error==='storage'?'failed':'unavailable':null;
+  return {snapshot, error:error??planError, loading, busy:busy||['preparing','confirming'].includes(audience.state.status), refresh, mutate, audience};
 }

@@ -8,6 +8,7 @@ import {readOwnerShareJournal,ownerShareStore} from '@/lib/collections/sharing/o
 import {OwnedCollectionSharing} from '../sharing/OwnedCollectionSharing';
 import {OwnedLabelSharing} from '../sharing/OwnedLabelSharing';
 import {useLabelSharingCatalog} from '../sharing/useLabelSharingCatalog';
+import {LabelAudienceConfirmation} from '../sharing/LabelAudienceConfirmation';
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
 import { ActionMenu } from "@/components/practice/ui/ActionMenu";
 import overlays from "@/components/practice/library/libraryOverlays.module.css";
@@ -168,6 +169,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
       <div className={s.filters}><label className={s.search}><Search size={16} aria-hidden="true"/><input aria-label={t.search} placeholder={t.search} maxLength={200} value={query} onChange={event=>{setQuery(Array.from(event.target.value).slice(0,100).join(''));setPageSize(20);}}/></label><CollectionSortControl locale={locale} value={sort} onChange={value=>{setSort(value);setPageSize(20);}}/></div>
       {labels.error && !editor && <p role="alert">{message(labels.error)} <button onClick={()=>void labels.refresh()} disabled={labels.busy}>{t.retry}</button></p>}
       {groupSharingEnabled&&sharedLabels.status==='error'&&<p role="alert">{t.sharingStatusError} <button onClick={()=>void sharedLabels.refresh()}>{t.retry}</button></p>}
+      {groupSharingEnabled&&labels.audience?.hasPending&&labels.audience.state.status==='idle'&&<button onClick={labels.audience.resume}>{localizedField('collectionSharing','check')[locale]}</button>}
       {publicationEnabled&&catalog.status==='error'&&<p role="alert">{t.unavailable} <button onClick={()=>void catalog.refresh()}>{t.retry}</button></p>}
       <div className={s.results} aria-busy={labels.loading||publicationEnabled&&catalog.status==='loading'}>
         {publicationEnabled&&catalog.status==='loading'?<p role="status">{t.loading}</p>:!rows.length&&(!publicationEnabled||catalog.status==='ready')&&<p className={s.state}>{query.trim()||effectiveScope!=='all'?t.noResults:t.empty}</p>}
@@ -205,6 +207,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
         <footer><button type="button" disabled={saving} onClick={closeEditor}>{t.cancel}</button><button type="submit" disabled={saving || saveError === "uncertain" || ((editor.kind === "label" || editor.kind === "collection") && !name.trim())}>{saving ? t.saving : editor.kind.startsWith("delete") ? t.remove : t.save}</button></footer>
       </form>
     </DialogSurface>}
+    {groupSharingEnabled&&labels.audience&&['awaiting','confirming','uncertain','checking'].includes(labels.audience.state.status)&&<LabelAudienceConfirmation controller={labels.audience} collections={collections} locale={locale} onConfirm={()=>{void labels.audience.confirm().then(saved=>{if(saved){setEditor(null);void catalog.refresh();void sharedLabels.refresh();}});}} onCheck={()=>{void labels.audience.check().then(saved=>{if(saved){setEditor(null);void catalog.refresh();void sharedLabels.refresh();}});}}/>}
   </div>;
 }
 

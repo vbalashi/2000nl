@@ -1709,5 +1709,13 @@
   "features.labelSharing.openGroup": {"source":"Open group","translationHash":"cd07262af5582b42d1cab0a5c2691f5785e090c36e5b4db083c4e330de5eaf5c"},
   "features.labelSharing.leaveNotice": {"source":"The group will leave your library. Independently granted access and learning progress are kept.","translationHash":"6305d574ffe9435103a9a785841dd789481e2d06139469d21fa9875a5e436295"},
   "features.labelSharing.groups": {"source":"Collection groups","translationHash":"21912bda69bf2c077f5d2a6004bb4d213d62a55240b6a2ba2179e943ea9f1c36"},
-  "features.labelSharing.accessRemains": {"source":"Access remains through these groups: {groups}.","translationHash":"17da7dcf1e55ef120f06e18ead2673c006269cf8c9af9220dbf75c0c947807c6"}
+  "features.labelSharing.accessRemains": {"source":"Access remains through these groups: {groups}.","translationHash":"17da7dcf1e55ef120f06e18ead2673c006269cf8c9af9220dbf75c0c947807c6"},
+  "features.labelSharing.audienceTitle": {"source":"Access changes","translationHash":"0209841713bced86f942ae258cc5c75b182aee94c0ce732d5a1525aa3b744b17"},
+  "features.labelSharing.audienceIntro": {"source":"Changing these labels changes who can access the collections.","translationHash":"d3b1aa8c6e9b5bff82eba43df0e41950472d01fc50fed175e5bd59f5c0db5412"},
+  "features.labelSharing.audienceAdded": {"source":"Gain access: {readers} readers, {collections} collections.","translationHash":"775273f328a7eb3745b1bd2e04372f32f7b704fb3b8092df5ecef8240694fd3c"},
+  "features.labelSharing.audienceRemoved": {"source":"Lose access: {readers} readers, {collections} collections.","translationHash":"d1df5afdaa67291b6ec706f01c0df1790777e56bf26c1f8eabe34085ecc4f34d"},
+  "features.labelSharing.pathsChanged": {"source":"Access paths change. Independent subscriptions are kept.","translationHash":"50a84caab00862e19225377e7a984d7791a723fe59000d53a64ef6394dd6feef"},
+  "features.labelSharing.copyRequired": {"source":"Independent copies of borrowed entries are needed before this change can be published.","translationHash":"bf0998a3e8690b1235e9262b565faaabd81a0f14c15c54e9ef2869fb13a68f13"},
+  "features.labelSharing.saveUncertain": {"source":"You confirmed this change, but its result could not be verified.","translationHash":"0add3d68625276159c3253d2bf436bea7bba3ef3114cdd7bfbc7747a7251ce81"},
+  "features.labelSharing.retrySave": {"source":"Retry the confirmed change","translationHash":"336b546d45c46487d711928d646e01600aeecf3a0765ef27c200b2c653fad794"}
 }

@@ -1935,7 +1935,15 @@
       "openGroup": "Open group",
       "leaveNotice": "The group will leave your library. Independently granted access and learning progress are kept.",
       "groups": "Collection groups",
-      "accessRemains": "Access remains through these groups: {groups}."
+      "accessRemains": "Access remains through these groups: {groups}.",
+      "audienceTitle": "Access changes",
+      "audienceIntro": "Changing these labels changes who can access the collections.",
+      "audienceAdded": "Gain access: {readers} readers, {collections} collections.",
+      "audienceRemoved": "Lose access: {readers} readers, {collections} collections.",
+      "pathsChanged": "Access paths change. Independent subscriptions are kept.",
+      "copyRequired": "Independent copies of borrowed entries are needed before this change can be published.",
+      "saveUncertain": "You confirmed this change, but its result could not be verified.",
+      "retrySave": "Retry the confirmed change"
     }
   },
   "tour": {
