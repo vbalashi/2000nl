@@ -19,9 +19,9 @@ function emphasizedCount(text:string,number:string){
 }
 export function TrainingAvailabilityStrip({state,language,onRetry}:{state:TrainingAvailabilityState;language:OnboardingLanguage;onRetry?:()=>void}){
  const t=getUiMessages(language), copy=localizedSection("trainingAvailability")[language];
- const updating=state.status==="loading"||(state.status==="ready"&&state.refreshing);
+ const updating=state.status==="loading";
  const failed=state.status==="error"||(state.status==="ready"&&state.refreshFailed);
- const value=state.status==="ready"&&!updating&&!failed?state.value:null;
+ const value=state.status==="ready"&&!failed?state.value:null;
  // Keep the previous geometry during a recalculation without presenting stale counts.
  const lastValue=useRef<typeof value>(null);
  if(value) lastValue.current=value;
@@ -44,10 +44,9 @@ export function TrainingAvailabilityStrip({state,language,onRetry}:{state:Traini
      words:emphasizedCount(formatUiCount(language,displayValue.totalWords,copy,"wordCount"),number(displayValue.totalWords)),
      meanings:emphasizedCount(formatUiCount(language,displayValue.totalMeanings,t.librarySearch,"meaningCount"),number(displayValue.totalMeanings))
     })}{" "}
-    {displayValue.totalCards!==displayValue.totalMeanings&&<>{sentence(copy.sentenceCards,{cards:<strong>{number(displayValue.totalCards)}</strong>})}{" "}</>}
+    {sentence(copy.sentenceCards,{cards:<strong>{number(displayValue.totalCards)}</strong>})}{" "}
    </>}
-   {sentence(copy.sentenceProgress,{learning:<strong>{number(displayValue.totalReviews)}</strong>,new:<strong>{number(displayValue.newCards)}</strong>,due:<strong>{number(displayValue.dueToday)}</strong>})}
-   {displayValue.totalCards!==undefined&&displayValue.totalCards>displayValue.totalReviews+displayValue.newCards&&<> {sentence(copy.sentenceOther,{other:<strong>{number(displayValue.totalCards-displayValue.totalReviews-displayValue.newCards)}</strong>})}</>}
+   {sentence(copy.sentenceProgress,{learning:<strong>{number(displayValue.totalReviews)}</strong>,due:<strong>{number(displayValue.dueToday)}</strong>})}
   </p>}
   {(updating||state.status==="idle")&&<p className={local.status} role="status" aria-live="polite">{copy.updating}</p>}
   {failed&&<p role="alert" className={local.error}>{copy.error} <button type="button" className={local.retry} onClick={onRetry}>{t.trainingOverview.retry}</button></p>}

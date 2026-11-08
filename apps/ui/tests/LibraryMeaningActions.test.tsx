@@ -92,8 +92,9 @@ test('unknown membership offers only the full picker; pending quick writes canno
  const props={meaning,language:'en' as const,busy:false,collectionCount:0,onAction:vi.fn(),onCollections:vi.fn()};
  const view=render(<LibraryMeaningActions {...props} currentCollection={{name:'Lesson',included:null,busy:false,onToggle:toggle}}/>);
  fireEvent.click(screen.getByRole('button',{name:'Collections'}));
- expect(screen.getAllByRole('menuitem')).toHaveLength(1);
- fireEvent.keyDown(screen.getByRole('menuitem'),{key:'Escape'});
+ expect(props.onCollections).toHaveBeenCalledOnce();
+ expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+ expect(toggle).not.toHaveBeenCalled();
  view.rerender(<LibraryMeaningActions {...props} currentCollection={{name:'Lesson',included:true,busy:true,onToggle:toggle}}/>);
  fireEvent.click(screen.getByRole('button',{name:'Collections'}));
  const remove=screen.getByRole('menuitem',{name:'Remove from “Lesson”'});expect(remove).toBeDisabled();fireEvent.click(remove);
@@ -117,4 +118,16 @@ test('own-note editor has a separate menu owner and does not trigger learning or
  const meaning=buildLibrarySenseCardGroupModel(multiSenseBankGroup,'en').meanings[1];const note=vi.fn(),learn=vi.fn(),collections=vi.fn();
  render(<LibraryMeaningActions meaning={meaning} language="en" busy={false} collectionCount={0} onAction={learn} onCollections={collections} onEditNote={note}/>);
  const trigger=screen.getByRole('button',{name:getUiMessages('en').library.moreActions});fireEvent.click(trigger);fireEvent.click(screen.getByRole('menuitem',{name:'My note'}));expect(note).toHaveBeenCalledOnce();expect(learn).not.toHaveBeenCalled();expect(collections).not.toHaveBeenCalled();expect(trigger).toHaveFocus();
+});
+
+test('recent collections toggle only the selected meaning and keep the full picker available',()=>{
+ const meaning=buildLibrarySenseCardGroupModel(multiSenseBankGroup,'en').meanings[1];
+ const toggle=vi.fn(), choose=vi.fn();
+ render(<LibraryMeaningActions meaning={meaning} language="en" busy={false} collectionCount={1} onAction={vi.fn()} onCollections={choose}
+   recentCollections={[{id:'one',name:'Lesson',included:true,disabled:false,onToggle:toggle}]}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Collections · 1'}));
+ const item=screen.getByRole('menuitem',{name:'Lesson'});
+ expect(item).toHaveAccessibleDescription('Remove from “Lesson”');
+ fireEvent.click(item);expect(toggle).toHaveBeenCalledWith(true);expect(choose).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByRole('menuitem',{name:'Choose collections…'}));expect(choose).toHaveBeenCalledOnce();
 });

@@ -165,3 +165,12 @@ test('draft preview shows exact selected meanings independently of article total
  expect(mocked.fetchPage).toHaveBeenCalledTimes(2);
  expect(mocked.fetchPage.mock.calls[1][0].libraryScope.filters.vocabulary.meanings).toBe(2);
 });
+
+test('unchanged idle rerenders retain the library count without restarting the preview',async()=>{
+ mocked.fetchPage.mockResolvedValue({librarySearch:{totalGroups:73,totalMeanings:191}});
+ const view=render(<AccountLibraryFilters {...props} query=""/>);
+ await screen.findByText('73 articles · 191 meanings');
+ view.rerender(<AccountLibraryFilters {...props} query=""/>);
+ expect(screen.getByText('73 articles · 191 meanings')).toBeInTheDocument();
+ expect(mocked.fetchPage).toHaveBeenCalledTimes(1);
+});

@@ -8,6 +8,7 @@ import {
 } from "@/components/training/wordlist/DictionarySearchTab";
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
 import type { DictionaryEntry } from "@/lib/types";
+import {buildLibraryHeadwordGroupResults} from '@/components/training/wordlist/libraryHeadwordGroupResults';
 
 const fetchGroupPage = vi.fn();
 const countLibraryGroups = vi.fn().mockResolvedValue(0);
@@ -795,6 +796,7 @@ test("approved Library browses immediately with server totals and cursor paging"
   render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:""}}/></AccountMaterialProvider>);
   await screen.findByTestId("library-headword-group-group-goed-homograph");
   expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({query:"",cursor:null,libraryScope:{dictionaryIds:null,filters:{parts:[],article:null}}}));
+  fireEvent.click(screen.getByRole("button", {name:"42 articles"}));
   expect(screen.getByText("Found: 42")).toBeInTheDocument();
   expect(screen.getByText("1 / 1")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button",{name:"Next"}));
@@ -965,6 +967,7 @@ test('applied counter uses selected meaning totals and discards old-scope late t
  const oldRead=deferred<unknown>();
  fetchGroupPage.mockReset().mockResolvedValueOnce({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:73,totalMeanings:191,matchingEntryIds:[]}}).mockReturnValueOnce(oldRead.promise).mockResolvedValueOnce({groups:[nextPageGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:73,totalMeanings:115,matchingEntryIds:[]}});
  const view=render(<Harness locale="en" initial={{query:'goed'}}/>);
+ fireEvent.click(await screen.findByRole('button',{name:'73 articles'}));
  await screen.findByText('73 articles · 191 meanings');
  fireEvent.change(screen.getByRole('textbox',{name:'Search words'}),{target:{value:'old'}});
  await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalledTimes(2));
@@ -975,4 +978,50 @@ test('applied counter uses selected meaning totals and discards old-scope late t
  expect(screen.queryByText('73 articles · 191 meanings')).toBeNull();
  expect(screen.getByText('73 articles · 115 meanings')).toBeInTheDocument();
  view.unmount();
+});
+
+test('bulk article choices persist across pages and page selection stays page-scoped',async()=>{
+ const {AccountMaterialProvider}=await import('@/components/practice/material/AccountMaterialProvider');
+ readableSources.mockReset().mockResolvedValue([source(scopeB,'Enabled B')]);
+ fetchGroupPage.mockReset().mockImplementation(async(input:{cursor:string|null})=>input.cursor
+  ? {groups:[nextPageGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:51,totalMeanings:51,matchingEntryIds:['entry-goed-next']}}
+  : {groups:[firstGroup],selectedTierComplete:false,nextGroupCursor:'page-two',librarySearch:{totalGroups:51,totalMeanings:51,matchingEntryIds:['entry-goed-bn']}});
+ render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:''}}/></AccountMaterialProvider>);
+ const first=await screen.findByTestId('library-headword-group-group-goed-main');
+ fireEvent.click(screen.getByRole('button',{name:'51 articles'}));
+ fireEvent.click(screen.getByRole('menuitem',{name:'Select articles'}));
+ fireEvent.click(first);
+ expect(screen.getByRole('button',{name:'Selected: 1'})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Next'}));
+ await screen.findByTestId('library-headword-group-group-goed-next-page');
+ fireEvent.click(screen.getByRole('button',{name:'Selected: 1'}));
+ fireEvent.click(screen.getByRole('menuitem',{name:'Select this page'}));
+ expect(screen.getByRole('button',{name:'Selected: 2'})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Selected: 2'}));
+ fireEvent.click(screen.getByRole('menuitem',{name:'Clear this page'}));
+ expect(screen.getByRole('button',{name:'Selected: 1'})).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Previous'}));
+ expect(await screen.findByTestId('library-headword-group-group-goed-main')).toHaveAttribute('aria-pressed','true');
+});
+
+test('whole-filter selection can exclude a row without a checkbox',async()=>{
+ const {AccountMaterialProvider}=await import('@/components/practice/material/AccountMaterialProvider');
+ readableSources.mockReset().mockResolvedValue([source(scopeB,'Enabled B')]);
+ fetchGroupPage.mockReset().mockResolvedValue({groups:[firstGroup],selectedTierComplete:true,nextGroupCursor:null,librarySearch:{totalGroups:1,totalMeanings:2,matchingEntryIds:['entry-goed-bn']}});
+ const view=render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:''}}/></AccountMaterialProvider>);
+ const row=await screen.findByTestId('library-headword-group-group-goed-main');
+ fireEvent.click(screen.getByRole('button',{name:'1 article'}));
+ fireEvent.click(screen.getByRole('menuitem',{name:'Select all in this filter (1)'}));
+ expect(row).toHaveAttribute('aria-pressed','true');
+ expect(view.container.querySelector('input[type=checkbox]')).toBeNull();
+ fireEvent.click(row);expect(row).toHaveAttribute('aria-pressed','false');
+ expect(screen.getByRole('button',{name:'All − 1'})).toBeInTheDocument();
+});
+test('an unavailable material source never renders retained article rows',async()=>{
+ await act(async()=>{render(<Harness locale="en" collection sourceRead={{collectionId:'owned-list',type:'user',status:'error',onRetry:vi.fn()}} initial={{query:'',applyListFilter:true,groupResults:buildLibraryHeadwordGroupResults([firstGroup]),groupTotal:1}}/>);});
+ expect(document.querySelector('[data-group-id="group-goed-main"]')).not.toBeInTheDocument();
+ expect(screen.queryByText('goed')).not.toBeInTheDocument();
+ expect(screen.queryByTestId('library-group-pagination')).not.toBeInTheDocument();
+ expect(screen.queryByRole('button',{name:/^1 article$/})).not.toBeInTheDocument();
+ expect(screen.queryByRole('menuitem',{name:'Select articles'})).not.toBeInTheDocument();
 });

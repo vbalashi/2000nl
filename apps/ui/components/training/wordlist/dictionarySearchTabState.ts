@@ -7,6 +7,7 @@ export type DictionarySearchTabState = {
   searchCategory?: import("@/lib/platform/dictionaryCategorySearch").DictionarySearchCategory;
   applyListFilter: boolean;
   collectionId?: string | null;
+  collectionOwnership?: "owned" | "received" | null;
   labelId?: string | null;
   labelName?: string | null;
   wordResults: DictionaryEntry[];

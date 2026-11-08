@@ -1,4 +1,5 @@
 "use client";
+import type { WordListSummary, EntryLearningListMembership } from "@/lib/types";
 import {AdditionalCardTranslationProvider,useAdditionalTranslationLanguage} from "@/components/practice/article/AdditionalCardTranslation";
 import {useMeaningLearningActions} from './useMeaningLearningActions';
 import {MeaningLearningProgress} from '@/components/practice/MeaningLearningProgress';
@@ -76,6 +77,10 @@ type Props = {
   activeMeaningId?: string | null;
   onActiveMeaningChange?: (entryId: string) => void;
   onRequestTranslation?: (entryId: string, cardTypeId: CardTypeId) => void;
+  recentCollections?: WordListSummary[];
+  recentMemberships?: Record<string, EntryLearningListMembership[]>;
+  recentMembershipReady?: boolean;
+  onToggleRecentCollection?: (meaning: LibrarySenseCardModel, list: WordListSummary, included: boolean) => void;
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
   onReport?: (meaning: LibrarySenseCardModel) => void;
@@ -123,6 +128,7 @@ export function LibrarySenseCardGroup({
   activeMeaningId = null,
   onActiveMeaningChange,
   onRequestTranslation,
+  recentCollections, recentMemberships, recentMembershipReady, onToggleRecentCollection,
   onOpenCollections,
   onTrainNext,
   onReport,
@@ -447,6 +453,7 @@ export function LibrarySenseCardGroup({
                   onRetryTranslation={() =>
                     onRequestTranslation?.(meaning.entryId, meaning.cardTypeId)
                   }
+                  recentCollections={recentCollections} recentMemberships={recentMemberships} recentMembershipReady={recentMembershipReady} onToggleRecentCollection={onToggleRecentCollection}
                   onOpenCollections={onOpenCollections}
                   onTrainNext={onTrainNext}
                   onReport={onReport}
@@ -497,6 +504,7 @@ function MeaningCardBody({
   onToggleExpanded,
   onActiveMeaningChange,
   onRetryTranslation,
+  recentCollections, recentMemberships, recentMembershipReady, onToggleRecentCollection,
   onOpenCollections,
   onTrainNext,
   onReport,
@@ -529,6 +537,10 @@ function MeaningCardBody({
   onToggleExpanded: () => void;
   onActiveMeaningChange?: (entryId: string) => void;
   onRetryTranslation: () => void;
+  recentCollections?: WordListSummary[];
+  recentMemberships?: Record<string, EntryLearningListMembership[]>;
+  recentMembershipReady?: boolean;
+  onToggleRecentCollection?: (meaning: LibrarySenseCardModel, list: WordListSummary, included: boolean) => void;
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
   onReport?: (meaning: LibrarySenseCardModel) => void;
@@ -674,6 +686,7 @@ function MeaningCardBody({
                   busy: currentCollection.busy,
                   onToggle: () => { if (included !== null) onToggleCurrentCollection(meaning, included); },
                 } : undefined}
+                recentCollections={recentCollections?.map(list => ({id:list.id,name:list.name,included:(recentMemberships?.[meaning.entryId] ?? []).some(item => item.listId === list.id && item.listType === "user"),disabled:!recentMembershipReady,onToggle:(included:boolean)=>onToggleRecentCollection?.(meaning,list,included)}))}
                 onCollections={onOpenCollections ? () => { onActiveMeaningChange?.(meaning.entryId); onOpenCollections(meaning); } : undefined}
                 onTrainNext={onTrainNext ? () => { onActiveMeaningChange?.(meaning.entryId); onTrainNext(meaning); } : undefined}
               onReport={onReport && reportableEntryIds?.has(meaning.entryId) ? () => onReport(meaning) : undefined}

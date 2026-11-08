@@ -15,3 +15,9 @@ test('exact references reject unsolicited IDs and never follow a catalog cursor'
 test('account check after transport suppresses a previous-account result',async()=>{
  mock.headers.mockResolvedValueOnce({}).mockRejectedValueOnce(Error('account_changed'));mock.fetch.mockResolvedValue(Response.json({collections:[row],nextCursor:null}));await expect(readTrainingCollectionPage('viewer','nl','',null,new AbortController().signal)).rejects.toThrow('account_changed');
 });
+
+test('training page sends explicit ownership and rejects another kind in its response',async()=>{
+ mock.fetch.mockResolvedValueOnce(Response.json({collections:[row],nextCursor:null}));
+ await expect(readTrainingCollectionPage('viewer','nl','',null,new AbortController().signal,'owned')).rejects.toThrow('contract_invalid');expect(mock.fetch.mock.calls[0][0]).toContain('ownership=owned');
+ mock.fetch.mockResolvedValueOnce(Response.json({collections:[row],nextCursor:null}));expect((await readTrainingCollectionPage('viewer','nl','',null,new AbortController().signal,'received')).collections).toHaveLength(1);
+});

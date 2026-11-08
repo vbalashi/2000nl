@@ -1,0 +1,105 @@
+import {randomUUID} from 'node:crypto';
+import {Pool} from 'pg';
+import {beforeAll,afterAll,describe,test,expect} from 'vitest';
+import {getDbUrl,runMigrations,ensureUserWithSettings,withTransaction} from './dbTestUtils';
+const url=getDbUrl();
+(url?describe:describe.skip)('label group invitation lifecycle',()=>{
+ const pool=new Pool({connectionString:url});
+ beforeAll(()=>runMigrations(pool)); afterAll(()=>pool.end());
+ test('preview never joins; rotation preserves subscribers; reopen requires explicit rejoin',async()=>{
+  await withTransaction(pool,async c=>{
+   const owner=randomUUID(),viewer=randomUUID(),label=randomUUID();
+   await ensureUserWithSettings(c,owner);await ensureUserWithSettings(c,viewer);
+   await c.query('insert into private.collection_labels(user_id,id,name) values($1,$2,$3)',[owner,label,'group']);
+   const as=async(user:string)=>{await c.query('reset role');await c.query("select set_config('request.jwt.claim.sub',$1,true)",[user]);await c.query('set local role authenticated');};
+   const mutate=async(action:string,revision:number)=>(await c.query('select mutate_label_share_v1($1,$2,$3) value',[label,action,revision])).rows[0].value;
+   await as(owner);
+   const operation=randomUUID(),command={action:'open',labelId:label,expectedRevision:0};
+   const executed=(await c.query('select command_label_share_v1($1,$2) value',[operation,command])).rows[0].value;
+   const opened=executed.result;expect(opened.isOpen).toBe(true);
+   expect((await c.query('select command_label_share_v1($1,$2,true) value',[operation,command])).rows[0].value).toEqual(executed);
+   await c.query('savepoint operation_conflict');
+   await expect(c.query('select command_label_share_v1($1,$2)',[operation,{...command,action:'close'}])).rejects.toThrow('share_operation_conflict');
+   await c.query('rollback to savepoint operation_conflict');
+   await as(viewer);
+   expect((await c.query('select read_label_sharing_catalog_v1() value')).rows[0].value).toEqual({owned:[],received:[]});
+   expect((await c.query('select preview_shared_resource_v1($1) value',[opened.invitationCode])).rows[0].value.kind).toBe('label');
+   await c.query('savepoint unauthorized_management');
+   await expect(c.query('select read_label_share_v1($1)',[label])).rejects.toThrow('share_unavailable');
+   await c.query('rollback to savepoint unauthorized_management');
+   await c.query('savepoint unauthorized_group');
+   await expect(c.query('select read_label_share_collections_v1($1)',[label])).rejects.toThrow('share_unavailable');
+   await c.query('rollback to savepoint unauthorized_group');
+   expect((await c.query('select preview_label_share_v1($1) value',[opened.invitationCode])).rows[0].value.alreadyAdded).toBe(false);
+   expect((await c.query('select accept_label_share_v1($1) value',[opened.invitationCode])).rows[0].value.alreadyAdded).toBe(true);
+   expect((await c.query('select read_label_sharing_catalog_v1() value')).rows[0].value.received)
+    .toEqual([{labelId:label,name:'group',collectionCount:0}]);
+   await c.query('reset role');
+   const child=randomUUID(),list=randomUUID();
+   await c.query('insert into private.collection_labels(user_id,id,parent_id,name) values($1,$2,$3,$4)',[owner,child,label,'child']);
+   await c.query('insert into user_word_lists(id,user_id,name) values($1,$2,$3)',[list,owner,'future']);
+   await c.query('insert into private.collection_label_assignments values($1,$2,$3)',[owner,list,child]);
+   const scope=async()=>(await c.query('select collection_id from private.live_label_sharing_collections_v1 where user_id=$1',[viewer])).rows;
+   expect(await scope()).toEqual([{collection_id:list}]);
+   expect((await c.query('select collection_id,root_kind from private.live_collection_access_paths_v1 where user_id=$1',[viewer])).rows)
+    .toEqual([{collection_id:list,root_kind:'label'}]);
+
+   await as(viewer);
+   expect((await c.query('select read_label_share_collections_v1($1) value',[label])).rows[0].value.collections).toEqual([{collectionId:list,name:'future'}]);
+   await c.query('reset role');
+   await c.query('insert into private.collection_label_assignments values($1,$2,$3)',[owner,list,label]);
+   expect(await scope()).toEqual([{collection_id:list}]);
+   await c.query('delete from private.collection_label_assignments where label_id=$1',[label]);
+   await c.query('update private.collection_labels set parent_id=null where id=$1',[child]);
+   expect(await scope()).toEqual([]);
+   await c.query('update private.collection_labels set parent_id=$1 where id=$2',[label,child]);
+   expect(await scope()).toEqual([{collection_id:list}]);
+   const directRoot=randomUUID(),directLifetime=randomUUID();
+   await c.query('insert into private.collection_sharing_roots(id,owner_user_id,collection_id,is_open,access_lifetime) values($1,$2,$3,true,$4)',[directRoot,owner,list,directLifetime]);
+   await c.query('insert into private.collection_sharing_subscriptions(user_id,root_id,access_lifetime) values($1,$2,$3)',[viewer,directRoot,directLifetime]);
+   expect((await c.query('select count(*)::int n from private.live_collection_access_paths_v1 where user_id=$1 and collection_id=$2',[viewer,list])).rows[0].n).toBe(2);
+   const beforeAudience=(await c.query('select private.label_audience_snapshot_v1($1) value',[owner])).rows[0].value;
+   const audienceRevision=(await c.query('select private.label_audience_revision_v1($1) value',[owner])).rows[0].value;
+   expect(beforeAudience.paths).toHaveLength(2);
+
+   await as(owner);const rotated=await mutate('rotate',1);expect(rotated.invitationCode).not.toBe(opened.invitationCode);expect(rotated.subscriberCount).toBe(1);
+   await as(viewer);
+   await c.query('savepoint stale_invitation');
+   await expect(c.query('select accept_label_share_v1($1)',[opened.invitationCode])).rejects.toThrow('share_unavailable');
+   await c.query('rollback to savepoint stale_invitation');
+   await c.query('savepoint foreign_write');
+   await expect(c.query('select mutate_label_share_v1($1,$2,$3)',[label,'close',2])).rejects.toThrow('share_unavailable');
+   await c.query('rollback to savepoint foreign_write');
+   await as(owner);
+   await c.query('savepoint stale_revision');
+   await expect(c.query('select mutate_label_share_v1($1,$2,$3)',[label,'close',1])).rejects.toThrow('share_revision_conflict');
+   await c.query('rollback to savepoint stale_revision');
+   expect((await c.query('select read_label_share_v1($1) value',[label])).rows[0].value.subscriberCount).toBe(1);
+   const rejectedOperation=randomUUID(),rejectedCommand={action:'close',labelId:label,expectedRevision:1};
+   const rejected=(await c.query('select command_label_share_v1($1,$2) value',[rejectedOperation,rejectedCommand])).rows[0].value;
+   expect(rejected.status).toBe('rejected');expect(rejected.reason).toBe('share_revision_conflict');
+   expect((await c.query('select command_label_share_v1($1,$2,true) value',[rejectedOperation,rejectedCommand])).rows[0].value).toEqual(rejected);
+   const closed=await mutate('close',2);expect(closed.subscriberCount).toBe(0);
+   await c.query('reset role');
+   expect((await c.query('select root_kind from private.live_collection_access_paths_v1 where user_id=$1 and collection_id=$2',[viewer,list])).rows).toEqual([{root_kind:'collection'}]);
+   const afterAudience=(await c.query('select private.label_audience_snapshot_v1($1) value',[owner])).rows[0].value;
+   expect(afterAudience).not.toEqual(beforeAudience);
+   expect(afterAudience.paths).toHaveLength(1);
+   await c.query('savepoint stale_audience');
+   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
+   await expect(c.query('select commit_label_organization_v1($1,$2,$3)',[0,{type:'update',id:label,name:'changed'},audienceRevision])).rejects.toThrow('label_audience_changed');
+   await c.query('rollback to savepoint stale_audience');
+
+   expect((await c.query('select private.label_audience_delta_v1($1,$2) value',[beforeAudience,afterAudience])).rows[0].value)
+    .toEqual({added:[],removed:[],pathsChanged:true});
+
+   await as(owner);
+
+   const reopened=await mutate('open',3);expect(reopened.invitationCode).not.toBe(rotated.invitationCode);expect(reopened.subscriberCount).toBe(0);
+   await as(viewer);expect((await c.query('select preview_label_share_v1($1) value',[reopened.invitationCode])).rows[0].value.alreadyAdded).toBe(false);
+   await c.query('select accept_label_share_v1($1)',[reopened.invitationCode]);
+   await c.query('select unsubscribe_label_share_v1($1)',[label]);
+   expect((await c.query('select preview_label_share_v1($1) value',[reopened.invitationCode])).rows[0].value.alreadyAdded).toBe(false);
+  });
+ });
+});

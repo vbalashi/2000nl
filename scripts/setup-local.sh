@@ -23,7 +23,8 @@ psql "$target" -X -v ON_ERROR_STOP=1 -f db/test-fixtures/search_multisource.sql
 psql "$target" -X -v ON_ERROR_STOP=1 -f db/test-fixtures/training_smoke.sql
 # Demo entries need the same derived search documents as imported entries.
 psql "$target" -X -v ON_ERROR_STOP=1 -c "SELECT public.refresh_dictionary_search_document(id, 2) FROM public.word_entries" >/dev/null
-psql "$target" -X -v ON_ERROR_STOP=1 -f db/deploy-contract/postflight-289.sql
+postflight_probe="$(node -e 'process.stdout.write(require("./packages/shared/deployment/db-contract.json").postflightProbe)')"
+psql "$target" -X -v ON_ERROR_STOP=1 -f "$postflight_probe"
 read -r contract_id migration_id < <(node -e 'const c=require("./packages/shared/deployment/db-contract.json");process.stdout.write(c.contractId+" "+(c.migrations.at(-1)?.migrationId??c.baseline.migrationId)+"\n")')
 [[ "$contract_id" =~ ^[a-z0-9-]+$ && "$migration_id" =~ ^[0-9]+$ ]]
 app_commit=0000000000000000000000000000000000000000

@@ -95,7 +95,10 @@ async function waiting(pool:Pool,pid:number){for(let n=0;n<200;n++){if((await po
         const aPid=(await a.query("select pg_backend_pid() pid")).rows[0].pid,bPid=(await b.query("select pg_backend_pid() pid")).rows[0].pid;
         const change=async()=>{
           if(kind==="close")return b.query("select private.mutate_collection_share_v1($1,'close',$2,1)",[randomUUID(),f.roots[0].list]);
-          if(kind==="remove")return b.query("delete from user_word_list_items where list_id=$1 and word_id=$2",[f.roots[0].list,f.entry]);
+          if(kind==="remove"){
+            const plan=(await b.query('select prepare_collection_composition_v1($1,$2) payload',[f.roots[0].list,{action:'remove',entryIds:[f.entry]}])).rows[0].payload;
+            return b.query('select confirm_collection_composition_v1($1)',[plan.planId]);
+          }
           if(kind==="delete")return b.query("delete from user_word_lists where id=$1",[f.roots[0].list]);
           if(kind==="unsubscribe"){await user(b,f.viewer);return b.query("select private.unsubscribe_collection_share_v1($1,$2)",[randomUUID(),f.roots[0].list]);}
           return b.query("select write_entry_note_v1($1,1,'changed teacher')",[f.entry]);

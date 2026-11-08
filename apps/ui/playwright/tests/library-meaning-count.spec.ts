@@ -12,9 +12,13 @@ for(const profile of [{name:'mobile-ru',width:320,height:740,language:'ru'},{nam
  const nav=page.locator(profile.width<700?'[data-app-mobile-navigation="tabs"]':'[data-app-primary-navigation="desktop"]');
  await nav.getByRole('button').nth(1).click();
  const label=profile.language==='ru'?'73 статьи · 115 значений':'73 articles · 115 meanings';
- await expect(page.getByText(label,{exact:true})).toBeVisible();
- const counter=page.getByText(label,{exact:true});
+ const counter=page.getByRole('button',{name:profile.language==='ru'?'73 статьи':'73 articles',exact:true});
+ await expect(counter).toBeVisible();
  expect(await counter.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
  expect(await page.getByTestId('library-workspace').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+ await counter.click();
+ const details=page.getByRole('menu',{name:label,exact:true});
+ await expect(details.getByText(label,{exact:true})).toBeVisible();
+ expect(await details.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
  await page.screenshot({path:info.outputPath('dual-count.png'),fullPage:true});
 });

@@ -1,7 +1,8 @@
+import {parseSharedCatalogGroups,type SharedCatalogGroup} from './sharedCatalogPathContract';
 import { copyUuid } from '@/lib/platform/independentEntryCopyContract';
 export type ReceivedCatalogCursor = { id: string; key: string; scope: string };
 export type ReceivedCatalogQuery = { query: string; sort: 'name'|'recent'|'count'; scope: 'all'|'unlabelled'|'label'; labelId: string|null; cursor: ReceivedCatalogCursor|null; limit: number };
-export type ReceivedCollection = { id:string; name:string; createdAt:string; addedAt:string; ownerUserId:string; role:'viewer'; itemCount:number; labelIds:string[] };
+export type ReceivedCollection = { id:string; name:string; createdAt:string; addedAt:string; ownerUserId:string; role:'viewer'; itemCount:number; labelIds:string[]; directSubscription:boolean; groups:SharedCatalogGroup[] };
 export type ReceivedCatalogPage = { revision:number; collections:ReceivedCollection[]; nextCursor:ReceivedCatalogCursor|null };
 const record=(v:unknown):v is Record<string,unknown>=>Boolean(v)&&typeof v==='object'&&!Array.isArray(v);
 const keys=(v:Record<string,unknown>,allowed:string[])=>Object.keys(v).length===allowed.length&&Object.keys(v).every(k=>allowed.includes(k));
@@ -24,10 +25,11 @@ export function parseReceivedCatalogPage(value:unknown,limit:number,principalId?
   !Array.isArray(value.collections)||value.collections.length>limit)return null;
  const ids=new Set<string>();const collections:ReceivedCollection[]=[];
  for(const row of value.collections){
-  if(!record(row)||!keys(row,['id','name','createdAt','addedAt','ownerUserId','role','itemCount','labelIds'])||!copyUuid(row.id)||ids.has(row.id.toLowerCase())||
+  if(!record(row)||!keys(row,['id','name','createdAt','addedAt','ownerUserId','role','itemCount','labelIds','directSubscription','groups'])||!copyUuid(row.id)||ids.has(row.id.toLowerCase())||
    !text(row.name,1000)||!timestamp(row.createdAt)||!timestamp(row.addedAt)||!copyUuid(row.ownerUserId)||row.ownerUserId.toLowerCase()===principalId?.toLowerCase()||row.role!=='viewer'||
    !Number.isSafeInteger(row.itemCount)||Number(row.itemCount)<0||!Array.isArray(row.labelIds)||row.labelIds.length>1000||row.labelIds.some(id=>!copyUuid(id))||
-   new Set(row.labelIds.map(id=>id.toLowerCase())).size!==row.labelIds.length)return null;
+   new Set(row.labelIds.map(id=>id.toLowerCase())).size!==row.labelIds.length||typeof row.directSubscription!=='boolean'
+   ||!parseSharedCatalogGroups(row.groups)||(!row.directSubscription&&(row.groups as unknown[]).length===0))return null;
   ids.add(row.id.toLowerCase());collections.push({...row,id:row.id.toLowerCase(),ownerUserId:row.ownerUserId.toLowerCase(),labelIds:row.labelIds.map(id=>id.toLowerCase())} as ReceivedCollection);
  }
  const nextCursor=value.nextCursor===null?null:parseReceivedCatalogCursor(value.nextCursor);

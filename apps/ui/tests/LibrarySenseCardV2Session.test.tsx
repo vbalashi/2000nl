@@ -1,3 +1,5 @@
+const compositionCalls=vi.hoisted(()=>({prepare:vi.fn(),confirm:vi.fn(),read:vi.fn()}));
+vi.mock('@/lib/collections/sharing/collectionCompositionClient',()=>({prepareCollectionComposition:compositionCalls.prepare,confirmCollectionComposition:compositionCalls.confirm,readCollectionCompositionReceipt:compositionCalls.read}));
 const selectedRead=vi.hoisted(()=>vi.fn());
 vi.mock('@/lib/collections/sharing/selectedMembership',()=>({readSelectedMembership:selectedRead}));
 const noteHintRead=vi.hoisted(()=>({refresh:undefined as undefined|(()=>void|Promise<unknown>),blocked:undefined as undefined|(()=>boolean)}));
@@ -286,6 +288,19 @@ describe("LibrarySenseCardV2Session", () => {
     if(outcome==="updated")expect(screen.getByText("Updated note")).toBeInTheDocument();else expect(screen.queryByText("Current note")).not.toBeInTheDocument();
     expect(performAction).not.toHaveBeenCalled();
   });
+  test("a denied refresh removes the cached card and a fresh authorized lookup restores it",async()=>{
+    fetchGroup.mockResolvedValueOnce(multiSenseBankGroup);
+    render(<LibrarySenseCardV2Session userId="reader" entryId={financeEntry.entryId} initialGroup={multiSenseBankGroup} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
+    await waitFor(()=>expect(fetchGroup).toHaveBeenCalledOnce());
+    expect(screen.getByTestId('library-sense-card-group')).toBeInTheDocument();
+    fetchGroup.mockRejectedValueOnce(new Error('lookup_http_403'));
+    await act(async()=>{await noteHintRead.refresh!();});
+    expect(screen.queryByTestId('library-sense-card-group')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button',{name:'Learn'})).not.toBeInTheDocument();
+    fetchGroup.mockResolvedValueOnce(multiSenseBankGroup);
+    fireEvent.click(screen.getByRole('button',{name:'Retry'}));
+    expect(await screen.findByTestId('library-sense-card-group')).toBeInTheDocument();
+  });
   test("account switch hides the old note and discards a late previous-account response",async()=>{
     const withNotes=(text:string):PlatformHeadwordGroupV2=>({...multiSenseBankGroup,entries:multiSenseBankGroup.entries.map(e=>e.kind==="sense-card"&&e.entryId===furnitureEntry.entryId?{...e,noteMaterial:[{noteId:"teacher-note",ownerUserId:"teacher",text,revision:"1",isOwn:false}]}:e)});
     fetchGroup.mockResolvedValueOnce(withNotes("First account note"));
@@ -374,11 +389,11 @@ describe("LibrarySenseCardV2Session", () => {
     fireEvent.click(within(card).getByRole("button",{name:"Good"}));
     expect(await screen.findByRole("alert")).toHaveTextContent("Saved. Could not reload");
     expect(screen.queryByText("Review saved: Good")).not.toBeInTheDocument();
-    expect(within(card).getByRole("button",{name:"Good"})).toBeDisabled();
+    expect(screen.queryByTestId(`library-sense-card-${furnitureEntry.entryId}`)).not.toBeInTheDocument();
     expect(performAction).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole("button",{name:"Retry"}));
     await waitFor(()=>expect(screen.queryByRole("alert")).not.toBeInTheDocument());
-    expect(within(card).getByRole("button",{name:"Good"})).toBeEnabled();
+    expect(within(screen.getByTestId(`library-sense-card-${furnitureEntry.entryId}`)).getByRole("button",{name:"Good"})).toBeEnabled();
     expect(performAction).toHaveBeenCalledOnce();
   });
 
@@ -544,6 +559,41 @@ describe("LibrarySenseCardV2Session", () => {
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(screen.queryByRole("button", { name: "Train next" })).not.toBeInTheDocument();
     expect(trainNext).not.toHaveBeenCalled();
+  });
+
+  test("shared collection changes ask for confirmation before saving", async () => {
+    vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');sessionStorage.clear();
+    const list={id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',name:'Lesson',type:'user' as const};
+    const planId='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    compositionCalls.prepare.mockResolvedValue({planId,collectionId:list.id,action:'remove',audience:[{userId:'reader',paths:[{kind:'collection'}]}]});
+    compositionCalls.confirm.mockResolvedValue({planId,collectionId:list.id,status:'committed'});
+    fetchMemberships.mockResolvedValueOnce(new Map([[financeEntry.entryId,[membership(list.id)]]])).mockResolvedValue(new Map());
+    const updated=vi.fn();render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} initialGroup={multiSenseBankGroup} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" userId="owner" userLists={[list]} currentCollection={list} onListsUpdated={updated}/>);
+    const card=await screen.findByTestId(`library-sense-card-${financeEntry.entryId}`);
+    await waitFor(()=>expect(card).toHaveAttribute('data-current-collection','included'));
+    fireEvent.click(within(card).getByRole('button',{name:'Collections · 1'}));
+    fireEvent.click(screen.getByRole('menuitem',{name:'Remove from “Lesson”'}));
+    const dialog=await screen.findByRole('dialog',{name:'Change collection'});
+    expect(compositionCalls.confirm).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole('button',{name:'Confirm'}));
+    await waitFor(()=>expect(compositionCalls.confirm).toHaveBeenCalledOnce());
+    await waitFor(()=>expect(updated).toHaveBeenCalled());
+    expect(removeFromList).not.toHaveBeenCalled();vi.unstubAllEnvs();
+  });
+
+  test("changing the displayed word hides a previous pending audience confirmation", async () => {
+    vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');sessionStorage.clear();compositionCalls.confirm.mockClear();
+    const list={id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',name:'Lesson',type:'user' as const};
+    let finish!:(value:unknown)=>void;compositionCalls.prepare.mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));
+    fetchMemberships.mockResolvedValue(new Map([[financeEntry.entryId,[membership(list.id)]]]));
+    const props={initialGroup:multiSenseBankGroup,headword:'bank',contentLanguageCode:'nl',translationTargetLanguageCode:null,interfaceLanguage:'en' as const,userId:'owner',userLists:[list],currentCollection:list};
+    const view=render(<LibrarySenseCardV2Session {...props} entryId={financeEntry.entryId}/>);
+    const card=await screen.findByTestId(`library-sense-card-${financeEntry.entryId}`);await waitFor(()=>expect(card).toHaveAttribute('data-current-collection','included'));
+    fireEvent.click(within(card).getByRole('button',{name:'Collections · 1'}));fireEvent.click(screen.getByRole('menuitem',{name:'Remove from “Lesson”'}));
+    await waitFor(()=>expect(compositionCalls.prepare).toHaveBeenCalled());
+    view.rerender(<LibrarySenseCardV2Session {...props} entryId={furnitureEntry.entryId}/>);
+    await act(async()=>finish({planId:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',collectionId:list.id,action:'remove',audience:[{userId:'reader',paths:[{kind:'collection'}]}]}));
+    expect(screen.queryByRole('dialog',{name:'Change collection'})).not.toBeInTheDocument();expect(compositionCalls.confirm).not.toHaveBeenCalled();vi.unstubAllEnvs();
   });
 
   test("quick collection actions target the clicked meaning and refresh membership without opening the picker", async () => {
@@ -1805,7 +1855,7 @@ test("copy stays unavailable during failed article review and returns only after
   fireEvent.click(screen.getByRole("button",{name:"Simulate source changed"}));await waitFor(()=>expect(fetchGroup).toHaveBeenCalledTimes(2));
   openMenu();expect(screen.queryByRole("menuitem",{name:"Copy to my dictionary"})).not.toBeInTheDocument();fireEvent.keyDown(document,{key:"Escape"});
   await act(async()=>refresh.reject(new Error("offline")));
-  openMenu();expect(screen.queryByRole("menuitem",{name:"Copy to my dictionary"})).not.toBeInTheDocument();fireEvent.keyDown(document,{key:"Escape"});
+  expect(screen.queryByTestId(`library-sense-card-${financeEntry.entryId}`)).not.toBeInTheDocument();
   fetchGroup.mockResolvedValueOnce(multiSenseBankGroup);fireEvent.click(screen.getByRole("button",{name:"Retry"}));
   await waitFor(()=>expect(fetchGroup).toHaveBeenCalledTimes(3));await act(async()=>{});
   openMenu();expect(screen.getByRole("menuitem",{name:"Copy to my dictionary"})).toBeInTheDocument();

@@ -7,7 +7,7 @@ const id='75600000-0000-4000-8000-000000000001',other='75600000-0000-4000-8000-0
 const get=(query='?languageCode=nl')=>new NextRequest('http://localhost/api/library/collections/training-catalog'+query);
 const post=(ids:string[])=>new NextRequest('http://localhost/api/library/collections/training-catalog',{method:'POST',body:JSON.stringify({languageCode:'nl',collectionIds:ids})});
 beforeEach(()=>{vi.resetAllMocks();mock.auth.mockResolvedValue({principal:{authKind:'first_party'},supabase:{rpc:mock.rpc}});mock.scope.mockReturnValue(null);mock.rpc.mockReturnValue({abortSignal:mock.abort});mock.abort.mockResolvedValue({data:{collections:[row],nextCursor:null},error:null});});
-test('one bounded read returns only the selected training projection',async()=>{const response=await GET(get());expect(response.status).toBe(200);expect(response.headers.get('cache-control')).toBe('no-store');expect(mock.rpc).toHaveBeenCalledWith('read_training_collection_catalog_v1',{p_query:'',p_language_code:'nl',p_cursor:null,p_limit:50});});
+test('one bounded read returns only the selected training projection',async()=>{const response=await GET(get());expect(response.status).toBe(200);expect(response.headers.get('cache-control')).toBe('no-store');expect(mock.rpc).toHaveBeenCalledWith('read_training_collection_catalog_v2',{p_query:'',p_language_code:'nl',p_cursor:null,p_limit:50,p_ownership:'all'});});
 test('rejects malformed cursors, duplicate fields and connected clients before RPC',async()=>{
  for(const query of ['?languageCode=nl&limit=500','?languageCode=nl&cursor=bad','?languageCode=nl&languageCode=en'])expect((await GET(get(query))).status).toBe(400);
  expect(mock.rpc).not.toHaveBeenCalled();mock.auth.mockResolvedValueOnce({principal:{authKind:'connected_client'}});expect((await GET(get())).status).toBe(403);
@@ -15,4 +15,11 @@ test('rejects malformed cursors, duplicate fields and connected clients before R
 test('exact stored references cannot return unrelated collection metadata',async()=>{
  mock.abort.mockResolvedValueOnce({data:{collections:[{...row,id:other}]},error:null});expect((await POST(post([id]))).status).toBe(502);
  expect((await POST(post([id,id]))).status).toBe(400);expect((await POST(post(Array(101).fill(id)))).status).toBe(400);
+});
+
+test('ownership reaches SQL before paging and mixed projections fail closed',async()=>{
+ expect((await GET(get('?languageCode=nl&ownership=received'))).status).toBe(200);
+ expect(mock.rpc).toHaveBeenLastCalledWith('read_training_collection_catalog_v2',expect.objectContaining({p_ownership:'received'}));
+ expect((await GET(get('?languageCode=nl&ownership=owned'))).status).toBe(502);
+ mock.rpc.mockClear();for(const query of ['?languageCode=nl&ownership=shared','?languageCode=nl&ownership=owned&ownership=received'])expect((await GET(get(query))).status).toBe(400);expect(mock.rpc).not.toHaveBeenCalled();
 });

@@ -111,7 +111,9 @@ BEGIN
          AND (procedure_state.proconfig IS NOT DISTINCT FROM
            ARRAY['search_path=public, private, pg_temp']::text[]
            OR procedure_state.proconfig IS NOT DISTINCT FROM
-           ARRAY['search_path=public, private, pg_temp', 'enable_nestloop=off']::text[])
+           ARRAY['search_path=public, private, pg_temp', 'enable_nestloop=off']::text[]
+           OR procedure_state.proconfig IS NOT DISTINCT FROM
+           ARRAY['search_path=public, private, pg_temp', 'enable_nestloop=off', 'jit=off']::text[])
      )
      OR has_function_privilege('service_role', candidate_fn, 'EXECUTE')
      OR has_function_privilege('authenticated', candidate_fn, 'EXECUTE')

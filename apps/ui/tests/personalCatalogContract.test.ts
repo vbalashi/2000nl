@@ -8,3 +8,10 @@ test('unified catalog keeps query and resource type closed',()=>{
  expect(parsePersonalCatalogPage({revision:1,collections:[row],nextCursor:null},50)?.collections[0].ownership).toBe('received');
  for(const value of [{...row,isShared:false},{...row,invitationCode:'secret'},{...row,labelIds:[id,id]}])expect(parsePersonalCatalogPage({revision:1,collections:[value],nextCursor:null},50)).toBeNull();
 });
+
+test('personal ownership defaults all and cannot be inferred from publication',()=>{
+ expect(parsePersonalCatalogQuery({})?.ownership).toBe('all');expect(parsePersonalCatalogQuery({ownership:'received'})?.ownership).toBe('received');
+ for(const ownership of ['shared','private',null,''])expect(parsePersonalCatalogQuery({ownership})).toBeNull();
+ const page={revision:0,collections:[row],nextCursor:null};expect(parsePersonalCatalogPage(page,50,'received')).not.toBeNull();expect(parsePersonalCatalogPage(page,50,'owned')).toBeNull();
+ expect(parsePersonalCatalogPage({...page,collections:[{...row,ownership:'owned',isShared:true}]},50,'received')).toBeNull();
+});

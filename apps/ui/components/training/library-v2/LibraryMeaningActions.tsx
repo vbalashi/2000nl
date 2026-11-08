@@ -14,7 +14,7 @@ import { independentEntryCopyText } from "@/lib/platform/independentEntryCopyTex
 import s from "@/components/practice/article/articleActions.module.css";
 
 /** Presentation adapter; authoritative capabilities and callbacks stay with the owner. */
-export function LibraryMeaningActions({ meaning, language, busy, collectionCount, currentCollection, onAction, onCollections, onReport, onExclude, onArchive, onCopy, onEditNote, exclusionDisabled, onProgress, onResume, activeTraining = false, headwordTrainingBlocked = false }: {
+export function LibraryMeaningActions({ meaning, language, busy, collectionCount, currentCollection, recentCollections, onAction, onCollections, onReport, onExclude, onArchive, onCopy, onEditNote, exclusionDisabled, onProgress, onResume, activeTraining = false, headwordTrainingBlocked = false }: {
   activeTraining?: boolean;
   headwordTrainingBlocked?: boolean;
   meaning: LibrarySenseCardModel;
@@ -23,6 +23,7 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
   collectionCount: number;
   currentCollection?: { name: string; included: boolean | null; busy: boolean; onToggle: () => void };
   onAction: (capability: LibraryMutationCapability) => void;
+  recentCollections?: {id:string;name:string;included:boolean;disabled:boolean;onToggle:(included:boolean)=>void}[];
   onCollections?: () => void;
   onTrainNext?: () => void;
   onReport?: () => void;
@@ -65,6 +66,7 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
     disabled: busy || currentCollection.busy,
     onSelect: () => { if (busy || currentCollection.busy) return; closeCollections(); currentCollection.onToggle(); },
   });
+  for (const list of recentCollections ?? []) collectionItems.push({id:`recent-${list.id}`,label:list.name,description:platformV2Message(language,list.included ? "senseCard.collections.removeCurrent" : "senseCard.collections.addCurrent",{name:list.name}),icon:list.included ? <Check size={15} aria-hidden="true"/> : <Plus size={15} aria-hidden="true"/>,disabled:list.disabled || busy,onSelect:()=>list.onToggle(list.included)});
   if (onCollections) collectionItems.push({ id: "choose-collections", label: t("senseCard.collections.choose"), icon: <List size={15} aria-hidden="true"/>,
     onSelect: () => { closeCollections(); onCollections(); },
   });
@@ -77,8 +79,8 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
     {!activeTraining && resumeBlocked && blocked ? <p className={s.status}>{protectionCopy.headwordHint}</p> : null}
     <div data-testid="library-service-actions" className={s.row}>
       {onCollections ? <button data-onboarding="meaning-collections" ref={collectionTrigger} type="button" className={s.quiet}
-        aria-haspopup={currentCollection ? "menu" : "dialog"} aria-expanded={currentCollection ? Boolean(collectionAnchor) : undefined}
-        onClick={event => currentCollection ? collectionAnchor ? closeCollections() : setCollectionAnchor(event.currentTarget) : onCollections()}>
+        aria-haspopup={collectionItems.length>1 ? "menu" : "dialog"} aria-expanded={Boolean(collectionAnchor)}
+        onClick={event => collectionItems.length===1 ? onCollections() : collectionAnchor ? closeCollections() : setCollectionAnchor(event.currentTarget)}>
         <List size={14} aria-hidden="true"/>{t("senseCard.collections.label")}{collectionCount > 0 ? ` · ${new Intl.NumberFormat(language).format(collectionCount)}` : ""}
       </button> : null}
       <span className={s.spacer}/>

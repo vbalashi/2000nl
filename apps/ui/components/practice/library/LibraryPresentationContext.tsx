@@ -30,6 +30,7 @@ export type LibraryPresentationSources = {
   selected: string | null;
   select: (id: string | null) => void;
   query: string;
+  kind?: import("../ui/SourceTypeControl").SourceKind;
 };
 export const LibraryPresentationContext = createContext<{
   renderColumns?: (props: LibraryPresentationColumns) => ReactNode;

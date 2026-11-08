@@ -3,7 +3,13 @@ import {formatLibraryCounts} from "@/lib/platform/libraryCountLabel";
 import { languageAutonym } from "@/lib/languages/languageDisplayName";
 import { localizedField } from "@/lib/i18n/catalog";
 
-import {IconAction} from "@/components/practice/ui/IconAction";
+import {useRecentLibraryScopes} from "./useRecentLibraryScopes";
+import {recentLibraryScopeKey,type RecentLibraryScope} from "./recentLibraryScopes";
+import {materialKindSummary} from "@/components/practice/vocabulary/MaterialKindSelection";
+import {localizedSection} from "@/lib/i18n/catalog";
+import {WordsBulkDialog} from "./WordsBulkDialog";
+import {emptyBulkArticleSelection,reconcileBulkArticleSelection,setBulkArticlesSelected} from "./bulkArticleSelection";
+import {ActionMenu} from "@/components/practice/ui/ActionMenu";
 import {LibrarySortControl} from "@/components/practice/library/LibrarySortControl";
 import {librarySelectionToTraining,type LibraryTrainingHandoff} from "@/lib/vocabulary/libraryTrainingHandoff";
 import {vocabularySelectionActive} from "@/lib/vocabulary/selection";
@@ -22,7 +28,7 @@ import { LibraryCategoryResults } from "./LibraryCategoryResults";
 import type { LibraryMaterialScope } from "@/lib/platform/librarySearchScope";
 import { LibraryPresentationContext } from "@/components/practice/library/LibraryPresentationContext";
 import { LIBRARY_PAGE_SIZE } from "@/lib/platform/libraryPagination";
-import { SlidersHorizontal, ChevronLeft, ChevronRight, FileText, Folder, Play } from "lucide-react";
+import { SlidersHorizontal, ChevronLeft, ChevronRight, FileText, Folder, Play, Check, Layers, ListChecks, FolderPlus, X, History, RotateCcw } from "lucide-react";
 import { LibraryResultList, LibraryResultRow } from "@/components/practice/library/LibraryResultList";
 import { AccountLibraryFilters } from "@/components/practice/library/AccountLibraryFilters";
 import {SelectedCollectionSourceStatus,collectionSourceMessage,type CollectionSourceRead} from '@/components/library/sharing/SelectedCollectionSourceStatus';
@@ -156,8 +162,15 @@ export function DictionarySearchTab({
 
   const [categoryTabsHost, setCategoryTabsHost] = useState<HTMLDivElement | null>(null);
   const [categoryCountHost, setCategoryCountHost] = useState<HTMLSpanElement | null>(null);
+  React.useEffect(()=>{
+    if(!categoryCountHost)return;
+    const update=()=>setCategoryCountText(categoryCountHost.querySelector("[data-count-detail]")?.getAttribute("data-count-detail") || categoryCountHost.textContent || "");
+    const observer=new MutationObserver(update);observer.observe(categoryCountHost,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:["data-count-detail"]});update();
+    return ()=>observer.disconnect();
+  },[categoryCountHost]);
   const categoryAppearance = "plain" as const;
   const [categoryRevision, setCategoryRevision] = useState(0);
+  const [categoryBulkCount,setCategoryBulkCount]=useState<number|null>(null);
   const presentation = React.useContext(LibraryPresentationContext);
   const {
     query,
@@ -182,6 +195,10 @@ export function DictionarySearchTab({
   const selectedSourceRead=collectionSourceRead?.collectionId===viewedListId?collectionSourceRead:undefined;
   const viewedListName = viewedList?.name ?? (searchState.collectionId ? '' : defaultViewedListName);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [countAnchor, setCountAnchor] = useState<HTMLButtonElement | null>(null);
+  const [categoryCountText,setCategoryCountText]=useState("");
+  const [scopeAnchor, setScopeAnchor] = useState<HTMLButtonElement | null>(null);
+  const closeCount = () => { setCountAnchor(null); countAnchor?.focus({preventScroll:true}); };
   const [availableLanguages, setAvailableLanguages] = useState<
     AvailableLearningLanguage[]
   >([]);
@@ -472,6 +489,55 @@ export function DictionarySearchTab({
     ? viewedListName || (selectedSourceRead?collectionSourceMessage(interfaceLanguage,selectedSourceRead.status):copy.noSources)
     : sourceLabel;
   const groupedSearchActive = materialEnabled || !useViewedListFilter;
+  const bulkScopeKey = JSON.stringify([userId,searchLanguage,query,searchState.searchCategory,categoryMaterial,dictionaryId,searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS]);
+  const [bulkSelection,setBulkSelection]=useState(()=>emptyBulkArticleSelection(userId,bulkScopeKey));
+  const [bulkMode,setBulkMode]=useState(false);
+  const [bulkAll,setBulkAll]=useState(false);
+  const [bulkDialogScope,setBulkDialogScope]=useState<string|null>(null);
+  const [bulkNotice,setBulkNotice]=useState<string|null>(null);
+  const currentBulk=reconcileBulkArticleSelection(bulkSelection,userId,bulkScopeKey);
+  const bulkCopy=getUiMessages(interfaceLanguage).wordsBulk;
+  React.useEffect(()=>{setBulkSelection(emptyBulkArticleSelection(userId,bulkScopeKey));setBulkMode(false);setBulkAll(false);setBulkDialogScope(null);setBulkNotice(null);},[userId,bulkScopeKey]);
+  React.useEffect(()=>{if(!bulkNotice)return;const timer=window.setTimeout(()=>setBulkNotice(null),4000);return()=>window.clearTimeout(timer);},[bulkNotice]);
+  const bulkRequest=useMemo(()=>({groups:[...currentBulk.articleIds].sort(),all:bulkAll,category:categorySearchActive ? "headwords" as const : "browse" as const,query,language:searchLanguage,
+    dictionaryIds:categoryMaterial ? null : dictionaryId ? [dictionaryId] : null,
+    filters:searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS,...(categoryMaterial?{material:categoryMaterial}:{})}),
+    [bulkAll,currentBulk.articleIds,query,searchLanguage,dictionaryId,searchState.entryFilters,categoryMaterial,categorySearchActive]);
+  const categoryHeadwords=categorySearchActive && (searchState.searchCategory ?? 'headwords')==='headwords';
+  const canBulk=groupedSearchActive && (!categorySearchActive || (categoryHeadwords && categoryBulkCount!==null));
+  const bulkTotal=categorySearchActive ? categoryBulkCount : groupTotal;
+  const bulkCountLabel=bulkNotice ?? (bulkMode ? formatUiMessage(bulkAll ? (currentBulk.articleIds.size ? bulkCopy.allExceptShort : bulkCopy.allShort) : bulkCopy.selectedShort,{count:number(bulkAll ? (currentBulk.articleIds.size || (bulkTotal ?? 0)) : currentBulk.articleIds.size)}) : null);
+  const pageIds=groupResults.filter(result=>result.meaningCount>0).map(result=>result.headwordGroupId);
+  const pageSelected=pageIds.length>0 && pageIds.every(id=>bulkAll ? !currentBulk.articleIds.has(id) : currentBulk.articleIds.has(id));
+  const setSelected=(ids:string[],selected:boolean)=>setBulkSelection(previous=>setBulkArticlesSelected(reconcileBulkArticleSelection(previous,userId,bulkScopeKey),ids,bulkAll ? !selected : selected));
+  const {items:recentItems,ready:recentReady,remember:rememberScope}=useRecentLibraryScopes(userId);
+  const historyScope=useMemo<RecentLibraryScope>(()=>({query:'',languageCode:searchLanguage,
+    dictionaryId:categoryMaterial ? null : dictionaryId,collectionId:categoryMaterial?.kind==='collection'?categoryMaterial.id:null,
+    collectionOwnership:categoryMaterial?.kind==='collection' ? (viewedList?.ownership==='received' || searchState.collectionOwnership==='received' ? 'received' : 'owned') : null,
+    labelId:categoryMaterial?.kind==='label'?categoryMaterial.id:null,labelName:categoryMaterial?.kind==='label'?searchState.labelName ?? null:null,
+    sourceName:resultScopeLabel,filters:searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS,category:'headwords'}),
+    [searchLanguage,categoryMaterial,dictionaryId,viewedList?.ownership,searchState.collectionOwnership,searchState.labelName,resultScopeLabel,searchState.entryFilters]);
+  const rememberHistory=useCallback(()=>{if(open && recentReady)rememberScope(historyScope);},[open,recentReady,rememberScope,historyScope]);
+  React.useEffect(()=>{if(!categorySearchActive && hasCurrentResults && !searchLoading && !searchError && searchMaterialReady)rememberHistory();},[categorySearchActive,hasCurrentResults,searchLoading,searchError,searchMaterialReady,rememberHistory]);
+  const historyChoices=recentItems.filter(item=>recentLibraryScopeKey(item)!==recentLibraryScopeKey(historyScope)).slice(0,5);
+  const historySource=(item:RecentLibraryScope)=>item.dictionaryId || item.collectionId || item.labelId ? item.sourceName : copy.allSources;
+  const historyDescription=(item:RecentLibraryScope)=>{
+    const vocab=item.filters.vocabulary, text=localizedSection('vocabularySelection')[interfaceLanguage];
+    const parts=item.filters.parts.map(part=>getUiMessages(interfaceLanguage).builder.parts[LIBRARY_PART_LABELS[part]]);
+    const details=[languageDisplayName(interfaceLanguage,item.languageCode),historySource(item),...parts,
+      item.filters.article, vocab?.materialKinds.length ? materialKindSummary(vocab.materialKinds,interfaceLanguage) : null,
+      vocab?.mode==='frequency' ? `${vocab.profile==='spoken'?text.spokenShort:text.writtenShort} ${number(vocab.from)}–${number(vocab.to)}` : null,
+      vocab && vocab.meanings!=='all' ? (vocab.meanings===1?text.firstMeaning:formatUiCount(interfaceLanguage,vocab.meanings,text,'firstMeanings')) : null,
+      item.query && item.category!=='headwords'?getUiMessages(interfaceLanguage).librarySearch.labels[item.category]:null];
+    return details.filter(Boolean).join(' · ');
+  };
+  const restoreHistory=(item:RecentLibraryScope)=>{
+    setScopeAnchor(null);
+    onSearchStateChange({...createDictionarySearchTabState(),query,languageCode:item.languageCode,dictionaryId:item.dictionaryId,
+      applyListFilter:Boolean(item.collectionId),collectionId:item.collectionId,collectionOwnership:item.collectionOwnership,
+      labelId:item.labelId,labelName:item.labelName,entryFilters:item.filters,searchCategory:searchState.searchCategory});
+    refreshSearch();
+  };
   const resultCountLabel =
     query.trim() || useViewedListFilter || (materialEnabled)
       ? formatUiMessage(copy.pageScope, {
@@ -517,7 +583,7 @@ export function DictionarySearchTab({
     filtersOpen && <AccountLibraryFilters category={categorySearchActive ? searchState.searchCategory ?? "headwords" : undefined} locale={interfaceLanguage} query={query} collection={viewedList} collections={filterCollections}
           value={{languageCode:searchLanguage,dictionaryId,applyListFilter,labelId:searchState.labelId,labelName:searchState.labelName,collectionId:applyListFilter ? viewedListId : null,...(searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS)}}
           onClose={()=>setFiltersOpen(false)} onApply={draft=>{
-            updateSearchState({labelId:draft.labelId ?? null,labelName:draft.labelName ?? null,languageCode:draft.languageCode,dictionaryId:draft.dictionaryId,applyListFilter:Boolean(draft.applyListFilter),collectionId:draft.collectionId ?? null,
+            updateSearchState({labelId:draft.labelId ?? null,labelName:draft.labelName ?? null,languageCode:draft.languageCode,dictionaryId:draft.dictionaryId,applyListFilter:Boolean(draft.applyListFilter),collectionId:draft.collectionId ?? null,collectionOwnership:draft.applyListFilter && draft.collectionId ? (filterCollections.find(list=>list.id===draft.collectionId)?.ownership === "received" ? "received" : "owned") : null,
               entryFilters:{parts:[...draft.parts].sort(),article:draft.article,vocabulary:draft.vocabulary,sort:draft.sort},page:1,groupPageCursors:[null],groupHasMore:false,
               groupTotal:null,meaningTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});
             refreshSearch();
@@ -591,33 +657,37 @@ export function DictionarySearchTab({
 
         <div className={workspace.scopeRow}>
           <div className={workspace.scopeSummary}>
-            <div className={workspace.scope}>
+            <button type="button" className={`${workspace.scope} ${workspace.scopeButton}`} title={copy.scopeActions} aria-haspopup="menu" aria-expanded={Boolean(scopeAnchor)} onClick={event => setScopeAnchor(scopeAnchor ? null : event.currentTarget)}>
               {languageDisplayName(interfaceLanguage, searchLanguage)} ·{" "}
               {searchState.labelId ? <Folder size={14} aria-hidden="true" className="inline align-text-bottom"/> : useViewedListFilter ? <FileText size={14} aria-hidden="true" className="inline align-text-bottom"/> : null}{" "}{resultScopeLabel}
               {searchState.entryFilters?.parts.map(part=>
                 <React.Fragment key={part}> · {getUiMessages(interfaceLanguage).builder.parts[LIBRARY_PART_LABELS[part]]}
                   {part === "noun" && searchState.entryFilters?.article ? ` (${searchState.entryFilters.article})` : ""}
                 </React.Fragment>)}
-            </div>
-            {onTrainSelection && searchMaterialReady && (
-              <IconAction
-                className={workspace.trainSelection}
-                label={localizedField("libraryWordSelection", "train")[interfaceLanguage]}
-                title={localizedField("libraryWordSelection", "setup")[interfaceLanguage]}
-                onClick={() => onTrainSelection(librarySelectionToTraining({
-                  languageCode: searchLanguage,
-                  filters: searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS,
-                  dictionaryId, labelId: searchState.labelId, labelName: searchState.labelName,
-                  collection: useViewedListFilter && viewedList ? {id:viewedList.id,type:viewedList.type} : undefined,
-                  query, category: categorySearchActive ? searchState.searchCategory ?? "headwords" : undefined,
-                }))}
-              ><Play size={14} aria-hidden="true"/></IconAction>
-            )}
-          </div>
-          {categorySearchActive && <span ref={setCategoryCountHost} className={workspace.scope}/> }
-          {!categorySearchActive && hasCurrentResults && <span className={workspace.scope}>{formatLibraryCounts(interfaceLanguage,!groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length),groupedSearchActive ? meaningTotal : undefined)}</span>}
-        </div>
+            </button>
 
+          </div>
+          {scopeAnchor && <ActionMenu anchor={scopeAnchor} title={copy.scopeActions} language={interfaceLanguage} onClose={() => setScopeAnchor(null)} items={[
+            {id:"reset",label:copy.resetFilters,icon:<RotateCcw size={14}/>,onSelect:()=>{setScopeAnchor(null);updateSearchState({labelId:null,labelName:null,dictionaryId:null,applyListFilter:false,collectionId:null,collectionOwnership:null,entryFilters:{...EMPTY_LIBRARY_ENTRY_FILTERS,sort:searchState.entryFilters?.sort},page:1,groupPageCursors:[null],groupHasMore:false,groupTotal:null,meaningTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});refreshSearch();}},
+            ...historyChoices.map((item,index)=>({id:`recent-${index}`,label:item.query || historySource(item),description:historyDescription(item),icon:<History size={14}/>,onSelect:()=>restoreHistory(item)})),
+          ]}/>}
+          {!unresolvedSource && categorySearchActive && ((onTrainSelection && searchMaterialReady) || canBulk ? <button type="button" className={`${workspace.scope} ${workspace.countTrigger}`} aria-label={bulkCountLabel || categoryCountText || copy.entries} aria-haspopup="menu" aria-expanded={Boolean(countAnchor)} onClick={event=>{setBulkNotice(null);setCountAnchor(countAnchor ? null : event.currentTarget);}}><span ref={setCategoryCountHost} className={`${workspace.categoryCountContent} ${bulkCountLabel ? 'sr-only' : ''}`}/>{bulkCountLabel}</button> : <span ref={setCategoryCountHost} className={workspace.scope}/>)}
+
+          {!unresolvedSource && !categorySearchActive && hasCurrentResults && (!groupedSearchActive || groupTotal != null) && <button type="button" className={`${workspace.scope} ${workspace.countTrigger}`} aria-haspopup="menu" aria-expanded={Boolean(countAnchor)} onClick={event => {setBulkNotice(null);setCountAnchor(countAnchor ? null : event.currentTarget);}}>{bulkCountLabel ?? formatUiCount(interfaceLanguage, !groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length), getUiMessages(interfaceLanguage).librarySearch, "articleCount")}</button>}
+          {!unresolvedSource && countAnchor && <ActionMenu anchor={countAnchor} title={categorySearchActive ? categoryCountText : formatLibraryCounts(interfaceLanguage,!groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length),groupedSearchActive ? meaningTotal : undefined)} language={interfaceLanguage} notice={categorySearchActive ? categoryCountText : formatLibraryCounts(interfaceLanguage,!groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length),groupedSearchActive ? meaningTotal : undefined)} onClose={closeCount} items={[
+            ...(onTrainSelection && searchMaterialReady ? [{id:"train",label:localizedField("libraryWordSelection", "setup")[interfaceLanguage],icon:<Play size={14}/>,onSelect:()=>{closeCount();onTrainSelection(librarySelectionToTraining({languageCode:searchLanguage,filters:searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS,dictionaryId,labelId:searchState.labelId,labelName:searchState.labelName,collection:useViewedListFilter && viewedList ? {id:viewedList.id,type:viewedList.type} : undefined,query,category:categorySearchActive ? searchState.searchCategory ?? "headwords" : undefined}));}}] : []),
+            ...(canBulk && !bulkMode ? [{id:"select",label:bulkCopy.select,icon:<Check size={15}/>,onSelect:()=>{closeCount();setBulkMode(true);}}] : []),
+            ...(canBulk && !bulkMode ? [{id:"all",label:formatUiMessage(bulkCopy.selectAll,{count:number(bulkTotal ?? 0)}),description:(bulkTotal ?? 0)>2500?bulkCopy.limit:undefined,icon:<Layers size={15}/>,disabled:!bulkTotal || bulkTotal>2500,onSelect:()=>{closeCount();setBulkMode(true);setBulkAll(true);setBulkSelection(emptyBulkArticleSelection(userId,bulkScopeKey));}}] : []),
+            ...(canBulk && bulkMode ? [
+              ...([{id:"page",label:pageSelected?bulkCopy.clearPage:bulkCopy.selectPage,description:currentBulk.articleIds.size>=200?bulkCopy.manualLimit:undefined,icon:<ListChecks size={15}/>,disabled:!pageIds.length || ((bulkAll ? pageSelected : !pageSelected) && new Set([...currentBulk.articleIds,...pageIds]).size>200),onSelect:()=>{closeCount();setSelected(pageIds,!pageSelected);}}]),
+              {id:"all",label:formatUiMessage(bulkCopy.selectAll,{count:number(bulkTotal ?? 0)}),description:(bulkTotal ?? 0)>2500?bulkCopy.limit:undefined,icon:<Layers size={15}/>,disabled:(bulkAll && !currentBulk.articleIds.size) || !bulkTotal || bulkTotal>2500,onSelect:()=>{closeCount();setBulkAll(true);setBulkSelection(emptyBulkArticleSelection(userId,bulkScopeKey));}},
+              {id:"add",label:bulkCopy.add,icon:<FolderPlus size={15}/>,disabled:bulkAll ? (bulkTotal ?? 0)<=currentBulk.articleIds.size : !currentBulk.articleIds.size,onSelect:()=>{closeCount();setBulkDialogScope(bulkScopeKey);}},
+              {id:"cancel",label:bulkCopy.cancel,icon:<X size={15}/>,onSelect:()=>{closeCount();setBulkMode(false);setBulkAll(false);setBulkSelection(emptyBulkArticleSelection(userId,bulkScopeKey));}},
+            ] : []),
+          ]}/> }
+          <span className="sr-only" role="status" aria-live="polite">{bulkNotice}</span>
+        </div>
+        {!unresolvedSource && bulkDialogScope===bulkScopeKey && (bulkAll || currentBulk.articleIds.size>0) && <WordsBulkDialog key={bulkScopeKey} userId={userId} language={interfaceLanguage} lists={userLists} selection={bulkRequest} onListsUpdated={()=>{void reloadLists();notifyListsUpdated();}} onClose={()=>setBulkDialogScope(null)} onDone={count=>{setBulkDialogScope(null);setBulkMode(false);setBulkAll(false);setBulkSelection(emptyBulkArticleSelection(userId,bulkScopeKey));setBulkNotice(formatUiMessage(bulkCopy.success,{count:number(count)}));void reloadLists();notifyListsUpdated();}}/>}
         {categorySearchActive && <div ref={setCategoryTabsHost}/> }
 
         {useViewedListFilter&&selectedSourceRead&&<SelectedCollectionSourceStatus read={selectedSourceRead} locale={interfaceLanguage}/>}
@@ -741,7 +811,8 @@ export function DictionarySearchTab({
           workspace.results
         }
       >
-        {categorySearchActive ? <LibraryCategoryResults onWordResults={applyCategoryWordResults} appearance={categoryAppearance} userId={userId} onSelectGroup={openGroupDetail} tabsHost={categoryTabsHost} countHost={categoryCountHost}
+        {unresolvedSource ? null : categorySearchActive ? <LibraryCategoryResults onWordResults={applyCategoryWordResults} onWordCount={setCategoryBulkCount} onSearchComplete={rememberHistory}
+          bulkSelected={bulkMode ? (bulkAll ? new Set(pageIds.filter(id=>!currentBulk.articleIds.has(id))) : currentBulk.articleIds) : undefined} bulkAll={bulkAll} bulkExcludedCount={currentBulk.articleIds.size} onBulkSelect={bulkMode ? (id,selected)=>{if(bulkAll && !selected && currentBulk.articleIds.size>=200)return;setSelected([id],selected);} : undefined} appearance={categoryAppearance} userId={userId} onSelectGroup={openGroupDetail} tabsHost={categoryTabsHost} countHost={categoryCountHost}
           interfaceLanguage={interfaceLanguage} query={query} languageCode={searchLanguage} dictionaryId={dictionaryId}
           filters={searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS} material={categoryMaterial}
           materialRevision={material?.revision} refreshRevision={categoryRevision} enabled={searchEnabled && searchMaterialReady && !unresolvedSource}
@@ -762,7 +833,7 @@ export function DictionarySearchTab({
             </button>
           </div>
         ) : null}
-        {searchError && !hasCurrentResults ? null : searchLoading ? (
+        {unresolvedSource ? null : searchError && !hasCurrentResults ? null : searchLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 6 }).map((_, index) => (
               <div
@@ -776,6 +847,10 @@ export function DictionarySearchTab({
             results={groupResults}
             interfaceLanguage={interfaceLanguage}
             selectedHeadwordGroupId={selectedHeadwordGroupId}
+            bulkSelected={bulkMode ? (bulkAll ? new Set(pageIds.filter(id=>!currentBulk.articleIds.has(id))) : currentBulk.articleIds) : undefined}
+            bulkAll={bulkAll}
+            bulkExcludedCount={currentBulk.articleIds.size}
+            onBulkSelect={bulkMode ? (id,selected)=>{if(bulkAll && !selected && currentBulk.articleIds.size>=200)return;setSelected([id],selected);} : undefined}
             onSelect={openGroupDetail}
           />
         ) : wordResults.length ? (
@@ -818,7 +893,7 @@ export function DictionarySearchTab({
         </>}
       </div>
 
-      {!categorySearchActive && hasCurrentResults && <div
+      {!unresolvedSource && !categorySearchActive && hasCurrentResults && <div
         data-testid={
           groupedSearchActive ? "library-group-pagination" : undefined
         }

@@ -5,7 +5,7 @@ vi.mock('@/lib/platform/serverSupabase',()=>({getAuthenticatedSupabase:mock.auth
 import {GET as ownedGET} from '@/app/api/library/shared-collections/owned/route';
 import {GET as overviewGET} from '@/app/api/library/shared-collections/overview/route';
 const id='75600000-0000-4000-8000-000000000003';
-const row={id,name:'Lesson',createdAt:'2026-01-01T00:00:00+00:00',itemCount:2,subscriberCount:1};
+const row={id,name:'Lesson',createdAt:'2026-01-01T00:00:00+00:00',itemCount:2,subscriberCount:1,directPublication:true,groups:[]};
 const page={collections:[row],nextCursor:null},overview={sharedByMe:1,addedByMe:2};
 const request=(path:string,search='')=>new NextRequest('http://localhost/api/library/shared-collections/'+path+search);
 beforeEach(()=>{vi.resetAllMocks();mock.auth.mockResolvedValue({principal:{authKind:'first_party'},user:{id},supabase:{rpc:mock.rpc}});mock.scope.mockReturnValue(null);mock.rpc.mockReturnValue({abortSignal:mock.abort});mock.abort.mockResolvedValue({data:page,error:null});});

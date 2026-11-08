@@ -166,7 +166,8 @@ BEGIN
    RAISE EXCEPTION 'db-contract-gate: raw training scope/source-owner metadata exposed'; END IF;
  END LOOP;
  definition:=pg_catalog.pg_get_functiondef('private.received_collection_training_available_v1(uuid,uuid,text)'::regprocedure);
- IF strpos(definition,'private.live_collection_sharing_subscriptions_v1')=0
+ IF (strpos(definition,'private.live_collection_sharing_subscriptions_v1')=0
+     AND strpos(definition,'private.collection_access_paths_for_user_v1(p_user_id)')=0 AND strpos(definition,'private.live_collection_access_paths_v1')=0)
   OR strpos(definition,'private.active_word_entries')=0
   OR strpos(definition,'entry.language_code=p_language_code')=0
   OR strpos(definition,'private.entry_access_v1(p_user_id,entry.id,''train'')')=0 THEN
@@ -190,12 +191,13 @@ BEGIN
   RAISE EXCEPTION 'db-contract-gate: received selection authorization/source-parent fence changed'; END IF;
  definition:=pg_catalog.pg_get_functiondef('public.get_word_list_summary(uuid,uuid,text)'::regprocedure);
  IF strpos(definition,'private.get_word_list_summary_owner_base_v1')=0
-  OR strpos(definition,'private.live_collection_sharing_subscriptions_v1')=0
+  OR (strpos(definition,'private.live_collection_sharing_subscriptions_v1')=0 AND strpos(definition,'private.live_collection_access_paths_v1')=0 AND strpos(definition,'private.collection_access_paths_for_user_v1')=0)
   OR strpos(definition,'private.entry_access_v1(p_user_id,entry.id,''train'')')=0
   OR strpos(definition,'''ownership'',''received'',''editable'',false')=0 THEN
   RAISE EXCEPTION 'db-contract-gate: received summary train authority/edit isolation changed'; END IF;
  definition:=pg_catalog.pg_get_functiondef('private.training_collection_catalog_cohort_v1(uuid,text,text,uuid,text,integer,uuid[])'::regprocedure);
- IF strpos(definition,'private.live_collection_sharing_subscriptions_v1')=0
+ IF (strpos(definition,'private.live_collection_sharing_subscriptions_v1')=0
+     AND strpos(definition,'private.collection_access_paths_for_user_v1(p_user_id)')=0 AND strpos(definition,'private.live_collection_access_paths_v1')=0)
   OR strpos(definition,'private.active_word_entries')=0
   OR strpos(definition,'public.can_access_dictionary(p_user_id,dictionary.id,''read'')')=0
   OR strpos(definition,'private.shared_author_entry_memberships_v1')=0
@@ -204,10 +206,15 @@ BEGIN
   OR strpos(definition,'list.id=ANY(p_collection_ids)')=0 THEN
   RAISE EXCEPTION 'db-contract-gate: bounded training source cohort/live train authority changed'; END IF;
  definition:=pg_catalog.pg_get_functiondef('public.read_training_collection_catalog_v1(text,text,jsonb,integer)'::regprocedure);
+ IF strpos(definition,'RETURN public.read_training_collection_catalog_v2(')>0 THEN
+  IF strpos(definition,'p_limit,''all'')')=0 THEN
+   RAISE EXCEPTION 'db-contract-gate: legacy training source wrapper default changed'; END IF;
+  definition:=pg_catalog.pg_get_functiondef('public.read_training_collection_catalog_v2(text,text,jsonb,integer,text)'::regprocedure);
+ END IF;
  IF strpos(definition,'principal uuid:=(select auth.uid())')=0
   OR strpos(definition,'p_limit NOT BETWEEN 1 AND 100')=0 OR strpos(definition,'length(query)>100')=0
   OR strpos(definition,'p_cursor->>''scope'' IS DISTINCT FROM fingerprint')=0
-  OR strpos(definition,'private.training_collection_catalog_cohort_v1(principal,query,language')=0
+  OR (strpos(definition,'private.training_collection_catalog_cohort_v1(principal,query,language')=0 AND strpos(definition,'private.training_collection_catalog_cohort_v2(principal,query,language')=0)
   OR strpos(definition,'availableItemCount')=0 THEN
   RAISE EXCEPTION 'db-contract-gate: paginated training source query/cursor/response fence changed'; END IF;
  definition:=pg_catalog.pg_get_functiondef('public.read_training_collection_summaries_v1(uuid[],text)'::regprocedure);

@@ -10,6 +10,8 @@ import {SharedCollectionsWorkspace} from '@/components/library/sharing/SharedCol
 import {useReceivedSource} from '@/components/library/sharing/useReceivedSource';
 import {InvitationInput} from '@/components/library/sharing/InvitationInput';
 import {InvitationPreview} from '@/components/library/sharing/InvitationPreview';
+import {SharedResourceInvitation} from '@/components/library/sharing/SharedResourceInvitation';
+import {SharedLabelContents} from '@/components/library/sharing/SharedLabelContents';
 import {forgetShareInvitation} from '@/lib/collections/sharing/shareInvitationIntake';
 import { PersonalCollections } from "@/components/library/organization/PersonalCollections";
 import { organizationCopy } from "@/components/library/organization/copy";
@@ -77,11 +79,13 @@ function LibraryDestinationSession({
   const [destination, setDestination] = useState<"words" | "collections" | "shared">(pendingCode?'shared':'words');
   const lastInvitation=React.useRef<string|null>(pendingCode);
   useEffect(()=>{if(sharingEnabled&&invitationCode&&lastInvitation.current!==invitationCode){lastInvitation.current=invitationCode;setPendingCode(invitationCode);setDestination('shared');}},[sharingEnabled,invitationCode]);
+  const groupSharingEnabled=process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED==='true';
+  const [sharedLabelSelection,setSharedLabelSelection]=useState<{id:string;name:string}|null>(null);
   const [inputOpen,setInputOpen]=useState(false);
   const [sharedView,setSharedView]=useState<'owned'|'received'>('owned');
   const [pickedOwn,setPickedOwn]=useState<{userId:string;row:WordListSummary;pending:boolean;error:boolean;fresh:boolean}|null>(null);
   const [receivedSourceId,setReceivedSourceId]=useState<string|null>(null);
-  const selectedReceivedId=sharingEnabled&&searchState.applyListFilter&&searchState.collectionId&&(searchState.collectionId===receivedSourceId||lists.some(list=>list.id===searchState.collectionId&&list.ownership==='received'))?searchState.collectionId:null;
+  const selectedReceivedId=sharingEnabled&&searchState.applyListFilter&&searchState.collectionId&&(searchState.collectionOwnership==='received'||(searchState.collectionOwnership!=='owned'&&(searchState.collectionId===receivedSourceId||lists.some(list=>list.id===searchState.collectionId&&list.ownership==='received'))) )?searchState.collectionId:null;
   useEffect(()=>{if(selectedReceivedId)setReceivedSourceId(selectedReceivedId);},[selectedReceivedId]);
   const receivedRead=useReceivedSource(userId,selectedReceivedId,sharingEnabled&&open&&destination==='words');
   const receivedSource:WordListSummary|null=receivedRead.source?{id:receivedRead.source.id,name:receivedRead.source.name,type:'user',ownership:'received',created_at:receivedRead.source.createdAt}:null;
@@ -126,14 +130,15 @@ function LibraryDestinationSession({
           {getUiMessages(interfaceLanguage).library.title}
         </h1>
         <LibraryDestinationTabs language={interfaceLanguage} destination={destination} organizationEnabled={organizationEnabled} sharingEnabled={sharingEnabled} onChange={setDestination}/>
-        {pendingCode&&<div className={destination==='shared'?'min-h-0 flex-1 flex flex-col':'hidden'}><InvitationPreview onConfirmed={onInvitationConsumed} userId={userId} code={pendingCode} locale={interfaceLanguage} onClose={closeInvitation} onOpen={(id)=>{closeInvitation();setReceivedSourceId(id);setSearchState({...createDictionarySearchTabState(),applyListFilter:true,collectionId:id});setDestination('words');}}/></div>}
-        {sharingEnabled&&!pendingCode&&<div className={destination==='shared'?'min-h-0 flex-1 flex flex-col':'hidden'}>{inputOpen?<InvitationInput locale={interfaceLanguage} onCancel={()=>setInputOpen(false)} onSubmit={code=>{setPendingCode(code);setInputOpen(false);}}/>:<SharedCollectionsWorkspace userId={userId} active={open&&destination==='shared'} locale={interfaceLanguage} view={sharedView} onViewChange={setSharedView} onAdd={()=>setInputOpen(true)} onOpenOwned={row=>{setReceivedSourceId(null);setSearchState({...createDictionarySearchTabState(),applyListFilter:true,collectionId:row.id});setDestination('words');}} onOpenReceived={row=>{setReceivedSourceId(row.id);setSearchState({...createDictionarySearchTabState(),applyListFilter:true,collectionId:row.id});setDestination('words');}}/>}</div>}
+        {pendingCode&&<div className={destination==='shared'?'min-h-0 flex-1 flex flex-col':'hidden'}>{groupSharingEnabled?<SharedResourceInvitation onConfirmed={onInvitationConsumed} userId={userId} code={pendingCode} locale={interfaceLanguage} onClose={closeInvitation} onOpen={id=>{closeInvitation();setReceivedSourceId(id);setSearchState({...createDictionarySearchTabState(),applyListFilter:true,collectionId:id,collectionOwnership:'received'});setDestination('words');}} onOpenLabel={(id,name)=>{closeInvitation();setSharedLabelSelection({id,name});}}/>:<InvitationPreview onConfirmed={onInvitationConsumed} userId={userId} code={pendingCode} locale={interfaceLanguage} onClose={closeInvitation} onOpen={(id)=>{closeInvitation();setReceivedSourceId(id);setSearchState({...createDictionarySearchTabState(),applyListFilter:true,collectionId:id,collectionOwnership:'received'});setDestination('words');}}/>}</div>}
+        {sharingEnabled&&!pendingCode&&<div className={destination==='shared'?'min-h-0 flex-1 flex flex-col':'hidden'}>{inputOpen?<InvitationInput locale={interfaceLanguage} onCancel={()=>setInputOpen(false)} onSubmit={code=>{setPendingCode(code);setInputOpen(false);}}/>:<SharedCollectionsWorkspace userId={userId} ownCollections={userLists} active={open&&destination==='shared'} locale={interfaceLanguage} view={sharedView} onViewChange={setSharedView} onReference={code=>{setPendingCode(code);setInputOpen(false);}} onAdd={()=>setInputOpen(true)} onOpenGroupCollection={(id,ownership)=>{setReceivedSourceId(ownership==='received'?id:null);setSearchState({...createDictionarySearchTabState(),applyListFilter:true,collectionId:id,collectionOwnership:ownership});setDestination('words');}} onOpenOwned={row=>{setReceivedSourceId(null);setSearchState({...createDictionarySearchTabState(),applyListFilter:true,collectionId:row.id,collectionOwnership:'owned'});setDestination('words');}} onOpenReceived={row=>{setReceivedSourceId(row.id);setSearchState({...createDictionarySearchTabState(),applyListFilter:true,collectionId:row.id,collectionOwnership:'received'});setDestination('words');}}/>}</div>}
+        {groupSharingEnabled&&sharedLabelSelection&&destination==='shared'&&<SharedLabelContents userId={userId} labelId={sharedLabelSelection.id} name={sharedLabelSelection.name} locale={interfaceLanguage} onClose={()=>setSharedLabelSelection(null)} onReference={code=>{setSharedLabelSelection(null);setPendingCode(code);}} onOpen={id=>{setSharedLabelSelection(null);setReceivedSourceId(id);setSearchState({...createDictionarySearchTabState(),applyListFilter:true,collectionId:id,collectionOwnership:'received'});setDestination('words');}}/>}
         {organizationEnabled && <div className={destination === "collections" ? "min-h-0 flex-1 overflow-hidden" : "hidden"}>
           <PersonalCollections active={open && destination === "collections"} userId={userId} language={language} locale={interfaceLanguage} collections={userLists} onReload={onReloadLists} onOpen={collection => {
             setReceivedSourceId(null);
-            setSearchState({...createDictionarySearchTabState(), applyListFilter: true, collectionId: collection.id});
+            setSearchState({...createDictionarySearchTabState(), applyListFilter: true, collectionId: collection.id, collectionOwnership: "owned"});
             setDestination("words");
-          }} onOpenReceived={collection=>{setReceivedSourceId(collection.id);setSearchState({...createDictionarySearchTabState(),applyListFilter:true,collectionId:collection.id});setDestination('words');}} onOpenLabel={label => {
+          }} onOpenReceived={collection=>{setReceivedSourceId(collection.id);setSearchState({...createDictionarySearchTabState(),applyListFilter:true,collectionId:collection.id,collectionOwnership:'received'});setDestination('words');}} onOpenLabel={label => {
             setReceivedSourceId(null);
             setSearchState({...createDictionarySearchTabState(), labelId: label.id, labelName: label.name});
             setDestination("words");

@@ -944,7 +944,9 @@
       "matchingGroupZero": "{count} matching articles",
       "matchingGroupTwo": "{count} matching articles",
       "referenceZero": "{count} references",
-      "referenceTwo": "{count} references"
+      "referenceTwo": "{count} references",
+      "recentSearch": "Recent",
+      "scopeActions": "Filter history"
     },
     "collections": {
       "title": "Collections",
@@ -1127,6 +1129,42 @@
     "common": {
       "closePanel": "Close {title}",
       "unknownLanguage": "Unknown language"
+    },
+    "wordsBulk": {
+      "select": "Select articles",
+      "cancel": "Cancel selection",
+      "selectPage": "Select this page",
+      "clearPage": "Clear this page",
+      "add": "Add to collection",
+      "choose": "Choose a collection",
+      "preview": "Articles: {articles} · meanings: {meanings}",
+      "confirm": "Add meanings",
+      "loading": "Checking meanings…",
+      "failed": "Could not complete this action. Please try again.",
+      "empty": "Create a collection first.",
+      "success": "Added: {count}",
+      "changed": "The matching meanings changed. Review the updated count.",
+      "selectAll": "Select all in this filter ({count})",
+      "limit": "At most 2,500 articles and 100,000 meanings can be added at once.",
+      "selectedShort": "Selected: {count}",
+      "allShort": "All: {count}",
+      "allExceptShort": "All − {count}",
+      "manualLimit": "Up to 200 individually selected or excluded articles.",
+      "retryConfirmed": "Retry confirmed change",
+      "private": "Private",
+      "sharedReadersZero": "Shared · {count} subscribers",
+      "sharedReadersOne": "Shared · {count} subscriber",
+      "sharedReadersTwo": "Shared · {count} subscribers",
+      "sharedReadersFew": "Shared · {count} subscribers",
+      "sharedReadersMany": "Shared · {count} subscribers",
+      "sharedReadersOther": "Shared · {count} subscribers"
+    },
+    "collectionComposition": {
+      "title": "Shared collection",
+      "audience": "Readers: {count}. They can see this change.",
+      "failed": "Could not update this collection. Review it and try again.",
+      "storage": "Could not save the confirmation on this device. Try again.",
+      "pending": "The result is not available yet. Check again before retrying."
     }
   },
   "wordDetails": {
@@ -1334,7 +1372,8 @@
       "owned": "Shared by me",
       "received": "Added by me",
       "add": "Add by link / code",
-      "label": "Shared sections"
+      "label": "Shared sections",
+      "search": "Search groups and collections"
     },
     "utilityNavigation": {
       "theme": "Theme",
@@ -1840,7 +1879,7 @@
       "wordCountOther": "{count} words",
       "sentenceFound": "Found {words} with {meanings}.",
       "sentenceCards": "Available cards: {cards}.",
-      "sentenceProgress": "Of these cards, you are learning {learning}; new: {new}. Ready to review now: {due}.",
+      "sentenceProgress": "Of these cards, you are learning {learning}, ready to review now: {due}.",
       "sentenceOther": "Other card states: {other}."
     },
     "libraryWordSelection": {
@@ -1903,6 +1942,62 @@
       "interjection": "interj.",
       "abbreviation": "abbr.",
       "prefix": "prefix"
+    },
+    "collectionDetails": {
+      "source": "Source",
+      "materialKind": "Material kind",
+      "originKind": "Source",
+      "materialTitle": "Material title",
+      "creatorName": "Author / channel",
+      "url": "URL",
+      "fileName": "File name",
+      "publishedOn": "Publication date",
+      "video": "Video",
+      "article": "Article",
+      "text": "Text",
+      "book": "Book",
+      "other": "Other",
+      "youtube": "YouTube",
+      "web": "Web",
+      "localFile": "Local file",
+      "manual": "Manual",
+      "preview": "Preview — source details are demonstration data; changes are not saved.",
+      "description": "Description",
+      "invalid": "Check the name, description and source details. Links must start with http:// or https://."
+    },
+    "labelSharing": {
+      "title": "Share label",
+      "openNotice": "Anyone with the invitation can subscribe to your current and future collections under this label, including nested labels.",
+      "closeNotice": "Subscribers lose access through this label. Independent access and learning progress are kept.",
+      "description": "This group includes the author's collections under this label or its nested labels. The list updates automatically.",
+      "collections": "Collections",
+      "accepted": "Group added",
+      "contents": "Group contents",
+      "openGroup": "Open group",
+      "leaveNotice": "The group will leave your library. Independently granted access and learning progress are kept.",
+      "groups": "Collection groups",
+      "accessRemains": "Access remains through these groups: {groups}.",
+      "audienceTitle": "Access changes",
+      "audienceIntro": "Changing these labels changes who can access the collections.",
+      "audienceAdded": "Readers gaining access: {readers}. Collections: {collections}.",
+      "audienceRemoved": "Readers losing access: {readers}. Collections: {collections}.",
+      "pathsChanged": "Access paths change. Independent subscriptions are kept.",
+      "copyRequired": "Independent copies of borrowed entries are needed before this change can be published.",
+      "saveUncertain": "You confirmed this change, but its result could not be verified.",
+      "retrySave": "Retry the confirmed change",
+      "copyTitle": "Prepare independent copies",
+      "copySeparation": "Copying is confirmed separately for each collection. Completed copies are kept.",
+      "copyNext": "After copying, return to the change and confirm it.",
+      "borrowedCount": "Borrowed entries: {count}",
+      "noBorrowed": "No borrowed entries",
+      "compositionTitle": "Change collection",
+      "compositionAdd": "Adding this meaning changes the collection for its subscribers.",
+      "compositionRemove": "Removing meanings changes the collection for its subscribers.",
+      "compositionDelete": "Deleting this collection removes access through this collection. Other collections and learning progress are kept.",
+      "compositionReaders": "Subscribers affected: {count}",
+      "compositionPaths": "Direct subscriptions: {direct}. Group subscriptions: {groups}.",
+      "originalCollections": "Original collections",
+      "referenceNotice": "These collections belong to other authors. Open an invitation and add each collection separately."
     }
   },
   "tour": {

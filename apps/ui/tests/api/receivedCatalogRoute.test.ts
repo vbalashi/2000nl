@@ -4,7 +4,7 @@ const mock=vi.hoisted(()=>({auth:vi.fn(),rpc:vi.fn(),scope:vi.fn(),abort:vi.fn()
 vi.mock('@/lib/platform/serverSupabase',()=>({getAuthenticatedSupabase:mock.auth,requirePlatformScope:mock.scope,jsonNoStore:(body:unknown,status=200)=>Response.json(body,{status,headers:{'cache-control':'no-store'}})}));
 import { GET } from '@/app/api/library/shared-collections/received/route';
 const owner='75600000-0000-4000-8000-000000000001',viewer='75600000-0000-4000-8000-000000000002',id='75600000-0000-4000-8000-000000000003';
-const row={id,name:'Lesson',createdAt:'2026-01-01T00:00:00+00:00',addedAt:'2026-01-02T00:00:00+00:00',ownerUserId:owner,role:'viewer',itemCount:2,labelIds:[]};
+const row={id,name:'Lesson',createdAt:'2026-01-01T00:00:00+00:00',addedAt:'2026-01-02T00:00:00+00:00',ownerUserId:owner,role:'viewer',itemCount:2,labelIds:[],directSubscription:true,groups:[]};
 const page={revision:0,collections:[row],nextCursor:null};
 const request=(search='')=>new NextRequest('http://localhost/api/library/shared-collections/received'+search);
 beforeEach(()=>{vi.resetAllMocks();mock.auth.mockResolvedValue({principal:{authKind:'first_party'},user:{id:viewer},supabase:{rpc:mock.rpc}});mock.scope.mockReturnValue(null);mock.rpc.mockReturnValue({abortSignal:mock.abort});mock.abort.mockResolvedValue({data:page,error:null});});

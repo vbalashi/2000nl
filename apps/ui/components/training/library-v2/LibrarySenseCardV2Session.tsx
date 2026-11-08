@@ -1,5 +1,7 @@
 "use client";
 import { useCardLoadDiagnostics } from "@/lib/diagnostics/useCardLoadDiagnostics";
+import {useCollectionComposition} from '@/components/library/sharing/useCollectionComposition';
+import {CollectionCompositionConfirmation} from '@/components/library/sharing/CollectionCompositionConfirmation';
 import {useSelectedMembership} from '@/components/library/sharing/useSelectedMembership';
 import {clearPlatformNoteMaterial} from "@/lib/platform/noteMaterialPresentation";
 
@@ -141,6 +143,17 @@ function SenseCardV2Session({
   const [membershipsByEntryId, setMembershipsByEntryId] = React.useState<
     Record<string, EntryLearningListMembership[]>
   >({});
+  const [recentState, setRecentState] = React.useState<{userId:string; ids:string[]} | null>(null);
+  const recentCollectionIds = recentState && recentState.userId === userId ? recentState.ids : [];
+  React.useEffect(() => {
+    if (!userId) { setRecentState(null); return; }
+    try { const value = JSON.parse(localStorage.getItem(`2000nl:recent-collections:${userId}`) ?? "[]"); setRecentState({userId, ids:Array.isArray(value) ? value.filter((id): id is string => typeof id === "string").slice(0, 3) : []}); }
+    catch { setRecentState({userId, ids:[]}); }
+  }, [userId]);
+  const rememberCollection = (id: string) => {
+    if (!userId) return;
+    setRecentState(previous => { const next = [id, ...(previous?.userId === userId ? previous.ids : []).filter(item => item !== id)].slice(0, 3); try { localStorage.setItem(`2000nl:recent-collections:${userId}`, JSON.stringify(next)); } catch {} return {userId, ids:next}; });
+  };
   const [membershipState, setMembershipState] = React.useState<"loading" | "ready" | "failed">("loading");
   const [collectionsEntryId, setCollectionsEntryId] = React.useState<
     string | null
@@ -288,7 +301,7 @@ function SenseCardV2Session({
             (expectedTranslationSession == null || expectedTranslationSession === translationSession.current) &&
             (!expectedDetailIdentity || expectedDetailIdentity === detailIdentityRef.current)) {
           setLoading(false);
-          if (!(error && typeof error === "object" && "name" in error && error.name === "AbortError")) setLookupError("unavailable");
+          if (!(error && typeof error === "object" && "name" in error && error.name === "AbortError")) { setGroup(null); setNoteAuthority(null); setLookupError("unavailable"); }
         }
         throw error;
       }
@@ -562,8 +575,35 @@ function SenseCardV2Session({
     return results.every(Boolean);
   }, [detailIdentity, loadMemberships, model, refreshSelectedMembership]);
 
+  const [compositionTarget,setCompositionTarget]=React.useState<{list:WordListSummary;entryId:string;included:boolean;userId:string;identity:string;visibleMeaning:string}|null>(null);
+  const activeCompositionTarget=compositionTarget && compositionTarget.userId===userId && compositionTarget.identity===detailIdentity && compositionTarget.visibleMeaning===activeMeaningId ? compositionTarget : null;
+  const startedComposition=React.useRef<typeof compositionTarget>(null);
+  const composition=useCollectionComposition(userId ?? '',activeCompositionTarget?.list.id ?? '',()=>{
+    const target=activeCompositionTarget;
+    if(!target || target.userId!==userId || target.identity!==detailIdentityRef.current)return;
+    if(!target.included)rememberCollection(target.list.id);
+    void refreshMemberships().then(ready=>{if(target.identity!==detailIdentityRef.current)return;if(ready)setCollectionStatus(platformV2Message(interfaceLanguage,"senseCard.collections.saved"));});
+    void Promise.resolve(onListsUpdated?.()).catch(()=>undefined);
+    setCompositionTarget(null);
+  });
+  const saveComposition=composition.save, compositionCollectionId=composition.state.collectionId;
+  React.useEffect(()=>{
+    const target=activeCompositionTarget;
+    if(!target || target.list.id!==compositionCollectionId || startedComposition.current===target)return;
+    startedComposition.current=target;
+    void saveComposition(target.included?{action:'remove',entryIds:[target.entryId]}:{action:'add',entryId:target.entryId});
+  },[activeCompositionTarget,compositionCollectionId,saveComposition]);
+  React.useEffect(()=>{
+    if(composition.state.status==='failed')setCollectionStatus(platformV2Message(interfaceLanguage,"senseCard.collections.failed"));
+  },[composition.state.status,interfaceLanguage]);
+
+  const compositionBusy=Boolean(activeCompositionTarget && !["idle","failed"].includes(composition.state.status));
+
   const handleToggleList = async (list: WordListSummary, included: boolean, targetEntryId = collectionsEntryId) => {
-    if (!targetEntryId || pendingCollectionWrites.current > 0) return;
+    if (!targetEntryId || pendingCollectionWrites.current > 0 || compositionBusy) return;
+    if(process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED==='true' && userId){
+      setCollectionStatus(null);setCompositionTarget({list,entryId:targetEntryId,included,userId,identity:detailIdentity,visibleMeaning:activeMeaningId});return;
+    }
     const isCurrent = () => detailIdentity === detailIdentityRef.current;
     pendingCollectionWrites.current++;
     setCollectionBusyListId(list.id);
@@ -573,6 +613,7 @@ function SenseCardV2Session({
         ? await removeWordsFromUserList(list.id, [targetEntryId])
         : await addWordsToUserList(list.id, [targetEntryId]);
       if (result.error) throw result.error;
+      if (!included && isCurrent()) rememberCollection(list.id);
       const membershipsReady = await refreshMemberships();
       if (!isCurrent()) return;
       // List counts elsewhere may refresh after the saved membership is shown.
@@ -598,7 +639,7 @@ function SenseCardV2Session({
   };
 
   const handleCreateList = async (name: string) => {
-    if (!userId || !collectionsEntryId) return;
+    if (!userId || !collectionsEntryId || compositionBusy) return;
     const isCurrent = () => detailIdentity === detailIdentityRef.current;
     pendingCollectionWrites.current++;
     setCollectionBusyListId("__new__");
@@ -610,8 +651,13 @@ function SenseCardV2Session({
         language_code: contentLanguageCode,
       });
       if (!created?.id) throw new Error("create_list_failed");
+      if(process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED==='true'){
+        if(isCurrent())setCompositionTarget({list:created,entryId:collectionsEntryId,included:false,userId,identity:detailIdentity,visibleMeaning:activeMeaningId});
+        return;
+      }
       const result = await addWordsToUserList(created.id, [collectionsEntryId]);
       if (result.error) throw result.error;
+      if (isCurrent()) rememberCollection(created.id);
       const membershipsReady = await refreshMemberships();
       if (!isCurrent()) return;
       await onListsUpdated?.();
@@ -863,6 +909,10 @@ function SenseCardV2Session({
       {userId && context === "library" ? <TrainingExclusionUndoNotice userId={userId} language={interfaceLanguage}/> : null}
       <div className="min-h-0 flex-1">
         <LibrarySenseCardGroup
+          recentCollections={recentCollectionIds.flatMap(id => { const list = userLists.find(item => item.id === id && item.type === "user" && item.ownership !== "received"); return list ? [list] : []; })}
+          recentMemberships={membershipsByEntryId}
+          recentMembershipReady={membershipState === "ready" && !collectionBusyListId && !compositionBusy}
+          onToggleRecentCollection={(meaning, list, included) => void handleToggleList(list, included, meaning.entryId)}
           currentCard={permittedCurrentCard}
           currentCardEntryId={permittedCurrentCard ? entryId : undefined}
           contentLanguage={group?.dictionary.sourceLanguageCode ?? contentLanguageCode}
@@ -898,7 +948,7 @@ function SenseCardV2Session({
               lists.some(list => list.listId === currentCollection.id && list.listType === currentCollection.type),
             ).map(([id]) => id)),
             editable: currentCollection.type === "user" && userLists.some(list => list.id === currentCollection.id && list.type === "user"),
-            busy: Boolean(collectionBusyListId),
+            busy: Boolean(collectionBusyListId) || compositionBusy,
           } : undefined}
           onToggleCurrentCollection={context === "library" && currentCollection ? (meaning, included) => {
             if ((process.env.NEXT_PUBLIC_COLLECTION_SHARING_ENABLED==='true'?selectedMembership.status!=='ready':membershipState!=="ready") || currentCollection.type !== "user" ||
@@ -948,6 +998,7 @@ function SenseCardV2Session({
       {copyEntryId && userId && onOpenCopied && context === "library" ? <IndependentEntryCopyDialog key={`${detailIdentity}:copy`} entryId={copyEntryId} headword={model.headword} dictionaryName={model.dictionaryName ?? ""} contentLanguageCode={contentLanguageCode} userId={userId} language={interfaceLanguage} onClose={()=>setCopyEntryId(null)} onReviewSource={()=>{copyReviewGeneration.current++;setCopyReviewRequired(true);setCopyEntryId(null);setLookupRetry(current=>current+1);}} onOpen={copy=>{setCopyEntryId(null);onOpenCopied(copy);}}/> : null}
       {archiveEntryId && userId && context === "library" ? <AuthorEntryArchiveDialog key={detailIdentity} entryId={archiveEntryId} headword={model.headword} userId={userId} language={interfaceLanguage} onCancel={() => setArchiveEntryId(null)} onArchived={() => { setArchiveEntryId(null); onArchived?.(archiveEntryId); }} /> : null}
       {reportSnapshot ? <SenseCardReportSheet snapshot={reportSnapshot} interfaceLanguage={interfaceLanguage} onClose={() => setReportSnapshot(null)} /> : null}
+      {activeCompositionTarget && <CollectionCompositionConfirmation controller={composition} collectionName={activeCompositionTarget.list.name} locale={interfaceLanguage}/>}
       <LibraryCollectionsPicker
         open={Boolean(collectionsMeaning)}
         headword={model.headword}
@@ -959,7 +1010,7 @@ function SenseCardV2Session({
             ? (membershipsByEntryId[collectionsMeaning.entryId] ?? [])
             : []
         }
-        busyListId={collectionBusyListId}
+        busyListId={collectionBusyListId ?? (compositionBusy ? activeCompositionTarget?.list.id ?? null : null)}
         membershipState={membershipState}
         onRetryMemberships={() => { setCollectionStatus(null); void refreshMemberships(); }}
         status={collectionStatus}
@@ -968,7 +1019,7 @@ function SenseCardV2Session({
         onCreateList={(name) => void handleCreateList(name)}
         onOpenListMembership={onOpenListMembership}
       />
-      {context === "library" && currentCollection && !collectionsMeaning && collectionStatus ? <p
+      {context === "library" && !collectionsMeaning && collectionStatus ? <p
         role={collectionStatus === platformV2Message(interfaceLanguage, "senseCard.collections.failed") ? "alert" : "status"}
         className={collectionStatus === platformV2Message(interfaceLanguage, "senseCard.collections.failed") ? "px-4 py-2 text-sm text-[var(--practice-text-muted)]" : "sr-only"}>{collectionStatus}</p> : null}
       {savedReviewMessageKey && !errorNotice ? <p role="status" aria-live="polite" aria-atomic="true"

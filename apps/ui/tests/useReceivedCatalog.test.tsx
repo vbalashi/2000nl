@@ -6,7 +6,7 @@ vi.mock('@/lib/events/userEventHints',()=>({useUserEventHints:(_user:unknown,_ki
 import { useReceivedCatalog } from '@/components/library/organization/useReceivedCatalog';
 import type { ReceivedCatalogPage,ReceivedCollection } from '@/lib/collections/sharing/receivedCatalogContract';
 const id=(n:number)=>'75600000-0000-4000-8000-'+String(n).padStart(12,'0');
-const row=(n:number,name='Lesson '+n):ReceivedCollection=>({id:id(n),name,createdAt:'2026-01-01T00:00:00Z',addedAt:'2026-01-02T00:00:00Z',ownerUserId:id(99),role:'viewer',itemCount:1,labelIds:[]});
+const row=(n:number,name='Lesson '+n):ReceivedCollection=>({id:id(n),name,createdAt:'2026-01-01T00:00:00Z',addedAt:'2026-01-02T00:00:00Z',ownerUserId:id(99),role:'viewer',itemCount:1,labelIds:[],directSubscription:true,groups:[]});
 const cursor=(n:number)=>({id:id(n),key:'lesson '+n,scope:'a'.repeat(64)});
 const page=(rows:ReceivedCollection[],next:number|null=null,revision=0):ReceivedCatalogPage=>({collections:rows,nextCursor:next===null?null:cursor(next),revision});
 const input={userId:id(90),active:true,query:{query:'',sort:'name' as const,scope:'all' as const,labelId:null,limit:2}};

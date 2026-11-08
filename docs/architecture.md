@@ -168,3 +168,30 @@ full `/updates` page paginates the same catalog. Only the server service role ca
 read or edit it. The managed release process owns publication; editorial changes
 do not select an image or authorize deployment. A failed catalog read preserves
 update detection, while older clients retain the schema1 announcement format.
+
+## Live collection groups
+
+A label projects its author's collections, including descendant labels. Sharing
+that label creates a live group subscription: current and future owned
+collections in that subtree become available after the recipient explicitly
+adds the invitation. Multiple paths to the same collection remain independent.
+Removing one path preserves other accepted paths and the learner's progress.
+Rotating an invitation keeps existing subscribers; closing and reopening creates
+a new lifetime that requires an explicit new acceptance.
+
+A received collection placed in a shared label remains a reference to its
+original publication. It never grants access transitively. Publishing borrowed
+private entries requires the independent-copy workflow first.
+
+The sharing API lives under `/api/library/label-sharing`. Organization and
+collection composition use server-stored preview plans. Confirmation rechecks
+the exact audience and composition revision under author admission before
+writing. Reconciliation reads the existing receipt and never executes a pending
+plan. Direct collection table mutations are unavailable to browser API roles;
+application writes use the authenticated RPC boundary. Group events invalidate
+collection and note views without publishing content in event payloads.
+
+The public SQL migrations describe fresh installations. They are not a managed
+upgrade procedure. A managed release needs separately reviewed operational
+forward migrations and release authorization; publishing this code does not
+change a managed database or application traffic.

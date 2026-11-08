@@ -5,8 +5,9 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
 import s from "@/components/practice/library/libraryOverlays.module.css";
-import { getUiMessages } from "@/lib/uiMessages";
-import { Plus, X } from "lucide-react";
+import { formatUiCount, getUiMessages } from "@/lib/uiMessages";
+import { Search, X } from "lucide-react";
+import { AddAction } from "@/components/practice/ui/AddAction";
 import type {
   EntryLearningListMembership,
   WordListSummary,
@@ -167,6 +168,7 @@ export function LibraryCollectionsPicker({
               {definition}
             </p>
           </div>
+          <AddAction aria-label={copy.new} title={copy.new} disabled={editingBlocked} onClick={()=>{setNewListName("");setCreating(value=>!value);}}><span className="hidden min-[361px]:inline">{t("senseCard.collections.create")}</span></AddAction>
           <button
             type="button"
             aria-label={platformV2Message(interfaceLanguage, "common.close")}
@@ -179,7 +181,8 @@ export function LibraryCollectionsPicker({
 
         <p className={s.hint}>{copy.hint}</p>
         <div data-dialog-part="fields" className="space-y-3 border-b border-slate-200 px-5 py-4 dark:border-slate-700">
-          <label className="block">
+          <label className="relative block">
+            <Search aria-hidden="true" size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
             <span className="sr-only">{t("senseCard.collections.search")}</span>
             <input
               ref={searchRef}
@@ -187,9 +190,10 @@ export function LibraryCollectionsPicker({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("senseCard.collections.search")}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-[#171b22] dark:text-slate-100"
+              className="w-full rounded-xl border border-slate-300 bg-white pl-9 pr-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-[#171b22] dark:text-slate-100"
             />
           </label>
+          {creating && createForm}
         </div>
 
         <div ref={collectionRegionRef} data-dialog-part="body" role="region" aria-label={t("senseCard.collections.title")} tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
@@ -233,7 +237,7 @@ export function LibraryCollectionsPicker({
                       </span>
                       {typeof list.item_count === "number" ? (
                         <span className="block text-xs text-slate-500 dark:text-slate-400">
-                          {list.item_count} {t("senseCard.collections.items")}
+                          {formatUiCount(interfaceLanguage, list.item_count, getUiMessages(interfaceLanguage).librarySearch, "meaningCount")}
                         </span>
                       ) : null}
                     </label>
@@ -261,13 +265,6 @@ export function LibraryCollectionsPicker({
               {t("senseCard.collections.empty")}
             </p>
           ) : null}
-        </div>
-
-        <div className={s.creation}>
-          {creating ? createForm : <button type="button" disabled={editingBlocked}
-            onClick={() => { setNewListName(query); setCreating(true); }}>
-            <Plus aria-hidden="true" size={15} />{copy.new}
-          </button>}
         </div>
 
         <footer data-dialog-part="footer" className="flex min-h-12 items-center justify-between gap-3 border-t border-slate-200 px-5 py-3 dark:border-slate-700">

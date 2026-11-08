@@ -5,7 +5,7 @@ import {formatLibraryCounts} from "@/lib/platform/libraryCountLabel";
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { SegmentedControl } from "@/components/practice/ui/SegmentedControl";
-import { getUiMessages, formatUiMessage } from "@/lib/uiMessages";
+import { getUiMessages, formatUiMessage, formatUiCount } from "@/lib/uiMessages";
 import { LibraryResultList, LibraryContextResultRow } from "@/components/practice/library/LibraryResultList";
 import type { LibraryEntryFilters, LibraryMaterialScope } from "@/lib/platform/librarySearchScope";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -24,7 +24,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
 }
 type CategoryState = { page?: DictionaryCategoryPage; complete: boolean; error?: string; moreError?: boolean };
 type WordState = { results: LibraryHeadwordGroupResult[]; loading: boolean; error?: boolean };
-export function LibraryCategoryResults({ query, languageCode, dictionaryId, selectedId, selectedResultKey, onSelect, onSelectGroup, tabsHost, countHost, interfaceLanguage, userId, filters, material, materialRevision, refreshRevision = 0, enabled = true, category = "headwords", onCategoryChange, onWordResults, appearance = "plain" }: {
+export function LibraryCategoryResults({ query, languageCode, dictionaryId, selectedId, selectedResultKey, onSelect, onSelectGroup, tabsHost, countHost, interfaceLanguage, userId, filters, material, materialRevision, refreshRevision = 0, enabled = true, category = "headwords", onCategoryChange, onWordResults, onSearchComplete, onWordCount, bulkSelected, bulkAll, bulkExcludedCount, onBulkSelect, appearance = "plain" }: {
   query: string; languageCode: string; dictionaryId: string | null; selectedId?: string; selectedResultKey?: string; userId?: string;
   onSelect: (item: SearchItem) => void; onSelectGroup?: (group: LibraryHeadwordGroupResult) => void;
   tabsHost?: HTMLElement | null; countHost?: HTMLElement | null; interfaceLanguage: OnboardingLanguage;
@@ -32,6 +32,10 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
   appearance?: "plain" | "framed";
   refreshRevision?: number; enabled?: boolean; category?: DictionarySearchCategory;
   onWordResults?: (results: LibraryHeadwordGroupResult[]) => void;
+  onSearchComplete?: () => void;
+  onWordCount?: (count:number|null)=>void;
+  bulkSelected?: ReadonlySet<string>;bulkAll?:boolean;bulkExcludedCount?:number;
+  onBulkSelect?: (id:string,selected:boolean)=>void;
   onCategoryChange?: (category: DictionarySearchCategory) => void;
 }) {
   const copy = getUiMessages(interfaceLanguage).librarySearch;
@@ -128,6 +132,9 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
   const failed = current?.error || wordState?.error;
   const loading = enabled && Boolean(query.trim()) && (!currentScope || !current?.complete || (isWords && (!wordState || wordState.loading)));
   const selectedGroupId = wordState?.results.find(result => result.group.entries.some(entry => (entry.kind === "sense-card" ? entry.entryId : entry.crossReferenceId) === selectedId))?.headwordGroupId ?? null;
+  const wordGroupCount=current?.page?.wordGroupCount;
+  React.useEffect(()=>{onWordCount?.(active==='headwords' && enabled && currentScope && current?.complete && !loading && !failed && typeof wordGroupCount==='number' && Number.isSafeInteger(wordGroupCount) ? wordGroupCount : null);},[active,enabled,currentScope,current?.complete,wordGroupCount,loading,failed,onWordCount]);
+  React.useEffect(()=>{if(enabled && currentScope && current?.complete && !loading && !failed)onSearchComplete?.();},[enabled,currentScope,current?.complete,loading,failed,scopeKey,active,onSearchComplete]);
   const tabs = <div className={styles.tabs}><SegmentedControl standard label={copy.group}>
     {DICTIONARY_SEARCH_CATEGORIES.map(value => <button key={value} type="button" aria-pressed={active === value} aria-controls="library-search-results" onClick={() => setActive(value)}>{copy.labels[value]}</button>)}
   </SegmentedControl></div>;
@@ -137,14 +144,16 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
   const countLabel = isWords
     ? formatLibraryCounts(locale,current?.page?.wordGroupCount ?? wordState?.results.length ?? 0,current?.page?.wordGroupCount === undefined ? undefined : current.page.total)
     : formatUiMessage(copy.foundCount, {count:new Intl.NumberFormat(locale).format(hits?.length ?? 0) + (moreAvailable ? "+" : "")});
+  const compactCount = isWords && current?.page?.wordGroupCount !== undefined
+    ? formatUiCount(locale,current.page.wordGroupCount,getUiMessages(locale).librarySearch,"articleCount") : countLabel;
   return <div className={styles.results}>
     {tabsHost ? createPortal(tabs, tabsHost) : tabs}
-    {countHost && createPortal(<span className={styles.count} role="status">{!enabled ? "" : loading ? copy.busy : !failed ? countLabel : ""}</span>, countHost)}
+    {countHost && createPortal(<span className={styles.count} role="status" data-count-detail={!enabled || loading || failed ? "" : countLabel}>{!enabled ? "" : loading ? copy.busy : !failed ? compactCount : ""}</span>, countHost)}
     <div id="library-search-results" aria-busy={loading && !failed} aria-label={copy.labels[active]}>
       {!enabled ? null : !query.trim() ? <p className={styles.empty}>{copy.prompt}</p> : <>
         {failed && <p role="alert" className={styles.empty}>{current?.error === "material_not_accessible" ? getUiMessages(locale).library.materialUnavailable : copy.error} <button type="button" onClick={() => current?.error ? setRevision(value => value + 1) : setHydrationRevision(value => value + 1)}>{copy.retry}</button></p>}
         {loading && !failed && <p role="status" className={styles.empty}>{copy.busy}</p>}
-        {isWords ? wordState?.results.length ? <LibraryHeadwordGroupResultsList results={wordState.results} appearance={appearance} interfaceLanguage={locale} selectedHeadwordGroupId={selectedGroupId} onSelect={result => {
+        {isWords ? wordState?.results.length ? <LibraryHeadwordGroupResultsList results={wordState.results} appearance={appearance} interfaceLanguage={locale} selectedHeadwordGroupId={selectedGroupId} bulkSelected={active==='headwords'?bulkSelected:undefined} bulkAll={bulkAll} bulkExcludedCount={bulkExcludedCount} onBulkSelect={active==='headwords'?onBulkSelect:undefined} onSelect={result => {
           if (onSelectGroup) onSelectGroup(result);
           else onSelect({ entry: { id: result.selectedEntryId, headword: result.headword, languageCode } });
         }}/> : null : currentScope && hits?.length ? <LibraryResultList appearance={appearance} language={locale} listing="preview" entrySelection hasDetail={Boolean(selectedId)} showSource={showSource}>

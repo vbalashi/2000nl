@@ -1,5 +1,5 @@
 'use client';
-import { localizedSection } from "@/lib/i18n/catalog";
+import { localizedSection,formatMessage } from "@/lib/i18n/catalog";
 
 import {localRecordSnapshotStore} from '@/lib/collections/sharing/corruptLocalRecord';
 import {readUnsubscribeJournal} from '@/lib/collections/sharing/unsubscribeJournal';
@@ -17,15 +17,19 @@ import overlays from '@/components/practice/library/libraryOverlays.module.css';
 import s from '../organization/organization.module.css';
 import {organizationCopy} from '../organization/copy';
 import {useUnsubscribeCollection} from './useShareMutation';
+import {useCollectionAccessPaths} from './useCollectionAccessPaths';
 const copy=localizedSection("receivedCollectionActions");
 export const receivedActionCopy=(locale:OnboardingLanguage)=>copy[locale];
 export function UnsubscribeCollection({userId,row,locale,onClose,onDone}:{userId:string;row:Pick<ReceivedCollection,'id'|'name'>;locale:OnboardingLanguage;onClose:()=>void;onDone:()=>void}){
  const {state,start,check,retry}=useUnsubscribeCollection(userId,row.id);
+ const groupSharingEnabled=process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED==='true';
+ const paths=useCollectionAccessPaths(userId,groupSharingEnabled?row.id:null);
+ const retainedGroups=paths.data?.groups.map(group=>group.name)??[];
  const t=copy[locale],common=organizationCopy(locale);
  const done=useRef(false);
  useEffect(()=>{if(state.status==='committed'&&!done.current){done.current=true;onDone();}},[state.status,onDone]);
  const blocked=state.status==='saving';
- return <DialogSurface className={overlays.dialog} aria-label={t.leave} onDismiss={()=>{if(!blocked)onClose();}}><div className={`${s.editor} ${s.sharingAction}`}><CorruptLocalRecovery scopeKey={JSON.stringify([userId,row.id])} storageKey={'2000nl.pending-unsubscribe.v1.'+encodeURIComponent(userId)} valid={raw=>['saving','uncertain'].includes(state.status)||Boolean(readUnsubscribeJournal(localRecordSnapshotStore(raw),userId))} verify={async signal=>{await readReceivedSource(userId,row.id,signal);}} trigger={state.status} locale={locale} onClose={onClose} onReset={()=>{onClose();}}/><h2>{t.leave}</h2><p>{row.name}</p><p>{t.confirm}</p>{state.status==='uncertain'&&<p role="alert">{t.uncertain}</p>}{state.status==='storage-error'&&<p role="alert">{common.failed}</p>}<footer><button disabled={blocked} onClick={onClose}>{common.cancel}</button>{state.status==='uncertain'?<><button onClick={()=>void check()}>{t.check}</button><button onClick={()=>void retry()}>{t.retry}</button></>:<button disabled={state.status!=='ready'&&state.status!=='storage-error'} onClick={()=>void start()}>{state.status==='saving'?common.saving:t.leave}</button>}</footer></div></DialogSurface>;
+ return <DialogSurface className={overlays.dialog} aria-label={t.leave} onDismiss={()=>{if(!blocked)onClose();}}><div className={`${s.editor} ${s.sharingAction}`}><CorruptLocalRecovery scopeKey={JSON.stringify([userId,row.id])} storageKey={'2000nl.pending-unsubscribe.v1.'+encodeURIComponent(userId)} valid={raw=>['saving','uncertain'].includes(state.status)||Boolean(readUnsubscribeJournal(localRecordSnapshotStore(raw),userId))} verify={async signal=>{await readReceivedSource(userId,row.id,signal);}} trigger={state.status} locale={locale} onClose={onClose} onReset={()=>{onClose();}}/><h2>{t.leave}</h2><p>{row.name}</p><p>{t.confirm}</p>{retainedGroups.length>0&&<p>{formatMessage(localizedSection('labelSharing')[locale].accessRemains,{groups:retainedGroups.join(', ')})}</p>}{state.status==='uncertain'&&<p role="alert">{t.uncertain}</p>}{state.status==='storage-error'&&<p role="alert">{common.failed}</p>}{groupSharingEnabled&&paths.status==='error'&&<p role="alert">{common.sharingStatusError}</p>}<footer><button disabled={blocked} onClick={onClose}>{common.cancel}</button>{state.status==='uncertain'?<><button onClick={()=>void check()}>{t.check}</button><button onClick={()=>void retry()}>{t.retry}</button></>:<button disabled={(state.status!=='ready'&&state.status!=='storage-error')||(groupSharingEnabled&&paths.data?.directSubscription!==true)} onClick={()=>void start()}>{state.status==='saving'?common.saving:t.leave}</button>}</footer></div></DialogSurface>;
 }
 export function ForwardCollection({userId,row,locale,onClose}:{userId:string;row:ReceivedCollection;locale:OnboardingLanguage;onClose:()=>void}){
  const key=JSON.stringify([userId,row.id]);

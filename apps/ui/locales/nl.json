@@ -944,7 +944,9 @@
       "matchingGroupZero": "{count} passende artikelen",
       "matchingGroupTwo": "{count} passende artikelen",
       "referenceZero": "{count} verwijzingen",
-      "referenceTwo": "{count} verwijzingen"
+      "referenceTwo": "{count} verwijzingen",
+      "recentSearch": "Recent",
+      "scopeActions": "Filtergeschiedenis"
     },
     "collections": {
       "title": "Collecties",
@@ -1127,6 +1129,42 @@
     "common": {
       "closePanel": "{title} sluiten",
       "unknownLanguage": "Onbekende taal"
+    },
+    "wordsBulk": {
+      "select": "Artikelen selecteren",
+      "cancel": "Selectie annuleren",
+      "selectPage": "Deze pagina selecteren",
+      "clearPage": "Selectie op deze pagina wissen",
+      "add": "Aan collectie toevoegen",
+      "choose": "Kies een collectie",
+      "preview": "Artikelen: {articles} · betekenissen: {meanings}",
+      "confirm": "Betekenissen toevoegen",
+      "loading": "Betekenissen controleren…",
+      "failed": "De actie is mislukt. Probeer het opnieuw.",
+      "empty": "Maak eerst een collectie.",
+      "success": "Toegevoegd: {count}",
+      "changed": "De passende betekenissen zijn gewijzigd. Controleer het nieuwe aantal.",
+      "selectAll": "Alles in dit filter selecteren ({count})",
+      "limit": "U kunt maximaal 2.500 artikelen en 100.000 betekenissen tegelijk toevoegen.",
+      "selectedShort": "Geselecteerd: {count}",
+      "allShort": "Alle: {count}",
+      "allExceptShort": "Alle − {count}",
+      "manualLimit": "Maximaal 200 afzonderlijk geselecteerde of uitgesloten artikelen.",
+      "retryConfirmed": "Bevestigde wijziging opnieuw proberen",
+      "private": "Privé",
+      "sharedReadersZero": "Gedeeld · {count} abonnees",
+      "sharedReadersOne": "Gedeeld · {count} abonnee",
+      "sharedReadersTwo": "Gedeeld · {count} abonnees",
+      "sharedReadersFew": "Gedeeld · {count} abonnees",
+      "sharedReadersMany": "Gedeeld · {count} abonnees",
+      "sharedReadersOther": "Gedeeld · {count} abonnees"
+    },
+    "collectionComposition": {
+      "title": "Gedeelde collectie",
+      "audience": "Lezers: {count}. Zij kunnen deze wijziging zien.",
+      "failed": "De collectie kon niet worden bijgewerkt. Controleer en probeer opnieuw.",
+      "storage": "De bevestiging kon niet op dit apparaat worden bewaard. Probeer opnieuw.",
+      "pending": "Het resultaat is nog niet beschikbaar. Controleer opnieuw voordat u het opnieuw probeert."
     }
   },
   "wordDetails": {
@@ -1334,7 +1372,8 @@
       "owned": "Door mij gedeeld",
       "received": "Door mij toegevoegd",
       "add": "Toevoegen via link / code",
-      "label": "Gedeelde onderdelen"
+      "label": "Gedeelde onderdelen",
+      "search": "Groepen en collecties zoeken"
     },
     "utilityNavigation": {
       "theme": "Thema",
@@ -1840,7 +1879,7 @@
       "wordCountOther": "{count} woorden",
       "sentenceFound": "Gevonden: {words} met {meanings}.",
       "sentenceCards": "Beschikbare kaarten: {cards}.",
-      "sentenceProgress": "Van deze kaarten leer je er al {learning}; nieuw: {new}. Nu te herhalen: {due}.",
+      "sentenceProgress": "Van deze kaarten leer je er {learning}, nu te herhalen: {due}.",
       "sentenceOther": "Kaarten met een andere status: {other}."
     },
     "libraryWordSelection": {
@@ -1903,6 +1942,62 @@
       "interjection": "tsw.",
       "abbreviation": "afk.",
       "prefix": "voorv."
+    },
+    "collectionDetails": {
+      "source": "Bron",
+      "materialKind": "Soort materiaal",
+      "originKind": "Bron",
+      "materialTitle": "Titel van het materiaal",
+      "creatorName": "Auteur / kanaal",
+      "url": "URL",
+      "fileName": "Bestandsnaam",
+      "publishedOn": "Publicatiedatum",
+      "video": "Video",
+      "article": "Artikel",
+      "text": "Tekst",
+      "book": "Boek",
+      "other": "Anders",
+      "youtube": "YouTube",
+      "web": "Web",
+      "localFile": "Lokaal bestand",
+      "manual": "Handmatig",
+      "preview": "Voorbeeld: brongegevens zijn demonstratiegegevens en worden niet opgeslagen.",
+      "description": "Beschrijving",
+      "invalid": "Controleer de naam, beschrijving en brongegevens. Links moeten beginnen met http:// of https://."
+    },
+    "labelSharing": {
+      "title": "Label delen",
+      "openNotice": "Via de uitnodiging kunnen anderen zich abonneren op je huidige en toekomstige collecties onder dit label, inclusief onderliggende labels.",
+      "closeNotice": "Abonnees verliezen toegang via dit label. Onafhankelijke toegang en leervoortgang blijven behouden.",
+      "description": "Deze groep bevat de collecties van de auteur met dit label of de onderliggende labels. De lijst wordt automatisch bijgewerkt.",
+      "collections": "Collecties",
+      "accepted": "Groep toegevoegd",
+      "contents": "Inhoud van de groep",
+      "openGroup": "Groep openen",
+      "leaveNotice": "De groep verdwijnt uit je bibliotheek. Onafhankelijk verleende toegang en leervoortgang blijven behouden.",
+      "groups": "Collectiegroepen",
+      "accessRemains": "Toegang blijft behouden via deze groepen: {groups}.",
+      "audienceTitle": "Toegang wijzigen",
+      "audienceIntro": "Deze labelwijziging verandert wie toegang heeft tot de collecties.",
+      "audienceAdded": "Lezers die toegang krijgen: {readers}. Collecties: {collections}.",
+      "audienceRemoved": "Lezers die toegang verliezen: {readers}. Collecties: {collections}.",
+      "pathsChanged": "Toegangspaden veranderen. Onafhankelijke abonnementen blijven behouden.",
+      "copyRequired": "Voor publicatie van deze wijziging zijn onafhankelijke kopieën van geleende artikelen nodig.",
+      "saveUncertain": "Je hebt deze wijziging bevestigd, maar het resultaat kon nog niet worden gecontroleerd.",
+      "retrySave": "Bevestigde wijziging opnieuw opslaan",
+      "copyTitle": "Onafhankelijke kopieën voorbereiden",
+      "copySeparation": "Je bevestigt het kopiëren per collectie. Voltooide kopieën blijven behouden.",
+      "copyNext": "Ga na het kopiëren terug naar de wijziging en bevestig deze.",
+      "borrowedCount": "Geleende artikelen: {count}",
+      "noBorrowed": "Geen geleende artikelen",
+      "compositionTitle": "Collectie wijzigen",
+      "compositionAdd": "De toegevoegde betekenis wordt beschikbaar voor abonnees van de collectie.",
+      "compositionRemove": "Verwijderde betekenissen verdwijnen uit de collectie voor abonnees.",
+      "compositionDelete": "Na het verwijderen vervalt toegang via deze collectie. Andere collecties en de leervoortgang blijven behouden.",
+      "compositionReaders": "Betrokken abonnees: {count}",
+      "compositionPaths": "Rechtstreekse abonnementen: {direct}. Groepsabonnementen: {groups}.",
+      "originalCollections": "Collecties van andere auteurs",
+      "referenceNotice": "Deze collecties zijn van andere auteurs. Open een uitnodiging en voeg elke collectie afzonderlijk toe."
     }
   },
   "tour": {

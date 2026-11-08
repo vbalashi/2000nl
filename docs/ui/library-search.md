@@ -20,9 +20,9 @@ spacing, reading font, separators, hover, selection and focus behavior. Literal
 query matches use text weight, without adding a highlight color.
 
 Short category names contain no counts. A single counter sits beside the source
-line, above the categories. Ordinary browsing, Words and A–Z show separate
-localized article and selected-meaning totals (for example, `73 articles · 115
-meanings`). Articles are dictionary article groups, not unique spellings: homonyms
+line, above the categories. Ordinary browsing shows the article total in the counter and reveals the exact
+article and selected-meaning totals in its action menu (for example, `73 articles · 115
+meanings`). Words and A–Z category results retain their separate counter policy. Articles are dictionary article groups, not unique spellings: homonyms
 or different parts of speech can form separate articles. Meanings count the
 selected entry identities after source and vocabulary filters, before pagination;
 they do not count a complete article opened separately. Reducing meanings per
@@ -84,3 +84,22 @@ Replace observations and their profile revision atomically. Cursor scope include
 that revision, so a changed resource rejects an old page cursor. The public
 migration is a fresh-install contract; managed upgrades use the private release
 process.
+
+## Selecting articles for a collection
+
+In ordinary Words browsing, the result counter opens actions for training and
+article selection. Selection uses the article rows themselves. A selection can
+include manually chosen articles across pages, the current page, or all articles
+in the current filter; these scopes are distinct. When all are selected, clicking
+an article excludes or restores it. A change of account or search scope clears
+the selection. Headword category searches also support selection; example, definition and alphabetical category searches do not yet expose it.
+
+Before adding, the server resolves the selected article identities using the
+same Library source and vocabulary filters and reports the number of matching
+meanings. Only owned writable collections are destinations. Confirmation
+re-resolves that scope and refuses to write if the article or meaning set has
+changed since preview. For shared collections, the preview also shows the affected readership. The insert is atomic and skips existing memberships; a lost confirmation is reconciled by reading its receipt without repeating the write.
+The operation is bounded to 200 manually selected articles or exclusions,
+2,500 articles in the full-filter scope and 100,000 candidate meanings; it fails
+closed if the bounds or cursor traversal limit are exceeded. It does not operate
+on locally cached result pages or implicitly add all meanings of an article.
