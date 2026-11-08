@@ -26,5 +26,14 @@ export async function readSharingOverview(userId:string,signal:AbortSignal){
  if(signal.aborted)throw new DOMException('Aborted','AbortError');
  const overview=response.ok?parseSharingOverview(value):null;
  if(!overview)throw new Error('sharing_overview_unavailable');
- return overview;
+ // The owner tab counts publications, rather than inherited group access.
+ let sharedByMe=0,cursor:OwnedCatalogQuery['cursor']=null;
+ const seen=new Set<string>();
+ do {
+  const page=await readOwnedSharedCatalog(userId,{query:'',sort:'recent',limit:100,cursor},signal);
+  sharedByMe+=page.collections.filter(row=>row.directPublication).length;
+  cursor=page.nextCursor;
+  if(cursor){const key=JSON.stringify(cursor);if(seen.has(key))throw new Error('catalog_cursor_cycle');seen.add(key);}
+ }while(cursor);
+ return {...overview,sharedByMe};
 }

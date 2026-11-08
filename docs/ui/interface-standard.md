@@ -130,3 +130,9 @@ without a boxed surface; opening a text editor selects its current value. Enter 
 leaving focus commits once, while Shift+Enter keeps a description newline and
 Escape restores the saved value. Failed saves keep the editor available for
 correction or revision refresh. Empty metadata uses caption-sized muted ink.
+
+## Compact dialog actions
+
+`ActionButton` owns the ordinary dialog action family: `primary` uses the muted selected palette, while `quiet` uses muted text without a border. Its visual surface is 28px high with the shared control radius; the button target is 36px, or 44px for coarse pointers. Hover gently dims the primary surface rather than replacing it with an unrelated surface; keyboard focus remains explicit. Disabled buttons do not receive hover emphasis.
+
+Use explicit variants, never a footer's child order, to identify the primary action. The collection card, label editors, collection membership picker, library filters and normal sharing dialogs use this family. Training launch controls retain their dedicated 44px family. Destructive collection deletion retains its existing treatment pending separate review.

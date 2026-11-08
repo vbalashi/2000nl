@@ -1,4 +1,5 @@
 "use client";
+import {ActionButton} from '@/components/practice/ui/ActionButton';
 import React from "react";
 import {Search,Lock,Share2,Check} from "lucide-react";
 import {getInterfaceCatalog} from "@/lib/i18n/catalog";
@@ -118,6 +119,6 @@ export function WordsBulkDialog({userId,language,lists,selection,onClose,onDone,
    {!choices.length&&<p>{available.some(list=>list.type==='user'&&list.ownership!=='received') ? getUiMessages(language).collections.empty : copy.empty}</p>}
   </div>
   <p role="status" className={s.status}>{busy?copy.loading:error?error:preview?formatUiMessage(copy.preview,{articles:preview.articleCount,meanings:preview.meaningCount}):error}{error && !busy && !uncertain && <button type="button" onClick={()=>setRetry(value=>value+1)}>{getUiMessages(language).library.retry}</button>}</p>
-  <div className={s.actions}><button type="button" disabled={busy && action.current} onClick={onClose}>{getUiMessages(language).builder.cancel}</button>{uncertain?<><button type="button" disabled={busy} onClick={()=>{if(expired){sessionStorage.removeItem(journalKey);setUncertain(null);setExpired(false);setError(null);}else void check();}}>{expired?copy.cancel:getInterfaceCatalog(language).features.personalNote.check}</button>{!expired && <button type="button" disabled={busy} onClick={()=>void check(true)}>{copy.retryConfirmed}</button>}</>:<button type="button" disabled={!preview||preview.meaningCount===0||busy||access?.userId!==userId||!listId||!access.rows.has(listId)} onClick={()=>void submit()}>{copy.confirm}</button>}</div>
+  <div className={s.actions}><ActionButton type="button" disabled={busy && action.current} onClick={onClose}>{getUiMessages(language).builder.cancel}</ActionButton>{uncertain?<><ActionButton type="button" disabled={busy} onClick={()=>{if(expired){sessionStorage.removeItem(journalKey);setUncertain(null);setExpired(false);setError(null);}else void check();}}>{expired?copy.cancel:getInterfaceCatalog(language).features.personalNote.check}</ActionButton>{!expired && <ActionButton type="button" disabled={busy} onClick={()=>void check(true)}>{copy.retryConfirmed}</ActionButton>}</>:<ActionButton variant="primary" type="button" disabled={!preview||preview.meaningCount===0||busy||access?.userId!==userId||!listId||!access.rows.has(listId)} onClick={()=>void submit()}>{copy.confirm}</ActionButton>}</div>
  </DialogSurface><CorruptLocalRecovery scopeKey={userId} storageKey={journalKey} valid={raw=>Boolean(parseBulkJournal(raw))} verify={async signal=>{await fetchUserLists(userId,selection.language);signal.throwIfAborted();}} trigger={userId} locale={language} onClose={onClose} onReset={()=>{setUncertain(null);setError(null);}}/></>;
 }

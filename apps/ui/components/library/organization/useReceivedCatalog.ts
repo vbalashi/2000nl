@@ -27,7 +27,7 @@ export function useReceivedCatalog(input:{ userId:string; active:boolean; query:
   const valid=()=>!controller.signal.aborted&&generation===sequence.current&&current.current.key===scope.key;
   const cursor=append?base.nextCursor:null;
   if(append){cursors.current.add(JSON.stringify(cursor));commit({...base,loadingMore:true});}
-  else{cursors.current.clear();commit(empty(scope.key,'loading'));}
+  else{cursors.current.clear();commit(base.key===scope.key&&base.status==='ready'?{...base,loadingMore:false}:empty(scope.key,'loading'));}
   try{
    const page=await readReceivedCatalog(scope.userId,{...scope.query,cursor},controller.signal);
    if(!valid())return;

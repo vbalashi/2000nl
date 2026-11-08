@@ -1799,5 +1799,9 @@
   "features.labelSharing.subscriberTwo": {"source":"{count} subscribers","translationHash":"579c049cc0d63d0b1d8f79bd885214a6f60b0d3bb72264ebc995f46c5f639ac6"},
   "features.labelSharing.subscriberFew": {"source":"{count} subscribers","translationHash":"579c049cc0d63d0b1d8f79bd885214a6f60b0d3bb72264ebc995f46c5f639ac6"},
   "features.labelSharing.subscriberMany": {"source":"{count} subscribers","translationHash":"9ba84bb8d73615839c8b9acd1113057cb6495ea7de210154c13a8535fa969a99"},
-  "features.labelSharing.subscriberOther": {"source":"{count} subscribers","translationHash":"7529fb4a53f2e9f535dddd6b6d388cc5e74a7a4f35f03d3ab0205e254da70230"}
+  "features.labelSharing.subscriberOther": {"source":"{count} subscribers","translationHash":"7529fb4a53f2e9f535dddd6b6d388cc5e74a7a4f35f03d3ab0205e254da70230"},
+  "features.collectionDetails.urlHint": {"source":"Use a website address, for example www.example.com.","translationHash":"8ff86c9bf3a9201ab879ccb0b95c881aae0026bae5ff232d32ee3c4a7eadb526"},
+  "features.labelSharing.openInCollections": {"source":"Open in collections","translationHash":"e62529be058ceffa2d4fda1dd2a9783c37c029b664ba568c9eddb5a28c554abd"},
+  "features.labelSharing.accessViaGroup": {"source":"Access through {groups}","translationHash":"093ea69f3989319553b71935cf0391c4b0958556a6c82ab915637a1187a10a62"},
+  "features.labelSharing.publishedSeparately": {"source":"Published separately","translationHash":"ab0b647f562ec29210bc3f771222f42a53c3a60294e89163c0647d43044b00c6"}
 }

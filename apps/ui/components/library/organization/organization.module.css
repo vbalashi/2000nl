@@ -242,3 +242,25 @@
 .collectionDetails .inlineFieldForm input::placeholder,.collectionDetails .inlineFieldForm textarea::placeholder{font-size:var(--practice-text-caption);color:var(--practice-text-muted);opacity:1}
 .collectionDetails .inlineFieldForm[data-empty=true] input,.collectionDetails .inlineFieldForm[data-empty=true] textarea,.collectionDetails .inlineFieldForm[data-empty=true]>div>button{font-size:var(--practice-text-caption)}
 @media(max-width:700px){.collectionDetails .inlineFieldForm{min-height:36px}}
+.collectionDetails .fieldHint{font-size:var(--practice-text-caption);color:var(--practice-text-muted)}
+.ownedSharedActions .copyLinkAction{display:inline-flex;align-items:center;justify-content:flex-start;gap:6px;white-space:nowrap;border-color:transparent;background:transparent;color:var(--practice-text-muted);font-size:var(--practice-text-caption);padding:4px 8px}
+.ownedSharedActions .copyLinkAction:hover{background:var(--practice-surface-subtle);color:var(--practice-text-secondary)}
+.copyFeedbackText{display:grid}.copyFeedbackText>span{grid-area:1/1}
+.copyAnnounce{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media(min-width:701px){.ownedSharedHead,.ownedSharedRow{grid-template-columns:minmax(0,2fr) minmax(90px,.65fr) minmax(220px,1fr)}}
+
+/* Shared labels stay inside the catalogue, beneath its common heading. */
+.sharedGroups .sharedGroupRow{display:grid;grid-template-columns:18px minmax(0,1fr) 44px;gap:12px;padding:12px 16px;margin:0}
+.sharedGroups .sharedGroupRow .collectionCopy{min-width:0}
+.sharedGroups .sharedGroupRow>button:last-child{justify-self:end}
+@media(max-width:700px){.sharedGroups .sharedGroupRow{padding-inline:4px}}
+
+.sharedGroups .sharedGroupRow{grid-template-columns:minmax(0,2fr) minmax(90px,.65fr) minmax(220px,1fr);gap:12px}
+.sharedGroups .sharedGroupRow .ownedSharedActions{grid-column:3}
+@media(max-width:700px){.sharedGroups .sharedGroupRow{grid-template-columns:minmax(0,1fr) 44px}.sharedGroups .sharedGroupRow .ownedSharedActions{grid-column:2;grid-row:1}}
+
+.objectAccessIcon{position:relative;display:inline-flex;flex:none;width:20px;height:22px;align-items:center;color:var(--practice-text-muted)}
+.objectAccessBadge{position:absolute;inset-inline-end:-3px;bottom:-1px;display:flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;background:var(--practice-canvas);color:var(--practice-text-secondary)}
+.collection>.objectAccessIcon{margin-top:2px}
+
+.groupContents .compactActions{gap:8px;align-items:center;flex-wrap:wrap}

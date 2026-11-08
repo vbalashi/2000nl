@@ -1980,7 +1980,8 @@
       "collectionName": "Collectienaam",
       "notSpecified": "Niet opgegeven",
       "editField": "{field} bewerken",
-      "materialTitleHelp": "De oorspronkelijke titel van de video, het artikel of het boek. Je collectie kan een andere naam hebben."
+      "materialTitleHelp": "De oorspronkelijke titel van de video, het artikel of het boek. Je collectie kan een andere naam hebben.",
+      "urlHint": "Vul een websiteadres in, bijvoorbeeld www.example.com."
     },
     "labelSharing": {
       "title": "Label delen",
@@ -2029,7 +2030,10 @@
       "subscriberTwo": "{count} abonnees",
       "subscriberFew": "{count} abonnees",
       "subscriberMany": "{count} abonnees",
-      "subscriberOther": "{count} abonnees"
+      "subscriberOther": "{count} abonnees",
+      "openInCollections": "Openen in collecties",
+      "accessViaGroup": "Toegang via {groups}",
+      "publishedSeparately": "Afzonderlijk gedeeld"
     }
   },
   "tour": {

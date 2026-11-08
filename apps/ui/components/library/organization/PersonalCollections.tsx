@@ -1,4 +1,8 @@
 "use client";
+import {ActionButton} from '@/components/practice/ui/ActionButton';
+import {CollectionAccessIcon} from "./CollectionAccessIcon";
+import {useOwnedSharedCatalog} from "../sharing/useOwnedSharedCatalog";
+import {localizedSection} from "@/lib/i18n/catalog";
 import {ChoiceSelect} from "./ChoiceSelect";
 import {InlineLabelCreate} from "./InlineLabelCreate";
 import {formatMessage} from "@/lib/i18n/catalog";
@@ -7,7 +11,7 @@ import { localizedField } from "@/lib/i18n/catalog";
 import {CollectionSortControl} from "@/components/library/organization/CollectionSortControl";
 import {SearchField} from "@/components/practice/ui/SearchField";
 import React, { useMemo, useState } from "react";
-import { FileText, Folder, Folders, Share2, LockKeyhole, UserRound, MoreHorizontal, Plus, Search, Tags, X, ChevronDown, ChevronRight } from "lucide-react";
+import { FileText, Folder, Folders, Share2, MoreHorizontal, Plus, Search, Tags, X, ChevronDown, ChevronRight } from "lucide-react";
 import {readOwnerShareJournal,ownerShareStore} from '@/lib/collections/sharing/ownerShareJournal';
 import {OwnedCollectionSharing} from '../sharing/OwnedCollectionSharing';
 import {OwnedLabelSharing} from '../sharing/OwnedLabelSharing';
@@ -33,14 +37,15 @@ import {CollectionDetailsController} from "./CollectionDetailsController";
 import {CollectionDetailsSurface} from "./CollectionDetailsPanel";
 import s from "./organization.module.css";
 
-type CatalogCollection=WordListSummary&{ownership?:'owned'|'received';isShared?:boolean;labelIds?:string[]};
-type Props = {active: boolean; userId: string; language: string; locale: OnboardingLanguage; collections: WordListSummary[]; onReload: () => Promise<void>; onOpen: (collection: WordListSummary) => void; onOpenReceived?: (collection:WordListSummary)=>void; onOpenLabel?: (label:CollectionLabel) => void};
+type CatalogCollection=WordListSummary&{ownership?:'owned'|'received';isShared?:boolean;accessDescription?:string;labelIds?:string[]};
+type Props = {requestedLabelId?:string;labelRequest?:number;active: boolean; userId: string; language: string; locale: OnboardingLanguage; collections: WordListSummary[]; onReload: () => Promise<void>; onOpen: (collection: WordListSummary) => void; onOpenReceived?: (collection:WordListSummary)=>void; onOpenLabel?: (label:CollectionLabel) => void};
 type Editor = {kind:"label"; id:string; existing?:CollectionLabel} | {kind:"collection"; existing?:WordListSummary} | {kind:"assign"; collection:WordListSummary} | {kind:"delete-label"; label:CollectionLabel} | {kind:"delete-collection"; collection:WordListSummary};
 
-export function PersonalCollections({active, userId, language, locale, collections, onReload, onOpen, onOpenReceived, onOpenLabel}: Props) {
+export function PersonalCollections({active, userId, language, locale, collections, onReload, onOpen, onOpenReceived, onOpenLabel, requestedLabelId, labelRequest}: Props) {
   const t = organizationCopy(locale);
   const labels = usePersonalLabels(active,userId);
   const [scope, setScope] = useState("all");
+  React.useEffect(()=>{if(requestedLabelId){setScope(requestedLabelId);setQuery("");setDetailsSelection(null);}},[requestedLabelId,labelRequest]);
   const [query, setQuery] = useState("");
   const [labelQuery, setLabelQuery] = useState("");
   const [collapsedLabels,setCollapsedLabels]=useState<Set<string>>(new Set());
@@ -97,7 +102,9 @@ export function PersonalCollections({active, userId, language, locale, collectio
   const publicationEnabled=process.env.NEXT_PUBLIC_COLLECTION_SHARING_ENABLED==='true';
   const catalog=usePersonalCollectionCatalog({userId,active:active&&publicationEnabled&&Boolean(snapshot),query:{query,sort,scope:effectiveScope==='all'?'all':effectiveScope==='unlabelled'?'unlabelled':'label',labelId:['all','unlabelled'].includes(effectiveScope)?null:effectiveScope,languageCode:language,limit:50}});
   const deletion=useCollectionComposition(userId,editor?.kind==='delete-collection'?editor.collection.id:'',()=>{setEditor(null);setDetailsSelection(null);void onReload();void labels.refresh();void catalog.refresh();void sharedLabels.refresh();});
-  const rows:CatalogCollection[]=publicationEnabled?catalog.collections.map(row=>({id:row.id,name:row.name,description:collections.find(collection=>collection.id===row.id)?.description,type:'user',created_at:row.createdAt,item_count:row.itemCount,ownership:row.ownership,isShared:row.isShared,labelIds:row.labelIds})):ownRows;
+  const sharedAccess=useOwnedSharedCatalog({userId,active:active&&publicationEnabled,query:{query,sort,limit:100}});
+  const accessCopy=localizedSection('labelSharing')[locale];
+  const rows:CatalogCollection[]=publicationEnabled?catalog.collections.map(row=>({id:row.id,name:row.name,description:collections.find(collection=>collection.id===row.id)?.description,type:'user',created_at:row.createdAt,item_count:row.itemCount,ownership:row.ownership,isShared:row.isShared,accessDescription:(()=>{const access=sharedAccess.collections.find(item=>item.id===row.id);return access?access.directPublication?accessCopy.publishedSeparately:formatMessage(accessCopy.accessViaGroup,{groups:access.groups.map(group=>group.name).join(', ')}):undefined;})(),labelIds:row.labelIds})):ownRows;
   const visibleRows=publicationEnabled?rows:rows.slice(0,pageSize);
   const selectedOwnCollection=detailsSelection?.userId===userId?collections.find(row=>row.id===detailsSelection.id&&row.type==='user'&&row.ownership!=='received'):undefined;
   const details:CatalogCollection|null=detailsSelection?.userId===userId?rows.find(row=>row.id===detailsSelection.id)??(selectedOwnCollection&&detailsSelection.row.ownership!=='received'?{...selectedOwnCollection,ownership:'owned',isShared:detailsSelection.isShared}:detailsSelection.row):null;
@@ -164,7 +171,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
       <button type="button" aria-pressed={effectiveScope === "unlabelled"} onClick={()=>changeScope("unlabelled")}><FileText size={18}/><span>{t.unlabelled}</span></button>
       {filteredLabels.map(({label,depth,path,parents})=><div className={s.labelRow} key={label.id} style={{paddingInlineStart:Math.min(depth,4)*12}}>
         {snapshot?.labels.some(row=>row.parent_id===label.id)?<button className={s.treeDisclosure} type="button" aria-label={label.name} aria-expanded={!collapsedLabels.has(label.id)} onClick={()=>toggleCollapsed(setCollapsedLabels,label.id)}>{collapsedLabels.has(label.id)?<ChevronRight size={14}/>:<ChevronDown size={14}/>}</button>:<span className={s.treeSpacer} aria-hidden="true"/>}
-        <button type="button" aria-pressed={effectiveScope === label.id} title={path} onClick={()=>changeScope(label.id)}>{isSharedLabel(label.id)?<Share2 size={18} aria-label={t.shared}/>:<Folder size={18}/>}<span>{label.name}{labelQuery.trim() && parents ? ` · ${parents}` : ""}</span></button>
+        <button type="button" aria-label={label.name} aria-pressed={effectiveScope === label.id} title={path} onClick={()=>changeScope(label.id)}><CollectionAccessIcon kind="label" shared={isSharedLabel(label.id)} label={isSharedLabel(label.id)?t.shared:t.labels}/><span>{label.name}{labelQuery.trim() && parents ? ` · ${parents}` : ""}</span></button>
         <button type="button" aria-label={`${t.more}: ${label.name}`} onClick={event=>setMenu({anchor:event.currentTarget,label})}><MoreHorizontal size={16} strokeWidth={1.5}/></button>
       </div>)}
       {!labelRows.length && <p className={s.muted}>{t.noLabels}</p>}
@@ -214,7 +221,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
         {(editor.kind === "delete-label" || editor.kind === "delete-collection") && <><p>{editor.kind === "delete-label" ? editor.label.name : editor.collection.name}</p><p>{editor.kind === "delete-label" ? t.deleteLabel : t.deleteCollection}</p></>}
         {(saveError || labels.error) && <p role="alert">{message(saveError ?? labels.error!)}{saveError === "uncertain" && <button type="button" onClick={()=>{void onReload();void labels.refresh();}}>{t.retry}</button>}</p>}
         {groupSharingEnabled&&editor.kind==='delete-collection'&&deletion.state.status==='failed'&&<p role="alert">{deletion.state.error==='collection_audience_changed'?t.conflict:t.failed}</p>}
-        <footer><button type="button" disabled={saving||creatingLabel} onClick={closeEditor}>{t.cancel}</button><button type="submit" disabled={saving || creatingLabel || saveError === "uncertain" || ((editor.kind === "label" || editor.kind === "collection") && !name.trim())}>{saving ? t.saving : editor.kind.startsWith("delete") ? t.remove : t.save}</button></footer>
+        {editor.kind.startsWith('delete')?<footer><button type="button" disabled={saving||creatingLabel} onClick={closeEditor}>{t.cancel}</button><button type="submit" disabled={saving || creatingLabel || saveError === "uncertain" || ((editor.kind === "label" || editor.kind === "collection") && !name.trim())}>{saving ? t.saving : editor.kind.startsWith("delete") ? t.remove : t.save}</button></footer>:<footer><ActionButton type="button" disabled={saving||creatingLabel} onClick={closeEditor}>{t.cancel}</ActionButton><ActionButton variant="primary" type="submit" disabled={saving || creatingLabel || saveError === "uncertain" || ((editor.kind === "label" || editor.kind === "collection") && !name.trim())}>{saving ? t.saving : editor.kind.startsWith("delete") ? t.remove : t.save}</ActionButton></footer>}
       </form>
     </DialogSurface>}
     {groupSharingEnabled&&editor?.kind==='delete-collection'&&<CollectionCompositionConfirmation controller={deletion} collectionName={editor.collection.name} locale={locale}/>}
@@ -226,7 +233,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
 export function PersonalCollectionRow({collection,names=[],locale,onOpen,onDetails,onMore}:{collection:CatalogCollection;names?:string[];locale:OnboardingLanguage;onOpen:()=>void;onDetails?:()=>void;onMore:React.MouseEventHandler<HTMLButtonElement>}) {
  const t=organizationCopy(locale);
  return <article className={s.collection}>
-  <span role="img" className={s.accessIcon} title={collection.ownership==='received'?t.received:collection.isShared?t.sharedByYou:t.private} aria-label={collection.ownership==='received'?t.received:collection.isShared?t.sharedByYou:t.private}>{collection.ownership==='received'?<UserRound size={16} aria-hidden="true"/>:collection.isShared?<Share2 size={16} aria-hidden="true"/>:<LockKeyhole size={16} aria-hidden="true"/>}</span><div className={s.collectionCopy}><button className={s.collectionName} onClick={onDetails??onOpen}>{collection.name}</button><p>{formatUiCount(locale,collection.item_count??0,t,"meaning")}{collection.ownership==='received'?` · ${t.received}`:""}{names.length?` · ${names.join(" / ")}`:""}</p></div>
+  <CollectionAccessIcon shared={collection.isShared} received={collection.ownership==='received'} label={collection.ownership==='received'?t.received:collection.accessDescription??(collection.isShared?t.sharedByYou:t.private)}/><div className={s.collectionCopy}><button className={s.collectionName} onClick={onDetails??onOpen}>{collection.name}</button><p>{formatUiCount(locale,collection.item_count??0,t,"meaning")}{collection.ownership==='received'?` · ${t.received}`:""}{names.length?` · ${names.join(" / ")}`:""}</p></div>
   <button data-onboarding="own-collection-menu" aria-label={`${t.more}: ${collection.name}`} onClick={onMore}><MoreHorizontal size={16} strokeWidth={1.5}/></button>
  </article>;
 }

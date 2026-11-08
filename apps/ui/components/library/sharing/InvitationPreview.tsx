@@ -1,4 +1,5 @@
 'use client';
+import {ActionButton} from '@/components/practice/ui/ActionButton';
 import { localizedSection, localizedField } from "@/lib/i18n/catalog";
 
 import {localRecordSnapshotStore} from '@/lib/collections/sharing/corruptLocalRecord';
@@ -23,15 +24,15 @@ export function InvitationPreviewView({userId,code,locale,onClose,onOpen,onConfi
  useEffect(()=>{if(state.status==='accepted')onConfirmed?.();},[state.status,onConfirmed]);
  const t=copy[locale],common=organizationCopy(locale);
  return <section data-onboarding="invitation-preview" className={`${s.catalog} ${s.invitation}`} aria-busy={state.status==='loading'||state.status==='saving'}><CorruptLocalRecovery scopeKey={JSON.stringify([userId,code])} storageKey={'2000nl.pending-share-accept.v1.'+encodeURIComponent(userId)} valid={raw=>['saving','uncertain'].includes(state.status)||Boolean(readAcceptJournal(localRecordSnapshotStore(raw),userId))} verify={async signal=>{try{await previewCollectionShare(userId,code,signal);}catch(error){if(!(error instanceof Error)||error.message!=='share_preview_not_found')throw error;};}} trigger={state.status} locale={locale} onClose={onClose} onReset={()=>{void refresh();}}/>
-  {state.status==='loading'?<p role="status">{common.loading}</p>:state.status==='unavailable'||state.status==='error'?<><p role="alert">{state.status==='error'?(localizedField("invitationPreview", "loadError")[locale]):t.unavailable}</p><div><button onClick={()=>void refresh()}>{common.retry}</button><button onClick={onClose}>{common.close}</button></div></>:state.status==='accepted'?<><h2>{state.available?t.accepted:t.revoked}</h2><div>{state.available&&<button data-onboarding="invitation-open" onClick={()=>onOpen(state.collectionId,state.name,state.entryCount)}>{common.open}</button>}<button onClick={onClose}>{common.close}</button></div></>:<>
+  {state.status==='loading'?<p role="status">{common.loading}</p>:state.status==='unavailable'||state.status==='error'?<><p role="alert">{state.status==='error'?(localizedField("invitationPreview", "loadError")[locale]):t.unavailable}</p><div><ActionButton onClick={()=>void refresh()}>{common.retry}</ActionButton><ActionButton onClick={onClose}>{common.close}</ActionButton></div></>:state.status==='accepted'?<><h2>{state.available?t.accepted:t.revoked}</h2><div>{state.available&&<ActionButton variant="primary" data-onboarding="invitation-open" onClick={()=>onOpen(state.collectionId,state.name,state.entryCount)}>{common.open}</ActionButton>}<ActionButton onClick={onClose}>{common.close}</ActionButton></div></>:<>
    <header className={s.catalogHeader}><h2><FileText size={18} aria-hidden="true"/> {state.preview?.name??t.add}</h2></header>
    <p className={s.muted}>{state.preview?`${state.preview.entryCount.toLocaleString(locale)} ${t.count}`:null}</p>
    <p><Eye size={16} aria-hidden="true"/> {t.view}</p><p className={s.muted}>{t.description}</p>
    {Boolean(state.preview?.samples.length)&&<dl className={s.previewSamples}>{state.preview?.samples.map((sample,index)=><div key={index}><dt>{sample.headword}</dt><dd>{sample.definition}</dd></div>)}</dl>}
    {state.preview?.alreadyAdded&&<p>{t.already}</p>}
    {state.status==='uncertain'&&<p role="alert">{t.uncertain}</p>}{state.status==='storage-error'&&<p role="alert">{common.failed}</p>}
-   <div>{state.status==='uncertain'?<><button onClick={()=>void reconcile()}>{t.check}</button><button onClick={()=>void retry()}>{t.retry}</button></>:<button disabled={state.status==='saving'} data-onboarding="invitation-accept" onClick={()=>void accept()}>{state.status==='saving'?common.saving:t.add}</button>}
-    <button disabled={state.status==='saving'||state.status==='uncertain'} onClick={onClose}>{common.cancel}</button></div>
+   <div>{state.status==='uncertain'?<><ActionButton onClick={()=>void reconcile()}>{t.check}</ActionButton><ActionButton onClick={()=>void retry()}>{t.retry}</ActionButton></>:<ActionButton variant="primary" disabled={state.status==='saving'} data-onboarding="invitation-accept" onClick={()=>void accept()}>{state.status==='saving'?common.saving:t.add}</ActionButton>}
+    <ActionButton disabled={state.status==='saving'||state.status==='uncertain'} onClick={onClose}>{common.cancel}</ActionButton></div>
   </>}
  </section>;
 }

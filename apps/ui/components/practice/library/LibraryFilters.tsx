@@ -1,4 +1,5 @@
 "use client";
+import {ActionButton} from '@/components/practice/ui/ActionButton';
 
 import React, { useEffect, useRef, useState } from "react";
 import { BookOpen, Check, Folder, Layers, Search, X } from "lucide-react";
@@ -102,7 +103,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
     </div>
     <footer className={f.footer}>
         <p className={f.count} role="status">{countContent}</p>
-        <div className={f.actions}><button type="button" className={f.reset} onClick={() => { setDraft({ languageCode: draft.languageCode, dictionaryId: null, parts: [], article: null, ...(draft.sort?{sort:draft.sort}:{}) }); presentation?.onResetAdditionalFilters?.(); }}>{copy.resetFilters}</button><button type="button" className={f.action} onClick={close}>{builder.cancel}</button><button type="button" className={`${f.action} ${f.primary}`} disabled={!canApply} onClick={() => { presentation?.onApplyAdditionalFilters?.(); onApply(effectiveDraft); }}>{copy.showResults}</button></div>
+        <div className={f.actions}><button type="button" className={f.reset} onClick={() => { setDraft({ languageCode: draft.languageCode, dictionaryId: null, parts: [], article: null, ...(draft.sort?{sort:draft.sort}:{}) }); presentation?.onResetAdditionalFilters?.(); }}>{copy.resetFilters}</button><ActionButton onClick={close}>{builder.cancel}</ActionButton><ActionButton variant="primary" disabled={!canApply} onClick={() => { presentation?.onApplyAdditionalFilters?.(); onApply(effectiveDraft); }}>{copy.showResults}</ActionButton></div>
     </footer>
   </>;
   // Keep the controlled draft mounted while the dev organizer occupies Library.

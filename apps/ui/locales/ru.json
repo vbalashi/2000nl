@@ -1980,7 +1980,8 @@
       "collectionName": "Название коллекции",
       "notSpecified": "Не указано",
       "editField": "Изменить поле «{field}»",
-      "materialTitleHelp": "Исходное название видео, статьи или книги. У вашей коллекции может быть другое название."
+      "materialTitleHelp": "Исходное название видео, статьи или книги. У вашей коллекции может быть другое название.",
+      "urlHint": "Укажите адрес сайта, например www.example.com."
     },
     "labelSharing": {
       "title": "Поделиться меткой",
@@ -2029,7 +2030,10 @@
       "subscriberTwo": "{count} подписчика",
       "subscriberFew": "{count} подписчика",
       "subscriberMany": "{count} подписчиков",
-      "subscriberOther": "{count} подписчика"
+      "subscriberOther": "{count} подписчика",
+      "openInCollections": "Открыть в коллекциях",
+      "accessViaGroup": "Доступ через {groups}",
+      "publishedSeparately": "Опубликована отдельно"
     }
   },
   "tour": {

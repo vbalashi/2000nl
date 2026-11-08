@@ -1980,7 +1980,8 @@
       "collectionName": "Назва колекції",
       "notSpecified": "Не вказано",
       "editField": "Змінити поле «{field}»",
-      "materialTitleHelp": "Початкова назва відео, статті або книги. Ваша колекція може мати іншу назву."
+      "materialTitleHelp": "Початкова назва відео, статті або книги. Ваша колекція може мати іншу назву.",
+      "urlHint": "Укажіть адресу сайту, наприклад www.example.com."
     },
     "labelSharing": {
       "title": "Поділитися міткою",
@@ -2029,7 +2030,10 @@
       "subscriberTwo": "{count} підписники",
       "subscriberFew": "{count} підписники",
       "subscriberMany": "{count} підписників",
-      "subscriberOther": "{count} підписника"
+      "subscriberOther": "{count} підписника",
+      "openInCollections": "Відкрити в колекціях",
+      "accessViaGroup": "Доступ через {groups}",
+      "publishedSeparately": "Опублікована окремо"
     }
   },
   "tour": {

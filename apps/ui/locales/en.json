@@ -1980,7 +1980,8 @@
       "collectionName": "Collection name",
       "notSpecified": "Not specified",
       "editField": "Edit {field}",
-      "materialTitleHelp": "The original title of the video, article or book. Your collection can have a different name."
+      "materialTitleHelp": "The original title of the video, article or book. Your collection can have a different name.",
+      "urlHint": "Use a website address, for example www.example.com."
     },
     "labelSharing": {
       "title": "Share label",
@@ -2029,7 +2030,10 @@
       "subscriberTwo": "{count} subscribers",
       "subscriberFew": "{count} subscribers",
       "subscriberMany": "{count} subscribers",
-      "subscriberOther": "{count} subscribers"
+      "subscriberOther": "{count} subscribers",
+      "openInCollections": "Open in collections",
+      "accessViaGroup": "Access through {groups}",
+      "publishedSeparately": "Published separately"
     }
   },
   "tour": {

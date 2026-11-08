@@ -55,10 +55,10 @@ test('recipient reads current and empty source fields but cannot edit any of the
 
 test('validation failure keeps the chosen URL for correction without changing other fields',async()=>{
  const onUnavailable=vi.fn();render(<CollectionDetailsController {...props} onUnavailable={onUnavailable}/>);await screen.findByText('Maker');edit('URL');
- fireEvent.change(screen.getByRole('textbox',{name:'URL'}),{target:{value:'ftp://example.com'}});
+ fireEvent.change(screen.getByRole('textbox',{name:'URL'}),{target:{value:'https://rejected.example/'}});
  mocks.fetch.mockResolvedValueOnce(Response.json({error:'details_unavailable'},{status:400}));fireEvent.submit(screen.getByRole('form',{name:'URL'}));
- expect(await screen.findByRole('alert')).toHaveTextContent('Links must start with http:// or https://');expect(screen.getByRole('textbox',{name:'URL'})).toHaveValue('ftp://example.com');expect(onUnavailable).not.toHaveBeenCalled();
- expect(saves()[0]).toEqual({collectionId:id,expectedRevision:'1',patch:{source:{url:'ftp://example.com'}}});
+ expect(await screen.findByRole('alert')).toHaveTextContent('Links must start with http:// or https://');expect(screen.getByRole('textbox',{name:'URL'})).toHaveValue('https://rejected.example/');expect(onUnavailable).not.toHaveBeenCalled();
+ expect(saves()[0]).toEqual({collectionId:id,expectedRevision:'1',patch:{source:{url:'https://rejected.example/'}}});
  fireEvent.change(screen.getByRole('textbox',{name:'URL'}),{target:{value:'https://example.org'}});
  mocks.fetch.mockResolvedValueOnce(Response.json({...record,source:{...source,url:'https://example.org'},revision:'2'}));fireEvent.submit(screen.getByRole('form'));await screen.findByRole('link',{name:'https://example.org'});
  expect(screen.getByRole('heading',{name:'Lesson'})).toBeInTheDocument();expect(screen.getByText('A description')).toBeInTheDocument();
@@ -141,4 +141,24 @@ test('Shift+Enter keeps a description draft; ordinary Enter saves',async()=>{
  fireEvent.keyDown(input,{key:'Enter',shiftKey:true});expect(saves()).toHaveLength(0);
  mocks.fetch.mockResolvedValueOnce(Response.json({...record,description:'Two\nlines',revision:'2'}));fireEvent.keyDown(input,{key:'Enter'});
  await waitFor(()=>expect(screen.queryByRole('form',{name:'Description'})).toBeNull());expect(saves()).toHaveLength(1);
+});
+
+
+test('a bare website address saves as HTTPS without native URL validation',async()=>{
+ render(<CollectionDetailsController {...props}/>);await screen.findByText('Maker');edit('URL');
+ const input=screen.getByRole('textbox',{name:'URL'});expect(input).toHaveAttribute('type','text');
+ fireEvent.change(input,{target:{value:'www.lib.ru'}});
+ mocks.fetch.mockResolvedValueOnce(Response.json({...record,source:{...source,url:'https://www.lib.ru/'},revision:'2'}));
+ fireEvent.keyDown(input,{key:'Enter'});await screen.findByRole('link',{name:'https://www.lib.ru/'});
+ expect(saves()).toEqual([{collectionId:id,expectedRevision:'1',patch:{source:{url:'https://www.lib.ru/'}}}]);
+});
+
+test('an unrecognizable address keeps its draft and gives a quiet inline hint',async()=>{
+ render(<CollectionDetailsController {...props}/>);await screen.findByText('Maker');edit('URL');
+ const input=screen.getByRole('textbox',{name:'URL'});fireEvent.change(input,{target:{value:'not a website'}});
+ fireEvent.keyDown(input,{key:'Enter'});
+ expect(await screen.findByRole('status')).toHaveTextContent('Use a website address, for example www.example.com.');
+ expect(input).toHaveValue('not a website');expect(input).toHaveAttribute('aria-invalid','true');
+ expect(screen.queryByRole('alert')).toBeNull();expect(saves()).toHaveLength(0);
+ fireEvent.change(input,{target:{value:'www.lib.ru'}});expect(screen.queryByRole('status')).toBeNull();
 });

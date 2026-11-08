@@ -62,7 +62,7 @@ test('paused catalog makes no request, clears its rows and revalidates on activa
 test('focus refreshes the first page and unmount aborts the owned request',async()=>{
  const fresh=deferred();mock.read.mockResolvedValueOnce(page([row(1),row(2)],2)).mockReturnValueOnce(fresh.promise);
  const hook=renderHook(()=>useReceivedCatalog(input));await waitFor(()=>expect(hook.result.current.status).toBe('ready'));
- act(()=>window.dispatchEvent(new Event('focus')));expect(hook.result.current.collections).toEqual([]);expect(mock.read.mock.calls[1][1].cursor).toBeNull();
+ act(()=>window.dispatchEvent(new Event('focus')));expect(hook.result.current.status).toBe('ready');expect(hook.result.current.collections.map(row=>row.id)).toEqual([id(1),id(2)]);expect(mock.read.mock.calls[1][1].cursor).toBeNull();
  const signal=mock.read.mock.calls[1][2] as AbortSignal;hook.unmount();expect(signal.aborted).toBe(true);await act(async()=>fresh.resolve(page([row(3)])));
 });
 test('the first render of a replacement account never exposes prior rows before effects run',async()=>{

@@ -1,13 +1,16 @@
 "use client";
+import {ActionButton} from '@/components/practice/ui/ActionButton';
+import {normalizeSourceUrl} from "@/lib/collections/details/sourceUrl";
 import {DateField} from "@/components/practice/ui/DateField";
 import {ChoiceSelect} from "./ChoiceSelect";
-import React,{useEffect,useRef,useState} from "react";
+import React,{useEffect,useId,useRef,useState} from "react";
 import {DialogSurface} from "@/components/practice/ui/DialogSurface";
 import {SettingsHelp} from "@/components/practice/settings/SettingsHelp";
 import {IconAction} from "@/components/practice/ui/IconAction";
 import overlays from "@/components/practice/library/libraryOverlays.module.css";
 import {formatMessage,localizedSection} from "@/lib/i18n/catalog";
-import {X,Share2,LockKeyhole,Tags,List,Pencil,Folder,UserRound} from "lucide-react";
+import {CollectionAccessIcon} from "./CollectionAccessIcon";
+import {X,LockKeyhole,Tags,List,Pencil,Folder} from "lucide-react";
 import type {CollectionDetails,CollectionDetailsPatch,CollectionSourceDetails} from "@/lib/collections/details/model";
 import type {OnboardingLanguage} from "@/lib/onboardingI18n";
 import {formatUiCount} from "@/lib/uiMessages";
@@ -20,27 +23,29 @@ const sourceFields=["materialKind","originKind","materialTitle","creatorName","u
 function safeLink(value:string|null){if(!value)return null;try{const url=new URL(value);return ['http:','https:'].includes(url.protocol)?url.href:null;}catch{return null;}}
 export function CollectionDetailsPanel({details,labelNames,locale,isShared,isReceived=false,onClose,onLabels,onOpen,onSave,saving=false,error,onRetry}:{details:CollectionDetails;labelNames:string[];locale:OnboardingLanguage;isShared:boolean;isReceived?:boolean;onClose:()=>void;onLabels:()=>void;onOpen:()=>void;onSave?:(patch:CollectionDetailsPatch,revision:string)=>Promise<boolean>;saving?:boolean;error?:string|null;onRetry?:()=>Promise<string|null>}){
  const t=organizationCopy(locale),copy=localizedSection("collectionDetails")[locale];
- const [draft,setDraft]=useState<Draft|null>(null),saveLock=useRef(false);
+ const [draft,setDraft]=useState<Draft|null>(null),saveLock=useRef(false),[urlIssue,setUrlIssue]=useState(false),hintId=useId();
  const label=(key:Field)=>key==='name'?copy.collectionName:copy[key];
  const raw=(key:Field)=>key==='name'?details.name:key==='description'?details.description:details.source?.[key];
  const canEdit=(key:Field)=>Boolean(onSave&&details.revision!==null&&(key==='name'||key==='description'?details.capabilities.canEditDetails:details.capabilities.canEditSource));
- const start=(key:Field)=>{if(!canEdit(key)||draft)return;const value=raw(key)??'';setDraft({key,value,original:value,revision:details.revision!});};
- const cancel=()=>setDraft(null);
+ const start=(key:Field)=>{if(!canEdit(key)||draft)return;setUrlIssue(false);const value=raw(key)??'';setDraft({key,value,original:value,revision:details.revision!});};
+ const cancel=()=>{setUrlIssue(false);setDraft(null);};
  const commit=async(candidate:Draft|null=draft)=>{if(!candidate||!onSave||saving||saveLock.current)return false;if(candidate.value===candidate.original){cancel();return true;}
+  const normalized=candidate.key==='url'?normalizeSourceUrl(candidate.value):null;
+  if(normalized&&!normalized.ok){setUrlIssue(true);return false;}
   saveLock.current=true;
-  const patch:CollectionDetailsPatch=candidate.key==='name'?{name:candidate.value}:candidate.key==='description'?{description:candidate.value||null}:{source:{[candidate.key]:candidate.value||null}};
+  const patch:CollectionDetailsPatch=candidate.key==='name'?{name:candidate.value}:candidate.key==='description'?{description:candidate.value||null}:{source:{[candidate.key]:normalized?.ok?normalized.value:candidate.value||null}};
   try{const saved=await onSave(patch,candidate.revision);if(saved)cancel();return saved;}finally{saveLock.current=false;}
  };
  const submit=(event:React.FormEvent<HTMLFormElement>)=>{event.preventDefault();if(event.currentTarget.reportValidity())void commit();};
  const edit=(key:Field)=>canEdit(key)?<button className={s.fieldPencil} type="button" aria-label={formatMessage(copy.editField,{field:label(key)})} title={formatMessage(copy.editField,{field:label(key)})} disabled={saving||Boolean(draft)} onClick={()=>start(key)}><Pencil size={13} aria-hidden="true"/></button>:null;
  const editor=(key:Field)=>{
   if(draft?.key!==key)return null;
-  const change=(value:string)=>setDraft(current=>current?{...current,value}:current);
+  const change=(value:string)=>{setUrlIssue(false);setDraft(current=>current?{...current,value}:current);};
   const choose=(value:string)=>{const next={...draft,value};setDraft(next);void commit(next);};
   const choices=key==='materialKind'?(["video","article","text","book","other"] as const).map(id=>({id,label:copy[id]})):key==='originKind'?(["youtube","web","local_file","manual","other"] as const).map(id=>({id,label:id==='local_file'?copy.localFile:copy[id]})):null;
   return <form className={`${s.detailsForm} ${s.inlineFieldForm}`} aria-label={label(key)} data-empty={draft.value===''} aria-busy={saving} onSubmit={submit} onBlur={event=>{if(event.target instanceof Element&&event.target.closest('dialog')!==event.currentTarget.closest('dialog'))return;const target=event.relatedTarget;if(event.currentTarget.contains(target as Node|null)||target instanceof Element&&target.closest('[role="menu"]'))return;if(event.currentTarget.reportValidity())void commit();}} onKeyDown={event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.nativeEvent.isComposing&&(event.target instanceof HTMLTextAreaElement||event.target instanceof HTMLInputElement)&&event.target.closest('dialog')===event.currentTarget.closest('dialog')){event.preventDefault();if(event.currentTarget.reportValidity())void commit();}if(event.key==='Escape'&&!event.defaultPrevented&&(!(event.target instanceof Element)||event.target.closest('dialog')===event.currentTarget.closest('dialog'))){event.preventDefault();event.stopPropagation();if(!saving)cancel();}}}>
-   {choices?<ChoiceSelect label={label(key)} value={draft.value} options={[{id:'',label:copy.notSpecified},...choices]} onChange={choose} disabled={saving} locale={locale}/>:key==='publishedOn'?<DateField label={label(key)} value={draft.value} onChange={choose} locale={locale} disabled={saving} labels={{previousMonth:copy.previousMonth,nextMonth:copy.nextMonth,year:copy.year,clear:copy.clearDate,cancel:t.cancel}}/>:key==='description'?<textarea placeholder={copy.notSpecified} rows={1} aria-label={label(key)} autoFocus onFocus={event=>event.currentTarget.select()} maxLength={4000} disabled={saving} value={draft.value} onChange={event=>change(event.target.value)}/>:<input placeholder={key==='name'?copy.collectionName:copy.notSpecified} aria-label={label(key)} autoFocus onFocus={event=>event.currentTarget.select()} required={key==='name'} type={key==='url'?'url':'text'} maxLength={key==='name'?100:2048} disabled={saving} value={draft.value} onChange={event=>change(event.target.value)}/>}
-   {error&&<p role="alert">{error} {onRetry&&<button type="button" onClick={()=>void onRetry().then(revision=>{if(revision!==null)setDraft(current=>current?{...current,revision}:current);})}>{t.retry}</button>}</p>}
+   {choices?<ChoiceSelect label={label(key)} value={draft.value} options={[{id:'',label:copy.notSpecified},...choices]} onChange={choose} disabled={saving} locale={locale}/>:key==='publishedOn'?<DateField label={label(key)} value={draft.value} onChange={choose} locale={locale} disabled={saving} labels={{previousMonth:copy.previousMonth,nextMonth:copy.nextMonth,year:copy.year,clear:copy.clearDate,cancel:t.cancel}}/>:key==='description'?<textarea placeholder={copy.notSpecified} rows={1} aria-label={label(key)} autoFocus onFocus={event=>event.currentTarget.select()} maxLength={4000} disabled={saving} value={draft.value} onChange={event=>change(event.target.value)}/>:<input placeholder={key==='name'?copy.collectionName:copy.notSpecified} aria-label={label(key)} autoFocus onFocus={event=>event.currentTarget.select()} required={key==='name'} type="text" inputMode={key==='url'?'url':undefined} autoCapitalize={key==='url'?'none':undefined} spellCheck={key==='url'?false:undefined} aria-invalid={key==='url'&&urlIssue||undefined} aria-describedby={key==='url'&&urlIssue?hintId:undefined} maxLength={key==='name'?100:2048} disabled={saving} value={draft.value} onChange={event=>change(event.target.value)}/>}
+   {urlIssue?<p id={hintId} className={s.fieldHint} role="status">{copy.urlHint}</p>:error&&<p role="alert">{error} {onRetry&&<button type="button" onClick={()=>void onRetry().then(revision=>{if(revision!==null)setDraft(current=>current?{...current,revision}:current);})}>{t.retry}</button>}</p>}
   </form>;
  };
  const value=(key:Field)=>{
@@ -53,13 +58,13 @@ export function CollectionDetailsPanel({details,labelNames,locale,isShared,isRec
  };
  const access=isReceived?t.received:isShared?t.sharedByYou:t.private;
  return <section className={`${s.editor} ${s.collectionDetails}`}>
-  <div className={s.detailHeading}><header><div className={s.detailTitle}><span role="img" className={s.detailAccess} aria-label={access} title={access}>{isReceived?<UserRound size={18} aria-hidden="true"/>:isShared?<Share2 size={18} aria-hidden="true"/>:<LockKeyhole size={18} aria-hidden="true"/>}</span>{draft?.key==='name'?editor('name'):<><h2>{details.name}</h2>{edit('name')}</>}</div><IconAction label={t.close} onClick={onClose}><X size={20}/></IconAction></header>
+  <div className={s.detailHeading}><header><div className={s.detailTitle}><CollectionAccessIcon shared={isShared} received={isReceived} label={access}/>{draft?.key==='name'?editor('name'):<><h2>{details.name}</h2>{edit('name')}</>}</div><IconAction label={t.close} onClick={onClose}><X size={20}/></IconAction></header>
    <div className={s.detailSummary}>{details.itemCount!==null&&<span>{formatUiCount(locale,details.itemCount,t,"meaning")}</span>}{!details.capabilities.canEditDetails&&<>{details.itemCount!==null&&<span aria-hidden="true">·</span>}<span className={s.readOnlyBadge}><LockKeyhole size={13} aria-hidden="true"/>{copy.readOnlyLabel}<SettingsHelp label={copy.readOnlyLabel} text={copy.readOnly}/></span></>}</div>
   </div>
   <dl className={s.detailFields}><div><dt>{copy.description}</dt><dd>{draft?.key==='description'?editor('description'):<div className={s.fieldValue}><span>{value('description')}</span>{edit('description')}</div>}</dd></div></dl>
   <section className={s.detailSection}><h3>{copy.source}</h3><dl className={s.detailFields}>{sourceFields.map(key=><div key={key}><dt>{label(key)}{key==='materialTitle'&&<SettingsHelp label={copy.materialTitle} text={copy.materialTitleHelp}/>}</dt><dd>{draft?.key===key?editor(key):<div className={s.fieldValue}><span>{value(key)}</span>{edit(key)}</div>}</dd></div>)}</dl></section>
   <section className={s.detailSection}><h3>{t.labels}</h3><div className={s.detailLabels}>{labelNames.length?labelNames.map(name=><span key={name}><Folder size={13} aria-hidden="true"/>{name}</span>):<p>{t.noLabels}</p>}</div></section>
-  <footer className={s.detailActions}>{details.capabilities.canEditLabels&&<button type="button" onClick={onLabels} disabled={Boolean(draft)}><Tags size={16} aria-hidden="true"/>{t.assign}</button>}<button type="button" onClick={onOpen} disabled={Boolean(draft)}><List size={16} aria-hidden="true"/>{t.open}</button></footer>
+  <footer className={s.detailActions}>{details.capabilities.canEditLabels&&<ActionButton type="button" onClick={onLabels} disabled={Boolean(draft)}><Tags size={16} aria-hidden="true"/>{t.assign}</ActionButton>}<ActionButton variant="primary" type="button" onClick={onOpen} disabled={Boolean(draft)}><List size={16} aria-hidden="true"/>{t.open}</ActionButton></footer>
  </section>;
 }
 export function CollectionDetailsSurface({name,onClose,children}:{name:string;onClose:()=>void;children:React.ReactNode}){

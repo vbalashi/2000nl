@@ -31,14 +31,14 @@ test('old owner name and sharing dialog vanish on the first render of another ac
 });
 test('owner rows distinguish shared from personal, and uncertain status never labels a row personal',()=>{
  const view=render(<PersonalCollections {...base} userId="first" collections={[first,second]}/>);
- expect(screen.getByTitle('Shared')).toBeInTheDocument();expect(screen.getByTitle('Personal')).toBeInTheDocument();
+ expect(screen.getByTitle('Shared by you')).toBeInTheDocument();expect(screen.getByTitle('Personal')).toBeInTheDocument();
  badge.hook.mockReturnValue({status:'loading',collections:[],nextCursor:null,refresh:vi.fn()});view.rerender(<PersonalCollections {...base} userId="first" collections={[first,second]}/>);
- expect(screen.queryByTitle('Personal')).not.toBeInTheDocument();expect(screen.queryByTitle('Shared')).not.toBeInTheDocument();
+ expect(screen.queryByTitle('Personal')).not.toBeInTheDocument();expect(screen.queryByTitle('Shared by you')).not.toBeInTheDocument();
 });
 test('received collection exposes only opening and personal label assignment',()=>{
  const onOpenReceived=vi.fn();badge.hook.mockReturnValue({status:'ready',collections:[{...catalogRow(first,true),ownership:'received'}],nextCursor:null,refresh:vi.fn()});
  render(<PersonalCollections {...base} onOpenReceived={onOpenReceived} userId="first" collections={[]}/>);
- expect(screen.getByTitle('Shared')).toBeInTheDocument();fireEvent.click(screen.getByRole('button',{name:'First owner lesson'}));expect(onOpenReceived).not.toHaveBeenCalled();
+ expect(screen.getByTitle('From another author')).toBeInTheDocument();fireEvent.click(screen.getByRole('button',{name:'First owner lesson'}));expect(onOpenReceived).not.toHaveBeenCalled();
  fireEvent.click(screen.getByRole('button',{name:'More actions: First owner lesson'}));expect(screen.queryByRole('button',{name:'Share'})).not.toBeInTheDocument();expect(screen.queryByRole('button',{name:'Rename'})).not.toBeInTheDocument();expect(screen.queryByRole('button',{name:'Delete'})).not.toBeInTheDocument();
  fireEvent.click(screen.getByRole('button',{name:'View words'}));expect(onOpenReceived).toHaveBeenCalledOnce();
 });
