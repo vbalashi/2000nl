@@ -51,3 +51,14 @@ test('query change hides ready rows even while a same-scope refresh is pending',
  expect(hook.result.current.status).toBe('loading');
  expect(hook.result.current.collections).toEqual([]);
 });
+
+test('ownership change clears old rows and cursor and fences a late previous-kind refresh',async()=>{
+ let settleOld!:(value:unknown)=>void,settleNew!:(value:unknown)=>void;
+ mock.read.mockResolvedValueOnce(page(1,1,true)).mockReturnValueOnce(new Promise(resolve=>settleOld=resolve)).mockReturnValueOnce(new Promise(resolve=>settleNew=resolve));
+ const hook=renderHook((props:{ownership:'all'|'owned'|'received'})=>usePersonalCollectionCatalog({...input,query:{...input.query,ownership:props.ownership}}),{initialProps:{ownership:'all'}});
+ await waitFor(()=>expect(hook.result.current.status).toBe('ready'));act(()=>window.dispatchEvent(new Event('focus')));await waitFor(()=>expect(mock.read).toHaveBeenCalledTimes(2));
+ hook.rerender({ownership:'received'});expect(hook.result.current.collections).toEqual([]);
+ await waitFor(()=>expect(mock.read).toHaveBeenCalledTimes(3));expect(mock.read.mock.calls[2][1]).toMatchObject({ownership:'received',cursor:null});expect(mock.read.mock.calls[1][2].aborted).toBe(true);
+ await act(async()=>settleOld(page(1)));expect(hook.result.current.collections).toEqual([]);
+ await act(async()=>settleNew(page(2)));expect(hook.result.current.collections[0].ownership).toBe('received');
+});

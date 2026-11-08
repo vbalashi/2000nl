@@ -1,3 +1,4 @@
+import {parseSourceOwnership,type SourceOwnership} from '@/lib/collections/sharing/sourceOwnershipContract';
 import {NextRequest} from 'next/server';
 import {getAuthenticatedSupabase,jsonNoStore,requirePlatformScope} from '@/lib/platform/serverSupabase';
 import {readBoundedJson} from '@/lib/http/readBoundedJson';
@@ -18,16 +19,17 @@ async function run(request:NextRequest,point:boolean){
   ids=input.collectionIds.map(id=>id.toLowerCase());args={p_collection_ids:ids,p_language_code:input.languageCode};
  }else{
   const params=request.nextUrl.searchParams,lang=params.get('languageCode'),query=params.get('query')??'',limit=params.get('limit')??'50',raw=params.get('cursor');let cursor=null;
-  if([...params.keys()].some(key=>!['languageCode','query','limit','cursor'].includes(key)||params.getAll(key).length!==1)||!language(lang)||[...query].length>100||query.includes('\0')||limit!=='50')return jsonNoStore({error:'invalid_training_catalog_request'},400);
+  if([...params.keys()].some(key=>!['languageCode','query','limit','cursor','ownership'].includes(key)||params.getAll(key).length!==1)||!language(lang)||[...query].length>100||query.includes('\0')||limit!=='50')return jsonNoStore({error:'invalid_training_catalog_request'},400);
   if(raw){try{cursor=parseReceivedCatalogCursor(JSON.parse(raw));}catch{}if(!cursor)return jsonNoStore({error:'invalid_training_catalog_request'},400);}
-  args={p_query:query,p_language_code:lang,p_cursor:cursor,p_limit:50};
+  const ownership=parseSourceOwnership(params.has('ownership')?params.get('ownership'):undefined);if(!ownership)return jsonNoStore({error:'invalid_training_catalog_request'},400);
+  args={p_query:query,p_language_code:lang,p_cursor:cursor,p_limit:50,p_ownership:ownership};
  }
  try{
-  const {data,error}=await auth.supabase.rpc(point?'read_training_collection_summaries_v1':'read_training_collection_catalog_v1',args).abortSignal(AbortSignal.timeout(10000));
+  const {data,error}=await auth.supabase.rpc(point?'read_training_collection_summaries_v1':'read_training_collection_catalog_v2',args).abortSignal(AbortSignal.timeout(10000));
   if(error)return jsonNoStore({error:'training_catalog_unavailable'},503);
   if(point){const rows=data&&typeof data==='object'&&!Array.isArray(data)&&Object.keys(data).length===1?parseTrainingCollections(data.collections,100):null;
    return rows&&!rows.some(row=>!ids!.includes(row.id))?jsonNoStore({collections:rows}):jsonNoStore({error:'training_catalog_contract_invalid'},502);}
-  const page=parseTrainingCollectionPage(data,50);return page?jsonNoStore(page):jsonNoStore({error:'training_catalog_contract_invalid'},502);
+  const page=parseTrainingCollectionPage(data,50,args.p_ownership as SourceOwnership);return page?jsonNoStore(page):jsonNoStore({error:'training_catalog_contract_invalid'},502);
  }catch{return jsonNoStore({error:'training_catalog_unavailable'},503);}
 }
 export const GET=(request:NextRequest)=>run(request,false);

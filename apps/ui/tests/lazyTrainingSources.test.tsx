@@ -30,9 +30,9 @@ test('closing remote search reloads the unfiltered page and type filters retain 
  expect(screen.getByRole('button',{name:'Shared lesson'})).toHaveAttribute('aria-pressed','true');
  fireEvent.click(screen.getByRole('button',{name:'Search sources'}));
  fireEvent.change(screen.getByRole('textbox'),{target:{value:'Shared'}});
- await waitFor(()=>expect(mock.page).toHaveBeenLastCalledWith('reader','nl','Shared',null,expect.any(AbortSignal)));
+ await waitFor(()=>expect(mock.page).toHaveBeenLastCalledWith('reader','nl','Shared',null,expect.any(AbortSignal),'all'));
  fireEvent.click(screen.getByRole('button',{name:'Search sources'}));
- await waitFor(()=>expect(mock.page).toHaveBeenLastCalledWith('reader','nl','',null,expect.any(AbortSignal)));
+ await waitFor(()=>expect(mock.page).toHaveBeenLastCalledWith('reader','nl','',null,expect.any(AbortSignal),'all'));
  expect(JSON.parse(screen.getByTestId('source-draft').textContent!)).toMatchObject({materialMode:'collection',listValue:'user:'+id});
  expect(await screen.findByRole('button',{name:'Shared lesson'})).toHaveAttribute('aria-pressed','true');
  expect(screen.getByRole('button',{name:'Shared'})).toHaveAttribute('aria-pressed','true');

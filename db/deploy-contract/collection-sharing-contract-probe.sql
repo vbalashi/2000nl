@@ -206,10 +206,15 @@ BEGIN
   OR strpos(definition,'list.id=ANY(p_collection_ids)')=0 THEN
   RAISE EXCEPTION 'db-contract-gate: bounded training source cohort/live train authority changed'; END IF;
  definition:=pg_catalog.pg_get_functiondef('public.read_training_collection_catalog_v1(text,text,jsonb,integer)'::regprocedure);
+ IF strpos(definition,'RETURN public.read_training_collection_catalog_v2(')>0 THEN
+  IF strpos(definition,'p_limit,''all'')')=0 THEN
+   RAISE EXCEPTION 'db-contract-gate: legacy training source wrapper default changed'; END IF;
+  definition:=pg_catalog.pg_get_functiondef('public.read_training_collection_catalog_v2(text,text,jsonb,integer,text)'::regprocedure);
+ END IF;
  IF strpos(definition,'principal uuid:=(select auth.uid())')=0
   OR strpos(definition,'p_limit NOT BETWEEN 1 AND 100')=0 OR strpos(definition,'length(query)>100')=0
   OR strpos(definition,'p_cursor->>''scope'' IS DISTINCT FROM fingerprint')=0
-  OR strpos(definition,'private.training_collection_catalog_cohort_v1(principal,query,language')=0
+  OR (strpos(definition,'private.training_collection_catalog_cohort_v1(principal,query,language')=0 AND strpos(definition,'private.training_collection_catalog_cohort_v2(principal,query,language')=0)
   OR strpos(definition,'availableItemCount')=0 THEN
   RAISE EXCEPTION 'db-contract-gate: paginated training source query/cursor/response fence changed'; END IF;
  definition:=pg_catalog.pg_get_functiondef('public.read_training_collection_summaries_v1(uuid[],text)'::regprocedure);

@@ -34,6 +34,14 @@ test('write acknowledgement must match both requested labels and CAS clock',asyn
 test('unified catalog is bounded, literal and source-account derived',async()=>{
  mock.abort.mockResolvedValueOnce({data:{revision:3,collections:[],nextCursor:null},error:null});
  const response=await catalogGET(new NextRequest('http://localhost/api/library/collections/catalog?query=%25&languageCode=nl&limit=20'));
- expect(response.status).toBe(200);expect(mock.rpc).toHaveBeenCalledWith('read_personal_collection_catalog_v1',expect.objectContaining({p_query:'%',p_language_code:'nl',p_limit:20,p_cursor:null}));
+ expect(response.status).toBe(200);expect(mock.rpc).toHaveBeenCalledWith('read_personal_collection_catalog_v2',expect.objectContaining({p_query:'%',p_language_code:'nl',p_limit:20,p_cursor:null,p_ownership:'all'}));
  mock.rpc.mockClear();expect((await catalogGET(new NextRequest('http://localhost/api/library/collections/catalog?limit=1000'))).status).toBe(400);expect(mock.rpc).not.toHaveBeenCalled();
+});
+
+test('personal ownership is enum-closed and server projections must match it',async()=>{
+ mock.abort.mockResolvedValue({data:{revision:0,collections:[{id,name:'received',createdAt:'2026-01-01T00:00:00Z',ownership:'received',isShared:true,itemCount:1,labelIds:[]}],nextCursor:null},error:null});
+ expect((await catalogGET(new NextRequest('http://localhost/api/library/collections/catalog?ownership=received'))).status).toBe(200);
+ expect(mock.rpc).toHaveBeenLastCalledWith('read_personal_collection_catalog_v2',expect.objectContaining({p_ownership:'received'}));
+ expect((await catalogGET(new NextRequest('http://localhost/api/library/collections/catalog?ownership=owned'))).status).toBe(502);
+ mock.rpc.mockClear();for(const suffix of ['ownership=shared','ownership=owned&ownership=received'])expect((await catalogGET(new NextRequest('http://localhost/api/library/collections/catalog?'+suffix))).status).toBe(400);expect(mock.rpc).not.toHaveBeenCalled();
 });
