@@ -24,3 +24,9 @@ test('account switch aborts read and cannot display late prior labels',async()=>
  expect(hook.result.current.data).toBeNull();expect(signal.aborted).toBe(true);await act(async()=>resolve(state(1,[label])));
  await waitFor(()=>expect(hook.result.current.status).toBe('ready'));expect(hook.result.current.selected).toEqual([]);
 });
+test('creating a label preserves the current draft and saves against the resulting catalog revision',async()=>{
+ const hook=renderHook(()=>useReceivedLabelEditor('reader',id));await waitFor(()=>expect(hook.result.current.status).toBe('ready'));
+ act(()=>hook.result.current.toggle(label));const newLabel='75600000-0000-4000-8000-000000000003';
+ act(()=>hook.result.current.created({...state(9).catalog,labels:[...state().catalog.labels,{...state().catalog.labels[0],id:newLabel,name:'Created here'}]},newLabel));
+ expect(hook.result.current.selected).toEqual([label,newLabel]);await act(async()=>hook.result.current.save());expect(mock.write.mock.calls[0][2]).toEqual({expectedRevision:9,labelIds:[label,newLabel]});
+});

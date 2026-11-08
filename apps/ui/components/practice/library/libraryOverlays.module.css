@@ -64,5 +64,15 @@
 .menuTrailing{margin-inline-start:auto;display:flex;align-items:center;flex-shrink:0}
 
 /* Popovers inside catalog dialogs must not inherit catalog button chrome. */
-.menu>button[role=menuitem]{justify-content:flex-start;min-height:44px;border:0;background:transparent;text-align:start;font-family:var(--practice-font-ui);font-size:var(--practice-text-caption);font-weight:400;color:inherit}
-.menu>button[role=menuitem]:hover,.menu>button[role=menuitem]:focus-visible{background:var(--practice-canvas);border:0}
+.menu>button:is([role=menuitem],[role=menuitemradio]){justify-content:flex-start;min-height:44px;border:0;background:transparent;text-align:start;font-family:var(--practice-font-ui);font-size:var(--practice-text-caption);font-weight:400;color:inherit}
+.menu>button:is([role=menuitem],[role=menuitemradio]):hover,.menu>button:is([role=menuitem],[role=menuitemradio]):focus-visible{background:var(--practice-canvas);border:0}
+
+/* Reset global CSS margins explicitly: modal centering must not depend on UA styles. */
+.dialog{inset:0;margin:auto;box-sizing:border-box;overflow:auto}
+
+.production.production div:has(>input.hiddenChoice){position:relative}
+.production.production input.hiddenChoice{position:absolute;inset:0;z-index:1;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.production.production div:has(>input.hiddenChoice)>button{position:relative;z-index:2}
+.production label:has(+.choiceTick){cursor:pointer}
+.production div:has(>input.hiddenChoice:focus-visible){outline:2px solid var(--practice-focus);outline-offset:2px;border-radius:var(--practice-radius-control)}
+.choiceTick{display:inline-flex;align-items:center;justify-content:center;flex:none;width:20px;color:var(--practice-text-secondary)}

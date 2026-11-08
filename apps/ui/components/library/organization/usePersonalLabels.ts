@@ -75,5 +75,5 @@ export function usePersonalLabels(active: boolean, userId: string) {
   };
   useEffect(()=>{if(audience.state.status==='failed'&&['label_audience_changed','label_catalog_conflict'].includes(audience.state.error??''))void refresh();},[audience.state.status,audience.state.error,refresh]);
   const planError=audience.state.error&&(audience.state.status==='failed'||audience.state.error==='storage')?['label_audience_changed','label_catalog_conflict'].includes(audience.state.error)?'conflict':audience.state.error==='storage'?'failed':'unavailable':null;
-  return {snapshot, error:error??planError, loading, busy:busy||['preparing','confirming'].includes(audience.state.status), refresh, mutate, audience};
+  return {snapshot, adoptSnapshot:applyPlan, error:error??planError, loading, busy:busy||['preparing','confirming'].includes(audience.state.status), refresh, mutate, audience};
 }

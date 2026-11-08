@@ -1,7 +1,11 @@
 "use client";
+import {ChoiceSelect} from "./ChoiceSelect";
+import {InlineLabelCreate} from "./InlineLabelCreate";
+import {formatMessage} from "@/lib/i18n/catalog";
 import { localizedField } from "@/lib/i18n/catalog";
 
 import {CollectionSortControl} from "@/components/library/organization/CollectionSortControl";
+import {SearchField} from "@/components/practice/ui/SearchField";
 import React, { useMemo, useState } from "react";
 import { FileText, Folder, Folders, Share2, LockKeyhole, MoreHorizontal, Plus, Search, Tags, X, ChevronDown, ChevronRight } from "lucide-react";
 import {readOwnerShareJournal,ownerShareStore} from '@/lib/collections/sharing/ownerShareJournal';
@@ -68,6 +72,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
   const [parent, setParent] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [creatingLabel,setCreatingLabel]=useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const saveLock = React.useRef(false);
   const alive = React.useRef(true);
@@ -123,9 +128,9 @@ export function PersonalCollections({active, userId, language, locale, collectio
     setSelected(next.kind === "assign" ? snapshot?.assignments.filter(item=>item.collection_id===next.collection.id).map(item=>item.label_id) ?? [] : []);
     setEditor(next);
   };
-  const closeEditor = () => {if (!saveLock.current) setEditor(null);};
+  const closeEditor = () => {if (!saveLock.current&&!creatingLabel) setEditor(null);};
   const submit = async (event:React.FormEvent) => {
-    event.preventDefault(); if (!editor || saveLock.current) return;
+    event.preventDefault(); if (!editor || saveLock.current||creatingLabel) return;
     saveLock.current = true;setSaving(true);setSaveError(null);
     try {
       let operation:CollectionLabelOperation | null = null;
@@ -170,7 +175,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
     <aside className={s.sidebar}>{scopePicker}</aside>
     <section className={s.catalog} aria-label={t.collections}>
       <header className={s.catalogHeader}><button type="button" className={s.mobileScope} onClick={()=>setScopeOpen(true)}><Folder size={18}/><span>{scopeTitle}</span><ChevronDown size={16}/></button><h2>{scopeTitle}</h2><button type="button" aria-label={t.newCollection} onClick={()=>begin({kind:"collection"})}><Plus size={18}/><span>{t.newCollection}</span></button></header>
-      <div className={s.filters}><label className={s.search}><Search size={16} aria-hidden="true"/><input aria-label={t.search} placeholder={t.search} maxLength={200} value={query} onChange={event=>{setQuery(Array.from(event.target.value).slice(0,100).join(''));setPageSize(20);}}/></label><CollectionSortControl locale={locale} value={sort} onChange={value=>{setSort(value);setPageSize(20);}}/></div>
+      <div className={s.filters}><SearchField><input aria-label={t.search} placeholder={t.search} maxLength={200} value={query} onChange={event=>{setQuery(Array.from(event.target.value).slice(0,100).join(''));setPageSize(20);}}/></SearchField><CollectionSortControl locale={locale} value={sort} onChange={value=>{setSort(value);setPageSize(20);}}/></div>
       {labels.error && !editor && <p role="alert">{message(labels.error)} <button onClick={()=>void labels.refresh()} disabled={labels.busy}>{t.retry}</button></p>}
       {groupSharingEnabled&&sharedLabels.status==='error'&&<p role="alert">{t.sharingStatusError} <button onClick={()=>void sharedLabels.refresh()}>{t.retry}</button></p>}
       {groupSharingEnabled&&labels.audience?.hasPending&&labels.audience.state.status==='idle'&&<button onClick={labels.audience.resume}>{localizedField('collectionSharing','check')[locale]}</button>}
@@ -202,14 +207,14 @@ export function PersonalCollections({active, userId, language, locale, collectio
     {receivedEditor?.ownerId===userId&&<ReceivedCollectionLabels key={`${userId}:${receivedEditor.collection.id}`} userId={userId} collectionId={receivedEditor.collection.id} name={receivedEditor.collection.name} locale={locale} onClose={()=>setReceivedEditor(null)} onSaved={()=>{setReceivedEditor(null);void catalog.refresh();void labels.refresh();}}/>}
     {editor && <DialogSurface className={overlays.dialog} aria-labelledby="organization-dialog-title" onDismiss={closeEditor}>
       <form className={s.editor} onSubmit={submit}>
-        <header><h2 id="organization-dialog-title">{editor.kind === "label" ? editor.existing ? t.editLabel : t.newLabel : editor.kind === "collection" ? editor.existing ? t.editCollection : t.newCollection : editor.kind === "assign" ? t.assign : t.remove}</h2><button type="button" disabled={saving} aria-label={t.close} onClick={closeEditor}><X size={20}/></button></header>
+        <header><h2 id="organization-dialog-title">{editor.kind === "label" ? editor.existing ? t.editLabel : t.newLabel : editor.kind === "collection" ? editor.existing ? t.editCollection : t.newCollection : editor.kind === "assign" ? formatMessage(t.labelsFor,{name:editor.collection.name}) : t.remove}</h2><button type="button" disabled={saving||creatingLabel} aria-label={t.close} onClick={closeEditor}><X size={20}/></button></header>
         {(editor.kind === "label" || editor.kind === "collection") && <label>{t.name}<input required autoFocus maxLength={100} value={name} onChange={event=>setName(event.target.value)} disabled={saving}/></label>}
-        {editor.kind === "label" && <label>{t.parent}<select value={parent} onChange={event=>setParent(event.target.value)} disabled={saving}><option value="">{t.noParent}</option>{labelRows.filter(({label})=>label.id!==editor.id).map(({label,depth})=><option key={label.id} value={label.id}>{"— ".repeat(depth)}{label.name}</option>)}</select></label>}
-        {editor.kind === "assign" && <><LabelAssignmentPicker name={editor.collection.name} snapshot={snapshot} selected={selected} disabled={saving} locale={locale} onToggle={id=>setSelected(value=>value.includes(id)?value.filter(item=>item!==id):[...value,id])}/></>}
+        {editor.kind === "label" && <ChoiceSelect label={t.parent} value={parent} onChange={setParent} disabled={saving} locale={locale} options={[{id:"",label:t.noParent},...labelRows.filter(({label})=>label.id!==editor.id).map(({label,path})=>({id:label.id,label:path}))]}/>}
+        {editor.kind === "assign" && <><LabelAssignmentPicker createAction={<InlineLabelCreate scope={editor.collection.id} userId={userId} snapshot={snapshot} locale={locale} disabled={saving} onBusyChange={setCreatingLabel} onCreated={(_next,id)=>{labels.adoptSnapshot(_next);setSelected(value=>[...value,id]);}}/>} name={editor.collection.name} snapshot={snapshot} selected={selected} disabled={saving} locale={locale} onToggle={id=>setSelected(value=>value.includes(id)?value.filter(item=>item!==id):[...value,id])}/></>}
         {(editor.kind === "delete-label" || editor.kind === "delete-collection") && <><p>{editor.kind === "delete-label" ? editor.label.name : editor.collection.name}</p><p>{editor.kind === "delete-label" ? t.deleteLabel : t.deleteCollection}</p></>}
         {(saveError || labels.error) && <p role="alert">{message(saveError ?? labels.error!)}{saveError === "uncertain" && <button type="button" onClick={()=>{void onReload();void labels.refresh();}}>{t.retry}</button>}</p>}
         {groupSharingEnabled&&editor.kind==='delete-collection'&&deletion.state.status==='failed'&&<p role="alert">{deletion.state.error==='collection_audience_changed'?t.conflict:t.failed}</p>}
-        <footer><button type="button" disabled={saving} onClick={closeEditor}>{t.cancel}</button><button type="submit" disabled={saving || saveError === "uncertain" || ((editor.kind === "label" || editor.kind === "collection") && !name.trim())}>{saving ? t.saving : editor.kind.startsWith("delete") ? t.remove : t.save}</button></footer>
+        <footer><button type="button" disabled={saving||creatingLabel} onClick={closeEditor}>{t.cancel}</button><button type="submit" disabled={saving || creatingLabel || saveError === "uncertain" || ((editor.kind === "label" || editor.kind === "collection") && !name.trim())}>{saving ? t.saving : editor.kind.startsWith("delete") ? t.remove : t.save}</button></footer>
       </form>
     </DialogSurface>}
     {groupSharingEnabled&&editor?.kind==='delete-collection'&&<CollectionCompositionConfirmation controller={deletion} collectionName={editor.collection.name} locale={locale}/>}

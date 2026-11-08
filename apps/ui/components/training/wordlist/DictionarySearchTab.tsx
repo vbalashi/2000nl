@@ -1,4 +1,6 @@
 "use client";
+import {ChoiceSelect} from "@/components/library/organization/ChoiceSelect";
+import {SearchField} from "@/components/practice/ui/SearchField";
 import {formatLibraryCounts} from "@/lib/platform/libraryCountLabel";
 import { languageAutonym } from "@/lib/languages/languageDisplayName";
 import { localizedField } from "@/lib/i18n/catalog";
@@ -599,19 +601,7 @@ export function DictionarySearchTab({
       >
         <div className={materialEnabled ? workspace.searchRow : undefined}>
         {presentation?.filterButtonSide === "left" && filterButton}
-        <div className="relative min-w-0 flex-1">
-          <svg
-            className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
+        <SearchField>
           <input
             ref={queryRef}
             autoComplete="off"
@@ -628,9 +618,6 @@ export function DictionarySearchTab({
             }}
             aria-label={copy.search}
             placeholder={copy.searchPlaceholder}
-            className={
-              workspace.input
-            }
           />
           {query ? (
             <button
@@ -648,7 +635,7 @@ export function DictionarySearchTab({
               <span className="sr-only">{copy.clearSearch}</span>x
             </button>
           ) : null}
-        </div>
+        </SearchField>
         {presentation?.filterButtonSide !== "left" && filterButton}
         {(!categorySearchActive||(searchState.searchCategory??"headwords")==="headwords")&&<LibrarySortControl language={interfaceLanguage} value={searchState.entryFilters?.sort??"alphabetical"} onChange={sort=>{updateSearchState({entryFilters:{...(searchState.entryFilters??EMPTY_LIBRARY_ENTRY_FILTERS),sort},page:1,groupPageCursors:[null],groupHasMore:false});refreshSearch();}}/>}
         {presentation?.renderSearchActions?.(interfaceLanguage)}
@@ -727,79 +714,14 @@ export function DictionarySearchTab({
             {copy.searchScope}
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
-            <label
-              className={
-                workspace.label
-              }
-            >
-              <span>{copy.learningLanguage}</span>
-              <select
-                value={searchLanguage}
-                onChange={(event) => {
-                  updateSearchState({
-                    languageCode: event.target.value,
-                    dictionaryId: null,
-                    page: 1,
-                    groupPageCursors: [null],
-                    groupHasMore: false,
-                  });
-                }}
-                disabled={
-                  useViewedListFilter || (Boolean(material) && !materialReady)
-                }
-                className={
-                  workspace.field
-                }
-              >
-                {(scopeLanguages.length
-                  ? scopeLanguages
-                  : material
-                    ? []
-                    : [
-                        {
-                          code: searchLanguage,
-                          label: languageLabel(searchLanguage),
-                        },
-                      ]
-                ).map((option) => (
-                  <option key={option.code} value={option.code}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label
-              className={
-                workspace.label
-              }
-            >
-              <span>{copy.dictionarySource}</span>
-              <select
-                value={dictionaryId ?? "all"}
-                onChange={(event) => {
-                  updateSearchState({
-                    dictionaryId:
-                      event.target.value === "all" ? null : event.target.value,
-                    page: 1,
-                    groupPageCursors: [null],
-                    groupHasMore: false,
-                  });
-                }}
-                disabled={
-                  useViewedListFilter || (Boolean(material) && !materialReady)
-                }
-                className={
-                  workspace.field
-                }
-              >
-                <option value="all">{copy.allSources}</option>
-                {scopeDictionaries.map((source) => (
-                  <option key={source.id} value={source.id}>
-                    {source.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <ChoiceSelect label={copy.learningLanguage} value={searchLanguage} locale={interfaceLanguage}
+              disabled={useViewedListFilter || (Boolean(material) && !materialReady)}
+              options={(scopeLanguages.length?scopeLanguages:material?[]:[{code:searchLanguage,label:languageLabel(searchLanguage)}]).map(option=>({id:option.code,label:option.label}))}
+              onChange={value=>updateSearchState({languageCode:value,dictionaryId:null,page:1,groupPageCursors:[null],groupHasMore:false})}/>
+            <ChoiceSelect label={copy.dictionarySource} value={dictionaryId??"all"} locale={interfaceLanguage}
+              disabled={useViewedListFilter || (Boolean(material) && !materialReady)}
+              options={[{id:"all",label:copy.allSources},...scopeDictionaries.map(source=>({id:source.id,label:source.name}))]}
+              onChange={value=>updateSearchState({dictionaryId:value==="all"?null:value,page:1,groupPageCursors:[null],groupHasMore:false})}/>
           </div>
         </div>
         </>)}

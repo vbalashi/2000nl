@@ -1,0 +1,6 @@
+.field{position:relative;display:flex;align-items:center;gap:10px;flex:1;min-width:0;min-height:44px;box-sizing:border-box;padding:10px 12px;border:1px solid var(--practice-border);border-radius:var(--practice-radius-control);background:var(--practice-surface);color:var(--practice-text-muted);font:400 var(--practice-text-small)/1.5 var(--practice-font-ui)}
+.field>svg{flex:none;pointer-events:none}
+.field>input{flex:1;width:100%;min-width:0;border:0;outline:0;padding:0;background:transparent;color:var(--practice-text);font:inherit;box-shadow:none}
+.field>input::placeholder{color:var(--practice-text-muted)}
+.field:focus-within{border-color:var(--practice-focus);outline:2px solid var(--practice-focus);outline-offset:2px}
+.field:has(>button)>input{padding-inline-end:32px}

@@ -6,7 +6,7 @@ import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import { DialogSurface } from "@/components/practice/ui/DialogSurface";
 import s from "@/components/practice/library/libraryOverlays.module.css";
 import { formatUiCount, getUiMessages } from "@/lib/uiMessages";
-import { Search, X } from "lucide-react";
+import { Search, X, Check } from "lucide-react";
 import { AddAction } from "@/components/practice/ui/AddAction";
 import type {
   EntryLearningListMembership,
@@ -226,7 +226,7 @@ export function LibraryCollectionsPicker({
                         }
                         onToggleList(list, included);
                       }}
-                      className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      className={s.hiddenChoice}
                     />
                     <label
                       htmlFor={`library-collection-${list.id}`}
@@ -241,6 +241,7 @@ export function LibraryCollectionsPicker({
                         </span>
                       ) : null}
                     </label>
+                    <span className={s.choiceTick} aria-hidden="true">{included&&<Check size={16}/>}</span>
                     {included && onOpenListMembership ? (
                       <button
                         type="button"
