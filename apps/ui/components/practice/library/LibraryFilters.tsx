@@ -39,6 +39,9 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
   const vocabulary=draft.vocabulary??DEFAULT_VOCABULARY_SELECTION;
   const showParts=!vocabulary.materialKinds.includes("other");
   const [searchOpen, setSearchOpen] = useState(false);
+  const searchButton=useRef<HTMLButtonElement>(null),restoreSearchFocus=useRef(false);
+  const closeSourceSearch=()=>{restoreSearchFocus.current=true;setSearchOpen(false);setQuery("");};
+  useEffect(()=>{if(!searchOpen&&restoreSearchFocus.current){restoreSearchFocus.current=false;searchButton.current?.focus();}},[searchOpen]);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const options = [{ id: null, label: copy.allSources }, ...sourceOptions.map(option => ({...option,id:option.id ? `dictionary:${option.id}` : null})), ...collectionOptions.map(option => ({...option,id:option.id ? `collection:${option.id}` : null})), ...labelOptions.map(option => ({...option,id:option.id ? `label:${option.id}` : null}))];
   const selectedSource = draft.labelId ? `label:${draft.labelId}` : draft.applyListFilter && draft.collectionId ? `collection:${draft.collectionId}` : draft.dictionaryId ? `dictionary:${draft.dictionaryId}` : null;
@@ -77,10 +80,10 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
               options={languageOptions.flatMap(option => option.id ? [{ id: option.id, label: option.label }] : [])}
               value={draft.languageCode} onChange={selectLanguage}/>
           </div>
-          <BuilderSection title={builder.source} summary={sourceName} open={sourceOpen} onToggle={() => setSourceOpen(open => !open)}>
+          <BuilderSection title={builder.source} summary={sourceName} open={sourceOpen} onToggle={() => {if(sourceOpen){restoreSearchFocus.current=false;setSearchOpen(false);setQuery("");}setSourceOpen(!sourceOpen);}}>
             <div className={f.sourceToolbar}>
-              {searchOpen ? <label className={f.search}><Search size={16}/><input autoFocus={searchOpen} aria-label={copy.searchSources} placeholder={copy.sourcesPlaceholder} value={query} maxLength={200} onChange={event => setQuery([...event.target.value].slice(0,100).join(''))} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();setSearchOpen(false);setQuery('');}}}/></label>
-                : <button type="button" className={f.icon} aria-label={copy.searchSources} aria-expanded={searchOpen} onClick={() => setSearchOpen(true)}><Search size={16}/></button>}
+              {searchOpen ? <label className={f.search}><Search size={16}/><input autoFocus={searchOpen} aria-label={copy.searchSources} placeholder={copy.sourcesPlaceholder} value={query} maxLength={200} onChange={event => setQuery([...event.target.value].slice(0,100).join(''))} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();closeSourceSearch();}}}/></label>
+                : <button ref={searchButton} type="button" className={f.icon} aria-label={copy.searchSources} aria-expanded={searchOpen} onClick={() => setSearchOpen(true)}><Search size={16}/></button>}
               <SourceTypeControl locale={locale} value={kind} onChange={setKind}/>
             </div>
             {sourceNotice}
