@@ -59,19 +59,13 @@ test('a matching group suppresses the individual-collection empty message while 
  expect(screen.queryByText('No matching collections')).toBeNull();
 });
 
-test('group-only publication exposes group management instead of a nonexistent direct link',()=>{
+test('group-only collections are omitted from independent publications',()=>{
  const group={labelId:'75600000-0000-4000-8000-000000000011',name:'Easy Dutch'};
  mock.catalog.mockReturnValue({status:'ready',collections:[{...row,directPublication:false,groups:[group]}],nextCursor:null,refresh:vi.fn()});
- render(<OwnedSharedCollections {...props}/>);
- expect(screen.queryByRole('button',{name:'Copy link'})).toBeNull();
- fireEvent.click(screen.getByRole('button',{name:'More actions · At the market'}));
- expect(screen.queryByRole('button',{name:'Stop sharing'})).toBeNull();
- expect(screen.queryByRole('button',{name:'Link and code'})).toBeNull();
- fireEvent.click(screen.getByRole('button',{name:'Link and code: Easy Dutch'}));
- expect(screen.getByTestId('group-management')).toHaveTextContent('Easy Dutch');
+ render(<OwnedSharedCollections {...props} hasGroups groupRows={<div>Easy Dutch</div>}/>);
+ expect(screen.queryByText('At the market')).toBeNull();
+ expect(screen.getByText('Easy Dutch')).toBeInTheDocument();
  expect(mock.management).not.toHaveBeenCalled();
- fireEvent.click(screen.getByRole('button',{name:'Close group management'}));
- expect(screen.getByRole('button',{name:'More actions · At the market'})).toHaveFocus();
 });
 test('direct and group publications retain both independent management paths',()=>{
  mock.catalog.mockReturnValue({status:'ready',collections:[{...row,groups:[{labelId:'75600000-0000-4000-8000-000000000011',name:'Easy Dutch'}]}],nextCursor:null});
@@ -96,4 +90,21 @@ test('an open owner menu follows the latest authorized access paths',()=>{
 
 test('saving owner labels keeps shared collection details open',async()=>{
  render(<OwnedSharedCollections {...props}/>);fireEvent.click(screen.getByRole('button',{name:'At the market'}));fireEvent.click(await screen.findByRole('button',{name:'Choose labels'}));fireEvent.click(screen.getByRole('button',{name:'Save'}));await waitFor(()=>expect(mock.mutate).toHaveBeenCalledWith({type:'set-collection-labels',collection_id:id,label_ids:[]}));expect(screen.getByRole('button',{name:'View words'})).toBeInTheDocument();
+});
+
+test('copy feedback stays on the same row without adding a visible notice',async()=>{
+ render(<OwnedSharedCollections {...props}/>);
+ const button=screen.getByRole('button',{name:'Copy link'});fireEvent.click(button);
+ expect(await screen.findByRole('button',{name:'Copied'})).toBe(button);
+ expect(screen.getByRole('status')).toHaveTextContent('Link copied');
+ expect(button.querySelector('svg')).toHaveClass('lucide-check');
+ expect(screen.queryByRole('dialog')).toBeNull();
+});
+
+test('shared labels appear beneath the common heading alongside collections',()=>{
+ render(<OwnedSharedCollections {...props} hasGroups groupRows={<div data-testid="shared-label-row">Easy Dutch</div>}/>);
+ const table=screen.getByRole('table');
+ expect(table).toContainElement(screen.getByTestId('shared-label-row'));
+ expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+ expect(screen.getByRole('columnheader',{name:'Collections'}).compareDocumentPosition(screen.getByTestId('shared-label-row')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });

@@ -29,7 +29,7 @@ export function SettingsHelp({label,text,hover=false}:{label:string;text:string|
   onPointerLeave={()=>{if(hover)scheduleClose();}}
   onFocus={event=>{if(hover&&event.currentTarget.matches(":focus-visible"))show();}}
   onBlur={()=>{if(hover)scheduleClose();}}
-  onKeyDown={event=>{if(event.key==='Escape')hide();}}
+  onKeyDown={event=>{if(event.key==='Escape'&&open){event.preventDefault();event.stopPropagation();hide();}}}
  ><CircleHelp size={14} aria-hidden="true"/></button><div ref={popup} id={id} popover="auto" className={s.helpPopup}
   onPointerEnter={cancelClose} onPointerLeave={()=>{if(hover)scheduleClose();}}
   onToggle={event=>setOpen(event.newState==="open")}>{typeof text === "string" ? text : text.map((paragraph,index)=><p key={index}>{paragraph}</p>)}</div></>;

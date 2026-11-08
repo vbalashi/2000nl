@@ -1,0 +1,9 @@
+.button.button.button.button{position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:none;min-width:0;min-height:36px;padding:4px 14px;border:0;background:transparent;border-radius:var(--practice-radius-control);font-family:var(--practice-font-ui);font-size:var(--practice-text-small);line-height:20px;font-weight:400;text-decoration:none;cursor:pointer;color:var(--practice-text-muted)}
+.button.button.button.primary{color:var(--practice-selected-text)}
+.button:before{content:'';position:absolute;inset:4px 0;z-index:-1;border-radius:var(--practice-radius-control);pointer-events:none}
+.primary:before{background:var(--practice-selected)}
+@media(hover:hover){.primary:not(:disabled):hover:before{filter:brightness(.94)}.quiet:not(:disabled):hover:before{background:var(--practice-surface-subtle)}.button.button.button.quiet:not(:disabled):hover{color:var(--practice-text-secondary)}}
+.primary:not(:disabled):active:before{filter:brightness(.90)}
+.button.button.button.button:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}
+.button.button.button.button:disabled{opacity:.45;cursor:default}
+@media(pointer:coarse){.button.button.button.button{min-height:44px}.button:before{inset-block:8px}}

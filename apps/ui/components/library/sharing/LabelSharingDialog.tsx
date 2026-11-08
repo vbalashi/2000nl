@@ -1,4 +1,5 @@
 'use client';
+import {ActionButton} from '@/components/practice/ui/ActionButton';
 
 import React,{useEffect,useState} from 'react';
 import {DialogSurface} from '@/components/practice/ui/DialogSurface';
@@ -40,7 +41,7 @@ export function LabelSharingDialog({name,locale,controller,onClose}:{name:string
     <p role="alert">{t.uncertain}</p><button onClick={controller.reconcile}>{t.check}</button><button onClick={controller.retry}>{t.retry}</button>
    </>:data?confirmation?<>
     <p>{confirmation==='open'?group.openNotice:confirmation==='close'?group.closeNotice:t.rotateNotice}</p>
-    <footer><button onClick={()=>setConfirmation(null)}>{common.cancel}</button><button onClick={()=>{controller.run(confirmation);setConfirmation(null);}}>{t.confirm}</button></footer>
+    <footer><ActionButton onClick={()=>setConfirmation(null)}>{common.cancel}</ActionButton><ActionButton variant="primary" onClick={()=>{controller.run(confirmation);setConfirmation(null);}}>{t.confirm}</ActionButton></footer>
    </>:<>
     <p>{group.description}</p><p>{t.view} · {t.subscribers}: {data.subscriberCount.toLocaleString(locale)}</p>
     {data.isOpen?link&&data.invitationCode?<>
@@ -48,7 +49,7 @@ export function LabelSharingDialog({name,locale,controller,onClose}:{name:string
     </>:null:<button onClick={()=>setConfirmation('open')}>{t.open}</button>}
    </>:null}
    {notice&&<p role="status">{notice}</p>}
-   <footer><button disabled={status==='saving'} onClick={onClose}>{common.close}</button></footer>
+   <footer><ActionButton disabled={status==='saving'} onClick={onClose}>{common.close}</ActionButton></footer>
   </div>
  </DialogSurface>;
 }

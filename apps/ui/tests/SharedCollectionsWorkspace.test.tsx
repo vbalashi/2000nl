@@ -3,7 +3,7 @@ import {fireEvent,render,screen} from '@testing-library/react';
 import {beforeEach,expect,test,vi} from 'vitest';
 const mock=vi.hoisted(()=>({overview:vi.fn(),owned:vi.fn(),received:vi.fn(),groups:vi.fn()}));
 vi.mock('@/components/library/sharing/useSharingOverview',()=>({useSharingOverview:mock.overview}));
-vi.mock('@/components/library/sharing/OwnedSharedCollections',()=>({OwnedSharedCollections:(props:unknown)=>{mock.owned(props);return <div>Owned list</div>;}}));
+vi.mock('@/components/library/sharing/OwnedSharedCollections',()=>({OwnedSharedCollections:(props:{groupRows?:React.ReactNode})=>{mock.owned(props);return <div>{props.groupRows}Owned list</div>;}}));
 vi.mock('@/components/library/sharing/ReceivedCollections',()=>({ReceivedCollections:(props:unknown)=>{mock.received(props);return <div>Received list</div>;}}));
 vi.mock('@/components/library/sharing/useLabelSharingCatalog',()=>({useLabelSharingCatalog:mock.groups}));
 vi.mock('@/components/library/sharing/SharedLabelGroups',()=>({SharedLabelGroups:({groups}:{groups:Array<{labelId:string;name:string}>})=><div data-testid="groups">{groups.map(group=><div key={group.labelId}>{group.name}</div>)}</div>}));

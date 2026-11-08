@@ -10,7 +10,7 @@ beforeEach(()=>{vi.resetAllMocks();mock.headers.mockResolvedValue({authorization
 test('owner page and overview check account after response, without caching',async()=>{
  expect(await readOwnedSharedCatalog(user,query,new AbortController().signal)).toEqual(page);
  expect(mock.headers).toHaveBeenCalledTimes(2);expect(mock.fetch).toHaveBeenCalledWith(expect.stringContaining('/owned?'),expect.objectContaining({cache:'no-store',credentials:'same-origin'}));
- mock.fetch.mockResolvedValueOnce(Response.json({sharedByMe:1,addedByMe:2}));expect(await readSharingOverview(user,new AbortController().signal)).toEqual({sharedByMe:1,addedByMe:2});
+ mock.fetch.mockResolvedValueOnce(Response.json({sharedByMe:5,addedByMe:2})).mockResolvedValueOnce(Response.json(page));expect(await readSharingOverview(user,new AbortController().signal)).toEqual({sharedByMe:1,addedByMe:2});
 });
 test('account switch and abort discard old owner results',async()=>{
  mock.headers.mockResolvedValueOnce({}).mockRejectedValueOnce(new Error('auth_account_changed'));

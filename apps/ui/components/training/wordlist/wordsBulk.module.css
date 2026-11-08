@@ -4,7 +4,7 @@
 .dialog{width:min(480px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:20px;border:1px solid var(--practice-border);border-radius:16px;background:var(--practice-surface);color:var(--practice-text);font:400 var(--practice-text-small)/1.5 var(--practice-font-ui);box-shadow:0 20px 70px var(--practice-shadow);box-sizing:border-box}
 .dialog::backdrop{background:var(--practice-backdrop)}.header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}.dialog h2{margin:0;min-width:0;font:500 var(--practice-text-body-lg)/1.4 var(--practice-font-ui)}
 .create{display:flex;align-items:center;gap:8px}.search{display:flex;align-items:center;gap:8px;flex:1;min-width:0;box-sizing:border-box;border:1px solid var(--practice-control-border);border-radius:8px;background:var(--practice-surface);color:var(--practice-text-muted);padding:8px}.search input,.create input{min-width:0;flex:1;border:0;outline:none;background:transparent;color:var(--practice-text);font:inherit}.create{margin-top:10px}.create input{border:1px solid var(--practice-control-border);border-radius:8px;padding:8px}
-.choices{display:grid;gap:4px;max-height:40dvh;overflow:auto;margin-top:10px}.choices button{text-align:left;border-color:transparent}.choices button[aria-pressed=true]{background:var(--practice-surface-hover);border-color:var(--practice-control-border)}
+.choices{display:grid;gap:4px;max-height:40dvh;overflow:auto;margin-top:10px}.choices button{text-align:start;border:0;background:transparent}.choices button:hover:not(:disabled),.choices button[aria-pressed=true]{background:var(--practice-surface-subtle);color:var(--practice-text)}
 .status{min-height:2.8em;color:var(--practice-text-muted)}.actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}.actions button:last-child{background:var(--practice-accent);color:var(--practice-on-accent)}
 .dialog :focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}
 
@@ -12,10 +12,15 @@
 /* The list and result slot keep their dimensions while metadata and plans load. */
 .dialog{display:flex;flex-direction:column;overflow:hidden}
 .choices{height:clamp(144px,36dvh,280px);min-height:0;max-height:none;flex:none;align-content:start;scrollbar-gutter:stable}
-.choices button{display:flex;align-items:center;gap:10px;min-height:62px;box-sizing:border-box}
+.choices button{display:flex;align-items:center;gap:10px;min-height:44px;box-sizing:border-box}
 .accessIcon{display:flex;align-items:center;justify-content:center;flex:0 0 20px;color:var(--practice-text-muted)}
 .iconPlaceholder{width:17px;height:17px}
-.collectionText{min-width:0;display:flex;flex-direction:column}.collectionName{font-size:var(--practice-text-body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.collectionMeta{font-size:var(--practice-text-caption);line-height:1.4;color:var(--practice-text-muted);min-height:1.4em}
+.collectionText{flex:1;min-width:0;display:flex;flex-direction:column}.collectionName{font-size:var(--practice-text-body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.collectionMeta{font-size:var(--practice-text-caption);line-height:1.4;color:var(--practice-text-muted);min-height:1.4em}
 .status{height:4.5em;min-height:4.5em;flex:none;overflow:auto;margin:10px 0;font-size:var(--practice-text-caption);scrollbar-gutter:stable}
 .actions{flex:none}.header,.search{flex:none}
 @media(max-height:500px){.choices{height:100px}.dialog{overflow:auto}}
+
+.accessDescription{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.selectionMark{display:flex;align-items:center;justify-content:center;flex:0 0 16px;color:var(--practice-text-muted)}
+/* A top-layer dialog must not inherit the toolbar sibling-spacing margins. */
+dialog.dialog[open]:not([hidden]){inset:0;margin:auto;height:fit-content}

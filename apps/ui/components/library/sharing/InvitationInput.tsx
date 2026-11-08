@@ -1,4 +1,5 @@
 'use client';
+import {ActionButton} from '@/components/practice/ui/ActionButton';
 import { localizedSection } from "@/lib/i18n/catalog";
 
 import React,{useState} from 'react';
@@ -12,6 +13,6 @@ export function InvitationInput({locale,onSubmit,onCancel,initialValue="",readOn
  const t=copy[locale],common=organizationCopy(locale);
  return <form data-onboarding="invitation-input" className={`${s.catalog} ${s.invitation}`} onSubmit={event=>{event.preventDefault();const code=parseShareCode(value,window.location.origin);if(!code){setError(true);return;}onSubmit(code);}}>
   <h2>{t.title}</h2><label className={s.search}><input type="text" aria-label={t.hint} placeholder={t.hint} maxLength={1024} autoComplete="off" autoCorrect="off" spellCheck={false} readOnly={readOnly} value={value} onChange={event=>{setValue(event.target.value);setError(false);}}/></label>
-  {error&&<p role="alert">{t.error}</p>}<div><button type="submit">{t.check}</button><button type="button" onClick={onCancel}>{common.cancel}</button></div>
+  {error&&<p role="alert">{t.error}</p>}<div><ActionButton variant="primary" type="submit">{t.check}</ActionButton><ActionButton onClick={onCancel}>{common.cancel}</ActionButton></div>
  </form>;
 }

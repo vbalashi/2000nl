@@ -1274,7 +1274,10 @@
       "meaningZero": "{count} betekenissen",
       "meaningTwo": "{count} betekenissen",
       "sort": "Sorteren",
-      "labelsFor": "Labels voor ‘{name}’"
+      "labelsFor": "Labels voor ‘{name}’",
+      "noLabelsFound": "Geen overeenkomende labels",
+      "received": "Van een andere auteur",
+      "sharedByYou": "Door jou gedeeld"
     },
     "localRecovery": {
       "retry": "Opnieuw proberen",
@@ -1948,7 +1951,7 @@
       "source": "Bron",
       "materialKind": "Soort materiaal",
       "originKind": "Bron",
-      "materialTitle": "Titel van het materiaal",
+      "materialTitle": "Oorspronkelijke titel van het materiaal",
       "creatorName": "Auteur / kanaal",
       "url": "URL",
       "fileName": "Bestandsnaam",
@@ -1965,7 +1968,20 @@
       "preview": "Voorbeeld: brongegevens zijn demonstratiegegevens en worden niet opgeslagen.",
       "description": "Beschrijving",
       "invalid": "Controleer de naam, beschrijving en brongegevens. Links moeten beginnen met http:// of https://.",
-      "readOnly": "Alleen-lezen. De auteur kan deze collectie bewerken."
+      "readOnly": "Alleen-lezen. De auteur kan deze collectie bewerken.",
+      "readOnlyLabel": "Alleen lezen",
+      "editDetails": "Gegevens bewerken",
+      "addDetails": "Gegevens toevoegen",
+      "hideEditor": "Editor sluiten",
+      "previousMonth": "Vorige maand",
+      "nextMonth": "Volgende maand",
+      "year": "Jaar",
+      "clearDate": "Datum wissen",
+      "collectionName": "Collectienaam",
+      "notSpecified": "Niet opgegeven",
+      "editField": "{field} bewerken",
+      "materialTitleHelp": "De oorspronkelijke titel van de video, het artikel of het boek. Je collectie kan een andere naam hebben.",
+      "urlHint": "Vul een websiteadres in, bijvoorbeeld www.example.com."
     },
     "labelSharing": {
       "title": "Label delen",
@@ -1980,7 +1996,7 @@
       "groups": "Collectiegroepen",
       "accessRemains": "Toegang blijft behouden via deze groepen: {groups}.",
       "audienceTitle": "Toegang wijzigen",
-      "audienceIntro": "Deze labelwijziging verandert wie toegang heeft tot de collecties.",
+      "audienceIntro": "Als je deze labelwijziging opslaat, verandert ook welke collecties via gedeelde labels beschikbaar zijn.",
       "audienceAdded": "Lezers die toegang krijgen: {readers}. Collecties: {collections}.",
       "audienceRemoved": "Lezers die toegang verliezen: {readers}. Collecties: {collections}.",
       "pathsChanged": "Toegangspaden veranderen. Onafhankelijke abonnementen blijven behouden.",
@@ -1999,7 +2015,25 @@
       "compositionReaders": "Betrokken abonnees: {count}",
       "compositionPaths": "Rechtstreekse abonnementen: {direct}. Groepsabonnementen: {groups}.",
       "originalCollections": "Collecties van andere auteurs",
-      "referenceNotice": "Deze collecties zijn van andere auteurs. Open een uitnodiging en voeg elke collectie afzonderlijk toe."
+      "referenceNotice": "Deze collecties zijn van andere auteurs. Open een uitnodiging en voeg elke collectie afzonderlijk toe.",
+      "accessAddedTitle": "Deze collecties worden beschikbaar voor abonnees van gedeelde labels",
+      "accessRemovedTitle": "Deze collecties zijn niet langer beschikbaar voor de betrokken abonnees",
+      "accessUnchanged": "Niemand krijgt of verliest toegang. Bestaande toegang blijft behouden.",
+      "confirmAdded": "Toegang verlenen en opslaan",
+      "confirmRemoved": "Toegang intrekken en opslaan",
+      "confirmMixed": "Toegangswijzigingen toepassen en opslaan",
+      "affectedSubscribers": "Abonnees: {count}",
+      "placementAdded": "Je voegt ‘{collection}’ toe aan de gedeelde groep ‘{group}’ ({subscribers}). De collectie verschijnt in deze groep in de bibliotheken van de abonnees.",
+      "placementRemoved": "Je verwijdert ‘{collection}’ uit de gedeelde groep ‘{group}’ ({subscribers}). De collectie verdwijnt uit deze groep; toegang via andere wegen kan behouden blijven.",
+      "subscriberZero": "{count} abonnees",
+      "subscriberOne": "{count} abonnee",
+      "subscriberTwo": "{count} abonnees",
+      "subscriberFew": "{count} abonnees",
+      "subscriberMany": "{count} abonnees",
+      "subscriberOther": "{count} abonnees",
+      "openInCollections": "Openen in collecties",
+      "accessViaGroup": "Toegang via {groups}",
+      "publishedSeparately": "Afzonderlijk gedeeld"
     }
   },
   "tour": {

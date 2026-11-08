@@ -92,3 +92,47 @@ pair. Definitions, examples and idioms retain their own reading hierarchy.
 
 Original/translation paragraph spacing uses the shared article-pair token: 4 px
 in balanced spacing and 6 px in airy spacing before account spacing scaling.
+
+## Collection details and assignment
+
+The title is the primary heading. Its access icon distinguishes personal, shared
+by the current author, and received collections; received catalog rows also state
+that they came from another author. No account identity is inferred from a title,
+description or label. The current catalog does not provide an author display name.
+
+Meaning count and compact read-only status sit immediately below the title. The
+access explanation uses the existing help popover, available by pointer, keyboard
+and touch. Source and Labels have subordinate headings and the same small content
+inset. Labels carry folder icons. Empty labels describe the state rather than
+imitating an action. Each displayed field has its own pencil action, including the collection name
+in the heading. Empty metadata stays visible as a muted state. One field is edited
+at a time. Enter or leaving the field saves a sparse patch pinned to its starting
+revision; Escape cancels the draft. Menus and calendars save the chosen value
+without committing while focus moves inside the picker. There is no second copy of the title or description in an expanded form.
+The original material title is distinct from the user-chosen collection name.
+
+Label assignment always exposes the shared search field. Collection names are
+quoted in its heading, filtered-empty copy refers to labels, and hidden selected
+assignments are preserved. Save and Cancel have the same minimum width. The
+optional publication date uses the themed DateField dialog, locale-aware calendar
+labels and keyboard navigation. Scrolling surfaces retain a thin, muted rail;
+existing intentionally rail-free catalog lists remain unchanged.
+
+Shared-label placement confirmation names the collection and group, with a localized
+subscriber count in parentheses. Additions and removals describe their own effects;
+changes that retain another accepted access route never claim a global access loss.
+Explanatory group context is read against the prepared catalog revision. Stale or
+unavailable context falls back to the authoritative audience delta; presentation
+never bypasses the existing plan confirmation.
+
+Single-field editing has no Save/Cancel actions. Inputs keep the reading baseline
+without a boxed surface; opening a text editor selects its current value. Enter or
+leaving focus commits once, while Shift+Enter keeps a description newline and
+Escape restores the saved value. Failed saves keep the editor available for
+correction or revision refresh. Empty metadata uses caption-sized muted ink.
+
+## Compact dialog actions
+
+`ActionButton` owns the ordinary dialog action family: `primary` uses the muted selected palette, while `quiet` uses muted text without a border. Its visual surface is 28px high with the shared control radius; the button target is 36px, or 44px for coarse pointers. Hover gently dims the primary surface rather than replacing it with an unrelated surface; keyboard focus remains explicit. Disabled buttons do not receive hover emphasis.
+
+Use explicit variants, never a footer's child order, to identify the primary action. The collection card, label editors, collection membership picker, library filters and normal sharing dialogs use this family. Training launch controls retain their dedicated 44px family. Destructive collection deletion retains its existing treatment pending separate review.

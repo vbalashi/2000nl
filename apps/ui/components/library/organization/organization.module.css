@@ -178,3 +178,89 @@
 
 .choiceField .choiceSelect{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--practice-border);border-radius:var(--practice-radius-control);background:var(--practice-surface);color:var(--practice-text);font:400 var(--practice-text-small)/1.5 var(--practice-font-ui);text-align:start}
 .choiceSelect:disabled{opacity:.5}.choiceSelect:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}
+
+/* Compact details preserve title hierarchy while source and personal labels share an inset. */
+.detailsPane .collectionDetails{gap:16px}
+.detailHeading{display:flex;flex-direction:column;gap:2px}
+.detailHeading header{align-items:flex-start;gap:8px}
+.detailHeading h2{display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0;font-size:var(--practice-text-body-lg);font-weight:500;color:var(--practice-text)}
+.detailAccess{display:inline-flex;align-items:center;flex:none;min-height:24px;color:var(--practice-text-muted)}
+.detailHeading header>button{flex:none;margin-block:-8px;margin-inline-end:-8px}
+.detailSummary{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:var(--practice-text-caption);color:var(--practice-text-muted);line-height:1.5}
+.readOnlyBadge{display:inline-flex;align-items:center;gap:4px}
+.collectionDetails .readOnlyBadge>button{border:0;background:transparent;min-width:28px;min-height:28px;padding:4px}
+.detailDescription{font-size:var(--practice-text-small);color:var(--practice-text-secondary)}
+.detailSection{display:flex;flex-direction:column;gap:8px;min-width:0}
+.detailSection h3{margin:0;font:500 var(--practice-text-small)/1.5 var(--practice-font-ui);color:var(--practice-text-muted)}
+.detailSection>.detailFields,.detailSection>.detailLabels{padding-inline-start:8px}
+.detailLabels>span{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow-wrap:anywhere}
+.detailLabels>span>svg{flex:none}
+.detailLabels>p{font-size:var(--practice-text-caption);color:var(--practice-text-muted)}
+.collectionDetails .editDisclosure{align-self:flex-start;justify-content:flex-start;border:0;background:transparent;padding:4px 0;min-height:36px;color:var(--practice-text-secondary)}
+.editDisclosure>svg{transition:transform .16s ease}
+.editDisclosure[aria-expanded=true]>svg{transform:rotate(180deg)}
+.detailsForm{animation:detailsReveal .16s ease-out}
+@keyframes detailsReveal{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.editor footer>button{min-width:88px}
+.editor .detailActions>button{min-width:0}
+.assignmentToolbar{display:flex;flex-direction:column;gap:4px;min-width:0}
+.assignmentToolbar>.inlineCreate{min-width:0}
+.assignmentToolbar>.inlineCreate>button{min-height:36px}
+.editor:has(.assignmentList){gap:12px}
+.editor .assignmentToolbar input:not([type=checkbox]){border:0;border-radius:0;min-height:0;padding:0;background:transparent;box-shadow:none}
+.detailSummary{padding-inline-start:26px}
+.detailTitle{display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0}
+
+/* Per-field editing shares the reading baseline and compact action family. */
+.fieldValue{display:flex;align-items:flex-start;gap:4px;min-width:0;min-height:28px}
+.fieldValue>span{flex:1;min-width:0;align-self:flex-start;padding-top:4px;overflow-wrap:anywhere;white-space:pre-wrap}
+.collectionDetails .fieldPencil{flex:none;min-width:28px;width:28px;min-height:28px;border:0;background:transparent;padding:5px;color:var(--practice-text-muted);opacity:.7}
+.collectionDetails .fieldPencil:hover:not(:disabled){opacity:1}
+.detailTitle>.fieldPencil{margin-block:-2px}
+.emptyDetail{color:var(--practice-text-muted);font-size:var(--practice-text-caption)}
+.detailFields{gap:2px}
+.detailFields>div{align-items:start}
+.detailFields dt{padding-top:4px}
+.collectionDetails .detailFields dt>button{display:inline-flex;border:0;background:transparent;min-height:24px;min-width:24px;padding:4px;vertical-align:middle}
+.inlineFieldForm{min-width:0;width:100%;animation:none}
+.detailTitle>.inlineFieldForm{flex:1}
+.inlineFieldForm>div>span:first-child{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.collectionDetails .inlineFieldForm{gap:0;padding-top:4px}
+.collectionDetails .inlineFieldForm input:not([type=checkbox]),.collectionDetails .inlineFieldForm textarea{min-height:0;height:auto;line-height:1.5;border:0;border-radius:0;background:transparent;padding:0;font-size:var(--practice-text-small)}
+.collectionDetails .inlineFieldForm textarea{field-sizing:content;resize:vertical;min-height:1.5em}
+.collectionDetails .inlineFieldForm .choiceSelect,.collectionDetails .inlineFieldForm>div>button{border:0;border-radius:0;background:transparent;min-height:24px;padding:0}
+.detailTitle>.inlineFieldForm{padding-top:0}
+.detailTitle .inlineFieldForm input:not([type=checkbox]){font-size:var(--practice-text-body-lg);font-weight:500}
+.detailTitle h2{flex:0 1 auto}
+.audienceExplanation{display:flex;flex-direction:column;gap:16px;min-height:100px}
+.audienceExplanation ul{margin:8px 0 0;padding-inline-start:20px}
+@media(max-width:700px){.collectionDetails .fieldPencil{min-width:36px;width:36px;min-height:36px}.fieldValue{min-height:36px}.detailTitle>.fieldPencil{margin-block:-6px}}
+
+/* Empty placeholders and editor geometry match their read-only line. */
+.collectionDetails .inlineFieldForm{min-height:28px;box-sizing:border-box}
+.fieldValue>span:has(>.emptyDetail){font-size:var(--practice-text-caption)}
+.collectionDetails .inlineFieldForm input::placeholder,.collectionDetails .inlineFieldForm textarea::placeholder{font-size:var(--practice-text-caption);color:var(--practice-text-muted);opacity:1}
+.collectionDetails .inlineFieldForm[data-empty=true] input,.collectionDetails .inlineFieldForm[data-empty=true] textarea,.collectionDetails .inlineFieldForm[data-empty=true]>div>button{font-size:var(--practice-text-caption)}
+@media(max-width:700px){.collectionDetails .inlineFieldForm{min-height:36px}}
+.collectionDetails .fieldHint{font-size:var(--practice-text-caption);color:var(--practice-text-muted)}
+.ownedSharedActions .copyLinkAction{display:inline-flex;align-items:center;justify-content:flex-start;gap:6px;white-space:nowrap;border-color:transparent;background:transparent;color:var(--practice-text-muted);font-size:var(--practice-text-caption);padding:4px 8px}
+.ownedSharedActions .copyLinkAction:hover{background:var(--practice-surface-subtle);color:var(--practice-text-secondary)}
+.copyFeedbackText{display:grid}.copyFeedbackText>span{grid-area:1/1}
+.copyAnnounce{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media(min-width:701px){.ownedSharedHead,.ownedSharedRow{grid-template-columns:minmax(0,2fr) minmax(90px,.65fr) minmax(220px,1fr)}}
+
+/* Shared labels stay inside the catalogue, beneath its common heading. */
+.sharedGroups .sharedGroupRow{display:grid;grid-template-columns:18px minmax(0,1fr) 44px;gap:12px;padding:12px 16px;margin:0}
+.sharedGroups .sharedGroupRow .collectionCopy{min-width:0}
+.sharedGroups .sharedGroupRow>button:last-child{justify-self:end}
+@media(max-width:700px){.sharedGroups .sharedGroupRow{padding-inline:4px}}
+
+.sharedGroups .sharedGroupRow{grid-template-columns:minmax(0,2fr) minmax(90px,.65fr) minmax(220px,1fr);gap:12px}
+.sharedGroups .sharedGroupRow .ownedSharedActions{grid-column:3}
+@media(max-width:700px){.sharedGroups .sharedGroupRow{grid-template-columns:minmax(0,1fr) 44px}.sharedGroups .sharedGroupRow .ownedSharedActions{grid-column:2;grid-row:1}}
+
+.objectAccessIcon{position:relative;display:inline-flex;flex:none;width:20px;height:22px;align-items:center;color:var(--practice-text-muted)}
+.objectAccessBadge{position:absolute;inset-inline-end:-3px;bottom:-1px;display:flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;background:var(--practice-canvas);color:var(--practice-text-secondary)}
+.collection>.objectAccessIcon{margin-top:2px}
+
+.groupContents .compactActions{gap:8px;align-items:center;flex-wrap:wrap}

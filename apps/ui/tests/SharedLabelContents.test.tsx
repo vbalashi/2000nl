@@ -8,3 +8,8 @@ it('opens an original invitation separately from opening a group-owned collectio
  expect(onReference).not.toHaveBeenCalled();fireEvent.click(screen.getByRole('button',{name:'Another author'}));expect(onReference).toHaveBeenCalledWith('A'.repeat(26));expect(onOpen).not.toHaveBeenCalled();
  fireEvent.click(screen.getByRole('button',{name:'My lesson'}));expect(onOpen).toHaveBeenCalledWith('own');
 });
+
+it('opens the selected label in the collection catalogue',()=>{
+ const onOpenLabel=vi.fn();render(<SharedLabelContents userId="owner" labelId="group" name="Group" locale="en" onClose={()=>{}} onOpen={()=>{}} onOpenLabel={onOpenLabel}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Open in collections'}));expect(onOpenLabel).toHaveBeenCalledOnce();
+});

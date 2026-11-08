@@ -1274,7 +1274,10 @@
       "meaningZero": "{count} meanings",
       "meaningTwo": "{count} meanings",
       "sort": "Sort",
-      "labelsFor": "Labels for {name}"
+      "labelsFor": "Labels for “{name}”",
+      "noLabelsFound": "No matching labels",
+      "received": "From another author",
+      "sharedByYou": "Shared by you"
     },
     "localRecovery": {
       "retry": "Retry",
@@ -1948,7 +1951,7 @@
       "source": "Source",
       "materialKind": "Material kind",
       "originKind": "Source",
-      "materialTitle": "Material title",
+      "materialTitle": "Original material title",
       "creatorName": "Author / channel",
       "url": "URL",
       "fileName": "File name",
@@ -1965,7 +1968,20 @@
       "preview": "Preview — source details are demonstration data; changes are not saved.",
       "description": "Description",
       "invalid": "Check the name, description and source details. Links must start with http:// or https://.",
-      "readOnly": "Read only — the author can edit this collection."
+      "readOnly": "Read only — the author can edit this collection.",
+      "readOnlyLabel": "Read only",
+      "editDetails": "Edit details",
+      "addDetails": "Add details",
+      "hideEditor": "Close editor",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "year": "Year",
+      "clearDate": "Clear date",
+      "collectionName": "Collection name",
+      "notSpecified": "Not specified",
+      "editField": "Edit {field}",
+      "materialTitleHelp": "The original title of the video, article or book. Your collection can have a different name.",
+      "urlHint": "Use a website address, for example www.example.com."
     },
     "labelSharing": {
       "title": "Share label",
@@ -1980,7 +1996,7 @@
       "groups": "Collection groups",
       "accessRemains": "Access remains through these groups: {groups}.",
       "audienceTitle": "Access changes",
-      "audienceIntro": "Changing these labels changes who can access the collections.",
+      "audienceIntro": "Saving this label change also changes which collections are available through shared labels.",
       "audienceAdded": "Readers gaining access: {readers}. Collections: {collections}.",
       "audienceRemoved": "Readers losing access: {readers}. Collections: {collections}.",
       "pathsChanged": "Access paths change. Independent subscriptions are kept.",
@@ -1999,7 +2015,25 @@
       "compositionReaders": "Subscribers affected: {count}",
       "compositionPaths": "Direct subscriptions: {direct}. Group subscriptions: {groups}.",
       "originalCollections": "Original collections",
-      "referenceNotice": "These collections belong to other authors. Open an invitation and add each collection separately."
+      "referenceNotice": "These collections belong to other authors. Open an invitation and add each collection separately.",
+      "accessAddedTitle": "These collections will become available to subscribers of shared labels",
+      "accessRemovedTitle": "These collections will no longer be available to the affected subscribers",
+      "accessUnchanged": "No one gains or loses access. Existing access remains available.",
+      "confirmAdded": "Grant access and save",
+      "confirmRemoved": "Remove access and save",
+      "confirmMixed": "Apply access changes and save",
+      "affectedSubscribers": "Subscribers: {count}",
+      "placementAdded": "You are adding “{collection}” to shared group “{group}” ({subscribers}). The collection will appear in this group in subscribers’ libraries.",
+      "placementRemoved": "You are removing “{collection}” from shared group “{group}” ({subscribers}). It will disappear from this group; other access may remain.",
+      "subscriberZero": "{count} subscribers",
+      "subscriberOne": "{count} subscriber",
+      "subscriberTwo": "{count} subscribers",
+      "subscriberFew": "{count} subscribers",
+      "subscriberMany": "{count} subscribers",
+      "subscriberOther": "{count} subscribers",
+      "openInCollections": "Open in collections",
+      "accessViaGroup": "Access through {groups}",
+      "publishedSeparately": "Published separately"
     }
   },
   "tour": {

@@ -12,7 +12,7 @@ export function useSharingOverview(userId:string,active:boolean){
  const refresh=useCallback(async()=>{
   const current=scope.current;request.current?.abort();
   if(!current.active||!current.userId){setState({key:current.key,status:'idle',data:null});return;}
-  const abort=new AbortController();request.current=abort;setState({key:current.key,status:'loading',data:null});
+  const abort=new AbortController();request.current=abort;setState(previous=>previous.key===current.key&&previous.status==='ready'?previous:{key:current.key,status:'loading',data:null});
   try{const data=await readSharingOverview(current.userId,abort.signal);if(!abort.signal.aborted&&scope.current.key===current.key)setState({key:current.key,status:'ready',data});}
   catch{if(!abort.signal.aborted&&scope.current.key===current.key)setState({key:current.key,status:'error',data:null});}
   finally{if(request.current===abort)request.current=null;}

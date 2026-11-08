@@ -1,4 +1,5 @@
 'use client';
+import {ActionButton} from '@/components/practice/ui/ActionButton';
 import { localizedSection } from "@/lib/i18n/catalog";
 
 import {InlineLabelCreate} from "./InlineLabelCreate";
@@ -25,6 +26,6 @@ export function ReceivedCollectionLabels({userId,collectionId,name,locale,onClos
    {editor.status==='conflict'&&<p role="alert">{t.conflict}</p>}
    {editor.status==='uncertain'&&<p role="alert">{t.uncertain} <button type="button" onClick={()=>void editor.check()}>{extra.check}</button></p>}
   </>}
-  <footer><button type="button" disabled={saving} onClick={onClose}>{t.cancel}</button><button type="submit" disabled={saving||!['ready','conflict'].includes(editor.status)}>{saving?t.saving:t.save}</button></footer>
+  <footer><ActionButton type="button" disabled={saving} onClick={onClose}>{t.cancel}</ActionButton><ActionButton variant="primary" type="submit" disabled={saving||!['ready','conflict'].includes(editor.status)}>{saving?t.saving:t.save}</ActionButton></footer>
  </form></DialogSurface>;
 }

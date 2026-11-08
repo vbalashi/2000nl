@@ -89,6 +89,7 @@ test('loads badges in one batch and keeps published zero-subscriber collections 
  expect(await screen.findByText('Shared · 0 subscribers')).toBeInTheDocument();expect(screen.getByText('Private')).toBeInTheDocument();
  expect(access).toHaveBeenCalledTimes(1);expect(access).toHaveBeenCalledWith('account',['private','published'],expect.any(AbortSignal));
  expect(screen.getByRole('button',{name:'Published lesson'})).toHaveAccessibleDescription('Shared · 0 subscribers');
+ expect(screen.getByRole('button',{name:'Private lesson'})).toHaveAccessibleDescription('Private');
 });
 test('does not label missing metadata private or allow a new confirmation',async()=>{
  access.mockResolvedValue([]);request.mockResolvedValue({articleCount:2,meaningCount:3,planId:'planned',audience:[]});
