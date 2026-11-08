@@ -1,4 +1,5 @@
 "use client";
+import {ChoiceSelect} from "./ChoiceSelect";
 import React,{useEffect,useState} from "react";
 import {DialogSurface} from "@/components/practice/ui/DialogSurface";
 import {IconAction} from "@/components/practice/ui/IconAction";
@@ -27,8 +28,8 @@ export function CollectionDetailsPanel({details,labelNames,locale,isShared,onClo
   {draft?<form className={s.detailsForm} onSubmit={submit}>
    <label>{t.name}<input required maxLength={100} value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></label>
    <label>{copy.description}<textarea maxLength={4000} value={draft.description} onChange={e=>setDraft({...draft,description:e.target.value})}/></label>
-   <label>{copy.materialKind}<select value={draft.source.materialKind??''} onChange={e=>field('materialKind',e.target.value)}><option value="">—</option>{(['video','article','text','book','other'] as const).map(k=><option key={k} value={k}>{copy[k]}</option>)}</select></label>
-   <label>{copy.originKind}<select value={draft.source.originKind??''} onChange={e=>field('originKind',e.target.value)}><option value="">—</option>{(['youtube','web','local_file','manual','other'] as const).map(k=><option key={k} value={k}>{k==='local_file'?copy.localFile:copy[k]}</option>)}</select></label>
+   <ChoiceSelect label={copy.materialKind} value={draft.source.materialKind??""} onChange={value=>field("materialKind",value)} locale={locale} options={[{id:"",label:"—"},...(["video","article","text","book","other"] as const).map(k=>({id:k,label:copy[k]}))]}/>
+   <ChoiceSelect label={copy.originKind} value={draft.source.originKind??""} onChange={value=>field("originKind",value)} locale={locale} options={[{id:"",label:"—"},...(["youtube","web","local_file","manual","other"] as const).map(k=>({id:k,label:k==="local_file"?copy.localFile:copy[k]}))]}/>
    {(['materialTitle','creatorName','url','fileName','publishedOn'] as const).map(k=><label key={k}>{copy[k]}<input type={k==='publishedOn'?'date':k==='url'?'url':'text'} maxLength={k==='publishedOn'?undefined:2048} value={draft.source[k]??''} onChange={e=>field(k,e.target.value)}/></label>)}
    {error&&<p role="alert">{error} {onRetry&&<button type="button" onClick={()=>void onRetry().then(revision=>{if(revision!==null)setDraft(current=>current?{...current,revision}:current);})}>{t.retry}</button>}</p>}
    <footer><button type="button" disabled={saving} onClick={()=>setDraft(null)}>{t.cancel}</button><button type="submit" disabled={saving}>{saving?t.saving:t.save}</button></footer>
@@ -36,6 +37,7 @@ export function CollectionDetailsPanel({details,labelNames,locale,isShared,onClo
    {details.description&&<p>{details.description}</p>}
    {details.itemCount!==null&&<p className={s.detailMetadata}>{formatUiCount(locale,details.itemCount,t,"meaning")}</p>}
    {source&&values.some(([,value])=>value)&&<><h2>{copy.source}</h2><dl className={s.detailFields}>{values.filter(([,value])=>value).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{label===copy.url&&value&&safeLink(value)?<a href={safeLink(value)!} target="_blank" rel="noreferrer">{value}</a>:label===copy.publishedOn&&value?new Intl.DateTimeFormat(locale,{year:"numeric",month:"long",day:"numeric",timeZone:"UTC"}).format(new Date(`${value}T12:00:00Z`)):value}</dd></div>)}</dl></>}
+   {!details.capabilities.canEditDetails&&<p className={s.detailMetadata}>{copy.readOnly}</p>}
    {details.capabilities.canEditDetails&&onSave&&<button type="button" onClick={start}><Pencil size={16}/>{t.editCollection}</button>}
   </>}
   <h2>{t.labels}</h2><div className={s.detailLabels}>{labelNames.length?labelNames.map(name=><span key={name}>{name}</span>):<p>{t.addLabels}</p>}</div>

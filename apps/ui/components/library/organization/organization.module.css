@@ -157,3 +157,24 @@
 .copyCollection>button{align-self:flex-start}
 .copyCollection>div{display:flex;flex-wrap:wrap;gap:8px}
 .detailsForm{display:flex;flex-direction:column;gap:12px}.detailsForm label{display:flex;flex-direction:column;gap:4px;font-size:var(--practice-text-small)}.detailsForm :is(input,select,textarea){box-sizing:border-box;width:100%;min-height:44px;font:inherit;color:var(--practice-text);background:var(--practice-surface);border:1px solid var(--practice-border);border-radius:var(--practice-radius-control);padding:8px}.detailsForm textarea{min-height:88px;resize:vertical}.detailsForm footer{display:flex;gap:8px;justify-content:flex-end}
+
+/* Assignment choices share the app's trailing-tick selection language. */
+.editor .assignmentList>button{justify-content:flex-start;width:100%;border:0;background:transparent;text-align:start;gap:10px;flex-shrink:0}
+.editor .assignmentList>button[aria-checked=true]{background:var(--practice-surface-subtle);color:var(--practice-text)}
+.assignmentList>button>span:first-of-type{flex:1;min-width:0;overflow-wrap:anywhere}
+.assignmentList>button>svg,.selectionSpace{flex:none}.selectionSpace{width:16px}
+.choiceField{display:flex;flex-direction:column;gap:6px;color:var(--practice-text-muted);font-size:var(--practice-text-small)}
+.editor .choiceSelect{width:100%;justify-content:space-between;text-align:start;min-height:44px;border-radius:var(--practice-radius-control)}
+.choiceSelect>span{min-width:0;overflow-wrap:anywhere}.choiceSelect>svg{flex:none}
+.inlineCreate{display:flex;flex-direction:column;gap:8px}
+.editor .inlineCreate>button{align-self:flex-start;background:transparent;border:0;padding-inline:0}
+.inlineCreate>div{display:flex;justify-content:flex-end;gap:8px}
+.editor:has(.assignmentList){gap:12px}
+.invitation>h2,.editor h2{font-family:var(--practice-font-ui)}
+.mobileDetailsDialog.mobileDetailsDialog{inset:0;margin:auto;width:min(420px,calc(100vw - 28px));max-width:calc(100vw - 28px);height:fit-content;max-height:calc(100dvh - 40px);border:1px solid var(--practice-border);border-radius:var(--practice-radius-dialog);background:var(--practice-surface);box-sizing:border-box}
+.mobileDetailsDialog.mobileDetailsDialog .editor{min-height:0}
+
+.assignmentContext{align-items:flex-start}.assignmentContext>.inlineCreate{flex:1;min-width:0}
+
+.choiceField .choiceSelect{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--practice-border);border-radius:var(--practice-radius-control);background:var(--practice-surface);color:var(--practice-text);font:400 var(--practice-text-small)/1.5 var(--practice-font-ui);text-align:start}
+.choiceSelect:disabled{opacity:.5}.choiceSelect:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}

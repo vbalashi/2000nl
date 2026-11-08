@@ -1273,7 +1273,8 @@
       "clear": "Selectie wissen",
       "meaningZero": "{count} betekenissen",
       "meaningTwo": "{count} betekenissen",
-      "sort": "Sorteren"
+      "sort": "Sorteren",
+      "labelsFor": "Labels voor ‘{name}’"
     },
     "localRecovery": {
       "retry": "Opnieuw proberen",
@@ -1963,7 +1964,8 @@
       "manual": "Handmatig",
       "preview": "Voorbeeld: brongegevens zijn demonstratiegegevens en worden niet opgeslagen.",
       "description": "Beschrijving",
-      "invalid": "Controleer de naam, beschrijving en brongegevens. Links moeten beginnen met http:// of https://."
+      "invalid": "Controleer de naam, beschrijving en brongegevens. Links moeten beginnen met http:// of https://.",
+      "readOnly": "Alleen-lezen. De auteur kan deze collectie bewerken."
     },
     "labelSharing": {
       "title": "Label delen",

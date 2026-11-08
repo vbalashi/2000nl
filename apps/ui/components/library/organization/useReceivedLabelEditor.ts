@@ -38,5 +38,6 @@ export function useReceivedLabelEditor(userId:string,collectionId:string){
   }finally{if(request.current===abort){request.current=null;busy.current=false;}}
  };
  const visible:State=state.key===key?state:{key,status:'loading',data:null,selected:[]};
- return {...visible,toggle,save,check:()=>read(true),reload:()=>read(false)};
+ const created=(catalog:NonNullable<State["data"]>["catalog"],id:string)=>{if(busy.current||latest.current.key!==key)return;setState(current=>current.data?{...current,data:{...current.data,catalog},selected:[...current.selected,id],status:"ready"}:current);};
+ return {...visible,created,toggle,save,check:()=>read(true),reload:()=>read(false)};
 }
