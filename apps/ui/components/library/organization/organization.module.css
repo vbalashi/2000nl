@@ -264,3 +264,6 @@
 .collection>.objectAccessIcon{margin-top:2px}
 
 .groupContents .compactActions{gap:8px;align-items:center;flex-wrap:wrap}
+
+/* Details opened from Shared use a modal without the catalogue pane wrapper. */
+.collectionDetails .detailActions{flex-wrap:wrap;justify-content:flex-end}
