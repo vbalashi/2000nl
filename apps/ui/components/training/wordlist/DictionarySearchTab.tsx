@@ -516,7 +516,7 @@ export function DictionarySearchTab({
     collectionOwnership:categoryMaterial?.kind==='collection' ? (viewedList?.ownership==='received' || searchState.collectionOwnership==='received' ? 'received' : 'owned') : null,
     labelId:categoryMaterial?.kind==='label'?categoryMaterial.id:null,labelName:categoryMaterial?.kind==='label'?searchState.labelName ?? null:null,
     sourceName:resultScopeLabel,filters:searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS,category:'headwords'}),
-    [query,searchLanguage,categoryMaterial,dictionaryId,viewedList?.ownership,searchState.collectionOwnership,searchState.labelName,resultScopeLabel,searchState.entryFilters,searchState.searchCategory]);
+    [searchLanguage,categoryMaterial,dictionaryId,viewedList?.ownership,searchState.collectionOwnership,searchState.labelName,resultScopeLabel,searchState.entryFilters]);
   const rememberHistory=useCallback(()=>{if(open && recentReady)rememberScope(historyScope);},[open,recentReady,rememberScope,historyScope]);
   React.useEffect(()=>{if(!categorySearchActive && hasCurrentResults && !searchLoading && !searchError && searchMaterialReady)rememberHistory();},[categorySearchActive,hasCurrentResults,searchLoading,searchError,searchMaterialReady,rememberHistory]);
   const historyChoices=recentItems.filter(item=>recentLibraryScopeKey(item)!==recentLibraryScopeKey(historyScope)).slice(0,5);
