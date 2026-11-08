@@ -21,7 +21,7 @@ test('saving one name field sends a sparse patch and keeps the card open',async(
  expect(within(form).queryByRole('textbox',{name:'Description'})).not.toBeInTheDocument();
  fireEvent.change(screen.getByRole('textbox',{name:'Collection name'}),{target:{value:'Renamed'}});
  mocks.fetch.mockResolvedValueOnce(Response.json({...record,name:'Renamed',revision:'2'}));
- fireEvent.click(within(form).getByRole('button',{name:'Save'}));await screen.findByRole('heading',{name:'Renamed'});
+ fireEvent.submit(form);await screen.findByRole('heading',{name:'Renamed'});
  expect(saves()).toEqual([{collectionId:id,expectedRevision:'1',patch:{name:'Renamed'}}]);
  expect(screen.getByText('A description')).toBeInTheDocument();expect(screen.getByText('Maker')).toBeInTheDocument();
  expect(screen.getByText('February 29, 2024')).toBeInTheDocument();expect(props.onChanged).toHaveBeenCalled();expect(props.onClose).not.toHaveBeenCalled();
@@ -31,9 +31,9 @@ test('clearing the optional date saves only the date field',async()=>{
  render(<CollectionDetailsController {...props}/>);await screen.findByText('Maker');edit('Publication date');
  const form=screen.getByRole('form',{name:'Publication date'});
  fireEvent.click(within(form).getByRole('button',{name:'Publication date Feb 29, 2024'}));
- fireEvent.click(screen.getByRole('button',{name:'Clear date'}));
  mocks.fetch.mockResolvedValueOnce(Response.json({...record,revision:'2',source:{...source,publishedOn:null}}));
- fireEvent.click(within(form).getByRole('button',{name:'Save'}));await waitFor(()=>expect(screen.queryByRole('form',{name:'Publication date'})).toBeNull());
+ fireEvent.click(screen.getByRole('button',{name:'Clear date'}));
+ await waitFor(()=>expect(screen.queryByRole('form',{name:'Publication date'})).toBeNull());
  expect(saves()).toEqual([{collectionId:id,expectedRevision:'1',patch:{source:{publishedOn:null}}}]);
  expect(screen.getByRole('heading',{name:'Lesson'})).toBeInTheDocument();expect(screen.getByText('A description')).toBeInTheDocument();
 });
@@ -41,9 +41,9 @@ test('clearing the optional date saves only the date field',async()=>{
 test('conflict keeps the single-field draft and its frozen revision; revocation removes private details',async()=>{
  render(<CollectionDetailsController {...props}/>);await screen.findByText('Maker');edit('Collection name');fireEvent.change(screen.getByRole('textbox',{name:'Collection name'}),{target:{value:'Draft'}});
  mocks.fetch.mockResolvedValueOnce(Response.json({...record,name:'Changed elsewhere',revision:'2',source:{...source,creatorName:'New author'}}));fireEvent.focus(window);await screen.findByText('New author');expect(screen.getByRole('textbox',{name:'Collection name'})).toHaveValue('Draft');
- mocks.fetch.mockResolvedValueOnce(Response.json({error:'details_conflict'},{status:409}));fireEvent.click(screen.getByRole('button',{name:'Save'}));await screen.findByRole('alert');expect(screen.getByRole('textbox',{name:'Collection name'})).toHaveValue('Draft');expect(saves()[0]).toEqual({collectionId:id,expectedRevision:'1',patch:{name:'Draft'}});
+ mocks.fetch.mockResolvedValueOnce(Response.json({error:'details_conflict'},{status:409}));fireEvent.submit(screen.getByRole('form'));await screen.findByRole('alert');expect(screen.getByRole('textbox',{name:'Collection name'})).toHaveValue('Draft');expect(saves()[0]).toEqual({collectionId:id,expectedRevision:'1',patch:{name:'Draft'}});
  mocks.fetch.mockResolvedValueOnce(Response.json({...record,name:'Review latest',revision:'2',source:{...source,creatorName:'Review author'}}));fireEvent.click(screen.getByRole('button',{name:'Refresh'}));await screen.findByText('Review author');expect(screen.getByRole('textbox',{name:'Collection name'})).toHaveValue('Draft');
- mocks.fetch.mockResolvedValueOnce(Response.json({...record,name:'Draft',revision:'3'}));fireEvent.click(screen.getByRole('button',{name:'Save'}));await screen.findByRole('heading',{name:'Draft'});expect(saves()[1]).toEqual({collectionId:id,expectedRevision:'2',patch:{name:'Draft'}});
+ mocks.fetch.mockResolvedValueOnce(Response.json({...record,name:'Draft',revision:'3'}));fireEvent.submit(screen.getByRole('form'));await screen.findByRole('heading',{name:'Draft'});expect(saves()[1]).toEqual({collectionId:id,expectedRevision:'2',patch:{name:'Draft'}});
  mocks.fetch.mockResolvedValueOnce(Response.json({error:'details_unavailable'},{status:404}));fireEvent.focus(window);await waitFor(()=>expect(screen.queryByRole('heading',{name:'Draft'})).toBeNull());expect(screen.queryByText('Maker')).toBeNull();
 });
 
@@ -60,13 +60,13 @@ test('validation failure keeps the chosen URL for correction without changing ot
  expect(await screen.findByRole('alert')).toHaveTextContent('Links must start with http:// or https://');expect(screen.getByRole('textbox',{name:'URL'})).toHaveValue('ftp://example.com');expect(onUnavailable).not.toHaveBeenCalled();
  expect(saves()[0]).toEqual({collectionId:id,expectedRevision:'1',patch:{source:{url:'ftp://example.com'}}});
  fireEvent.change(screen.getByRole('textbox',{name:'URL'}),{target:{value:'https://example.org'}});
- mocks.fetch.mockResolvedValueOnce(Response.json({...record,source:{...source,url:'https://example.org'},revision:'2'}));fireEvent.click(screen.getByRole('button',{name:'Save'}));await screen.findByRole('link',{name:'https://example.org'});
+ mocks.fetch.mockResolvedValueOnce(Response.json({...record,source:{...source,url:'https://example.org'},revision:'2'}));fireEvent.submit(screen.getByRole('form'));await screen.findByRole('link',{name:'https://example.org'});
  expect(screen.getByRole('heading',{name:'Lesson'})).toBeInTheDocument();expect(screen.getByText('A description')).toBeInTheDocument();
 });
 
 test.each([401,403,404])('save access failure %i clears private details',async status=>{
  const onUnavailable=vi.fn();render(<CollectionDetailsController {...props} onUnavailable={onUnavailable}/>);await screen.findByText('Maker');edit('Collection name');fireEvent.change(screen.getByRole('textbox',{name:'Collection name'}),{target:{value:'Draft'}});
- mocks.fetch.mockResolvedValueOnce(Response.json({error:'unavailable'},{status}));fireEvent.click(screen.getByRole('button',{name:'Save'}));await waitFor(()=>expect(screen.queryByDisplayValue('Draft')).toBeNull());expect(screen.queryByText('Maker')).toBeNull();expect(onUnavailable).toHaveBeenCalledOnce();
+ mocks.fetch.mockResolvedValueOnce(Response.json({error:'unavailable'},{status}));fireEvent.submit(screen.getByRole('form'));await waitFor(()=>expect(screen.queryByDisplayValue('Draft')).toBeNull());expect(screen.queryByText('Maker')).toBeNull();expect(onUnavailable).toHaveBeenCalledOnce();
 });
 
 test('changing accounts immediately clears the prior account and field draft',async()=>{
@@ -88,7 +88,7 @@ test('entering a publication date persists through reading and reopening its fie
  const year=screen.getByRole('spinbutton',{name:'Year'});fireEvent.change(year,{target:{value:'2020'}});fireEvent.blur(year);
  const month=new Date().getMonth();for(let i=month;i>1;i--)fireEvent.click(screen.getByRole('button',{name:'Previous month'}));if(month===0)fireEvent.click(screen.getByRole('button',{name:'Next month'}));
  fireEvent.click(screen.getByRole('button',{name:'Saturday, February 29, 2020'}));
- fireEvent.click(screen.getByRole('button',{name:'Save'}));await screen.findByText('February 29, 2020');
+ await screen.findByText('February 29, 2020');
  edit('Publication date');expect(screen.getByRole('button',{name:'Publication date Feb 29, 2020'})).toBeInTheDocument();
  view.unmount();render(<CollectionDetailsController {...props}/>);await screen.findByText('February 29, 2020');edit('Publication date');expect(screen.getByRole('button',{name:'Publication date Feb 29, 2020'})).toBeInTheDocument();
 });
@@ -99,11 +99,46 @@ test('cancel discards only the chosen field and leaves unrelated values unchange
  const form=screen.getByRole('form',{name:'Original material title'});
  fireEvent.change(within(form).getByRole('textbox',{name:'Original material title'}),{target:{value:'Unsaved title'}});
  expect(within(form).queryByRole('textbox',{name:'Collection name'})).not.toBeInTheDocument();
- fireEvent.click(within(form).getByRole('button',{name:'Cancel'}));expect(screen.queryByRole('form')).not.toBeInTheDocument();expect(screen.getByText('Film')).toBeInTheDocument();
+ fireEvent.keyDown(within(form).getByRole('textbox'),{key:'Escape'});expect(screen.queryByRole('form')).not.toBeInTheDocument();expect(screen.getByText('Film')).toBeInTheDocument();
  edit('Original material title');expect(screen.getByRole('textbox',{name:'Original material title'})).toHaveValue('Film');expect(saves()).toEqual([]);
 });
 
 test('received access is distinct from publication and has a compact help action',async()=>{
  mocks.fetch.mockResolvedValue(Response.json({...record,isOwner:false}));render(<CollectionDetailsController {...props} userId="reader"/>);
  await screen.findByRole('img',{name:'From another author'});expect(screen.getByRole('button',{name:'? Read only'})).toBeInTheDocument();expect(screen.queryByRole('img',{name:'Shared by you'})).not.toBeInTheDocument();
+});
+
+
+test('Enter saves once with no explicit Save or Cancel actions',async()=>{
+ render(<CollectionDetailsController {...props}/>);await screen.findByText('Maker');edit('Collection name');
+ const input=screen.getByRole('textbox',{name:'Collection name'});
+ expect(screen.queryByRole('button',{name:'Save'})).toBeNull();expect(screen.queryByRole('button',{name:'Cancel'})).toBeNull();
+ fireEvent.change(input,{target:{value:'By Enter'}});mocks.fetch.mockResolvedValueOnce(Response.json({...record,name:'By Enter',revision:'2'}));
+ fireEvent.keyDown(input,{key:'Enter'});fireEvent.blur(input);await screen.findByRole('heading',{name:'By Enter'});
+ expect(saves()).toHaveLength(1);expect(screen.getByRole('button',{name:'Edit Collection name'})).toBeInTheDocument();
+});
+
+test('leaving a changed field saves it and restores the pencil',async()=>{
+ render(<CollectionDetailsController {...props}/>);await screen.findByText('Maker');edit('Original material title');
+ const input=screen.getByRole('textbox',{name:'Original material title'});fireEvent.change(input,{target:{value:'By blur'}});
+ mocks.fetch.mockResolvedValueOnce(Response.json({...record,source:{...source,materialTitle:'By blur'},revision:'2'}));
+ fireEvent.blur(input,{relatedTarget:document.body});await screen.findByText('By blur');
+ expect(saves()).toEqual([{collectionId:id,expectedRevision:'1',patch:{source:{materialTitle:'By blur'}}}]);
+ expect(screen.getByRole('button',{name:'Edit Original material title'})).toBeInTheDocument();
+});
+
+test('menu focus does not save early, while choosing an option saves it',async()=>{
+ render(<CollectionDetailsController {...props}/>);await screen.findByText('Maker');edit('Source');
+ const trigger=screen.getByRole('button',{name:'Source: YouTube'});fireEvent.click(trigger);
+ const option=screen.getByRole('menuitemradio',{name:'Web'});fireEvent.blur(trigger,{relatedTarget:option});expect(saves()).toHaveLength(0);
+ mocks.fetch.mockResolvedValueOnce(Response.json({...record,source:{...source,originKind:'web'},revision:'2'}));fireEvent.click(option);
+ await screen.findByText('Web');expect(saves()).toEqual([{collectionId:id,expectedRevision:'1',patch:{source:{originKind:'web'}}}]);
+});
+
+test('Shift+Enter keeps a description draft; ordinary Enter saves',async()=>{
+ render(<CollectionDetailsController {...props}/>);await screen.findByText('Maker');edit('Description');
+ const input=screen.getByRole('textbox',{name:'Description'});fireEvent.change(input,{target:{value:'Two\nlines'}});
+ fireEvent.keyDown(input,{key:'Enter',shiftKey:true});expect(saves()).toHaveLength(0);
+ mocks.fetch.mockResolvedValueOnce(Response.json({...record,description:'Two\nlines',revision:'2'}));fireEvent.keyDown(input,{key:'Enter'});
+ await waitFor(()=>expect(screen.queryByRole('form',{name:'Description'})).toBeNull());expect(saves()).toHaveLength(1);
 });

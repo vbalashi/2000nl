@@ -106,8 +106,9 @@ and touch. Source and Labels have subordinate headings and the same small conten
 inset. Labels carry folder icons. Empty labels describe the state rather than
 imitating an action. Each displayed field has its own pencil action, including the collection name
 in the heading. Empty metadata stays visible as a muted state. One field is edited
-at a time, with explicit Save/Cancel and a sparse patch pinned to its starting
-revision. There is no second copy of the title or description in an expanded form.
+at a time. Enter or leaving the field saves a sparse patch pinned to its starting
+revision; Escape cancels the draft. Menus and calendars save the chosen value
+without committing while focus moves inside the picker. There is no second copy of the title or description in an expanded form.
 The original material title is distinct from the user-chosen collection name.
 
 Label assignment always exposes the shared search field. Collection names are
@@ -124,9 +125,8 @@ Explanatory group context is read against the prepared catalog revision. Stale o
 unavailable context falls back to the authoritative audience delta; presentation
 never bypasses the existing plan confirmation.
 
-Single-field Save and Cancel are compact text actions directly below the edited
-value, aligned to its start. Save uses stronger accent ink; Cancel is muted.
-Neither has a resting fill or frame; hover adds a soft neutral fill. Inputs retain
-the reading baseline without a boxed field surface, and opening a text editor
-selects its current value for replacement. Empty metadata uses the label caption
-role and muted ink.
+Single-field editing has no Save/Cancel actions. Inputs keep the reading baseline
+without a boxed surface; opening a text editor selects its current value. Enter or
+leaving focus commits once, while Shift+Enter keeps a description newline and
+Escape restores the saved value. Failed saves keep the editor available for
+correction or revision refresh. Empty metadata uses caption-sized muted ink.
