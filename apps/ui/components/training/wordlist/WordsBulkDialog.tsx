@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import {Search,Lock,Share2} from "lucide-react";
+import {Search,Lock,Share2,Check} from "lucide-react";
 import {getInterfaceCatalog} from "@/lib/i18n/catalog";
 import {CorruptLocalRecovery} from "@/components/library/sharing/CorruptLocalRecovery";
 import {AddAction} from "@/components/practice/ui/AddAction";
@@ -112,7 +112,8 @@ export function WordsBulkDialog({userId,language,lists,selection,onClose,onDone,
     const count=listId===list.id && preview ? preview.audience.length : metadata?.subscriberCount;
     return <button type="button" key={list.id} aria-label={list.name} aria-describedby={`${titleId}-${list.id}-access`} aria-pressed={listId===list.id} disabled={busy} onClick={()=>{if(listId===list.id)return;setPreview(null);setListId(list.id);}}>
      <span className={s.accessIcon}>{shared?<Share2 size={17} aria-hidden="true"/>:metadata?<Lock size={17} aria-hidden="true"/>:<span className={s.iconPlaceholder}/>}</span>
-     <span className={s.collectionText}><span className={s.collectionName}>{list.name}</span><span id={`${titleId}-${list.id}-access`} className={s.collectionMeta}>{shared && count!==undefined ? formatUiCount(language,count,copy,'sharedReaders') : metadata ? copy.private : '\u00a0'}</span></span>
+     <span className={s.collectionText}><span className={s.collectionName}>{list.name}</span><span id={`${titleId}-${list.id}-access`} className={shared && count!==undefined ? s.collectionMeta : s.accessDescription}>{shared && count!==undefined ? formatUiCount(language,count,copy,'sharedReaders') : metadata ? copy.private : ''}</span></span>
+     <span className={s.selectionMark} aria-hidden="true">{listId===list.id&&<Check size={16}/>}</span>
     </button>;})}
    {!choices.length&&<p>{available.some(list=>list.type==='user'&&list.ownership!=='received') ? getUiMessages(language).collections.empty : copy.empty}</p>}
   </div>

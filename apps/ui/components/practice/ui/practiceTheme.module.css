@@ -205,3 +205,10 @@
 
 /* WebKit may omit :focus-visible on an opener restored after keyboard Escape. */
 :global(html[data-input-modality=keyboard]) .theme :where(button,summary,a,select,input[type=checkbox],input[type=radio]):focus{outline:2px solid var(--practice-focus);outline-offset:2px}
+
+/* Keep scroll position discoverable without a bright native rail in either theme. */
+.theme :where(*){scrollbar-width:thin;scrollbar-color:var(--practice-border) transparent}
+.theme :where(*)::-webkit-scrollbar{width:6px;height:6px}
+.theme :where(*)::-webkit-scrollbar-track{background:transparent}
+.theme :where(*)::-webkit-scrollbar-thumb{background:var(--practice-border);border-radius:var(--practice-radius-control)}
+.theme :where(*)::-webkit-scrollbar-thumb:hover{background:var(--practice-text-muted)}

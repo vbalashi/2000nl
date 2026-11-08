@@ -1768,6 +1768,17 @@
   "features.sharedWorkspace.search": {"source":"Search groups and collections","translationHash":"f6e5c29c226a9cd57a20eacb15aaed90ee517d2afe840c0b387d0e3201b08c7f"},
   "features.collectionDetails.description": {"source":"Description","translationHash":"1d6e3b45e9b1ebcb9e67bc4f664897785a4567bbd521bc8eba15f03154b213c6"},
   "features.collectionDetails.invalid": {"source":"Check the name, description and source details. Links must start with http:// or https://.","translationHash":"84755765e8f73e911c9042dd5cb8664f93c59579b88504e3c7e8224ea6e03907"},
-  "features.libraryOrganization.labelsFor": {"source":"Labels for {name}","translationHash":"47d130db80cb4a9616becf6774605816c09c1f41a480bdb634b1b6d490a21658"},
-  "features.collectionDetails.readOnly": {"source":"Read only — the author can edit this collection.","translationHash":"7b3f376e9eb7fa6e6efcd1262ec76e739ae1661e7348272d1cf06f6574c06bfa"}
+  "features.libraryOrganization.labelsFor": {"source":"Labels for “{name}”","translationHash":"47d130db80cb4a9616becf6774605816c09c1f41a480bdb634b1b6d490a21658"},
+  "features.collectionDetails.readOnly": {"source":"Read only — the author can edit this collection.","translationHash":"7b3f376e9eb7fa6e6efcd1262ec76e739ae1661e7348272d1cf06f6574c06bfa"},
+  "features.libraryOrganization.noLabelsFound": {"source":"No matching labels","translationHash":"d66083fd9d9106b2f336823d66b8402ad03c7cf11463b2b94f7d67abc3c968fb"},
+  "features.libraryOrganization.received": {"source":"From another author","translationHash":"7a4ffa34df6f0dfbf1818cca3ba4da0010525f07c817b1172a5a6df5d176b5ad"},
+  "features.libraryOrganization.sharedByYou": {"source":"Shared by you","translationHash":"dcad0c166706b2d7781deacea75974d589544f1d190fe2a1d5a6bb951a26ed4e"},
+  "features.collectionDetails.readOnlyLabel": {"source":"Read only","translationHash":"f856e33b9e4673620eaa4482eb045f0af9a805059542e3743c55d11b02061b64"},
+  "features.collectionDetails.editDetails": {"source":"Edit details","translationHash":"d417b40e97e7030c86bb6174a888bc6c3b32d6c89171729bd0822d217e301e46"},
+  "features.collectionDetails.addDetails": {"source":"Add details","translationHash":"2e9a9a40307f106ed8924c8e42dc3f6a5828a617991cd49fc98fcc3132a39e30"},
+  "features.collectionDetails.hideEditor": {"source":"Close editor","translationHash":"9b780598901e2fc2ace7330dbec405518d1e27e23086dbb199e3fe95f8db8057"},
+  "features.collectionDetails.previousMonth": {"source":"Previous month","translationHash":"b4559cc070f84665348325212ffc7c3961a4b064397c1f8c8d266cdc5cdfe82d"},
+  "features.collectionDetails.nextMonth": {"source":"Next month","translationHash":"2ed86f076a8b01012a4732b423f29d7ca018e71b513b1869344c548189fe0cf9"},
+  "features.collectionDetails.year": {"source":"Year","translationHash":"5ddd8c4a0dba3b3e66ad439f51836de6b7f1389165cedac4b5f0094a59edbd96"},
+  "features.collectionDetails.clearDate": {"source":"Clear date","translationHash":"ebb61b31c3a7d05d17b947bed04822f3c0f625cf66ee10765f48b55c80a0a828"}
 }

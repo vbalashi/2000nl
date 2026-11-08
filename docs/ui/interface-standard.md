@@ -92,3 +92,24 @@ pair. Definitions, examples and idioms retain their own reading hierarchy.
 
 Original/translation paragraph spacing uses the shared article-pair token: 4 px
 in balanced spacing and 6 px in airy spacing before account spacing scaling.
+
+## Collection details and assignment
+
+The title is the primary heading. Its access icon distinguishes personal, shared
+by the current author, and received collections; received catalog rows also state
+that they came from another author. No account identity is inferred from a title,
+description or label. The current catalog does not provide an author display name.
+
+Meaning count and compact read-only status sit immediately below the title. The
+access explanation uses the existing help popover, available by pointer, keyboard
+and touch. Source and Labels have subordinate headings and the same small content
+inset. Labels carry folder icons. Empty labels describe the state rather than
+imitating an action. Editing details is an explicit inline disclosure, retaining
+the title and summary while exposing optional fields.
+
+Label assignment always exposes the shared search field. Collection names are
+quoted in its heading, filtered-empty copy refers to labels, and hidden selected
+assignments are preserved. Save and Cancel have the same minimum width. The
+optional publication date uses the themed DateField dialog, locale-aware calendar
+labels and keyboard navigation. Scrolling surfaces retain a thin, muted rail;
+existing intentionally rail-free catalog lists remain unchanged.

@@ -1274,7 +1274,10 @@
       "meaningZero": "{count} meanings",
       "meaningTwo": "{count} meanings",
       "sort": "Sort",
-      "labelsFor": "Labels for {name}"
+      "labelsFor": "Labels for “{name}”",
+      "noLabelsFound": "No matching labels",
+      "received": "From another author",
+      "sharedByYou": "Shared by you"
     },
     "localRecovery": {
       "retry": "Retry",
@@ -1965,7 +1968,15 @@
       "preview": "Preview — source details are demonstration data; changes are not saved.",
       "description": "Description",
       "invalid": "Check the name, description and source details. Links must start with http:// or https://.",
-      "readOnly": "Read only — the author can edit this collection."
+      "readOnly": "Read only — the author can edit this collection.",
+      "readOnlyLabel": "Read only",
+      "editDetails": "Edit details",
+      "addDetails": "Add details",
+      "hideEditor": "Close editor",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "year": "Year",
+      "clearDate": "Clear date"
     },
     "labelSharing": {
       "title": "Share label",

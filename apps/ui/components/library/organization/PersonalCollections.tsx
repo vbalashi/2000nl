@@ -7,7 +7,7 @@ import { localizedField } from "@/lib/i18n/catalog";
 import {CollectionSortControl} from "@/components/library/organization/CollectionSortControl";
 import {SearchField} from "@/components/practice/ui/SearchField";
 import React, { useMemo, useState } from "react";
-import { FileText, Folder, Folders, Share2, LockKeyhole, MoreHorizontal, Plus, Search, Tags, X, ChevronDown, ChevronRight } from "lucide-react";
+import { FileText, Folder, Folders, Share2, LockKeyhole, UserRound, MoreHorizontal, Plus, Search, Tags, X, ChevronDown, ChevronRight } from "lucide-react";
 import {readOwnerShareJournal,ownerShareStore} from '@/lib/collections/sharing/ownerShareJournal';
 import {OwnedCollectionSharing} from '../sharing/OwnedCollectionSharing';
 import {OwnedLabelSharing} from '../sharing/OwnedLabelSharing';
@@ -104,7 +104,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
   const detailsFocus=React.useRef<HTMLElement|null>(null);
   const setDetails=(row:CatalogCollection|null)=>{if(row)detailsFocus.current=document.activeElement instanceof HTMLElement?document.activeElement:null;setDetailsSelection(row?{userId,id:row.id,isShared:row.isShared===true,row}:null);if(!row)detailsFocus.current?.focus({preventScroll:true});};
   const hasOpenDetails=Boolean(details);
-  React.useEffect(()=>{if(!hasOpenDetails||editor||receivedEditor)return;const key=(event:KeyboardEvent)=>{if(event.key==='Escape'){setDetailsSelection(null);detailsFocus.current?.focus({preventScroll:true});}};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[hasOpenDetails,editor,receivedEditor]);
+  React.useEffect(()=>{if(!hasOpenDetails||editor||receivedEditor)return;const key=(event:KeyboardEvent)=>{if(event.key==='Escape'&&!event.defaultPrevented&&!document.querySelector('dialog[open]')){setDetailsSelection(null);detailsFocus.current?.focus({preventScroll:true});}};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[hasOpenDetails,editor,receivedEditor]);
   const labelRows = useMemo(() => projectLabelRows(snapshot,locale),[snapshot,locale]);
   const namesByCollection = useMemo(() => collectionLabelNames(snapshot),[snapshot]);
   const filteredLabels = labelRows.filter(({label,path})=>labelQuery.trim()?path.toLocaleLowerCase(locale).includes(labelQuery.trim().toLocaleLowerCase(locale)):(()=>{let parent=label.parent_id;while(parent){if(collapsedLabels.has(parent))return false;parent=snapshot?.labels.find(row=>row.id===parent)?.parent_id??null;}return true;})());
@@ -226,7 +226,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
 export function PersonalCollectionRow({collection,names=[],locale,onOpen,onDetails,onMore}:{collection:CatalogCollection;names?:string[];locale:OnboardingLanguage;onOpen:()=>void;onDetails?:()=>void;onMore:React.MouseEventHandler<HTMLButtonElement>}) {
  const t=organizationCopy(locale);
  return <article className={s.collection}>
-  <span className={s.accessIcon} title={collection.isShared?t.shared:t.private}>{collection.isShared?<Share2 size={16}/>:<LockKeyhole size={16}/>}</span><div className={s.collectionCopy}><button className={s.collectionName} onClick={onDetails??onOpen}>{collection.name}</button><p>{formatUiCount(locale,collection.item_count??0,t,"meaning")}{names.length?` · ${names.join(" / ")}`:""}</p></div>
+  <span role="img" className={s.accessIcon} title={collection.ownership==='received'?t.received:collection.isShared?t.sharedByYou:t.private} aria-label={collection.ownership==='received'?t.received:collection.isShared?t.sharedByYou:t.private}>{collection.ownership==='received'?<UserRound size={16} aria-hidden="true"/>:collection.isShared?<Share2 size={16} aria-hidden="true"/>:<LockKeyhole size={16} aria-hidden="true"/>}</span><div className={s.collectionCopy}><button className={s.collectionName} onClick={onDetails??onOpen}>{collection.name}</button><p>{formatUiCount(locale,collection.item_count??0,t,"meaning")}{collection.ownership==='received'?` · ${t.received}`:""}{names.length?` · ${names.join(" / ")}`:""}</p></div>
   <button data-onboarding="own-collection-menu" aria-label={`${t.more}: ${collection.name}`} onClick={onMore}><MoreHorizontal size={16} strokeWidth={1.5}/></button>
  </article>;
 }

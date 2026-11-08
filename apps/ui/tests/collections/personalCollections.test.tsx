@@ -110,12 +110,26 @@ test("label search preserves hidden selected assignments",async()=>{
  fireEvent.click(screen.getByRole("button",{name:"My lesson"}));
  fireEvent.click(await within(screen.getByRole("complementary",{name:"Collections"})).findByRole("button",{name:"Choose labels"}));
  const dialog=screen.getByRole("dialog");
- expect(within(dialog).queryByRole("searchbox",{name:"Search labels"})).toBeNull();
- fireEvent.click(within(dialog).getByRole("button",{name:"Search labels"}));
+ expect(within(dialog).getByRole("searchbox",{name:"Search labels"})).toBeVisible();
+ expect(within(dialog).getByRole("heading",{name:'Labels for “My lesson”'})).toBeInTheDocument();
+ fireEvent.change(within(dialog).getByRole("searchbox",{name:"Search labels"}),{target:{value:"missing-label"}});
+ expect(within(dialog).getByText("No matching labels")).toBeInTheDocument();
+ expect(within(dialog).queryByText("No collections found")).not.toBeInTheDocument();
  fireEvent.change(within(dialog).getByRole("searchbox",{name:"Search labels"}),{target:{value:"Books"}});
  expect(within(dialog).queryByRole("checkbox",{name:"YouTube"})).toBeNull();
  fireEvent.click(within(dialog).getByRole("checkbox",{name:"Books"}));
  fireEvent.click(within(dialog).getByRole("button",{name:"Save"}));
  await waitFor(()=>expect(screen.queryByRole("dialog")).toBeNull());
  expect(request.mock.calls.find(call=>call[1])?.[1].operation.label_ids).toEqual([labelId,otherId]);
+});
+
+test('Escape dismisses an inner dialog before the collection details',async()=>{
+ render(<PersonalCollections {...props}/>);await screen.findByRole('button',{name:'My lesson'});
+ fireEvent.click(screen.getByRole('button',{name:'My lesson'}));
+ const details=await screen.findByRole('complementary',{name:'Collections'});
+ const nested=document.createElement('dialog');nested.setAttribute('open','');details.appendChild(nested);
+ fireEvent.keyDown(nested,{key:'Escape'});
+ expect(details).toBeInTheDocument();nested.remove();
+ fireEvent.keyDown(window,{key:'Escape'});
+ expect(screen.queryByRole('complementary',{name:'Collections'})).toBeNull();
 });

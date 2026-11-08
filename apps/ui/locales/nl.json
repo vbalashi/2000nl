@@ -1274,7 +1274,10 @@
       "meaningZero": "{count} betekenissen",
       "meaningTwo": "{count} betekenissen",
       "sort": "Sorteren",
-      "labelsFor": "Labels voor ‘{name}’"
+      "labelsFor": "Labels voor ‘{name}’",
+      "noLabelsFound": "Geen overeenkomende labels",
+      "received": "Van een andere auteur",
+      "sharedByYou": "Door jou gedeeld"
     },
     "localRecovery": {
       "retry": "Opnieuw proberen",
@@ -1965,7 +1968,15 @@
       "preview": "Voorbeeld: brongegevens zijn demonstratiegegevens en worden niet opgeslagen.",
       "description": "Beschrijving",
       "invalid": "Controleer de naam, beschrijving en brongegevens. Links moeten beginnen met http:// of https://.",
-      "readOnly": "Alleen-lezen. De auteur kan deze collectie bewerken."
+      "readOnly": "Alleen-lezen. De auteur kan deze collectie bewerken.",
+      "readOnlyLabel": "Alleen lezen",
+      "editDetails": "Gegevens bewerken",
+      "addDetails": "Gegevens toevoegen",
+      "hideEditor": "Editor sluiten",
+      "previousMonth": "Vorige maand",
+      "nextMonth": "Volgende maand",
+      "year": "Jaar",
+      "clearDate": "Datum wissen"
     },
     "labelSharing": {
       "title": "Label delen",

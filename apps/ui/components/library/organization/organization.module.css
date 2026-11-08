@@ -178,3 +178,35 @@
 
 .choiceField .choiceSelect{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--practice-border);border-radius:var(--practice-radius-control);background:var(--practice-surface);color:var(--practice-text);font:400 var(--practice-text-small)/1.5 var(--practice-font-ui);text-align:start}
 .choiceSelect:disabled{opacity:.5}.choiceSelect:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}
+
+/* Compact details preserve title hierarchy while source and personal labels share an inset. */
+.detailsPane .collectionDetails{gap:16px}
+.detailHeading{display:flex;flex-direction:column;gap:2px}
+.detailHeading header{align-items:flex-start;gap:8px}
+.detailHeading h2{display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0;font-size:var(--practice-text-body-lg);font-weight:500;color:var(--practice-text)}
+.detailAccess{display:inline-flex;align-items:center;flex:none;min-height:24px;color:var(--practice-text-muted)}
+.detailHeading header>button{flex:none;margin-block:-8px;margin-inline-end:-8px}
+.detailSummary{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:var(--practice-text-caption);color:var(--practice-text-muted);line-height:1.5}
+.readOnlyBadge{display:inline-flex;align-items:center;gap:4px}
+.collectionDetails .readOnlyBadge>button{border:0;background:transparent;min-width:28px;min-height:28px;padding:4px}
+.detailDescription{font-size:var(--practice-text-small);color:var(--practice-text-secondary)}
+.detailSection{display:flex;flex-direction:column;gap:8px;min-width:0}
+.detailSection h3{margin:0;font:500 var(--practice-text-small)/1.5 var(--practice-font-ui);color:var(--practice-text-muted)}
+.detailSection>.detailFields,.detailSection>.detailLabels{padding-inline-start:8px}
+.detailLabels>span{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow-wrap:anywhere}
+.detailLabels>span>svg{flex:none}
+.detailLabels>p{font-size:var(--practice-text-caption);color:var(--practice-text-muted)}
+.collectionDetails .editDisclosure{align-self:flex-start;justify-content:flex-start;border:0;background:transparent;padding:4px 0;min-height:36px;color:var(--practice-text-secondary)}
+.editDisclosure>svg{transition:transform .16s ease}
+.editDisclosure[aria-expanded=true]>svg{transform:rotate(180deg)}
+.detailsForm{animation:detailsReveal .16s ease-out}
+@keyframes detailsReveal{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.editor footer>button{min-width:88px}
+.editor .detailActions>button{min-width:0}
+.assignmentToolbar{display:flex;flex-direction:column;gap:4px;min-width:0}
+.assignmentToolbar>.inlineCreate{min-width:0}
+.assignmentToolbar>.inlineCreate>button{min-height:36px}
+.editor:has(.assignmentList){gap:12px}
+.editor .assignmentToolbar input:not([type=checkbox]){border:0;border-radius:0;min-height:0;padding:0;background:transparent;box-shadow:none}
+.detailSummary{padding-inline-start:26px}
+.detailTitle{display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0}
