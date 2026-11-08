@@ -2892,6 +2892,8 @@ test("pilot Start persists the complete selection in one scope update", async ()
   expect(updateActiveTrainingScope).toHaveBeenCalledWith({ userId:user.id, languageCode:"nl", listId:defaultAvailableList.id, listType:defaultAvailableList.type, activeScenario:"understanding", cardFilter:"both", modesEnabled:["word-to-definition","definition-to-word"], newReviewRatio:3 });
 }, 15_000);
 
+// Covers saved-setup hydration, draft editing, Calculate/Start and first-card scope.
+// Match the adjacent composite Start checks; this is not a 5s latency assertion.
 test("pilot Setup preserves saved source and date filters until Start commits the draft", async () => {
   const savedRecipe = {
     id: "saved-activity-scope",
@@ -2945,7 +2947,7 @@ test("pilot Setup preserves saved source and date filters until Start commits th
   await waitFor(() => expect(fetchNextTrainingWordByScenario.mock.calls.map(call => call[8])).toContainEqual(
     expect.objectContaining({ dateWindow: "today", sourceId: "source-youtube-1", partOfSpeech: ["ww"] }),
   ));
-});
+}, 15_000);
 test("pilot Start keeps recovery visible when the replacement queue fails", async () => {
   render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
 
