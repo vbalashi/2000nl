@@ -64,8 +64,8 @@
 .menuTrailing{margin-inline-start:auto;display:flex;align-items:center;flex-shrink:0}
 
 /* Popovers inside catalog dialogs must not inherit catalog button chrome. */
-.menu>button[role=menuitem]{justify-content:flex-start;min-height:44px;border:0;background:transparent;text-align:start;font-family:var(--practice-font-ui);font-size:var(--practice-text-caption);font-weight:400;color:inherit}
-.menu>button[role=menuitem]:hover,.menu>button[role=menuitem]:focus-visible{background:var(--practice-canvas);border:0}
+.menu>button:is([role=menuitem],[role=menuitemradio]){justify-content:flex-start;min-height:44px;border:0;background:transparent;text-align:start;font-family:var(--practice-font-ui);font-size:var(--practice-text-caption);font-weight:400;color:inherit}
+.menu>button:is([role=menuitem],[role=menuitemradio]):hover,.menu>button:is([role=menuitem],[role=menuitemradio]):focus-visible{background:var(--practice-canvas);border:0}
 
 /* Reset global CSS margins explicitly: modal centering must not depend on UA styles. */
 .dialog{inset:0;margin:auto;box-sizing:border-box;overflow:auto}

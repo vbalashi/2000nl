@@ -49,7 +49,7 @@ test("renaming the selected root label preserves its explicit null parent",async
  fireEvent.click(screen.getByRole("button",{name:"More actions: YouTube"}));
  fireEvent.click(screen.getByRole("menuitem",{name:"Edit label"}));
  const dialog=screen.getByRole("dialog");
- expect(within(dialog).getByLabelText("Parent label")).toHaveValue("");
+ expect(within(dialog).getByRole("button",{name:"Parent label: No parent"})).toHaveTextContent("No parent");
  fireEvent.change(within(dialog).getByLabelText("Name"),{target:{value:"Renamed"}});
  fireEvent.click(within(dialog).getByRole("button",{name:"Save"}));
  await waitFor(()=>expect(request.mock.calls.find(call=>call[1])?.[1]).toMatchObject({operation:{type:"update",id:labelId,parent_id:null,name:"Renamed"}}));
