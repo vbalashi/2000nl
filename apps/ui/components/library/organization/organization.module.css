@@ -156,3 +156,4 @@
 .copyCollection h3{margin:0;font-family:var(--practice-font-ui);font-size:var(--practice-text-body);font-weight:500}
 .copyCollection>button{align-self:flex-start}
 .copyCollection>div{display:flex;flex-wrap:wrap;gap:8px}
+.detailsForm{display:flex;flex-direction:column;gap:12px}.detailsForm label{display:flex;flex-direction:column;gap:4px;font-size:var(--practice-text-small)}.detailsForm :is(input,select,textarea){box-sizing:border-box;width:100%;min-height:44px;font:inherit;color:var(--practice-text);background:var(--practice-surface);border:1px solid var(--practice-border);border-radius:var(--practice-radius-control);padding:8px}.detailsForm textarea{min-height:88px;resize:vertical}.detailsForm footer{display:flex;gap:8px;justify-content:flex-end}

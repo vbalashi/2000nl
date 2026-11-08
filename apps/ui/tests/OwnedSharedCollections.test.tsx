@@ -1,7 +1,10 @@
 import React from 'react';
 import {fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {beforeEach,expect,test,vi} from 'vitest';
-const mock=vi.hoisted(()=>({catalog:vi.fn(),management:vi.fn(),dialog:vi.fn(),clipboard:vi.fn()}));
+const mock=vi.hoisted(()=>({catalog:vi.fn(),management:vi.fn(),dialog:vi.fn(),clipboard:vi.fn(),details:vi.fn(),mutate:vi.fn()}));
+vi.mock('@/lib/platform/platformV2Http',()=>({platformV2AuthenticatedJsonHeaders:vi.fn().mockResolvedValue({})}));
+vi.mock('@/lib/platform/platformFetchWithTimeout',()=>({platformFetchWithTimeout:mock.details}));
+vi.mock('@/components/library/organization/usePersonalLabels',()=>({usePersonalLabels:()=>({snapshot:{revision:1,labels:[],assignments:[]},busy:false,error:null,mutate:mock.mutate,audience:{state:{status:'idle'}}})}));
 vi.mock('@/components/library/sharing/useOwnedSharedCatalog',()=>({useOwnedSharedCatalog:mock.catalog}));
 vi.mock('@/lib/collections/sharing/shareManagementClient',()=>({readCollectionShareManagement:mock.management}));
 vi.mock('@/lib/collections/sharing/ownerShareJournal',()=>({ownerShareStore:()=>null,readOwnerShareJournal:()=>null}));
@@ -13,7 +16,7 @@ const id='75600000-0000-4000-8000-000000000001',code='A'.repeat(26);
 const row={id,name:'At the market',createdAt:'2026-01-01T00:00:00Z',itemCount:3,subscriberCount:12,directPublication:true,groups:[]};
 const props={userId:'owner',active:true,locale:'en' as const,onOpen:vi.fn(),onChanged:vi.fn()};
 beforeEach(()=>{
- vi.clearAllMocks();mock.catalog.mockReturnValue({status:'ready',collections:[row],nextCursor:null,loadingMore:false,refresh:vi.fn(),loadMore:vi.fn()});
+ vi.clearAllMocks();mock.details.mockResolvedValue(Response.json({id,name:row.name,description:null,source:null,revision:'0',isOwner:true}));mock.mutate.mockResolvedValue(true);mock.catalog.mockReturnValue({status:'ready',collections:[row],nextCursor:null,loadingMore:false,refresh:vi.fn(),loadMore:vi.fn()});
  mock.management.mockResolvedValue({collectionId:id,isOpen:true,revision:1,invitationCode:code,subscriberCount:12});
  Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:mock.clipboard}});mock.clipboard.mockResolvedValue(undefined);
 });
@@ -89,4 +92,8 @@ test('an open owner menu follows the latest authorized access paths',()=>{
  mock.catalog.mockReturnValue({status:'ready',collections:[],nextCursor:null});
  view.rerender(<OwnedSharedCollections {...props}/>);
  expect(screen.queryByRole('button',{name:'Link and code: Easy Dutch'})).toBeNull();
+});
+
+test('saving owner labels keeps shared collection details open',async()=>{
+ render(<OwnedSharedCollections {...props}/>);fireEvent.click(screen.getByRole('button',{name:'At the market'}));fireEvent.click(await screen.findByRole('button',{name:'Choose labels'}));fireEvent.click(screen.getByRole('button',{name:'Save'}));await waitFor(()=>expect(mock.mutate).toHaveBeenCalledWith({type:'set-collection-labels',collection_id:id,label_ids:[]}));expect(screen.getByRole('button',{name:'View words'})).toBeInTheDocument();
 });

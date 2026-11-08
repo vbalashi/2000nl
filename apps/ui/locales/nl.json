@@ -1961,7 +1961,8 @@
       "web": "Web",
       "localFile": "Lokaal bestand",
       "manual": "Handmatig",
-      "preview": "Voorbeeld: brongegevens zijn demonstratiegegevens en worden niet opgeslagen."
+      "preview": "Voorbeeld: brongegevens zijn demonstratiegegevens en worden niet opgeslagen.",
+      "description": "Beschrijving"
     },
     "labelSharing": {
       "title": "Label delen",

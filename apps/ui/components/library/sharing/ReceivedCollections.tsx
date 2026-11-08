@@ -15,8 +15,8 @@ import {organizationCopy} from '../organization/copy';
 import {IconAction} from '@/components/practice/ui/IconAction';
 import {SharedLabelContents} from './SharedLabelContents';
 import {DialogSurface} from '@/components/practice/ui/DialogSurface';
-import {CollectionDetailsPanel} from '../organization/CollectionDetailsPanel';
-import {collectionDetailsFromSummary} from '@/lib/collections/details/summaryAdapter';
+import {CollectionDetailsController} from '../organization/CollectionDetailsController';
+import {ReceivedCollectionLabels} from '../organization/ReceivedCollectionLabels';
 import {formatUiCount} from '@/lib/uiMessages';
 import {usePersonalLabels} from '../organization/usePersonalLabels';
 import {labelRows} from '@/lib/collections/labels/catalog';
@@ -29,7 +29,8 @@ export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=
  const searchInput=selection?.searchInputRef??localSearchInput;
  const [menuState,setMenu]=useState<{userId:string;row:ReceivedCollection;anchor:HTMLButtonElement}|null>(null);
  const [group,setGroup]=useState<{userId:string;labelId:string;name:string}|null>(null);
- const [detail,setDetail]=useState<{userId:string;id:string}|null>(null);
+ const [detail,setDetail]=useState<{userId:string;id:string;row:ReceivedCollection}|null>(null);
+ const [labelEditor,setLabelEditor]=useState<{userId:string;id:string;name:string}|null>(null);
  const labels=usePersonalLabels(active&&detail?.userId===userId,userId);
  const [action,setAction]=useState<{kind:'forward';row:ReceivedCollection}|{kind:'unsubscribe';row:Pick<ReceivedCollection,'id'|'name'>}|null>(null);
  useEffect(()=>{if(action||group||!actionFocus.current)return;const target=actionFocus.current.isConnected?actionFocus.current:addButton.current??searchInput.current;target?.focus({preventScroll:true});actionFocus.current=null;},[action,group,searchInput]);
@@ -51,7 +52,7 @@ export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=
   {!selection&&<div className={s.filters}><label className={s.search}><Search size={16} aria-hidden="true"/><input ref={searchInput} aria-label={common.search} placeholder={common.search} maxLength={100} value={query} onChange={event=>setQuery(event.target.value)}/></label>
    <CollectionSortControl locale={locale} value={sort} onChange={setSort}/></div>}
   {catalog.status==='loading'?<div className={s.state} role="status">{common.loading}</div>:catalog.status==='error'?<div className={s.state}><p role="alert">{t.error}</p><button onClick={()=>void catalog.refresh()}>{common.retry}</button></div>:catalog.status==='ready'&&catalog.collections.length===0&&!hasGroups?<p className={s.state}>{query.trim()?common.noResults:t.empty}</p>:null}
-  <div className={s.results}>{catalog.collections.map(row=><article className={s.collection} key={row.id}><span className={s.accessIcon} title={t.shared}><FileText size={16}/></span><div className={s.collectionCopy}><button className={s.collectionName} onClick={()=>setDetail({userId,id:row.id})}>{row.name}</button><p>{formatUiCount(locale,row.itemCount,common,'meaning')}{row.groups.length>0&&<> · <Folder size={12} aria-label={localizedSection('labelSharing')[locale].groups}/>{row.groups.map(group=>group.name).join(', ')}</>}</p></div><IconAction label={`${common.more} · ${row.name}`} onClick={event=>setMenu({userId,row,anchor:event.currentTarget})}><MoreHorizontal size={16} strokeWidth={1.5}/></IconAction></article>)}</div>
+  <div className={s.results}>{catalog.collections.map(row=><article className={s.collection} key={row.id}><span className={s.accessIcon} title={t.shared}><FileText size={16}/></span><div className={s.collectionCopy}><button className={s.collectionName} onClick={()=>setDetail({userId,id:row.id,row})}>{row.name}</button><p>{formatUiCount(locale,row.itemCount,common,'meaning')}{row.groups.length>0&&<> · <Folder size={12} aria-label={localizedSection('labelSharing')[locale].groups}/>{row.groups.map(group=>group.name).join(', ')}</>}</p></div><IconAction label={`${common.more} · ${row.name}`} onClick={event=>setMenu({userId,row,anchor:event.currentTarget})}><MoreHorizontal size={16} strokeWidth={1.5}/></IconAction></article>)}</div>
   {catalog.nextCursor&&<button className={s.loadMore} disabled={catalog.loadingMore} onClick={()=>void catalog.loadMore()}>{catalog.loadingMore?common.loading:common.moreResults}</button>}
  {menu?.userId===userId&&<ActionMenu anchor={menu.anchor} title={common.more} language={locale} onClose={()=>setMenu(null)} items={[
    {id:'open',label:common.open,onSelect:()=>{onOpen(menu.row);setMenu(null);}},
@@ -62,7 +63,8 @@ export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=
    ...menu.row.groups.map(item=>({id:`group:${item.labelId}`,label:`${localizedSection('labelSharing')[locale].openGroup}: ${item.name}`,icon:<Folder size={16}/>,onSelect:()=>{actionFocus.current=menu.anchor;menu.anchor.focus({preventScroll:true});setGroup({userId,...item});setMenu(null);}})),
   ]}/>}
   {group?.userId===userId&&<SharedLabelContents userId={userId} labelId={group.labelId} name={group.name} locale={locale} onClose={()=>setGroup(null)} onOpen={id=>{setGroup(null);if(onOpenCollectionId)onOpenCollectionId(id);else{const row=catalog.collections.find(item=>item.id===id);if(row)onOpen(row);}}}/>}
-  {detail?.userId===userId&&catalog.collections.filter(row=>row.id===detail.id).map(row=><DialogSurface key={row.id} className={overlays.dialog} aria-label={row.name} onDismiss={()=>setDetail(null)}><CollectionDetailsPanel details={collectionDetailsFromSummary({id:row.id,name:row.name,type:'user',item_count:row.itemCount},{canEditLabels:false})} locale={locale} labelNames={labelRows(labels.snapshot,locale).filter(item=>row.labelIds.includes(item.label.id)).map(item=>item.path)} isShared onClose={()=>setDetail(null)} onLabels={()=>{}} onOpen={()=>{setDetail(null);onOpen(row);}}/></DialogSurface>)}
+  {detail?.userId===userId&&[catalog.collections.find(row=>row.id===detail.id)??detail.row].map(row=><DialogSurface key={row.id} className={overlays.dialog} aria-label={common.collections} onDismiss={()=>setDetail(null)}><CollectionDetailsController key={`${userId}:${row.id}`} userId={userId} id={row.id} itemCount={row.itemCount} canEditLabels={true} onUnavailable={()=>setLabelEditor(null)} locale={locale} labelNames={labelRows(labels.snapshot,locale).filter(item=>row.labelIds.includes(item.label.id)).map(item=>item.path)} isShared onClose={()=>setDetail(null)} onLabels={name=>setLabelEditor({userId,id:row.id,name})} onOpen={name=>{setDetail(null);onOpen({...row,name});}}/></DialogSurface>)}
+  {labelEditor?.userId===userId&&<ReceivedCollectionLabels key={`${userId}:${labelEditor.id}`} userId={userId} collectionId={labelEditor.id} name={labelEditor.name} locale={locale} onClose={()=>setLabelEditor(null)} onSaved={()=>{setLabelEditor(null);void catalog.refresh();void labels.refresh();}}/>}
   {action?.kind==='forward'&&<ForwardCollection key={action.row.id} userId={userId} row={action.row} locale={locale} onClose={()=>setAction(null)}/>}
   {action?.kind==='unsubscribe'&&<UnsubscribeCollection key={action.row.id} userId={userId} row={action.row} locale={locale} onClose={closeUnsubscribe} onDone={()=>{setAction(null);void catalog.refresh();onChanged?.();}}/>}
  </section>;

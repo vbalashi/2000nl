@@ -1961,7 +1961,8 @@
       "web": "Web",
       "localFile": "Local file",
       "manual": "Manual",
-      "preview": "Preview — source details are demonstration data; changes are not saved."
+      "preview": "Preview — source details are demonstration data; changes are not saved.",
+      "description": "Description"
     },
     "labelSharing": {
       "title": "Share label",

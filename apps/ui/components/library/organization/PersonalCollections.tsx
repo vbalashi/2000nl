@@ -25,8 +25,8 @@ import { usePersonalLabels } from "./usePersonalLabels";
 import {usePersonalCollectionCatalog} from './usePersonalCollectionCatalog';
 import {ReceivedCollectionLabels} from './ReceivedCollectionLabels';
 import {LabelAssignmentPicker} from './LabelAssignmentPicker';
-import {collectionDetailsFromSummary} from "@/lib/collections/details/summaryAdapter";
-import {CollectionDetailsPanel,CollectionDetailsSurface} from "./CollectionDetailsPanel";
+import {CollectionDetailsController} from "./CollectionDetailsController";
+import {CollectionDetailsSurface} from "./CollectionDetailsPanel";
 import s from "./organization.module.css";
 
 type CatalogCollection=WordListSummary&{ownership?:'owned'|'received';isShared?:boolean;labelIds?:string[]};
@@ -42,7 +42,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
   const [collapsedLabels,setCollapsedLabels]=useState<Set<string>>(new Set());
   const [collapsedSections,setCollapsedSections]=useState<Set<string>>(new Set());
   const [labelSearchOpen,setLabelSearchOpen]=useState(false);
-  const [detailsSelection,setDetailsSelection]=useState<{userId:string;id:string;isShared:boolean}|null>(null);
+  const [detailsSelection,setDetailsSelection]=useState<{userId:string;id:string;isShared:boolean;row:CatalogCollection}|null>(null);
   const [sort, setSort] = useState<CollectionSort>("recent");
   const [pageSize, setPageSize] = useState(20);
   const [scopeOpen, setScopeOpen] = useState(false);
@@ -95,9 +95,9 @@ export function PersonalCollections({active, userId, language, locale, collectio
   const rows:CatalogCollection[]=publicationEnabled?catalog.collections.map(row=>({id:row.id,name:row.name,description:collections.find(collection=>collection.id===row.id)?.description,type:'user',created_at:row.createdAt,item_count:row.itemCount,ownership:row.ownership,isShared:row.isShared,labelIds:row.labelIds})):ownRows;
   const visibleRows=publicationEnabled?rows:rows.slice(0,pageSize);
   const selectedOwnCollection=detailsSelection?.userId===userId?collections.find(row=>row.id===detailsSelection.id&&row.type==='user'&&row.ownership!=='received'):undefined;
-  const details:CatalogCollection|null=detailsSelection?.userId===userId?rows.find(row=>row.id===detailsSelection.id)??(selectedOwnCollection?{...selectedOwnCollection,ownership:'owned',isShared:detailsSelection.isShared}:null):null;
+  const details:CatalogCollection|null=detailsSelection?.userId===userId?rows.find(row=>row.id===detailsSelection.id)??(selectedOwnCollection&&detailsSelection.row.ownership!=='received'?{...selectedOwnCollection,ownership:'owned',isShared:detailsSelection.isShared}:detailsSelection.row):null;
   const detailsFocus=React.useRef<HTMLElement|null>(null);
-  const setDetails=(row:CatalogCollection|null)=>{if(row)detailsFocus.current=document.activeElement instanceof HTMLElement?document.activeElement:null;setDetailsSelection(row?{userId,id:row.id,isShared:row.isShared===true}:null);if(!row)detailsFocus.current?.focus({preventScroll:true});};
+  const setDetails=(row:CatalogCollection|null)=>{if(row)detailsFocus.current=document.activeElement instanceof HTMLElement?document.activeElement:null;setDetailsSelection(row?{userId,id:row.id,isShared:row.isShared===true,row}:null);if(!row)detailsFocus.current?.focus({preventScroll:true});};
   const hasOpenDetails=Boolean(details);
   React.useEffect(()=>{if(!hasOpenDetails||editor||receivedEditor)return;const key=(event:KeyboardEvent)=>{if(event.key==='Escape'){setDetailsSelection(null);detailsFocus.current?.focus({preventScroll:true});}};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[hasOpenDetails,editor,receivedEditor]);
   const labelRows = useMemo(() => projectLabelRows(snapshot,locale),[snapshot,locale]);
@@ -182,7 +182,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
         {publicationEnabled?catalog.nextCursor&&<button className={s.loadMore} disabled={catalog.loadingMore} onClick={()=>void catalog.loadMore()}>{catalog.loadingMore?t.loading:t.moreResults}</button>:rows.length>pageSize&&<button className={s.loadMore} onClick={()=>setPageSize(value=>value+20)}>{t.moreResults} · {Math.min(pageSize,rows.length)} / {rows.length}</button>}
       </div>
     </section>
-    {details&&<CollectionDetailsSurface name={details.name} onClose={()=>setDetails(null)}><CollectionDetailsPanel details={withPreviewSource(collectionDetailsFromSummary(details,{canEditLabels:details.ownership==='owned'||details.ownership==='received'||!publicationEnabled}))} labelNames={details.labelIds?.map(id=>labelRows.find(row=>row.label.id===id)?.path).filter((name):name is string=>Boolean(name))??(snapshot.assignments.filter(item=>item.collection_id===details.id).map(item=>labelRows.find(row=>row.label.id===item.label_id)?.path).filter((path):path is string=>Boolean(path)))} locale={locale} isShared={details.isShared===true} onClose={()=>setDetails(null)} onLabels={()=>{if(details.ownership==='received')setReceivedEditor({ownerId:userId,collection:details});else begin({kind:"assign",collection:details});}} onOpen={()=>{setDetails(null);if(details.ownership==='received')onOpenReceived?.(details);else onOpen(details);}}/></CollectionDetailsSurface>}
+    {details&&<CollectionDetailsSurface name={t.collections} onClose={()=>setDetails(null)}><CollectionDetailsController key={`${userId}:${details.id}`} userId={userId} id={details.id} itemCount={details.item_count??null} canEditLabels={details.ownership==='owned'||details.ownership==='received'||!publicationEnabled} onUnavailable={()=>{setReceivedEditor(null);setEditor(current=>current?.kind==='assign'&&current.collection.id===details.id?null:current);}} onChanged={()=>{void onReload();void catalog.refresh();}} labelNames={details.labelIds?.map(id=>labelRows.find(row=>row.label.id===id)?.path).filter((name):name is string=>Boolean(name))??(snapshot.assignments.filter(item=>item.collection_id===details.id).map(item=>labelRows.find(row=>row.label.id===item.label_id)?.path).filter((path):path is string=>Boolean(path)))} locale={locale} isShared={details.isShared===true} onClose={()=>setDetails(null)} onLabels={name=>{const collection={...details,name};if(details.ownership==='received')setReceivedEditor({ownerId:userId,collection});else begin({kind:"assign",collection});}} onOpen={name=>{setDetails(null);const collection={...details,name};if(details.ownership==='received')onOpenReceived?.(collection);else onOpen(collection);}}/></CollectionDetailsSurface>}
     {scopeOpen && <DialogSurface className={overlays.dialog} aria-label={t.chooseScope} onDismiss={()=>setScopeOpen(false)}><div className={s.scopeDialog}><button className={s.dismiss} aria-label={t.close} onClick={()=>setScopeOpen(false)}><X size={20}/></button>{scopePicker}</div></DialogSurface>}
     {menu && <ActionMenu anchor={menu.anchor} title={t.more} language={locale} onClose={()=>setMenu(null)} items={menu.label ? [
       ...(onOpenLabel ? [{id:"open",label:t.open,onSelect:()=>{onOpenLabel(menu.label!);setMenu(null);}}] : []),
@@ -234,7 +234,3 @@ export function ownedCollectionMenuItems(p:{locale:OnboardingLanguage;sharingEna
 }
 
 function labelRowsForScope(snapshot:import("@/lib/collections/labels/model").CollectionLabelsSnapshot|null,locale:string,id:string){return projectLabelRows(snapshot,locale).find(row=>row.label.id===id)?.path??"";}
-function withPreviewSource(details:import("@/lib/collections/details/model").CollectionDetails):import("@/lib/collections/details/model").CollectionDetails{
- if(process.env.NODE_ENV!=="development"||process.env.NEXT_PUBLIC_COLLECTION_DETAILS_PREVIEW!=="true"||details.id!=="10900000-0000-4000-8000-000000000011")return details;
- return {...details,persistence:"preview",sourceStatus:"available",source:{materialKind:"video",originKind:"youtube",materialTitle:details.name,creatorName:"Lubach",url:"https://www.youtube.com/",fileName:null,publishedOn:"2026-10-16"}};
-}

@@ -65,4 +65,5 @@
 \i db/migrations/358_received_entry_membership_read.sql
 \i db/migrations/359_owned_collection_access_metadata.sql
 \i db/migrations/360_group_shared_catalog_search.sql
+\i db/migrations/361_collection_details.sql
 \i db/migrations/362_source_ownership_paging.sql

@@ -1765,5 +1765,6 @@
   "ui.wordsBulk.sharedReadersFew": {"source":"Shared · {count} subscribers","translationHash":"e77b8a44fdc077de897a5c32c669877ed027ceeefe7f28eea379b7ae5e539ce2"},
   "ui.wordsBulk.sharedReadersMany": {"source":"Shared · {count} subscribers","translationHash":"e77b8a44fdc077de897a5c32c669877ed027ceeefe7f28eea379b7ae5e539ce2"},
   "ui.wordsBulk.sharedReadersOther": {"source":"Shared · {count} subscribers","translationHash":"e77b8a44fdc077de897a5c32c669877ed027ceeefe7f28eea379b7ae5e539ce2"},
-  "features.sharedWorkspace.search": {"source":"Search groups and collections","translationHash":"f6e5c29c226a9cd57a20eacb15aaed90ee517d2afe840c0b387d0e3201b08c7f"}
+  "features.sharedWorkspace.search": {"source":"Search groups and collections","translationHash":"f6e5c29c226a9cd57a20eacb15aaed90ee517d2afe840c0b387d0e3201b08c7f"},
+  "features.collectionDetails.description": {"source":"Description","translationHash":"1d6e3b45e9b1ebcb9e67bc4f664897785a4567bbd521bc8eba15f03154b213c6"}
 }

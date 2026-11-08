@@ -2,19 +2,22 @@ import React from 'react';
 import {fireEvent,render,screen} from '@testing-library/react';
 import {beforeEach,afterEach,expect,test,vi} from 'vitest';
 vi.mock('@/lib/collections/sharing/shareCommandClient',async original=>({...await original<typeof import('@/lib/collections/sharing/shareCommandClient')>(),executeShareIntent:vi.fn(async()=>({state:'uncertain'}))}));
-const mock=vi.hoisted(()=>({hook:vi.fn(),refresh:vi.fn(),more:vi.fn(),paths:vi.fn()}));
+const mock=vi.hoisted(()=>({hook:vi.fn(),refresh:vi.fn(),more:vi.fn(),paths:vi.fn(),details:vi.fn()}));
+vi.mock('@/lib/platform/platformV2Http',()=>({platformV2AuthenticatedJsonHeaders:vi.fn().mockResolvedValue({})}));
+vi.mock('@/lib/platform/platformFetchWithTimeout',()=>({platformFetchWithTimeout:mock.details}));
 vi.mock('@/components/library/organization/useReceivedCatalog',()=>({useReceivedCatalog:mock.hook}));
 vi.mock('@/components/library/sharing/useCollectionAccessPaths',()=>({useCollectionAccessPaths:mock.paths}));
-vi.mock('@/components/library/organization/usePersonalLabels',()=>({usePersonalLabels:()=>({snapshot:null})}));
+vi.mock('@/components/library/organization/usePersonalLabels',()=>({usePersonalLabels:()=>({snapshot:null,refresh:vi.fn()})}));
+vi.mock('@/components/library/organization/ReceivedCollectionLabels',()=>({ReceivedCollectionLabels:({onSaved}:{onSaved:()=>void})=><div><button onClick={onSaved}>Save labels fixture</button></div>}));
 import {ReceivedCollections} from '@/components/library/sharing/ReceivedCollections';
 const row={id:'75600000-0000-4000-8000-000000000001',name:'Lesson',itemCount:10,ownerUserId:'private-account-id',labelIds:[],directSubscription:true,groups:[]};
 const props={active:true,userId:'reader',locale:'en' as const,onOpen:vi.fn(),onAdd:vi.fn()};
-beforeEach(()=>{window.sessionStorage.clear();vi.clearAllMocks();mock.paths.mockReturnValue({status:'ready',data:{collectionId:row.id,isOwner:false,directSubscription:true,groups:[]},refresh:vi.fn()});mock.hook.mockReturnValue({status:'ready',collections:[row],nextCursor:null,loadingMore:false,refresh:mock.refresh,loadMore:mock.more});});
+beforeEach(()=>{window.sessionStorage.clear();vi.clearAllMocks();mock.details.mockResolvedValue(Response.json({id:row.id,name:row.name,description:null,source:null,revision:'0',isOwner:false}));mock.paths.mockReturnValue({status:'ready',data:{collectionId:row.id,isOwner:false,directSubscription:true,groups:[]},refresh:vi.fn()});mock.hook.mockReturnValue({status:'ready',collections:[row],nextCursor:null,loadingMore:false,refresh:mock.refresh,loadMore:mock.more});});
 afterEach(()=>{vi.unstubAllEnvs();});
-test('opens exact collection and does not expose internal owner identity',()=>{
+test('opens exact collection and does not expose internal owner identity',async()=>{
  render(<ReceivedCollections {...props}/>);expect(screen.queryByText(row.ownerUserId)).not.toBeInTheDocument();
  fireEvent.click(screen.getByRole('button',{name:'Lesson'}));
- fireEvent.click(screen.getByRole('button',{name:'View words'}));expect(props.onOpen).toHaveBeenCalledWith(row);
+ fireEvent.click(await screen.findByRole('button',{name:'View words'}));expect(props.onOpen).toHaveBeenCalledWith(row);
 });
 test('search and sort are sent to the paginated query, rather than filtering one loaded page',()=>{
  render(<ReceivedCollections {...props}/>);fireEvent.change(screen.getByRole('textbox',{name:'Search collections'}),{target:{value:'Dutch'}});fireEvent.click(screen.getByRole('button',{name:'Sort: Recent'}));fireEvent.click(screen.getByRole('menuitem',{name:'Name'}));
@@ -108,4 +111,13 @@ test('an open reader menu loses direct actions when the latest row becomes group
  view.rerender(<ReceivedCollections {...props}/>);
  expect(screen.queryByRole('menuitem',{name:'Remove from my library'})).toBeNull();
  expect(screen.getByRole('menuitem',{name:'Open group: Easy Dutch'})).toBeInTheDocument();
+});
+
+test('saving personal labels leaves received details open',async()=>{
+ render(<ReceivedCollections {...props}/>);fireEvent.click(screen.getByRole('button',{name:'Lesson'}));fireEvent.click(await screen.findByRole('button',{name:'Choose labels'}));fireEvent.click(screen.getByRole('button',{name:'Save labels fixture'}));expect(screen.getByRole('button',{name:'View words'})).toBeInTheDocument();
+});
+test('revoked access closes the personal-label editor and hides collection details',async()=>{
+ render(<ReceivedCollections {...props}/>);fireEvent.click(screen.getByRole('button',{name:'Lesson'}));fireEvent.click(await screen.findByRole('button',{name:'Choose labels'}));expect(screen.getByRole('button',{name:'Save labels fixture'})).toBeInTheDocument();
+ mock.details.mockResolvedValueOnce(Response.json({error:'details_unavailable'},{status:404}));fireEvent.focus(window);
+ await screen.findByText('Collection organization is not available yet.');expect(screen.queryByRole('button',{name:'Save labels fixture'})).toBeNull();expect(screen.queryByRole('button',{name:'View words'})).toBeNull();
 });
