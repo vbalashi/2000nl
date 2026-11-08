@@ -39,8 +39,8 @@ test('received collection exposes only opening and personal label assignment',()
  const onOpenReceived=vi.fn();badge.hook.mockReturnValue({status:'ready',collections:[{...catalogRow(first,true),ownership:'received'}],nextCursor:null,refresh:vi.fn()});
  render(<PersonalCollections {...base} onOpenReceived={onOpenReceived} userId="first" collections={[]}/>);
  expect(screen.getByTitle('Shared')).toBeInTheDocument();fireEvent.click(screen.getByRole('button',{name:'First owner lesson'}));expect(onOpenReceived).not.toHaveBeenCalled();
- fireEvent.click(screen.getByRole('button',{name:'View words'}));expect(onOpenReceived).toHaveBeenCalledOnce();
  fireEvent.click(screen.getByRole('button',{name:'More actions: First owner lesson'}));expect(screen.queryByRole('button',{name:'Share'})).not.toBeInTheDocument();expect(screen.queryByRole('button',{name:'Rename'})).not.toBeInTheDocument();expect(screen.queryByRole('button',{name:'Delete'})).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'View words'}));expect(onOpenReceived).toHaveBeenCalledOnce();
 });
 test('pasted search is bounded by Unicode code points before catalog requests',()=>{
  render(<PersonalCollections {...base} userId="first" collections={[first]}/>);
