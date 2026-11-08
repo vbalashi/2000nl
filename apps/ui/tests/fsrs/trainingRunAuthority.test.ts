@@ -802,15 +802,18 @@ describeDb("active Training run authority", () => {
       let library: PoolClient | null = null,
         other: PoolClient | null = null;
       try {
+        // This case verifies lock ordering, not tie-breaking or mixed-pool replans.
+        // Give each review a distinct past due time so the old second member is
+        // still first in the replacement plan after Library grades the first.
         await committed(pool, userId, (c) =>
           c.query(
-            "insert into user_card_status(user_id,entry_id,card_type_id,in_learning,fsrs_enabled,fsrs_reps,fsrs_stability,fsrs_difficulty,fsrs_last_interval,last_reviewed_at,next_review_at) select $1,id,'word-to-definition',true,true,1,5,5,1,statement_timestamp()-interval '1 day',statement_timestamp()-interval '1 hour' from unnest($2::uuid[]) id",
+            "insert into user_card_status(user_id,entry_id,card_type_id,in_learning,fsrs_enabled,fsrs_reps,fsrs_stability,fsrs_difficulty,fsrs_last_interval,last_reviewed_at,next_review_at) select $1,id,'word-to-definition',true,true,1,5,5,1,statement_timestamp()-interval '1 day',statement_timestamp()-interval '1 hour'+fixture.ordinal*interval '1 minute' from unnest($2::uuid[]) with ordinality fixture(id,ordinal)",
             [userId, entryIds],
           ),
         );
         const launch = (c: PoolClient) =>
           c.query(
-            "select start_training_session($1::uuid,array['word-to-definition'],null,'curated','both','{}','4',$2::uuid) s",
+            "select start_training_session($1::uuid,array['word-to-definition'],null,'curated','review','{}','4',$2::uuid) s",
             [userId, randomUUID()],
           );
         const run = (await committed(pool, userId, launch)).rows[0].s;
@@ -821,6 +824,9 @@ describeDb("active Training run authority", () => {
           ]),
         );
         const [first, second] = before.rows[0].s.members;
+        expect(before.rows[0].s.members).toHaveLength(4);
+        expect(first.entryId).toBe(entryIds[0]);
+        expect(second.entryId).toBe(entryIds[1]);
         const state = await committed(
           pool,
           userId,
@@ -871,6 +877,11 @@ describeDb("active Training run authority", () => {
           expect(after.planRevision).toBe(1);
           expect(after.completedActions).toBe(1);
           expect(after.requestedTotal).toBe(4);
+          const consumed = await pool.query(
+            "select entry_id,consumed_at is not null as consumed from training_session_members where session_id=$1 and consumed_at is not null",
+            [run.sessionId],
+          );
+          expect(consumed.rows).toEqual([{entry_id:second.entryId,consumed:true}]);
         } else expect(result.rows[0].s.runStatus).toBe("active");
       } finally {
         for (const c of [library, other])
