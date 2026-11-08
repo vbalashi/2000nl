@@ -1,4 +1,4 @@
-.button.button.button.button{position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:none;min-width:0;min-height:36px;padding:4px 14px;border:0;background:transparent;border-radius:var(--practice-radius-control);font-family:var(--practice-font-ui);font-size:var(--practice-text-small);line-height:20px;font-weight:400;text-decoration:none;cursor:pointer;color:var(--practice-text-muted)}
+.button.button.button.button{position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:none;min-width:0;max-width:100%;overflow-wrap:anywhere;min-height:36px;padding:4px 14px;border:0;background:transparent;border-radius:var(--practice-radius-control);font-family:var(--practice-font-ui);font-size:var(--practice-text-small);line-height:20px;font-weight:400;text-decoration:none;cursor:pointer;color:var(--practice-text-muted)}
 .button.button.button.primary{color:var(--practice-selected-text)}
 .button:before{content:'';position:absolute;inset:4px 0;z-index:-1;border-radius:var(--practice-radius-control);pointer-events:none}
 .primary:before{background:var(--practice-selected)}
