@@ -783,7 +783,11 @@ test("the Library dictionary search surface renders @pilot", async ({ page }) =>
   await expect(headwordResult).toBeVisible();
   await expect(headwordResult).toContainText("huis");
   await expect(page.getByText("Dutch · All dictionaries")).toBeVisible();
-  await page.getByRole("button", {name: "1 article", exact: true}).click();
+  // Category search keeps the full count as its accessible name while the
+  // visible caption remains compact.
+  const countTrigger = page.getByRole("button", {name: "1 article · 1 meaning", exact: true});
+  await expect(countTrigger.getByRole("status")).toHaveText("1 article");
+  await countTrigger.click();
   await expect(page.getByRole("menu", {name: "1 article · 1 meaning", exact: true})
     .getByText("1 article · 1 meaning", {exact: true})).toBeVisible();
   await page.keyboard.press("Escape");
