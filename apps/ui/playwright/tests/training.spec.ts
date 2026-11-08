@@ -783,7 +783,10 @@ test("the Library dictionary search surface renders @pilot", async ({ page }) =>
   await expect(headwordResult).toBeVisible();
   await expect(headwordResult).toContainText("huis");
   await expect(page.getByText("Dutch · All dictionaries")).toBeVisible();
-  await expect(page.getByText("1 article · 1 meaning",{exact:true})).toBeVisible();
+  await page.getByRole("button", {name: "1 article", exact: true}).click();
+  await expect(page.getByRole("menu", {name: "1 article · 1 meaning", exact: true})
+    .getByText("1 article · 1 meaning", {exact: true})).toBeVisible();
+  await page.keyboard.press("Escape");
   await expect(headwordResult).toContainText("1 meaning");
   await headwordResult.click();
   await expect(page.getByText("Een gebouw waar mensen wonen.").first()).toBeVisible();
