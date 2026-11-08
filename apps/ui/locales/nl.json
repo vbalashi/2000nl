@@ -1962,7 +1962,8 @@
       "localFile": "Lokaal bestand",
       "manual": "Handmatig",
       "preview": "Voorbeeld: brongegevens zijn demonstratiegegevens en worden niet opgeslagen.",
-      "description": "Beschrijving"
+      "description": "Beschrijving",
+      "invalid": "Controleer de naam, beschrijving en brongegevens. Links moeten beginnen met http:// of https://."
     },
     "labelSharing": {
       "title": "Label delen",

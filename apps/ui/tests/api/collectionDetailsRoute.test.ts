@@ -16,6 +16,7 @@ test('reads only requested collection, no-store, and rejects foreign projections
 test('preserves null, omission and version; maps conflict and unavailable',async()=>{
  const body={collectionId:id,expectedRevision:'0',patch:{description:null,source:{publishedOn:null}}};expect((await POST(post(body))).status).toBe(200);
  expect(mock.rpc).toHaveBeenCalledWith('update_collection_details_v1',{p_collection_id:id,p_expected_revision:'0',p_patch:body.patch});
+ mock.abort.mockResolvedValueOnce({error:{code:'22023',message:'invalid_details'},data:null});const invalid=await POST(post(body));expect(invalid.status).toBe(400);expect(await invalid.json()).toEqual({error:'invalid_details'});
  mock.abort.mockResolvedValueOnce({error:{code:'40001'},data:null});expect((await POST(post(body))).status).toBe(409);
  mock.abort.mockResolvedValueOnce({error:{code:'42501'},data:null});expect((await GET(get())).status).toBe(404);
  expect((await POST(post({...body,other:'x'}))).status).toBe(400);

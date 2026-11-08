@@ -30,3 +30,20 @@ test('recipient can read current details but cannot edit them',async()=>{
  mocks.fetch.mockResolvedValue(Response.json({...record,isOwner:false,source:{...source,creatorName:'Updated author',publishedOn:null}}));render(<CollectionDetailsController {...props} userId="reader" canEditLabels={false}/>);
  await screen.findByText('Updated author');expect(screen.queryByRole('button',{name:'Edit collection'})).toBeNull();expect(screen.queryByRole('button',{name:'Choose labels'})).toBeNull();
 });
+
+test('validation failure keeps the draft for correction and resubmission',async()=>{
+ const onUnavailable=vi.fn();render(<CollectionDetailsController {...props} onUnavailable={onUnavailable}/>);await screen.findByText('Maker');fireEvent.click(screen.getByRole('button',{name:'Edit collection'}));
+ fireEvent.change(screen.getByLabelText('Name'),{target:{value:'   '}});fireEvent.change(screen.getByLabelText('URL'),{target:{value:'ftp://example.com'}});
+ mocks.fetch.mockResolvedValueOnce(Response.json({error:'details_unavailable'},{status:400}));fireEvent.submit(screen.getByRole('button',{name:'Save'}).closest('form')!);
+ expect(await screen.findByRole('alert')).toHaveTextContent('Links must start with http:// or https://');expect(screen.getByLabelText('Name')).toHaveValue('   ');expect(screen.getByLabelText('URL')).toHaveValue('ftp://example.com');expect(onUnavailable).not.toHaveBeenCalled();
+ fireEvent.change(screen.getByLabelText('Name'),{target:{value:'Corrected'}});fireEvent.change(screen.getByLabelText('URL'),{target:{value:'https://example.org'}});
+ mocks.fetch.mockResolvedValueOnce(Response.json({...record,name:'Corrected',source:{...source,url:'https://example.org'},revision:'2'}));fireEvent.click(screen.getByRole('button',{name:'Save'}));await screen.findByRole('heading',{name:'Corrected'});
+});
+test.each([401,403,404])('save access failure %i clears private details',async status=>{
+ const onUnavailable=vi.fn();render(<CollectionDetailsController {...props} onUnavailable={onUnavailable}/>);await screen.findByText('Maker');fireEvent.click(screen.getByRole('button',{name:'Edit collection'}));fireEvent.change(screen.getByLabelText('Name'),{target:{value:'Draft'}});
+ mocks.fetch.mockResolvedValueOnce(Response.json({error:'unavailable'},{status}));fireEvent.click(screen.getByRole('button',{name:'Save'}));await waitFor(()=>expect(screen.queryByDisplayValue('Draft')).toBeNull());expect(screen.queryByText('Maker')).toBeNull();expect(onUnavailable).toHaveBeenCalledOnce();
+});
+test('changing accounts immediately clears the prior account and draft',async()=>{
+ const view=render(<CollectionDetailsController {...props}/>);await screen.findByText('Maker');fireEvent.click(screen.getByRole('button',{name:'Edit collection'}));fireEvent.change(screen.getByLabelText('Name'),{target:{value:'Private draft'}});
+ mocks.fetch.mockReturnValueOnce(new Promise(()=>{}));view.rerender(<CollectionDetailsController {...props} userId="other"/>);expect(screen.queryByText('Maker')).toBeNull();expect(screen.queryByDisplayValue('Private draft')).toBeNull();
+});
