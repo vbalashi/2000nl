@@ -38,7 +38,10 @@ for (const viewport of [{width: 1440, height: 1000}, {width: 390, height: 844}])
     await page.getByRole("button", {name: uk.ui.navigation.library, exact: true}).click();
     await expect(page.getByPlaceholder(uk.ui.library.searchPlaceholder)).toBeVisible();
     await expect(page.getByTestId("library-headword-group-row").first()).toBeVisible();
-    await expect(page.getByText("1 стаття · 2 значення", {exact: true})).toBeVisible();
+    await page.getByRole("button", {name: "1 стаття", exact: true}).click();
+    await expect(page.getByRole("menu", {name: "1 стаття · 2 значення", exact: true})
+      .getByText("1 стаття · 2 значення", {exact: true})).toBeVisible();
+    await page.keyboard.press("Escape");
     await page.screenshot({path: info.outputPath("uk-library.png")});
     await page.getByRole("button", {name: uk.ui.navigation.training, exact: true}).click();
     await page.locator('[data-onboarding="launch"]').click();
