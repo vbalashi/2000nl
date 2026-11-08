@@ -92,8 +92,9 @@ test('unknown membership offers only the full picker; pending quick writes canno
  const props={meaning,language:'en' as const,busy:false,collectionCount:0,onAction:vi.fn(),onCollections:vi.fn()};
  const view=render(<LibraryMeaningActions {...props} currentCollection={{name:'Lesson',included:null,busy:false,onToggle:toggle}}/>);
  fireEvent.click(screen.getByRole('button',{name:'Collections'}));
- expect(screen.getAllByRole('menuitem')).toHaveLength(1);
- fireEvent.keyDown(screen.getByRole('menuitem'),{key:'Escape'});
+ expect(props.onCollections).toHaveBeenCalledOnce();
+ expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+ expect(toggle).not.toHaveBeenCalled();
  view.rerender(<LibraryMeaningActions {...props} currentCollection={{name:'Lesson',included:true,busy:true,onToggle:toggle}}/>);
  fireEvent.click(screen.getByRole('button',{name:'Collections'}));
  const remove=screen.getByRole('menuitem',{name:'Remove from “Lesson”'});expect(remove).toBeDisabled();fireEvent.click(remove);

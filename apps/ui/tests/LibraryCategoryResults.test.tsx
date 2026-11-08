@@ -108,7 +108,8 @@ test.each(['headwords','alphabetical'] as const)('word category %s uses exact se
  try{
   render(<LibraryCategoryResults {...props} category={category} countHost={host}/>);
   await screen.findByTestId('library-headword-group-group-bank');
-  expect(host).toHaveTextContent('73 articles · 115 meanings');
+  expect(host).toHaveTextContent('73 articles');
+  expect(host.querySelector('[data-count-detail]')).toHaveAttribute('data-count-detail','73 articles · 115 meanings');
   expect(readDictionaryCategory).toHaveBeenCalledTimes(1);expect(hydrateDictionaryWordResults).toHaveBeenCalledTimes(1);
  }finally{host.remove();}
 });
