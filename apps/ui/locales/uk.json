@@ -946,7 +946,7 @@
       "referenceZero": "{count} посилання",
       "referenceTwo": "{count} посилання",
       "recentSearch": "Нещодавній пошук",
-      "scopeActions": "Історія пошуку та фільтри"
+      "scopeActions": "Історія фільтрів"
     },
     "collections": {
       "title": "Колекції",
@@ -1879,7 +1879,7 @@
       "wordCountOther": "{count} слова",
       "sentenceFound": "Знайдено {words}, загалом {meanings}.",
       "sentenceCards": "Доступно карток: {cards}.",
-      "sentenceProgress": "Із цих карток ви вже вивчаєте {learning}, нових — {new}. Можна повторити зараз: {due}.",
+      "sentenceProgress": "Із цих карток ви вивчаєте {learning}, готові до повторення зараз: {due}.",
       "sentenceOther": "Карток в інших станах: {other}."
     },
     "libraryWordSelection": {

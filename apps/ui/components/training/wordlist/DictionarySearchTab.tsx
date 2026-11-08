@@ -511,11 +511,11 @@ export function DictionarySearchTab({
   const pageSelected=pageIds.length>0 && pageIds.every(id=>bulkAll ? !currentBulk.articleIds.has(id) : currentBulk.articleIds.has(id));
   const setSelected=(ids:string[],selected:boolean)=>setBulkSelection(previous=>setBulkArticlesSelected(reconcileBulkArticleSelection(previous,userId,bulkScopeKey),ids,bulkAll ? !selected : selected));
   const {items:recentItems,ready:recentReady,remember:rememberScope}=useRecentLibraryScopes(userId);
-  const historyScope=useMemo<RecentLibraryScope>(()=>({query:query.trim(),languageCode:searchLanguage,
+  const historyScope=useMemo<RecentLibraryScope>(()=>({query:'',languageCode:searchLanguage,
     dictionaryId:categoryMaterial ? null : dictionaryId,collectionId:categoryMaterial?.kind==='collection'?categoryMaterial.id:null,
     collectionOwnership:categoryMaterial?.kind==='collection' ? (viewedList?.ownership==='received' || searchState.collectionOwnership==='received' ? 'received' : 'owned') : null,
     labelId:categoryMaterial?.kind==='label'?categoryMaterial.id:null,labelName:categoryMaterial?.kind==='label'?searchState.labelName ?? null:null,
-    sourceName:resultScopeLabel,filters:searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS,category:query.trim() ? searchState.searchCategory ?? 'headwords' : 'headwords'}),
+    sourceName:resultScopeLabel,filters:searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS,category:'headwords'}),
     [query,searchLanguage,categoryMaterial,dictionaryId,viewedList?.ownership,searchState.collectionOwnership,searchState.labelName,resultScopeLabel,searchState.entryFilters,searchState.searchCategory]);
   const rememberHistory=useCallback(()=>{if(open && recentReady)rememberScope(historyScope);},[open,recentReady,rememberScope,historyScope]);
   React.useEffect(()=>{if(!categorySearchActive && hasCurrentResults && !searchLoading && !searchError && searchMaterialReady)rememberHistory();},[categorySearchActive,hasCurrentResults,searchLoading,searchError,searchMaterialReady,rememberHistory]);
@@ -524,7 +524,7 @@ export function DictionarySearchTab({
   const historyDescription=(item:RecentLibraryScope)=>{
     const vocab=item.filters.vocabulary, text=localizedSection('vocabularySelection')[interfaceLanguage];
     const parts=item.filters.parts.map(part=>getUiMessages(interfaceLanguage).builder.parts[LIBRARY_PART_LABELS[part]]);
-    const details=[copy.recentSearch,languageDisplayName(interfaceLanguage,item.languageCode),historySource(item),...parts,
+    const details=[languageDisplayName(interfaceLanguage,item.languageCode),historySource(item),...parts,
       item.filters.article, vocab?.materialKinds.length ? materialKindSummary(vocab.materialKinds,interfaceLanguage) : null,
       vocab?.mode==='frequency' ? `${vocab.profile==='spoken'?text.spokenShort:text.writtenShort} ${number(vocab.from)}–${number(vocab.to)}` : null,
       vocab && vocab.meanings!=='all' ? (vocab.meanings===1?text.firstMeaning:formatUiCount(interfaceLanguage,vocab.meanings,text,'firstMeanings')) : null,
@@ -533,9 +533,9 @@ export function DictionarySearchTab({
   };
   const restoreHistory=(item:RecentLibraryScope)=>{
     setScopeAnchor(null);
-    onSearchStateChange({...createDictionarySearchTabState(),query:item.query,languageCode:item.languageCode,dictionaryId:item.dictionaryId,
+    onSearchStateChange({...createDictionarySearchTabState(),query,languageCode:item.languageCode,dictionaryId:item.dictionaryId,
       applyListFilter:Boolean(item.collectionId),collectionId:item.collectionId,collectionOwnership:item.collectionOwnership,
-      labelId:item.labelId,labelName:item.labelName,entryFilters:item.filters,searchCategory:item.category});
+      labelId:item.labelId,labelName:item.labelName,entryFilters:item.filters,searchCategory:searchState.searchCategory});
     refreshSearch();
   };
   const resultCountLabel =

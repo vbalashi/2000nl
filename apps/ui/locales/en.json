@@ -946,7 +946,7 @@
       "referenceZero": "{count} references",
       "referenceTwo": "{count} references",
       "recentSearch": "Recent",
-      "scopeActions": "Search history and filters"
+      "scopeActions": "Filter history"
     },
     "collections": {
       "title": "Collections",
@@ -1879,7 +1879,7 @@
       "wordCountOther": "{count} words",
       "sentenceFound": "Found {words} with {meanings}.",
       "sentenceCards": "Available cards: {cards}.",
-      "sentenceProgress": "Of these cards, you are learning {learning}; new: {new}. Ready to review now: {due}.",
+      "sentenceProgress": "Of these cards, you are learning {learning}, ready to review now: {due}.",
       "sentenceOther": "Other card states: {other}."
     },
     "libraryWordSelection": {

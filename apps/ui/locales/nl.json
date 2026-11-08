@@ -946,7 +946,7 @@
       "referenceZero": "{count} verwijzingen",
       "referenceTwo": "{count} verwijzingen",
       "recentSearch": "Recent",
-      "scopeActions": "Zoekgeschiedenis en filters"
+      "scopeActions": "Filtergeschiedenis"
     },
     "collections": {
       "title": "Collecties",
@@ -1879,7 +1879,7 @@
       "wordCountOther": "{count} woorden",
       "sentenceFound": "Gevonden: {words} met {meanings}.",
       "sentenceCards": "Beschikbare kaarten: {cards}.",
-      "sentenceProgress": "Van deze kaarten leer je er al {learning}; nieuw: {new}. Nu te herhalen: {due}.",
+      "sentenceProgress": "Van deze kaarten leer je er {learning}, nu te herhalen: {due}.",
       "sentenceOther": "Kaarten met een andere status: {other}."
     },
     "libraryWordSelection": {

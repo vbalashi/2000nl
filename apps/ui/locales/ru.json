@@ -946,7 +946,7 @@
       "referenceZero": "{count} ссылки",
       "referenceTwo": "{count} ссылки",
       "recentSearch": "Недавний поиск",
-      "scopeActions": "История поиска и фильтры"
+      "scopeActions": "История фильтров"
     },
     "collections": {
       "title": "Коллекции",
@@ -1879,7 +1879,7 @@
       "wordCountOther": "{count} слова",
       "sentenceFound": "Найдено {words}, всего {meanings}.",
       "sentenceCards": "Доступно карточек: {cards}.",
-      "sentenceProgress": "Из этих карточек вы уже изучаете {learning}, новых — {new}. Ждут повторения сейчас: {due}.",
+      "sentenceProgress": "Из этих карточек вы изучаете {learning}, готовы к повторению сейчас: {due}.",
       "sentenceOther": "Карточек в других состояниях: {other}."
     },
     "libraryWordSelection": {
