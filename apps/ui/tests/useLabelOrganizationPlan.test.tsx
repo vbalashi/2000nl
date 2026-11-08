@@ -69,3 +69,39 @@ it('does not ask for a second confirmation when the prepared change affects no a
  await act(()=>hook.result.current.save(1,operation));
  expect(hook.result.current.state.status).toBe('idle');expect(saved).toHaveBeenCalledWith(snapshot);
 });
+
+it('does not reuse cancelled plan context for a different plan when journal retention fails',async()=>{
+ const hook=renderHook(()=>useLabelOrganizationPlan('owner',vi.fn()));
+ await act(()=>hook.result.current.save(1,operation));
+ expect(hook.result.current.preparedOperation).toEqual(operation);expect(hook.result.current.preparedRevision).toBe(1);
+ act(()=>hook.result.current.cancel());
+ expect(hook.result.current.preparedOperation).toBeNull();expect(hook.result.current.preparedRevision).toBeNull();
+ const nextId='44444444-4444-4444-8444-444444444444';
+ const nextOperation={type:'update' as const,id:'55555555-5555-4555-8555-555555555555',name:'Renamed label'};
+ vi.mocked(client.prepareLabelOrganization).mockResolvedValue({...plan,planId:nextId,delta:{added:[],removed:[],pathsChanged:false}});
+ const storage=vi.spyOn(Object.getPrototypeOf(window.sessionStorage),'setItem').mockImplementation(()=>{throw new Error('storage unavailable');});
+ try{
+  await act(()=>hook.result.current.save(9,nextOperation));
+  expect(hook.result.current.state).toMatchObject({status:'awaiting',planId:nextId,error:'storage'});
+  expect(hook.result.current.preparedOperation).toBeNull();expect(hook.result.current.preparedRevision).toBeNull();
+  expect(client.confirmLabelOrganization).not.toHaveBeenCalled();
+  expect(sessionStorage.getItem(labelOrganizationJournalKey('owner'))).toBeNull();
+ }finally{storage.mockRestore();}
+});
+
+it('resuming another pending plan for the same user hides the cancelled plan operation and revision',async()=>{
+ const hook=renderHook(()=>useLabelOrganizationPlan('owner',vi.fn()));
+ await act(()=>hook.result.current.save(4,operation));
+ expect(hook.result.current.state.planId).toBe(id);expect(hook.result.current.preparedRevision).toBe(4);
+ act(()=>hook.result.current.cancel());
+ const pendingId='66666666-6666-4666-8666-666666666666';
+ sessionStorage.setItem(labelOrganizationJournalKey('owner'),JSON.stringify({userId:'owner',planId:pendingId}));
+ act(()=>hook.result.current.resume());
+ expect(hook.result.current.state).toMatchObject({status:'uncertain',planId:pendingId,plan:null});
+ expect(hook.result.current.preparedOperation).toBeNull();expect(hook.result.current.preparedRevision).toBeNull();
+ vi.mocked(client.readLabelOrganizationReceipt).mockResolvedValue({planId:pendingId,status:'pending'});
+ await act(()=>hook.result.current.check());
+ expect(client.readLabelOrganizationReceipt).toHaveBeenCalledWith('owner',pendingId,expect.any(AbortSignal));
+ expect(client.confirmLabelOrganization).not.toHaveBeenCalled();
+ expect(hook.result.current.preparedOperation).toBeNull();expect(hook.result.current.preparedRevision).toBeNull();
+});

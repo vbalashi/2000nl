@@ -1,4 +1,4 @@
-/** Personal organization only: labels never create dictionary or sharing access. */
+/** Personal organization. Explicitly shared label roots project the author's own collections; placing a received reference never grants access transitively. */
 export const MAX_LABEL_REQUEST_BYTES = 64 * 1024;
 export const MAX_LABELS = 1000;
 export const MAX_LABEL_ASSIGNMENTS = 10000;

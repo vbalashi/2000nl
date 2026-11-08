@@ -104,8 +104,11 @@ Meaning count and compact read-only status sit immediately below the title. The
 access explanation uses the existing help popover, available by pointer, keyboard
 and touch. Source and Labels have subordinate headings and the same small content
 inset. Labels carry folder icons. Empty labels describe the state rather than
-imitating an action. Editing details is an explicit inline disclosure, retaining
-the title and summary while exposing optional fields.
+imitating an action. Each displayed field has its own pencil action, including the collection name
+in the heading. Empty metadata stays visible as a muted state. One field is edited
+at a time, with explicit Save/Cancel and a sparse patch pinned to its starting
+revision. There is no second copy of the title or description in an expanded form.
+The original material title is distinct from the user-chosen collection name.
 
 Label assignment always exposes the shared search field. Collection names are
 quoted in its heading, filtered-empty copy refers to labels, and hidden selected
@@ -113,3 +116,17 @@ assignments are preserved. Save and Cancel have the same minimum width. The
 optional publication date uses the themed DateField dialog, locale-aware calendar
 labels and keyboard navigation. Scrolling surfaces retain a thin, muted rail;
 existing intentionally rail-free catalog lists remain unchanged.
+
+Shared-label placement confirmation names the collection and group, with a localized
+subscriber count in parentheses. Additions and removals describe their own effects;
+changes that retain another accepted access route never claim a global access loss.
+Explanatory group context is read against the prepared catalog revision. Stale or
+unavailable context falls back to the authoritative audience delta; presentation
+never bypasses the existing plan confirmation.
+
+Single-field Save and Cancel are compact text actions directly below the edited
+value, aligned to its start. Save uses stronger accent ink; Cancel is muted.
+Neither has a resting fill or frame; hover adds a soft neutral fill. Inputs retain
+the reading baseline without a boxed field surface, and opening a text editor
+selects its current value for replacement. Empty metadata uses the label caption
+role and muted ink.

@@ -210,3 +210,33 @@
 .editor .assignmentToolbar input:not([type=checkbox]){border:0;border-radius:0;min-height:0;padding:0;background:transparent;box-shadow:none}
 .detailSummary{padding-inline-start:26px}
 .detailTitle{display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0}
+
+/* Per-field editing shares the reading baseline and compact action family. */
+.fieldValue{display:flex;align-items:flex-start;gap:4px;min-width:0;min-height:28px}
+.fieldValue>span{flex:1;min-width:0;align-self:flex-start;padding-top:4px;overflow-wrap:anywhere;white-space:pre-wrap}
+.collectionDetails .fieldPencil{flex:none;min-width:28px;width:28px;min-height:28px;border:0;background:transparent;padding:5px;color:var(--practice-text-muted);opacity:.7}
+.collectionDetails .fieldPencil:hover:not(:disabled){opacity:1}
+.detailTitle>.fieldPencil{margin-block:-2px}
+.emptyDetail{color:var(--practice-text-muted);font-size:var(--practice-text-caption)}
+.detailFields{gap:2px}
+.detailFields>div{align-items:start}
+.detailFields dt{padding-top:4px}
+.collectionDetails .detailFields dt>button{display:inline-flex;border:0;background:transparent;min-height:24px;min-width:24px;padding:4px;vertical-align:middle}
+.inlineFieldForm{min-width:0;width:100%;animation:none}
+.detailTitle>.inlineFieldForm{flex:1}
+.inlineFieldForm>div>span:first-child{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.collectionDetails .inlineFieldForm{gap:0;padding-top:4px}
+.collectionDetails .inlineFieldForm input:not([type=checkbox]),.collectionDetails .inlineFieldForm textarea{min-height:0;height:auto;line-height:1.5;border:0;border-radius:0;background:transparent;padding:0;font-size:var(--practice-text-small)}
+.collectionDetails .inlineFieldForm textarea{field-sizing:content;resize:vertical;min-height:1.5em}
+.collectionDetails .inlineFieldForm footer{display:flex;justify-content:flex-start;flex-wrap:wrap;gap:4px;padding-block:2px;margin:0}
+.collectionDetails .inlineFieldForm footer>button{min-height:28px;height:28px;min-width:0;padding:2px 6px;border:1px solid transparent;background:transparent;font-size:var(--practice-text-caption);line-height:1.5;position:relative}
+.collectionDetails .inlineFieldForm footer>button:first-child{color:var(--practice-text-muted)}
+.collectionDetails .inlineFieldForm footer>button:last-child{color:var(--practice-accent-hover);font-weight:600}
+.collectionDetails .inlineFieldForm footer>button:hover:not(:disabled){text-decoration:none;border-color:transparent;background:var(--practice-surface-subtle)}
+.collectionDetails .inlineFieldForm .choiceSelect,.collectionDetails .inlineFieldForm>div>button{border:0;border-radius:0;background:transparent;min-height:24px;padding:0}
+.detailTitle>.inlineFieldForm{padding-top:0}
+.detailTitle .inlineFieldForm input:not([type=checkbox]){font-size:var(--practice-text-body-lg);font-weight:500}
+.detailTitle h2{flex:0 1 auto}
+.audienceExplanation{display:flex;flex-direction:column;gap:16px;min-height:100px}
+.audienceExplanation ul{margin:8px 0 0;padding-inline-start:20px}
+@media(max-width:700px){.collectionDetails .fieldPencil{min-width:36px;width:36px;min-height:36px}.fieldValue{min-height:36px}.detailTitle>.fieldPencil{margin-block:-6px}.collectionDetails .inlineFieldForm footer>button::after{content:"";position:absolute;inset:-8px 0}}

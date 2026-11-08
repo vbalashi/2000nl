@@ -1951,7 +1951,7 @@
       "source": "Джерело",
       "materialKind": "Вид матеріалу",
       "originKind": "Джерело",
-      "materialTitle": "Назва матеріалу",
+      "materialTitle": "Початкова назва матеріалу",
       "creatorName": "Автор / канал",
       "url": "URL",
       "fileName": "Ім’я файлу",
@@ -1976,7 +1976,11 @@
       "previousMonth": "Попередній місяць",
       "nextMonth": "Наступний місяць",
       "year": "Рік",
-      "clearDate": "Очистити дату"
+      "clearDate": "Очистити дату",
+      "collectionName": "Назва колекції",
+      "notSpecified": "Не вказано",
+      "editField": "Змінити поле «{field}»",
+      "materialTitleHelp": "Початкова назва відео, статті або книги. Ваша колекція може мати іншу назву."
     },
     "labelSharing": {
       "title": "Поділитися міткою",
@@ -1991,7 +1995,7 @@
       "groups": "Групи колекцій",
       "accessRemains": "Доступ збережеться через групи: {groups}.",
       "audienceTitle": "Зміна доступу",
-      "audienceIntro": "Зміна міток вплине на доступ підписників до колекцій.",
+      "audienceIntro": "Збереження цієї зміни міток також змінить список колекцій, доступних через мітки зі спільним доступом.",
       "audienceAdded": "Отримають доступ — читачі: {readers}; колекції: {collections}.",
       "audienceRemoved": "Втратять доступ — читачі: {readers}; колекції: {collections}.",
       "pathsChanged": "Шляхи доступу зміняться. Незалежні підписки збережуться.",
@@ -2010,7 +2014,22 @@
       "compositionReaders": "Зачеплено підписників: {count}",
       "compositionPaths": "Прямі підписки: {direct}. Підписки через групи: {groups}.",
       "originalCollections": "Колекції інших авторів",
-      "referenceNotice": "Ці колекції належать іншим авторам. Відкрийте запрошення та додайте кожну колекцію окремо."
+      "referenceNotice": "Ці колекції належать іншим авторам. Відкрийте запрошення та додайте кожну колекцію окремо.",
+      "accessAddedTitle": "Ці колекції стануть доступними підписникам міток зі спільним доступом",
+      "accessRemovedTitle": "Ці колекції більше не будуть доступними відповідним підписникам",
+      "accessUnchanged": "Ніхто не отримає і не втратить доступ. Наявний доступ збережеться.",
+      "confirmAdded": "Надати доступ і зберегти",
+      "confirmRemoved": "Прибрати доступ і зберегти",
+      "confirmMixed": "Застосувати зміни доступу й зберегти",
+      "affectedSubscribers": "Підписники: {count}",
+      "placementAdded": "Ви додаєте колекцію «{collection}» до спільної групи «{group}» ({subscribers}). Колекція з’явиться в цій групі в бібліотеках підписників.",
+      "placementRemoved": "Ви прибираєте колекцію «{collection}» зі спільної групи «{group}» ({subscribers}). Вона зникне з цієї групи; доступ іншими способами може зберегтися.",
+      "subscriberZero": "{count} підписників",
+      "subscriberOne": "{count} підписник",
+      "subscriberTwo": "{count} підписники",
+      "subscriberFew": "{count} підписники",
+      "subscriberMany": "{count} підписників",
+      "subscriberOther": "{count} підписника"
     }
   },
   "tour": {
