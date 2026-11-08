@@ -47,3 +47,19 @@ test('changing accounts immediately clears the prior account and draft',async()=
  const view=render(<CollectionDetailsController {...props}/>);await screen.findByText('Maker');fireEvent.click(screen.getByRole('button',{name:'Edit collection'}));fireEvent.change(screen.getByLabelText('Name'),{target:{value:'Private draft'}});
  mocks.fetch.mockReturnValueOnce(new Promise(()=>{}));view.rerender(<CollectionDetailsController {...props} userId="other"/>);expect(screen.queryByText('Maker')).toBeNull();expect(screen.queryByDisplayValue('Private draft')).toBeNull();
 });
+test('entering a publication date persists it through reading and reopening the editor',async()=>{
+ let stored={...record,source:{...source,publishedOn:null as string|null}};
+ mocks.fetch.mockImplementation(async (_url:string,options:RequestInit)=>{
+  if(options.method==='POST'){
+   const request=JSON.parse(String(options.body));
+   expect(request.patch.source).toEqual({publishedOn:'2020-02-29'});
+   stored={...stored,source:{...stored.source,...request.patch.source},revision:'2'};
+  }
+  return Response.json(stored);
+ });
+ const view=render(<CollectionDetailsController {...props}/>);await screen.findByText('Maker');fireEvent.click(screen.getByRole('button',{name:'Edit collection'}));
+ const date=screen.getByLabelText('Publication date');expect(date).toHaveValue('');fireEvent.change(date,{target:{value:'2020-02-29'}});fireEvent.blur(date);
+ fireEvent.click(screen.getByRole('button',{name:'Save'}));await screen.findByText('February 29, 2020');
+ fireEvent.click(screen.getByRole('button',{name:'Edit collection'}));expect(screen.getByLabelText('Publication date')).toHaveValue('2020-02-29');
+ view.unmount();render(<CollectionDetailsController {...props}/>);await screen.findByText('February 29, 2020');fireEvent.click(screen.getByRole('button',{name:'Edit collection'}));expect(screen.getByLabelText('Publication date')).toHaveValue('2020-02-29');
+});
