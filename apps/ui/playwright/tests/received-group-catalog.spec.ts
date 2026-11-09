@@ -47,6 +47,14 @@ for(const width of [350,390,705,1200])for(const theme of ['light','dark'])test(`
   const geometry=await row.evaluate(e=>({height:e.getBoundingClientRect().height,overflow:e.scrollWidth>e.clientWidth+1}));
   expect(geometry.height).toBeLessThan(140);expect(geometry.overflow).toBe(false);
  }
+ if(width<=700){
+  const received=page.getByTestId('received-row-preview');
+  const receivedNames=[received.getByRole('button',{name:'333',exact:true}),received.getByRole('button',{name:'firstXXX',exact:true})];
+  for(const name of [group,collection,...receivedNames]){
+   const geometry=await name.evaluate(e=>{const row=e.closest('[role="row"],article')!;const style=getComputedStyle(row);return {padding:style.paddingInlineStart,height:row.getBoundingClientRect().height,columns:style.gridTemplateColumns};});
+   expect(geometry.padding).toBe('4px');expect(geometry.height).toBeGreaterThanOrEqual(64);expect(geometry.columns.split(' ')).toHaveLength(2);
+  }
+ }
  const actions=await Promise.all(['More actions: Owned 333','More actions · A long collection title about housing and living abroad'].map(name=>owned.getByRole('button',{name,exact:true}).boundingBox()));
  expect(Math.abs(actions[0]!.x+actions[0]!.width/2-actions[1]!.x-actions[1]!.width/2)).toBeLessThan(1);
 });
