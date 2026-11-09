@@ -1,12 +1,12 @@
 import React from 'react';
 import {fireEvent,render,screen} from '@testing-library/react';
 import {beforeEach,expect,test,vi} from 'vitest';
-const mock=vi.hoisted(()=>({overview:vi.fn(),owned:vi.fn(),received:vi.fn(),groups:vi.fn()}));
+const mock=vi.hoisted(()=>({overview:vi.fn(),owned:vi.fn(),received:vi.fn(),groups:vi.fn(),groupRows:vi.fn()}));
 vi.mock('@/components/library/sharing/useSharingOverview',()=>({useSharingOverview:mock.overview}));
 vi.mock('@/components/library/sharing/OwnedSharedCollections',()=>({OwnedSharedCollections:(props:{groupRows?:React.ReactNode})=>{mock.owned(props);return <div>{props.groupRows}Owned list</div>;}}));
 vi.mock('@/components/library/sharing/ReceivedCollections',()=>({ReceivedCollections:(props:unknown)=>{mock.received(props);return <div>Received list</div>;}}));
 vi.mock('@/components/library/sharing/useLabelSharingCatalog',()=>({useLabelSharingCatalog:mock.groups}));
-vi.mock('@/components/library/sharing/SharedLabelGroups',()=>({SharedLabelGroups:({groups}:{groups:Array<{labelId:string;name:string}>})=><div data-testid="groups">{groups.map(group=><div key={group.labelId}>{group.name}</div>)}</div>}));
+vi.mock('@/components/library/sharing/SharedLabelGroups',()=>({SharedLabelGroups:(props:{groups:Array<{labelId:string;name:string}>})=>{mock.groupRows(props);return <div data-testid="groups">{props.groups.map(group=><div key={group.labelId}>{group.name}</div>)}</div>;}}));
 vi.mock('@/components/practice/ui/ActionMenu',()=>({ActionMenu:({items}:{items:Array<{id:string;label:string;onSelect:()=>void}>})=><div role="menu">{items.map(item=><button role="menuitem" key={item.id} onClick={item.onSelect}>{item.label}</button>)}</div>}));
 import {SharedCollectionsWorkspace} from '@/components/library/sharing/SharedCollectionsWorkspace';
 const base={userId:'owner',active:true,locale:'en' as const,onViewChange:vi.fn(),onOpenOwned:vi.fn(),onOpenReceived:vi.fn(),onAdd:vi.fn()};
@@ -46,4 +46,10 @@ test('name sorting orders groups and controls collection sort without fabricatin
  expect(mock.owned).toHaveBeenLastCalledWith(expect.objectContaining({selection:expect.objectContaining({sort:'name'})}));
  fireEvent.click(screen.getByRole('button',{name:'Sort: Name'}));fireEvent.click(screen.getByRole('menuitem',{name:'Recent'}));
  expect(screen.getByTestId('groups')).toHaveTextContent('YouTubeBooks');
+});
+
+test.each(['owned','received'] as const)('offers the same catalog navigation for %s groups',view=>{
+ vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');const onOpenLabel=vi.fn();
+ render(<SharedCollectionsWorkspace {...base} view={view} onOpenLabel={onOpenLabel}/>);
+ expect(mock.groupRows).toHaveBeenLastCalledWith(expect.objectContaining({view,onOpenLabel}));
 });

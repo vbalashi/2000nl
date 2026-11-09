@@ -147,3 +147,10 @@ into metadata and the trailing menu retains a 44px target. Browser checks cover
 the actual group nested inside `OwnedSharedCollections`, including text width,
 row height and action alignment, so equal left offsets alone cannot hide a
 collapsed name column.
+
+The group contents dialog is the same for owned and received groups, including
+its Open in collections action. Navigation sends an account-bound scope request:
+an owned group selects a personal label; a received group selects the normal
+received-group catalog. The invitation entry point uses that same route. A new
+request clears prior search/details/paging, while ordinary rerenders preserve
+current input; a request belonging to another account is ignored.

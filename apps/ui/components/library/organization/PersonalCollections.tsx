@@ -39,15 +39,16 @@ import {CollectionDetailsSurface} from "./CollectionDetailsPanel";
 import s from "./organization.module.css";
 
 type CatalogCollection=WordListSummary&{ownership?:'owned'|'received';isShared?:boolean;accessDescription?:string;labelIds?:string[]};
-type Props = {requestedLabelId?:string;labelRequest?:number;active: boolean; userId: string; language: string; locale: OnboardingLanguage; collections: WordListSummary[]; onReload: () => Promise<void>; onOpen: (collection: WordListSummary) => void; onOpenReceived?: (collection:WordListSummary)=>void; onOpenLabel?: (label:CollectionLabel) => void};
+export type CollectionCatalogScopeRequest={userId:string;id:string;name:string;kind:'label'|'group';request:number};
+type Props = {scopeRequest?:CollectionCatalogScopeRequest;active: boolean; userId: string; language: string; locale: OnboardingLanguage; collections: WordListSummary[]; onReload: () => Promise<void>; onOpen: (collection: WordListSummary) => void; onOpenReceived?: (collection:WordListSummary)=>void; onOpenLabel?: (label:CollectionLabel) => void};
 type Editor = {kind:"label"; id:string; existing?:CollectionLabel} | {kind:"collection"; existing?:WordListSummary} | {kind:"assign"; collection:WordListSummary} | {kind:"delete-label"; label:CollectionLabel} | {kind:"delete-collection"; collection:WordListSummary};
 
-export function PersonalCollections({active, userId, language, locale, collections, onReload, onOpen, onOpenReceived, onOpenLabel, requestedLabelId, labelRequest}: Props) {
+export function PersonalCollections({active, userId, language, locale, collections, onReload, onOpen, onOpenReceived, onOpenLabel, scopeRequest}: Props) {
   const t = organizationCopy(locale);
   const labels = usePersonalLabels(active,userId);
   const [scope, setScope] = useState("all");
   const [receivedScope,setReceivedScope]=useState<{userId:string;id:string;name:string}|null>(null);
-  React.useEffect(()=>{if(requestedLabelId){setScope(requestedLabelId);setQuery("");setDetailsSelection(null);}},[requestedLabelId,labelRequest]);
+
   const [query, setQuery] = useState("");
   const [labelQuery, setLabelQuery] = useState("");
   const [collapsedLabels,setCollapsedLabels]=useState<Set<string>>(new Set());
@@ -96,6 +97,12 @@ export function PersonalCollections({active, userId, language, locale, collectio
     const target = opener?.isConnected && opener !== document.body ? opener : Array.from(organizerRoot.current?.querySelectorAll<HTMLButtonElement>("button") ?? []).find(button => !button.disabled && button.getClientRects().length > 0);
     target?.focus({preventScroll:true});
   },[editor,receivedEditor]);
+  React.useEffect(()=>{
+    if(!scopeRequest||scopeRequest.userId!==userId)return;
+    setReceivedScope(scopeRequest.kind==='group'?{userId,id:scopeRequest.id,name:scopeRequest.name}:null);
+    setScope(scopeRequest.kind==='group'?`group:${scopeRequest.id}`:scopeRequest.id);
+    setQuery("");setDetailsSelection(null);setPageSize(20);setScopeOpen(false);
+  },[scopeRequest,userId]);
   const snapshot = labels.snapshot;
   const selectedReceived=receivedScope?.userId===userId&&scope===`group:${receivedScope.id}`?receivedScope:null;
   const chosenLabel = snapshot?.labels.find(label => label.id === scope);
