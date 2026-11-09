@@ -2,5 +2,5 @@
 .field>svg{flex:none;pointer-events:none}
 .field>input{flex:1;width:100%;min-width:0;border:0;outline:0;padding:0;background:transparent;color:var(--practice-text);font:inherit;box-shadow:none}
 .field>input::placeholder{color:var(--practice-text-muted)}
-.field:focus-within{border-color:var(--practice-focus);outline:2px solid var(--practice-focus);outline-offset:2px}
+.field:focus-within{border-color:var(--practice-focus);outline:none;box-shadow:none}
 .field:has(>button)>input{padding-inline-end:32px}

@@ -4,8 +4,9 @@ import {afterEach,beforeEach,expect,test,vi} from 'vitest';
 import {useCollectionSelectionScope} from '@/components/library/sharing/CollectionSelectionContext';
 const mock=vi.hoisted(()=>({pick:null as null|((row:any)=>void),search:vi.fn(),source:null as null|{id:string;name:string;createdAt:string}}));
 vi.mock('@/components/library/sharing/useReceivedSource',()=>({useReceivedSource:(_user:string,id:string|null)=>({source:id===mock.source?.id?mock.source:null,status:'ready'})}));
-vi.mock('@/components/library/organization/PersonalCollections',()=>({PersonalCollections:()=>null}));
+vi.mock('@/components/library/organization/PersonalCollections',()=>({PersonalCollections:({onReference}:{onReference?:(code:string)=>void})=><button onClick={()=>onReference?.('A'.repeat(26))}>Open original from collection groups</button>}));
 vi.mock('@/components/library/sharing/SharedCollectionsWorkspace',()=>({SharedCollectionsWorkspace:({onOpenReceived,onOpenOwned,onAdd}:{onOpenReceived:(r:unknown)=>void;onOpenOwned:(r:unknown)=>void;onAdd:()=>void})=><><button onClick={()=>onOpenReceived({id:'received',name:'Anna lesson',itemCount:2,createdAt:'2026-01-01T00:00:00Z'})}>Open received lesson</button><button onClick={()=>onOpenOwned({id:'own',name:'Mine',itemCount:1,createdAt:'2026-01-01T00:00:00Z'})}>Open own lesson</button><button onClick={onAdd}>Add invitation</button></>}));
+vi.mock('@/components/library/sharing/SharedResourceInvitation',()=>({SharedResourceInvitation:({code}:{code:string})=><div data-testid="original-invitation">{code}</div>}));
 vi.mock('@/components/library/sharing/InvitationPreview',()=>({InvitationPreview:()=>null}));
 vi.mock('@/components/training/wordlist/DictionarySearchTab',()=>({createDictionarySearchTabState:()=>({query:'',dictionaryId:null,partsOfSpeech:[]}),DictionarySearchTab:(props:unknown)=>{mock.pick=useCollectionSelectionScope()?.onBrowseSelected??null;mock.search(props);return <div data-testid="words"/>;}}));
 import {LibraryDestination} from '@/components/navigation/LibraryDestination';
@@ -55,4 +56,10 @@ test('own picker metadata yields to fresh rows and does not revive a deleted sou
  view.rerender(<LibraryDestination {...props} lists={[{...own,name:'Fresh rename'}]} onReloadLists={onReloadLists}/>);expect(mock.search.mock.calls.at(-1)?.[0].collections).toContainEqual(expect.objectContaining({id:'own',name:'Fresh rename'}));
  await waitFor(()=>expect(onReloadLists).toHaveBeenCalledOnce());view.rerender(<LibraryDestination {...props} lists={[]} onReloadLists={onReloadLists}/>);await act(async()=>finish());
  expect(mock.search.mock.calls.at(-1)?.[0].collections).toEqual([]);expect(mock.search.mock.calls.at(-1)?.[0].collectionSourceRead).toMatchObject({type:'user',status:'unavailable'});
+});
+
+test('original reference from Collections makes the explicit invitation visible in Shared',()=>{
+ vi.stubEnv('NEXT_PUBLIC_COLLECTION_ORGANIZATION_ENABLED','true');vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');
+ render(<LibraryDestination {...props}/>);fireEvent.click(screen.getByRole('button',{name:'Collections'}));fireEvent.click(screen.getByRole('button',{name:'Open original from collection groups'}));
+ expect(screen.getByTestId('original-invitation').closest('.hidden')).toBeNull();expect(screen.getByTestId('original-invitation')).toBeVisible();expect(screen.getByTestId('original-invitation')).toHaveTextContent('A'.repeat(26));
 });

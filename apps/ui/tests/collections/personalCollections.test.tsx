@@ -1,5 +1,5 @@
 import React from "react";
-import {beforeAll, beforeEach, expect, test, vi} from "vitest";
+import {afterEach,beforeAll, beforeEach, expect, test, vi} from "vitest";
 import {fireEvent, render, screen, waitFor, within} from "@testing-library/react";
 import {PersonalCollections} from "@/components/library/organization/PersonalCollections";
 import {LabelsRequestError} from "@/lib/collections/labels/client";
@@ -8,6 +8,9 @@ vi.mock('@/lib/platform/platformV2Http',()=>({platformV2AuthenticatedJsonHeaders
 vi.mock('@/lib/platform/platformFetchWithTimeout',()=>({platformFetchWithTimeout:detailsFetch}));
 vi.mock("@/lib/collections/labels/client",()=>({requestLabels:request,LabelsRequestError:class extends Error {constructor(readonly code:string){super(code);}}}));
 vi.mock("@/lib/training/listService",()=>({createUserList:create,updateUserList:vi.fn(),deleteUserList:vi.fn()}));
+vi.mock('@/components/library/sharing/useLabelSharingCatalog',()=>({useLabelSharingCatalog:()=>({status:'ready',data:{owned:[],received:[{labelId:'received-group',name:'Received group',collectionCount:0}]},refresh:vi.fn()})}));
+vi.mock('@/components/library/sharing/useLabelShareCollections',()=>({useLabelShareCollections:()=>({status:'ready',page:{collections:[],nextCursor:null},references:[{collectionId:'original',name:'Original publication',invitationCode:'A'.repeat(26)}]})}));
+afterEach(()=>{vi.unstubAllEnvs();});
 const labelId="00000000-0000-4000-8000-000000000001";
 const collectionId="00000000-0000-4000-8000-000000000002";
 const snapshot={revision:4,labels:[{id:labelId,parent_id:null,name:"YouTube",description:null,created_at:"2026-10-25",updated_at:"2026-10-25"}],assignments:[{label_id:labelId,collection_id:collectionId}]};
@@ -132,4 +135,13 @@ test('Escape dismisses an inner dialog before the collection details',async()=>{
  expect(details).toBeInTheDocument();nested.remove();
  fireEvent.keyDown(window,{key:'Escape'});
  expect(screen.queryByRole('complementary',{name:'Collections'})).toBeNull();
+});
+
+test('mobile scope picker closes before opening an original publication invitation',async()=>{
+ vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');const onReference=vi.fn();render(<PersonalCollections {...props} onReference={onReference}/>);
+ await screen.findByText('My lesson');
+ const scopeButton=screen.getAllByRole('button',{name:'All collections'}).find(button=>!button.hasAttribute('aria-pressed'))!;fireEvent.click(scopeButton);
+ const scope=screen.getByRole('dialog',{name:'Choose a label'});fireEvent.click(within(scope).getByRole('button',{name:'Received group'}));
+ const contents=screen.getByRole('dialog',{name:'Group contents'});fireEvent.click(within(contents).getByRole('button',{name:'Original publication'}));
+ expect(onReference).toHaveBeenCalledWith('A'.repeat(26));expect(screen.queryByRole('dialog')).toBeNull();
 });

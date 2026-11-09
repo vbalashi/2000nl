@@ -1,4 +1,5 @@
 "use client";
+import {ReceivedGroupScopes} from './ReceivedGroupScopes';
 import {ActionButton} from '@/components/practice/ui/ActionButton';
 import {CollectionAccessIcon} from "./CollectionAccessIcon";
 import {useOwnedSharedCatalog} from "../sharing/useOwnedSharedCatalog";
@@ -38,10 +39,10 @@ import {CollectionDetailsSurface} from "./CollectionDetailsPanel";
 import s from "./organization.module.css";
 
 type CatalogCollection=WordListSummary&{ownership?:'owned'|'received';isShared?:boolean;accessDescription?:string;labelIds?:string[]};
-type Props = {requestedLabelId?:string;labelRequest?:number;active: boolean; userId: string; language: string; locale: OnboardingLanguage; collections: WordListSummary[]; onReload: () => Promise<void>; onOpen: (collection: WordListSummary) => void; onOpenReceived?: (collection:WordListSummary)=>void; onOpenLabel?: (label:CollectionLabel) => void};
+type Props = {onReference?:(code:string)=>void;requestedLabelId?:string;labelRequest?:number;active: boolean; userId: string; language: string; locale: OnboardingLanguage; collections: WordListSummary[]; onReload: () => Promise<void>; onOpen: (collection: WordListSummary) => void; onOpenReceived?: (collection:WordListSummary)=>void; onOpenLabel?: (label:CollectionLabel) => void};
 type Editor = {kind:"label"; id:string; existing?:CollectionLabel} | {kind:"collection"; existing?:WordListSummary} | {kind:"assign"; collection:WordListSummary} | {kind:"delete-label"; label:CollectionLabel} | {kind:"delete-collection"; collection:WordListSummary};
 
-export function PersonalCollections({active, userId, language, locale, collections, onReload, onOpen, onOpenReceived, onOpenLabel, requestedLabelId, labelRequest}: Props) {
+export function PersonalCollections({active, userId, language, locale, collections, onReload, onOpen, onOpenReceived, onOpenLabel, requestedLabelId, labelRequest,onReference}: Props) {
   const t = organizationCopy(locale);
   const labels = usePersonalLabels(active,userId);
   const [scope, setScope] = useState("all");
@@ -174,7 +175,8 @@ export function PersonalCollections({active, userId, language, locale, collectio
         <button type="button" aria-label={label.name} aria-pressed={effectiveScope === label.id} title={path} onClick={()=>changeScope(label.id)}><CollectionAccessIcon kind="label" shared={isSharedLabel(label.id)} label={isSharedLabel(label.id)?t.shared:t.labels}/><span>{label.name}{labelQuery.trim() && parents ? ` · ${parents}` : ""}</span></button>
         <button type="button" aria-label={`${t.more}: ${label.name}`} onClick={event=>setMenu({anchor:event.currentTarget,label})}><MoreHorizontal size={16} strokeWidth={1.5}/></button>
       </div>)}
-      {!labelRows.length && <p className={s.muted}>{t.noLabels}</p>}
+      {groupSharingEnabled&&<ReceivedGroupScopes onReference={onReference?code=>{setScopeOpen(false);onReference(code);}:undefined} userId={userId} locale={locale} groups={sharedLabels.data?.received??[]} query={labelQuery} onOpen={(id,name)=>{onOpenReceived?.(rows.find(item=>item.id===id)??collections.find(item=>item.id===id)??{id,name,type:"user",ownership:"received"});setScopeOpen(false);}}/>}
+      {!labelRows.length && !sharedLabels.data?.received.length && <p className={s.muted}>{t.noLabels}</p>}
     </div>
   </div>;
   if (!snapshot) return <div className={s.state} role={labels.error ? "alert" : "status"}>{labels.error ? message(labels.error) : t.loading}{labels.error && <button onClick={()=>void labels.refresh()}>{t.retry}</button>}</div>;
