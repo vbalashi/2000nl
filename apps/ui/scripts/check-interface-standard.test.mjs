@@ -38,3 +38,5 @@ test('launch and update buttons cannot diverge in geometry or typography',()=>{
  assert.ok(check(altered(paths.actions,'400 var(--practice-text-small)/1.4','400 var(--practice-text-caption)/1.4')).some(error=>error.includes('shared launch/update')));
  assert.ok(check(altered(paths.release,'from "@/components/practice/ui/launchAction.module.css"','from "./localButtons.module.css"')).some(error=>error.includes('shared launch/update')));
 });
+
+test('shared publication names retain collection typography',()=>assert.ok(check(altered(paths.publication,'400 var(--practice-text-body)/1.5','400 var(--practice-text-lead)/1.5')).some(e=>e.includes('publication names'))));

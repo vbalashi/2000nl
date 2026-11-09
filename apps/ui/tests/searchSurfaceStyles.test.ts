@@ -10,9 +10,11 @@ describe('search boundary ownership',()=>{
   expect(focus?.type).toBe('rule');
   if(focus?.type==='rule')expect(focus.nodes.filter(node=>node.type==='decl'&&node.prop==='outline').map(node=>node.type==='decl'?node.value:'')).toEqual(['none']);
  });
- it('gives received groups the same three-column row structure as collections',()=>{
-  const source=readFileSync(resolve('components/library/sharing/SharedLabelGroups.tsx'),'utf8');
-  expect(source).toContain('s.receivedGroupRow');
-  expect(css('library/organization/organization.module.css')).toMatch(/\.sharedGroups \.receivedGroupRow,\.received \.collection\{[^}]*grid-template-columns:20px minmax\(0,1fr\) 44px/);
+ it('shares publication presentation across owned and received groups and collections',()=>{
+  for(const name of ['SharedLabelGroups','OwnedSharedCollections','ReceivedCollections']) {
+   const source=readFileSync(resolve(`components/library/sharing/${name}.tsx`),'utf8');
+   expect(source).toContain('<SharedPublicationRow');
+  }
+  expect(css('library/organization/organization.module.css')).not.toMatch(/receivedGroupRow|sharedGroupRow|ownedSharedName|ownedSharedActions/);
  });
 });

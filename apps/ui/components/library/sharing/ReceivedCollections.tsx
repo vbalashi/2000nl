@@ -1,4 +1,5 @@
 'use client';
+import {SharedPublicationRow} from './SharedPublicationRow';
 import { localizedSection } from "@/lib/i18n/catalog";
 
 import type {SharedCatalogSelection} from './SharedCatalogControls';
@@ -52,7 +53,7 @@ export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=
   {!selection&&<div className={s.filters}><label className={s.search}><Search size={16} aria-hidden="true"/><input ref={searchInput} aria-label={common.search} placeholder={common.search} maxLength={100} value={query} onChange={event=>setQuery(event.target.value)}/></label>
    <CollectionSortControl locale={locale} value={sort} onChange={setSort}/></div>}
   {catalog.status==='loading'?<div className={s.state} role="status">{common.loading}</div>:catalog.status==='error'?<div className={s.state}><p role="alert">{t.error}</p><button onClick={()=>void catalog.refresh()}>{common.retry}</button></div>:catalog.status==='ready'&&catalog.collections.length===0&&!hasGroups?<p className={s.state}>{query.trim()?common.noResults:t.empty}</p>:null}
-  <div className={s.results}>{catalog.collections.map(row=><article className={s.collection} key={row.id}><span className={s.accessIcon} title={t.shared}><FileText size={16}/></span><div className={s.collectionCopy}><button className={s.collectionName} onClick={()=>setDetail({userId,id:row.id,row})}>{row.name}</button><p>{formatUiCount(locale,row.itemCount,common,'meaning')}{row.groups.length>0&&<> · <Folder size={12} aria-label={localizedSection('labelSharing')[locale].groups}/>{row.groups.map(group=>group.name).join(', ')}</>}</p></div><IconAction label={`${common.more} · ${row.name}`} onClick={event=>setMenu({userId,row,anchor:event.currentTarget})}><MoreHorizontal size={16} strokeWidth={1.5}/></IconAction></article>)}</div>
+  <div className={s.results}>{catalog.collections.map(row=><SharedPublicationRow key={row.id} name={row.name} icon={<span title={t.shared}><FileText size={16}/></span>} onOpen={()=>setDetail({userId,id:row.id,row})} metadata={<>{formatUiCount(locale,row.itemCount,common,'meaning')}{row.groups.length>0&&<> · <Folder size={12} aria-label={localizedSection('labelSharing')[locale].groups}/>{row.groups.map(group=>group.name).join(', ')}</>}</>} menu={<IconAction label={`${common.more} · ${row.name}`} onClick={event=>setMenu({userId,row,anchor:event.currentTarget})}><MoreHorizontal size={16} strokeWidth={1.5}/></IconAction>}/>)}</div>
   {catalog.nextCursor&&<button className={s.loadMore} disabled={catalog.loadingMore} onClick={()=>void catalog.loadMore()}>{catalog.loadingMore?common.loading:common.moreResults}</button>}
  {menu?.userId===userId&&<ActionMenu anchor={menu.anchor} title={common.more} language={locale} onClose={()=>setMenu(null)} items={[
    {id:'open',label:common.open,onSelect:()=>{onOpen(menu.row);setMenu(null);}},

@@ -1,0 +1,18 @@
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;min-width:0;flex-shrink:0;padding:10px 16px;border-bottom:1px solid var(--practice-border);font-family:var(--practice-font-ui);font-size:var(--practice-text-small);color:var(--practice-text)}
+.header{display:grid;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--practice-border);color:var(--practice-text-muted);font-size:var(--practice-text-caption)}
+.counted{grid-template-columns:minmax(0,2fr) minmax(90px,.65fr) minmax(220px,1fr)}
+.identity{display:flex;align-items:center;gap:10px;min-width:0}
+.icon{display:inline-flex;align-items:center;justify-content:center;flex:none;width:20px;height:22px;color:var(--practice-text-muted)}
+.copy{min-width:0;flex:1}
+.row .copy>button{display:block;min-height:28px;padding:0;border:0;background:transparent;text-align:start;overflow-wrap:anywhere;font:400 var(--practice-text-body)/1.5 var(--practice-font-ui);color:var(--practice-text);cursor:pointer}
+.metadata{margin-top:2px;font-size:var(--practice-text-caption);line-height:1.5;color:var(--practice-text-muted);overflow-wrap:anywhere}
+.metadata svg{display:inline-block;vertical-align:-2px;margin-inline-end:4px}
+.secondaryActions{display:flex;align-items:center;gap:8px}
+.menu{display:flex;flex:none}
+.actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0}
+.row .secondaryActions>button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 8px;border:0;background:transparent;color:var(--practice-text-muted);font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui);white-space:nowrap}
+.row .secondaryActions>button:hover{background:var(--practice-surface-subtle);color:var(--practice-text-secondary)}
+.row .menu>button{width:44px;min-width:44px;height:44px;min-height:44px;padding:8px;justify-content:center}
+.row button:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}
+@media(max-width:700px){.row,.header{display:grid;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--practice-border);color:var(--practice-text-muted);font-size:var(--practice-text-caption)}
+.counted{grid-template-columns:minmax(0,1fr) 44px;gap:8px;min-height:64px;padding:10px 4px}.count,.header{display:none}.secondaryActions{display:none}}

@@ -1,6 +1,7 @@
 'use client';
 import React,{useRef,useState} from 'react';
 import {SharedLabelGroups} from '@/components/library/sharing/SharedLabelGroups';
+import {OwnedSharedCollections} from '@/components/library/sharing/OwnedSharedCollections';
 import {ReceivedCollections} from '@/components/library/sharing/ReceivedCollections';
 import {SearchField} from '@/components/practice/ui/SearchField';
 import theme from '@/components/practice/ui/practiceTheme.module.css';
@@ -16,6 +17,9 @@ export function SearchBoundaryPreview(){const searchInputRef=useRef<HTMLInputEle
  <div className={organization.sharedWorkspace} data-testid="received-row-preview">
  <SharedLabelGroups userId="fixture" locale="en" groups={[{labelId:'group',name:'333',collectionCount:0}]} view="received" onChanged={()=>{}} onOpenCollection={()=>{}}/>
  <ReceivedCollections userId="fixture" locale="en" active={false} embedded onOpen={()=>{}} onAdd={()=>{}} selection={{query:'',sort:'recent',searchInputRef}} catalogOverride={{status:'ready',revision:1,nextCursor:null,loadingMore:false,refresh:async()=>{},loadMore:async()=>{},collections:[{id:'collection',name:'firstXXX',createdAt:'2026-01-01',addedAt:'2026-01-01',ownerUserId:'author',role:'viewer',itemCount:7,labelIds:[],directSubscription:true,groups:[]}]}}/>
+ </div>
+ <div className={organization.sharedWorkspace} data-testid="owned-row-preview">
+ <OwnedSharedCollections userId="fixture" locale="en" active={false} hasGroups onOpen={()=>{}} onChanged={()=>{}} selection={{query:'',sort:'recent',searchInputRef}} groupRows={<SharedLabelGroups userId="fixture" locale="en" groups={[{labelId:'12200000-0000-4000-8000-000000000001',name:'Owned 333',collectionCount:1}]} view="owned" onChanged={()=>{}} onOpenCollection={()=>{}}/>} catalogOverride={{status:'ready',nextCursor:null,loadingMore:false,refresh:async()=>{},loadMore:async()=>{},collections:[{id:'owned',name:'A long collection title about housing and living abroad',createdAt:'2026-01-01',itemCount:7,subscriberCount:1,directPublication:true,groups:[]}]}}/>
  </div>
  {['Words','Collections','Shared','Label assignment'].map(name=><section key={name} className={name==='Label assignment'?organization.editor:organization.organizer}><h2>{name}</h2><div className={organization.assignmentToolbar}><SearchField><input aria-label={name}/></SearchField></div></section>)}
  <section><h2>Other search surfaces</h2>

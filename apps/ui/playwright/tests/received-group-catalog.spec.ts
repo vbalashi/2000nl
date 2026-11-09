@@ -30,3 +30,23 @@ for(const width of [350,390,1200])test(`received group uses main catalog at ${wi
  expect(requests.at(-1)?.searchParams.get('labelId')).toBe(groupId);
  expect(requests.at(-1)?.searchParams.get('languageCode')).toBe('nl');
 });
+
+for(const width of [350,390,705,1200])for(const theme of ['light','dark'])test(`shared publication rows stay readable ${width} ${theme} @received-group-catalog`,async({page})=>{
+ await page.setViewportSize({width,height:900});
+ await page.goto('/dev/search-boundary-preview');
+ await page.getByRole('button',{name:`Use ${theme} theme`}).click();
+ const owned=page.getByTestId('owned-row-preview');
+ const group=owned.getByRole('button',{name:'Owned 333',exact:true});
+ const collection=owned.getByRole('button',{name:'A long collection title about housing and living abroad',exact:true});
+ const names=await Promise.all([group.boundingBox(),collection.boundingBox()]);
+ expect(names[0]!.width).toBeGreaterThan(50);
+ expect(names[1]!.width).toBeGreaterThan(70);
+ expect(Math.abs(names[0]!.x-names[1]!.x)).toBeLessThan(1);
+ for(const name of [group,collection]){
+  const row=name.locator('xpath=ancestor::*[@role="row"][1]');
+  const geometry=await row.evaluate(e=>({height:e.getBoundingClientRect().height,overflow:e.scrollWidth>e.clientWidth+1}));
+  expect(geometry.height).toBeLessThan(140);expect(geometry.overflow).toBe(false);
+ }
+ const actions=await Promise.all(['More actions: Owned 333','More actions · A long collection title about housing and living abroad'].map(name=>owned.getByRole('button',{name,exact:true}).boundingBox()));
+ expect(Math.abs(actions[0]!.x+actions[0]!.width/2-actions[1]!.x-actions[1]!.width/2)).toBeLessThan(1);
+});

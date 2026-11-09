@@ -1,4 +1,5 @@
 'use client';
+import {SharedPublicationRow} from './SharedPublicationRow';
 import React,{useEffect,useRef,useState} from 'react';
 import {MoreHorizontal,Copy,Check} from 'lucide-react';
 import {CollectionAccessIcon} from '../organization/CollectionAccessIcon';
@@ -50,12 +51,7 @@ export function SharedLabelGroups({userId,locale,groups,view,onChanged,onOpenCol
  };
  return <section className={`${s.sharedGroups} ${view==='received'?s.receivedGroups:''}`} aria-label={t.groups}>
   {copyFailed&&<p role="status" className={s.muted}>{shareCopy.copyFailed}</p>}
-  {groups.map(row=><article key={row.labelId} className={view==='owned'?`${s.collection} ${s.sharedGroupRow}`:`${s.collection} ${s.receivedGroupRow}`}>
-   <div className={s.ownedSharedName}><CollectionAccessIcon kind="label" shared received={view==='received'} label={t.groups}/>
-   <div className={s.collectionCopy}><button className={s.collectionName} onClick={()=>setDialog({key,row,kind:'contents'})}>{row.name}</button><p>{t.collections}: {row.collectionCount.toLocaleString(locale)}{view==='owned'&&<span className={s.mobileSubscriberLabel}> · {shareCopy.subscribers}: {counts.key===key?counts.values[row.labelId]?.toLocaleString(locale)??'—':'—'}</span>}</p></div></div>
-   {view==='owned'&&<span className={s.desktopSubscriberCount}>{counts.key===key?counts.values[row.labelId]?.toLocaleString(locale)??'—':'—'}</span>}
-   <div className={s.ownedSharedActions}>{view==='owned'&&<button type="button" className={s.copyLinkAction} onClick={()=>void copyLink(row)}>{copied===row.labelId?<Check size={15} aria-hidden="true"/>:<Copy size={15} aria-hidden="true"/>}{copied===row.labelId?copiedText:shareCopy.copy}</button>}<IconAction label={`${common.more}: ${row.name}`} onClick={event=>setMenu({key,row,anchor:event.currentTarget})}><MoreHorizontal size={16} strokeWidth={1.5}/></IconAction></div>
-  </article>)}
+  {groups.map(row=><SharedPublicationRow key={row.labelId} tableRow={view==='owned'} name={row.name} icon={<CollectionAccessIcon kind="label" shared received={view==='received'} label={t.groups}/>} onOpen={()=>setDialog({key,row,kind:'contents'})} metadata={<>{t.collections}: {row.collectionCount.toLocaleString(locale)}{view==='owned'&&<span className={s.mobileSubscriberLabel}> · {shareCopy.subscribers}: {counts.key===key?counts.values[row.labelId]?.toLocaleString(locale)??'—':'—'}</span>}</>} subscriberCount={view==='owned'?(counts.key===key?counts.values[row.labelId]?.toLocaleString(locale)??'—':'—'):undefined} actions={<>{view==='owned'&&<button type="button" onClick={()=>void copyLink(row)}>{copied===row.labelId?<Check size={15} aria-hidden="true"/>:<Copy size={15} aria-hidden="true"/>}{copied===row.labelId?copiedText:shareCopy.copy}</button>}</>} menu={<IconAction label={`${common.more}: ${row.name}`} onClick={event=>setMenu({key,row,anchor:event.currentTarget})}><MoreHorizontal size={16} strokeWidth={1.5}/></IconAction>}/>)}
   {menu?.key===key&&<ActionMenu language={locale} title={common.more} anchor={menu.anchor} onClose={()=>setMenu(null)} items={[
    ...(view==='owned'?[{id:'copy',label:shareCopy.copy,onSelect:()=>{void copyLink(menu.row);setMenu(null);}}]:[]),
    ...(onOpenLabel?[{id:'catalog',label:t.openInCollections,onSelect:()=>{onOpenLabel(menu.row.labelId);setMenu(null);}}]:[]),
