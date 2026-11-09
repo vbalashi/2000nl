@@ -60,6 +60,7 @@ for(const width of [350,390,705,1200])for(const theme of ['light','dark'])test(`
  for(const name of ['More actions: Owned 333','More actions · A long collection title about housing and living abroad']){
   const style=await owned.getByRole('button',{name,exact:true}).evaluate(e=>({border:getComputedStyle(e).borderTopWidth,background:getComputedStyle(e).backgroundColor}));
   expect(style.border).toBe('0px');expect(style.background).toBe('rgba(0, 0, 0, 0)');
+  const menu=owned.getByRole('button',{name,exact:true});await menu.hover();expect(await menu.evaluate(e=>getComputedStyle(e).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');await page.mouse.move(0,0);
  }
 
 });

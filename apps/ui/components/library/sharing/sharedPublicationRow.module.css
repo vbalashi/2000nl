@@ -11,7 +11,7 @@
 .menu{display:flex;flex:none}
 .actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0}
 .row .secondaryActions>button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 8px;border:0;background:transparent;color:var(--practice-text-muted);font:400 var(--practice-text-caption)/1.5 var(--practice-font-ui);white-space:nowrap}
-.row .secondaryActions>button:hover{background:var(--practice-surface-subtle);color:var(--practice-text-secondary)}
+.row .secondaryActions>button:hover,.row .menu>button:hover{background:var(--practice-surface-subtle);color:var(--practice-text-secondary)}
 .row .menu>button{border:0;background:transparent;color:var(--practice-text-muted);width:44px;min-width:44px;height:44px;min-height:44px;padding:8px;justify-content:center}
 .row button:focus-visible{outline:2px solid var(--practice-focus);outline-offset:2px}
 @media(max-width:700px){.row,.counted{grid-template-columns:minmax(0,1fr) 44px;gap:8px;min-height:64px;padding:10px 4px}.count,.header{display:none}.secondaryActions{display:none}}
