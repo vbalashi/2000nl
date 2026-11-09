@@ -57,6 +57,11 @@ for(const width of [350,390,705,1200])for(const theme of ['light','dark'])test(`
  }
  const actions=await Promise.all(['More actions: Owned 333','More actions · A long collection title about housing and living abroad'].map(name=>owned.getByRole('button',{name,exact:true}).boundingBox()));
  expect(Math.abs(actions[0]!.x+actions[0]!.width/2-actions[1]!.x-actions[1]!.width/2)).toBeLessThan(1);
+ if(width>700){
+  const heading=owned.getByRole('columnheader',{name:'More actions',exact:true});
+  expect(await heading.evaluate(e=>getComputedStyle(e).textAlign)).toBe('end');
+  const box=await heading.boundingBox();expect(Math.abs(box!.x+box!.width-actions[0]!.x-actions[0]!.width)).toBeLessThan(1);
+ }
  for(const name of ['More actions: Owned 333','More actions · A long collection title about housing and living abroad']){
   const style=await owned.getByRole('button',{name,exact:true}).evaluate(e=>({border:getComputedStyle(e).borderTopWidth,background:getComputedStyle(e).backgroundColor}));
   expect(style.border).toBe('0px');expect(style.background).toBe('rgba(0, 0, 0, 0)');

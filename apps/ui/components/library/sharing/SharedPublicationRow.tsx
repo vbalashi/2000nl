@@ -12,5 +12,5 @@ export function SharedPublicationRow({name,icon,metadata,actions,menu,subscriber
 }
 
 export function SharedPublicationHeader({name,subscribers,actions}:{name:string;subscribers:string;actions:string}) {
- return <div className={`${s.header} ${s.counted}`} role="row"><span role="columnheader">{name}</span><span role="columnheader">{subscribers}</span><span role="columnheader">{actions}</span></div>;
+ return <div className={`${s.header} ${s.counted}`} role="row"><span role="columnheader">{name}</span><span role="columnheader">{subscribers}</span><span className={s.actionsHeading} role="columnheader">{actions}</span></div>;
 }
