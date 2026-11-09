@@ -60,6 +60,6 @@ test('own picker metadata yields to fresh rows and does not revive a deleted sou
 
 test('original reference from Collections makes the explicit invitation visible in Shared',()=>{
  vi.stubEnv('NEXT_PUBLIC_COLLECTION_ORGANIZATION_ENABLED','true');vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');
- render(<LibraryDestination {...props}/>);fireEvent.click(screen.getByRole('button',{name:'Collections',exact:true}));fireEvent.click(screen.getByRole('button',{name:'Open original from collection groups'}));
+ render(<LibraryDestination {...props}/>);fireEvent.click(screen.getByRole('button',{name:'Collections'}));fireEvent.click(screen.getByRole('button',{name:'Open original from collection groups'}));
  expect(screen.getByTestId('original-invitation').closest('.hidden')).toBeNull();expect(screen.getByTestId('original-invitation')).toBeVisible();expect(screen.getByTestId('original-invitation')).toHaveTextContent('A'.repeat(26));
 });
