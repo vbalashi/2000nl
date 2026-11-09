@@ -157,3 +157,19 @@ for(const mobile of [false,true])test(`received group selects the normal results
  expect(personalCatalog.mock.calls.at(-1)?.[0].query).toMatchObject({scope:'all',labelId:null});
  expect(screen.queryByRole('button',{name:'Group lesson'})).toBeNull();
  });
+
+test('external group requests select the same account-bound catalog scope and can return to an owned label',async()=>{
+ vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');vi.stubEnv('NEXT_PUBLIC_COLLECTION_SHARING_ENABLED','true');
+ const group={userId:props.userId,id:'00000000-0000-4000-8000-000000000099',name:'Received group',kind:'group' as const,request:1};
+ const view=render(<PersonalCollections {...props} scopeRequest={group}/>);
+ await waitFor(()=>expect(personalCatalog.mock.calls.at(-1)?.[0].query).toMatchObject({scope:'group',labelId:group.id}));
+ fireEvent.change(screen.getByRole('textbox',{name:'Search collections'}),{target:{value:'lesson'}});
+ view.rerender(<PersonalCollections {...props} scopeRequest={group}/>);
+ expect(screen.getByRole('textbox',{name:'Search collections'})).toHaveValue('lesson');
+ view.rerender(<PersonalCollections {...props} scopeRequest={{userId:props.userId,id:labelId,name:'YouTube',kind:'label',request:2}}/>);
+ await waitFor(()=>expect(personalCatalog.mock.calls.at(-1)?.[0].query).toMatchObject({scope:'label',labelId,query:''}));
+ view.rerender(<PersonalCollections {...props} scopeRequest={{...group,request:3}}/>);
+ await waitFor(()=>expect(personalCatalog.mock.calls.at(-1)?.[0].query.scope).toBe('group'));
+ view.rerender(<PersonalCollections {...props} userId="different-account" scopeRequest={group}/>);
+ expect(personalCatalog.mock.calls.at(-1)?.[0].query).toMatchObject({scope:'all',labelId:null});
+});

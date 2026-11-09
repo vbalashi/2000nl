@@ -13,6 +13,11 @@ for(const width of [350,390,1200])test(`received group uses main catalog at ${wi
   const url=new URL(route.request().url());requests.push(url);
   return route.fulfill({json:{revision:0,collections:url.searchParams.get('scope')==='group'?[{id:lessonId,name:'Group lesson',createdAt:'2026-01-01T00:00:00Z',ownership:'received',isShared:true,itemCount:2,labelIds:[]}]:[],nextCursor:null}});
  });
+ await page.route('**/api/library/shared-collections/overview',route=>route.fulfill({json:{sharedByMe:0,addedByMe:0}}));
+ await page.route('**/api/library/shared-collections/owned?*',route=>route.fulfill({json:{collections:[],nextCursor:null}}));
+ await page.route('**/api/library/shared-collections/received?*',route=>route.fulfill({json:{revision:0,collections:[],nextCursor:null}}));
+ await page.route('**/api/library/label-sharing/collections?*',route=>route.fulfill({json:{labelId:groupId,collections:[{collectionId:lessonId,name:'Group lesson'}],nextCursor:null}}));
+ await page.route('**/api/library/label-sharing/references?*',route=>route.fulfill({json:{labelId:groupId,references:[]}}));
  await page.reload();
  const nav=page.locator(width<700?'[data-app-mobile-navigation="tabs"]':'[data-app-primary-navigation="desktop"]');
  await nav.getByRole('button').nth(1).click();
@@ -29,6 +34,18 @@ for(const width of [350,390,1200])test(`received group uses main catalog at ${wi
  expect(requests.at(-1)?.searchParams.get('scope')).toBe('group');
  expect(requests.at(-1)?.searchParams.get('labelId')).toBe(groupId);
  expect(requests.at(-1)?.searchParams.get('languageCode')).toBe('nl');
+ await page.getByRole('button',{name:'Shared',exact:true}).click();
+ await page.getByRole('button',{name:/^Added by me/}).click();
+ await page.getByRole('button',{name:'333',exact:true}).filter({visible:true}).click();
+ const preview=page.getByRole('dialog');
+ await expect(preview.getByRole('button',{name:'Group lesson',exact:true})).toBeVisible();
+ await preview.getByRole('button',{name:'Open in collections',exact:true}).click();
+ await expect(page.getByRole('dialog')).toHaveCount(0);
+ await expect(catalog.getByRole('region',{name:'Collections',exact:true}).getByRole('button',{name:'Group lesson',exact:true})).toBeVisible();
+ expect(requests.at(-1)?.searchParams.get('scope')).toBe('group');
+ expect(requests.at(-1)?.searchParams.get('labelId')).toBe(groupId);
+ await expect(catalog.getByRole('textbox',{name:'Search collections'})).toHaveValue('');
+
 });
 
 for(const width of [350,390,705,1200])for(const theme of ['light','dark'])test(`shared publication rows stay readable ${width} ${theme} @received-group-catalog`,async({page})=>{
