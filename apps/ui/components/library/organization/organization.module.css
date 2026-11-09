@@ -267,3 +267,16 @@
 
 /* Details opened from Shared use a modal without the catalogue pane wrapper. */
 .collectionDetails .detailActions{flex-wrap:wrap;justify-content:flex-end}
+
+/* Received groups and collections share icon, name and trailing action columns. */
+.sharedGroups .receivedGroupRow,.received .collection{display:grid;grid-template-columns:20px minmax(0,1fr) 44px;gap:10px;padding:8px 4px}
+.receivedGroupRow .ownedSharedName{display:contents}
+.receivedGroupRow .collectionCopy{grid-column:2}
+.receivedGroupRow .ownedSharedActions{grid-column:3;grid-row:1;justify-self:end}
+.receivedGroupRow .accessIcon{grid-column:1;grid-row:1}
+
+.organizer .receivedScopeRow>button:last-child{flex:1;width:auto;min-width:0;justify-content:flex-start;padding:6px 8px}
+
+.received .collection>button:last-child{width:44px;min-width:44px;justify-self:end}
+
+.receivedGroups{padding:2px}

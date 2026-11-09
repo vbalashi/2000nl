@@ -48,9 +48,9 @@ export function SharedLabelGroups({userId,locale,groups,view,onChanged,onOpenCol
    if(valid()){setCopied(row.labelId);clearTimeout(copyTimer.current);copyTimer.current=setTimeout(()=>setCopied(null),2500);}
   }catch{if(valid())setCopyFailed(true);}finally{if(copyRequest.current===abort)copyRequest.current=null;}
  };
- return <section className={s.sharedGroups} aria-label={t.groups}>
+ return <section className={`${s.sharedGroups} ${view==='received'?s.receivedGroups:''}`} aria-label={t.groups}>
   {copyFailed&&<p role="status" className={s.muted}>{shareCopy.copyFailed}</p>}
-  {groups.map(row=><article key={row.labelId} className={view==='owned'?`${s.collection} ${s.sharedGroupRow}`:s.collection}>
+  {groups.map(row=><article key={row.labelId} className={view==='owned'?`${s.collection} ${s.sharedGroupRow}`:`${s.collection} ${s.receivedGroupRow}`}>
    <div className={s.ownedSharedName}><CollectionAccessIcon kind="label" shared received={view==='received'} label={t.groups}/>
    <div className={s.collectionCopy}><button className={s.collectionName} onClick={()=>setDialog({key,row,kind:'contents'})}>{row.name}</button><p>{t.collections}: {row.collectionCount.toLocaleString(locale)}{view==='owned'&&<span className={s.mobileSubscriberLabel}> · {shareCopy.subscribers}: {counts.key===key?counts.values[row.labelId]?.toLocaleString(locale)??'—':'—'}</span>}</p></div></div>
    {view==='owned'&&<span className={s.desktopSubscriberCount}>{counts.key===key?counts.values[row.labelId]?.toLocaleString(locale)??'—':'—'}</span>}
