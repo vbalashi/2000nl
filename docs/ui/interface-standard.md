@@ -136,3 +136,14 @@ correction or revision refresh. Empty metadata uses caption-sized muted ink.
 `ActionButton` owns the ordinary dialog action family: `primary` uses the muted selected palette, while `quiet` uses muted text without a border. Its visual surface is 28px high with the shared control radius; the button target is 36px, or 44px for coarse pointers. Hover gently dims the primary surface rather than replacing it with an unrelated surface; keyboard focus remains explicit. Disabled buttons do not receive hover emphasis.
 
 Use explicit variants, never a footer's child order, to identify the primary action. The collection card, label editors, collection membership picker, library filters and normal sharing dialogs use this family. Training launch controls retain their dedicated 44px family. Destructive collection deletion retains its existing treatment pending separate review.
+
+### Shared publication rows
+
+`SharedPublicationRow` owns the icon/name/metadata, subscriber count and trailing
+actions for owned and received groups and collections. Its isolated CSS owns the
+responsive grid; callers supply content and actions without the legacy
+`collection`/`ownedSharedName` layout classes. At mobile widths the count moves
+into metadata and the trailing menu retains a 44px target. Browser checks cover
+the actual group nested inside `OwnedSharedCollections`, including text width,
+row height and action alignment, so equal left offsets alone cannot hide a
+collapsed name column.

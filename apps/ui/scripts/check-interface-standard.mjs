@@ -5,13 +5,13 @@ import postcss from 'postcss';
 import ts from 'typescript';
 
 const base='components/library/';
-export const paths={css:base+'organization/organization.module.css',theme:'components/practice/ui/practiceTheme.module.css',settings:'components/practice/settings/settings.module.css',personal:base+'organization/PersonalCollections.tsx',owned:base+'sharing/OwnedSharedCollections.tsx',received:base+'sharing/ReceivedCollections.tsx',sort:base+'organization/CollectionSortControl.tsx',shared:base+'sharing/SharedCollectionsWorkspace.tsx',actions:'components/practice/ui/launchAction.module.css',release:'components/releases/ReleaseUpdates.tsx',builder:'components/training/pilot/ApprovedTrainingBuilder.tsx'};
+export const paths={publication:base+'sharing/sharedPublicationRow.module.css',css:base+'organization/organization.module.css',theme:'components/practice/ui/practiceTheme.module.css',settings:'components/practice/settings/settings.module.css',personal:base+'organization/PersonalCollections.tsx',owned:base+'sharing/OwnedSharedCollections.tsx',received:base+'sharing/ReceivedCollections.tsx',sort:base+'organization/CollectionSortControl.tsx',shared:base+'sharing/SharedCollectionsWorkspace.tsx',actions:'components/practice/ui/launchAction.module.css',release:'components/releases/ReleaseUpdates.tsx',builder:'components/training/pilot/ApprovedTrainingBuilder.tsx'};
 /** Bounded collection presentation contract; intentionally not a legacy-wide style linter. */
 export function checkInterfaceStandard(read){
  const errors=[];
  const fail=(file,message)=>errors.push(`${file}: ${message}`);
  const css=postcss.parse(read(paths.css),{from:paths.css});
- const roles=[['.labelPanel h2','--practice-text-body-lg'],['.catalogHeader h2','--practice-text-body-lg'],['.collection .collectionName','--practice-text-body'],['.received .collectionName','--practice-text-body'],['.ownedSharedName button','--practice-text-body'],['.labelList button[aria-pressed]','--practice-text-caption']];
+ const roles=[['.labelPanel h2','--practice-text-body-lg'],['.catalogHeader h2','--practice-text-body-lg'],['.collection .collectionName','--practice-text-body'],['.labelList button[aria-pressed]','--practice-text-caption']];
  for(const [selector,token] of roles){
   let found=false;
   css.walkRules(rule=>{if(!rule.selectors.includes(selector))return;rule.walkDecls('font-size',decl=>{found=true;if(decl.value!==`var(${token})`)fail(paths.css,`${selector} must use ${token}, found ${decl.value}`);});});
@@ -25,6 +25,9 @@ export function checkInterfaceStandard(read){
   if(/(?:color|background|fill|stroke)$/.test(decl.prop)&&!/^\s*(?:var\(--practice-[\w-]+\)|transparent|none|inherit|currentColor)\s*$/.test(decl.value))fail(paths.css,`${decl.parent.selector}: ${decl.prop} must use a semantic color token`);
   if(decl.prop==='font'&&decl.value!=='inherit'&&!decl.value.includes('var(--practice-text-'))fail(paths.css,`${decl.parent.selector}: font shorthand must use semantic typography`);
  });
+ const publication=postcss.parse(read(paths.publication));let publicationName=false;
+ publication.walkRules(rule=>{if(rule.selector!=='.row .copy>button')return;rule.walkDecls('font',decl=>{publicationName=true;if(decl.value!=='400 var(--practice-text-body)/1.5 var(--practice-font-ui)')fail(paths.publication,'shared publication names must use body typography');});});
+ if(!publicationName)fail(paths.publication,'shared publication names need explicit body typography');
  const settings=postcss.parse(read(paths.settings));let signOut=false;
  settings.walkRules(rule=>{if(!rule.selectors.includes('.settings .signOut'))return;rule.walkDecls(decl=>{if(decl.prop==='font'){signOut=true;if(decl.value!=='400 var(--practice-text-caption)/1.5 var(--practice-font-ui)')fail(paths.settings,'Sign out must use caption typography at desktop specificity');}if(decl.prop==='font-size'&&decl.value!=='var(--practice-text-body)')fail(paths.settings,'Sign out mobile size must use body typography');});});
  if(!signOut)fail(paths.settings,'Sign out needs its scoped semantic caption font');
