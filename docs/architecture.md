@@ -196,6 +196,14 @@ plan. Direct collection table mutations are unavailable to browser API roles;
 application writes use the authenticated RPC boundary. Group events invalidate
 collection and note views without publishing content in event payloads.
 
+The Platform actions `add-to-list`, `remove-from-list` and `delete-user-list`
+return HTTP 409 with `collection_audience_confirmation_required` when the
+requested change affects a shared audience. No change is applied by that
+request. The owner can use the Library's preview and confirmation flow; the
+Library composition endpoints currently require first-party authentication and
+do not offer a connected-client confirmation flow. Clients must not retry the
+action automatically as if it were a transient server failure.
+
 The public SQL migrations describe fresh installations. They are not a managed
 upgrade procedure. A managed release needs separately reviewed operational
 forward migrations and release authorization; publishing this code does not

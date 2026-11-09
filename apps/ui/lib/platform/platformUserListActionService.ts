@@ -124,6 +124,9 @@ export async function performPlatformUserListAction(
 
     if (error) {
       const detail = error.message ?? String(error);
+      if (detail === "collection_audience_confirmation_required") {
+        return { payload: { error: detail }, status: 409 };
+      }
       if (detail.includes("list_not_found")) {
         return { payload: { error: "list_not_found" }, status: 404 };
       }

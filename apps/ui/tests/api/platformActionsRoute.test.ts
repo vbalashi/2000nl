@@ -1176,6 +1176,24 @@ describe("/api/platform/actions", () => {
     });
   });
 
+  test.each(["add-to-list", "remove-from-list", "delete-user-list"].flatMap(
+    (action) => [false, true].map((connected) => ({ action, connected })),
+  ))(
+    "reports that $action requires confirmation for connected=$connected without retrying the write",
+    async ({ action, connected }) => {
+      const { POST } = await import("@/app/api/platform/v1/actions/route");
+      mockAuthenticatedUser();
+      if (connected) mockConnectedClientPrincipal(["platform:read", "platform:write"]);
+      if (action === "add-to-list") mockAccessibleEntry();
+      rpc.mockResolvedValueOnce({ data: null, error: { message: "collection_audience_confirmation_required", code: "40001" } });
+
+      const response = await POST(request({ action, entryId: "entry-1", listId: "list-1" }));
+      expect(response.status).toBe(409);
+      await expect(response.json()).resolves.toEqual({ error: "collection_audience_confirmation_required" });
+      expect(rpc.mock.calls.filter(([name]) => name === "prepare_collection_composition_v1" || name === "confirm_collection_composition_v1")).toHaveLength(0);
+    },
+  );
+
   test("removes accessible entries from owned user lists", async () => {
     const { POST } = await import("@/app/api/platform/actions/route");
     mockAuthenticatedUser();
