@@ -3,20 +3,20 @@ import {afterEach,beforeAll, beforeEach, expect, test, vi} from "vitest";
 import {fireEvent, render, screen, waitFor, within} from "@testing-library/react";
 import {PersonalCollections} from "@/components/library/organization/PersonalCollections";
 import {LabelsRequestError} from "@/lib/collections/labels/client";
-const {request,create,detailsFetch} = vi.hoisted(()=>({request:vi.fn(),create:vi.fn(),detailsFetch:vi.fn()}));
+const {request,create,detailsFetch,personalCatalog} = vi.hoisted(()=>({request:vi.fn(),create:vi.fn(),detailsFetch:vi.fn(),personalCatalog:vi.fn()}));
 vi.mock('@/lib/platform/platformV2Http',()=>({platformV2AuthenticatedJsonHeaders:vi.fn().mockResolvedValue({})}));
 vi.mock('@/lib/platform/platformFetchWithTimeout',()=>({platformFetchWithTimeout:detailsFetch}));
 vi.mock("@/lib/collections/labels/client",()=>({requestLabels:request,LabelsRequestError:class extends Error {constructor(readonly code:string){super(code);}}}));
 vi.mock("@/lib/training/listService",()=>({createUserList:create,updateUserList:vi.fn(),deleteUserList:vi.fn()}));
-vi.mock('@/components/library/sharing/useLabelSharingCatalog',()=>({useLabelSharingCatalog:()=>({status:'ready',data:{owned:[],received:[{labelId:'received-group',name:'Received group',collectionCount:0}]},refresh:vi.fn()})}));
-vi.mock('@/components/library/sharing/useLabelShareCollections',()=>({useLabelShareCollections:()=>({status:'ready',page:{collections:[],nextCursor:null},references:[{collectionId:'original',name:'Original publication',invitationCode:'A'.repeat(26)}]})}));
+vi.mock('@/components/library/sharing/useLabelSharingCatalog',()=>({useLabelSharingCatalog:()=>({status:'ready',data:{owned:[],received:[{labelId:'00000000-0000-4000-8000-000000000099',name:'Received group',collectionCount:0}]},refresh:vi.fn()})}));
+vi.mock('@/components/library/organization/usePersonalCollectionCatalog',()=>({usePersonalCollectionCatalog:personalCatalog}));
 afterEach(()=>{vi.unstubAllEnvs();});
 const labelId="00000000-0000-4000-8000-000000000001";
 const collectionId="00000000-0000-4000-8000-000000000002";
 const snapshot={revision:4,labels:[{id:labelId,parent_id:null,name:"YouTube",description:null,created_at:"2026-10-25",updated_at:"2026-10-25"}],assignments:[{label_id:labelId,collection_id:collectionId}]};
 const props={active:true,userId:"owner",language:"nl",locale:"en" as const,collections:[{id:collectionId,name:"My lesson",type:"user" as const,item_count:2}],onReload:vi.fn().mockResolvedValue(undefined),onOpen:vi.fn()};
 beforeAll(()=>{HTMLDialogElement.prototype.showModal=function(){this.setAttribute("open","");};HTMLDialogElement.prototype.close=function(){this.removeAttribute("open");};});
-beforeEach(()=>{vi.clearAllMocks();request.mockResolvedValue(snapshot);detailsFetch.mockResolvedValue(Response.json({id:collectionId,name:"My lesson",description:null,source:null,revision:"0",isOwner:true}));});
+beforeEach(()=>{vi.clearAllMocks();personalCatalog.mockImplementation((input)=>({status:'ready',collections:input.query.scope==='group'?[{id:'00000000-0000-4000-8000-000000000098',name:'Group lesson',createdAt:'2026-01-01T00:00:00Z',ownership:'received',isShared:true,itemCount:2,labelIds:[]}]:[],revision:0,nextCursor:null,loadingMore:false,refresh:vi.fn(),loadMore:vi.fn()}));request.mockResolvedValue(snapshot);detailsFetch.mockResolvedValue(Response.json({id:collectionId,name:"My lesson",description:null,source:null,revision:"0",isOwner:true}));});
 test("unlabelled projection changes only display; open keeps exact collection identity",async()=>{
  render(<PersonalCollections {...props}/>);await screen.findByText("My lesson");
  fireEvent.click(screen.getByRole("button",{name:"Unlabelled"}));expect(screen.queryByText("My lesson")).toBeNull();
@@ -137,11 +137,23 @@ test('Escape dismisses an inner dialog before the collection details',async()=>{
  expect(screen.queryByRole('complementary',{name:'Collections'})).toBeNull();
 });
 
-test('mobile scope picker closes before opening an original publication invitation',async()=>{
- vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');const onReference=vi.fn();render(<PersonalCollections {...props} onReference={onReference}/>);
- await screen.findByText('My lesson');
- const scopeButton=screen.getAllByRole('button',{name:'All collections'}).find(button=>!button.hasAttribute('aria-pressed'))!;fireEvent.click(scopeButton);
- const scope=screen.getByRole('dialog',{name:'Choose a label'});fireEvent.click(within(scope).getByRole('button',{name:'Received group'}));
- const contents=screen.getByRole('dialog',{name:'Group contents'});fireEvent.click(within(contents).getByRole('button',{name:'Original publication'}));
- expect(onReference).toHaveBeenCalledWith('A'.repeat(26));expect(screen.queryByRole('dialog')).toBeNull();
+for(const mobile of [false,true])test(`received group selects the normal results area ${mobile?'from the mobile picker':'from the sidebar'}`,async()=>{
+ vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');vi.stubEnv('NEXT_PUBLIC_COLLECTION_SHARING_ENABLED','true');
+ render(<PersonalCollections {...props}/>);await screen.findByRole('button',{name:'Received group'});
+ if(mobile){const scopeButton=screen.getAllByRole('button',{name:'All collections'}).find(button=>!button.hasAttribute('aria-pressed'))!;fireEvent.click(scopeButton);const scope=screen.getByRole('dialog',{name:'Choose a label'});fireEvent.click(within(scope).getByRole('button',{name:'Received group'}));}
+ else fireEvent.click(screen.getByRole('button',{name:'Received group'}));
+ expect(screen.queryByRole('dialog')).toBeNull();expect(within(screen.getByRole('region',{name:'Collections'})).getByRole('button',{name:'Group lesson'})).toBeInTheDocument();
+ expect(personalCatalog.mock.calls.at(-1)?.[0].query).toMatchObject({scope:'group',labelId:'00000000-0000-4000-8000-000000000099',languageCode:'nl'});
+ expect(screen.queryByRole('button',{name:'New collection'})).toBeNull();
+ fireEvent.change(screen.getByRole('textbox',{name:'Search collections'}),{target:{value:'lesson'}});
+ expect(personalCatalog.mock.calls.at(-1)?.[0].query).toMatchObject({scope:'group',query:'lesson'});
 });
+
+ test('received group scope cannot carry across accounts',async()=>{
+ vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');vi.stubEnv('NEXT_PUBLIC_COLLECTION_SHARING_ENABLED','true');
+ const view=render(<PersonalCollections {...props}/>);fireEvent.click(await screen.findByRole('button',{name:'Received group'}));
+ expect(personalCatalog.mock.calls.at(-1)?.[0].query.scope).toBe('group');
+ view.rerender(<PersonalCollections {...props} userId="different-account"/>);
+ expect(personalCatalog.mock.calls.at(-1)?.[0].query).toMatchObject({scope:'all',labelId:null});
+ expect(screen.queryByRole('button',{name:'Group lesson'})).toBeNull();
+ });

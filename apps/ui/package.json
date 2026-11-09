@@ -31,7 +31,8 @@
     "i18n:check-registration": "node scripts/check-interface-registration.mjs",
     "i18n:add": "node scripts/interface-localization.mjs add",
     "i18n:publish": "node scripts/interface-catalog-snapshot.mjs",
-    "test:e2e:i18n": "PLAYWRIGHT_RUNTIME_CATALOGS=true PLAYWRIGHT_OPTIMIZED=true playwright test --grep @runtime-catalog --workers=1"
+    "test:e2e:i18n": "PLAYWRIGHT_RUNTIME_CATALOGS=true PLAYWRIGHT_OPTIMIZED=true playwright test --grep @runtime-catalog --workers=1",
+    "test:e2e:received-groups": "APP_ROLLOUT_PROFILE=pilot NEXT_PUBLIC_COLLECTION_SHARING_ENABLED=true NEXT_PUBLIC_LABEL_SHARING_ENABLED=true playwright test --grep @received-group-catalog --workers=1"
   },
   "dependencies": {
     "@google-cloud/text-to-speech": "^6.4.0",

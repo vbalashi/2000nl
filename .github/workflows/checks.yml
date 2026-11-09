@@ -72,6 +72,7 @@ jobs:
       - run: npm run test:e2e
       - run: npm run test:e2e:i18n
       - run: npm run test:e2e:training-reliability
+      - run: npm run test:e2e:received-groups
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

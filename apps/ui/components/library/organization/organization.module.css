@@ -36,7 +36,7 @@
 
 .editor input:not([type=checkbox]):focus{outline:none;box-shadow:none}
 
-@media(max-width:700px){.catalogHeader .mobileScope{flex:1;min-width:0;width:auto}.mobileScope span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.catalogHeader>button:last-child{width:44px;padding:8px}.catalogHeader>button:last-child span{display:none}}
+@media(max-width:700px){.catalogHeader .mobileScope{flex:1;min-width:0;width:auto}.mobileScope span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.catalogHeader>button:last-child:not(.mobileScope){width:44px;padding:8px}.catalogHeader>button:last-child:not(.mobileScope) span{display:none}}
 
 .invitation{flex:1;overflow:auto;font-family:var(--practice-font-ui);color:var(--practice-text)}
 .invitation p{margin:0;font-size:var(--practice-text-small);line-height:1.6}
@@ -95,7 +95,7 @@
 .collection{padding:8px 4px;gap:10px;align-items:center}
 .collection p{margin:2px 0 0}
 .accessIcon{display:inline-flex;align-self:flex-start;align-items:center;min-height:28px;color:var(--practice-text-muted);flex-shrink:0}
-@media(max-width:700px){.collection{padding:8px 4px}.collection .viewWords{display:inline-flex;font-size:var(--practice-text-small);padding:4px}.catalogHeader>button:last-child{width:auto}.catalogHeader>button:last-child span{display:inline}.organizer .mobileScope{width:auto;max-width:60%}.catalogHeader .mobileScope{flex:1}.scopeDialog .labelPanel{overflow:hidden}.scopeDialog .labelList{overflow:auto}}
+@media(max-width:700px){.collection{padding:8px 4px}.collection .viewWords{display:inline-flex;font-size:var(--practice-text-small);padding:4px}.catalogHeader>button:last-child:not(.mobileScope){width:auto}.catalogHeader>button:last-child:not(.mobileScope) span{display:inline}.organizer .mobileScope{width:auto;max-width:60%}.catalogHeader .mobileScope{flex:1}.scopeDialog .labelPanel{overflow:hidden}.scopeDialog .labelList{overflow:auto}}
 
 .organizer .treeDisclosure{background:transparent;border:0;min-width:20px;padding:0;flex:0 0 20px}
 .organizer .sectionHeading{background:transparent;border:0;justify-content:flex-start;padding:8px 0;font-size:var(--practice-text-body);font-weight:500;color:var(--practice-text-secondary);width:100%}
@@ -112,7 +112,7 @@
 .sharedTop>button,.ownedSharedActions>button,.received .viewWords{background:transparent;border-color:transparent}.ownedSharedHead{border:0;border-bottom:1px solid var(--practice-border);border-radius:0}.ownedSharedName>svg{color:var(--practice-text-muted)}
 @media(max-width:700px){.sharedTop{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}.sharedTop>button{align-self:auto;padding:4px 8px}.ownedSharedRow{background:transparent;border:0;border-bottom:1px solid var(--practice-border);border-radius:0;padding:10px 4px;grid-template-columns:minmax(0,1fr) auto}.ownedSharedName{grid-column:1}.ownedSharedActions{grid-column:2;grid-row:1/3}.ownedSharedActions button:first-child{flex:none}.ownedSharedStatus{grid-column:1}}
 
-@media(max-width:360px){.tabs{gap:8px}.tabs button{gap:4px;white-space:nowrap}.catalogHeader{flex-wrap:nowrap}.catalogHeader .mobileScope{flex-basis:auto;max-width:none}.catalogHeader>button:last-child{margin-inline-start:0;width:44px;min-width:44px;padding:8px}.catalogHeader>button:last-child span{display:none}.collection{display:grid;grid-template-columns:20px minmax(0,1fr) 44px;column-gap:8px;row-gap:0}.collectionCopy{grid-column:2}.collection .viewWords{grid-column:2;grid-row:2;justify-content:flex-start;min-height:44px;padding:0}.collection>button:last-child{grid-column:3;grid-row:1/3;min-width:44px}.collection .accessIcon{grid-column:1;grid-row:1}}
+@media(max-width:360px){.tabs{gap:8px}.tabs button{gap:4px;white-space:nowrap}.catalogHeader{flex-wrap:nowrap}.catalogHeader .mobileScope{flex-basis:auto;max-width:none}.catalogHeader>button:last-child:not(.mobileScope){margin-inline-start:0;width:44px;min-width:44px;padding:8px}.catalogHeader>button:last-child:not(.mobileScope) span{display:none}.collection{display:grid;grid-template-columns:20px minmax(0,1fr) 44px;column-gap:8px;row-gap:0}.collectionCopy{grid-column:2}.collection .viewWords{grid-column:2;grid-row:2;justify-content:flex-start;min-height:44px;padding:0}.collection>button:last-child{grid-column:3;grid-row:1/3;min-width:44px}.collection .accessIcon{grid-column:1;grid-row:1}}
 
 .mobileDetailsDialog{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;margin:0;padding:0;border:0;border-radius:0;background:var(--practice-canvas)}
 

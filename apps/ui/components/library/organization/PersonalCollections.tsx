@@ -39,13 +39,14 @@ import {CollectionDetailsSurface} from "./CollectionDetailsPanel";
 import s from "./organization.module.css";
 
 type CatalogCollection=WordListSummary&{ownership?:'owned'|'received';isShared?:boolean;accessDescription?:string;labelIds?:string[]};
-type Props = {onReference?:(code:string)=>void;requestedLabelId?:string;labelRequest?:number;active: boolean; userId: string; language: string; locale: OnboardingLanguage; collections: WordListSummary[]; onReload: () => Promise<void>; onOpen: (collection: WordListSummary) => void; onOpenReceived?: (collection:WordListSummary)=>void; onOpenLabel?: (label:CollectionLabel) => void};
+type Props = {requestedLabelId?:string;labelRequest?:number;active: boolean; userId: string; language: string; locale: OnboardingLanguage; collections: WordListSummary[]; onReload: () => Promise<void>; onOpen: (collection: WordListSummary) => void; onOpenReceived?: (collection:WordListSummary)=>void; onOpenLabel?: (label:CollectionLabel) => void};
 type Editor = {kind:"label"; id:string; existing?:CollectionLabel} | {kind:"collection"; existing?:WordListSummary} | {kind:"assign"; collection:WordListSummary} | {kind:"delete-label"; label:CollectionLabel} | {kind:"delete-collection"; collection:WordListSummary};
 
-export function PersonalCollections({active, userId, language, locale, collections, onReload, onOpen, onOpenReceived, onOpenLabel, requestedLabelId, labelRequest,onReference}: Props) {
+export function PersonalCollections({active, userId, language, locale, collections, onReload, onOpen, onOpenReceived, onOpenLabel, requestedLabelId, labelRequest}: Props) {
   const t = organizationCopy(locale);
   const labels = usePersonalLabels(active,userId);
   const [scope, setScope] = useState("all");
+  const [receivedScope,setReceivedScope]=useState<{userId:string;id:string;name:string}|null>(null);
   React.useEffect(()=>{if(requestedLabelId){setScope(requestedLabelId);setQuery("");setDetailsSelection(null);}},[requestedLabelId,labelRequest]);
   const [query, setQuery] = useState("");
   const [labelQuery, setLabelQuery] = useState("");
@@ -96,12 +97,13 @@ export function PersonalCollections({active, userId, language, locale, collectio
     target?.focus({preventScroll:true});
   },[editor,receivedEditor]);
   const snapshot = labels.snapshot;
+  const selectedReceived=receivedScope?.userId===userId&&scope===`group:${receivedScope.id}`?receivedScope:null;
   const chosenLabel = snapshot?.labels.find(label => label.id === scope);
-  const effectiveScope = scope === "all" || scope === "unlabelled" || chosenLabel ? scope : "all";
-  const scopeTitle = effectiveScope === "all" ? t.all : effectiveScope === "unlabelled" ? t.unlabelled : labelRowsForScope(snapshot,locale,chosenLabel!.id);
+  const effectiveScope = scope === "all" || scope === "unlabelled" || chosenLabel || selectedReceived ? scope : "all";
+  const scopeTitle = selectedReceived ? sharedLabels.data?.received.find(row=>row.labelId===selectedReceived.id)?.name??selectedReceived.name : effectiveScope === "all" ? t.all : effectiveScope === "unlabelled" ? t.unlabelled : labelRowsForScope(snapshot,locale,chosenLabel!.id);
   const ownRows = useMemo(() => collectionRows(snapshot,collections,effectiveScope,query,sort,locale),[snapshot,collections,effectiveScope,query,sort,locale]);
   const publicationEnabled=process.env.NEXT_PUBLIC_COLLECTION_SHARING_ENABLED==='true';
-  const catalog=usePersonalCollectionCatalog({userId,active:active&&publicationEnabled&&Boolean(snapshot),query:{query,sort,scope:effectiveScope==='all'?'all':effectiveScope==='unlabelled'?'unlabelled':'label',labelId:['all','unlabelled'].includes(effectiveScope)?null:effectiveScope,languageCode:language,limit:50}});
+  const catalog=usePersonalCollectionCatalog({userId,active:active&&publicationEnabled&&Boolean(snapshot),query:{query,sort,scope:selectedReceived?'group':effectiveScope==='all'?'all':effectiveScope==='unlabelled'?'unlabelled':'label',labelId:selectedReceived?selectedReceived.id:['all','unlabelled'].includes(effectiveScope)?null:effectiveScope,languageCode:language,limit:50}});
   const deletion=useCollectionComposition(userId,editor?.kind==='delete-collection'?editor.collection.id:'',()=>{setEditor(null);setDetailsSelection(null);void onReload();void labels.refresh();void catalog.refresh();void sharedLabels.refresh();});
   const sharedAccess=useOwnedSharedCatalog({userId,active:active&&publicationEnabled,query:{query,sort,limit:100}});
   const accessCopy=localizedSection('labelSharing')[locale];
@@ -175,7 +177,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
         <button type="button" aria-label={label.name} aria-pressed={effectiveScope === label.id} title={path} onClick={()=>changeScope(label.id)}><CollectionAccessIcon kind="label" shared={isSharedLabel(label.id)} label={isSharedLabel(label.id)?t.shared:t.labels}/><span>{label.name}{labelQuery.trim() && parents ? ` · ${parents}` : ""}</span></button>
         <button type="button" aria-label={`${t.more}: ${label.name}`} onClick={event=>setMenu({anchor:event.currentTarget,label})}><MoreHorizontal size={16} strokeWidth={1.5}/></button>
       </div>)}
-      {groupSharingEnabled&&<ReceivedGroupScopes onReference={onReference?code=>{setScopeOpen(false);onReference(code);}:undefined} userId={userId} locale={locale} groups={sharedLabels.data?.received??[]} query={labelQuery} onOpen={(id,name)=>{onOpenReceived?.(rows.find(item=>item.id===id)??collections.find(item=>item.id===id)??{id,name,type:"user",ownership:"received"});setScopeOpen(false);}}/>}
+      {groupSharingEnabled&&publicationEnabled&&<ReceivedGroupScopes locale={locale} groups={sharedLabels.data?.received??[]} query={labelQuery} selectedId={selectedReceived?.id??null} onSelect={group=>{setReceivedScope({userId,id:group.labelId,name:group.name});changeScope(`group:${group.labelId}`);}}/>}
       {!labelRows.length && !sharedLabels.data?.received.length && <p className={s.muted}>{t.noLabels}</p>}
     </div>
   </div>;
@@ -183,7 +185,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
   return <div ref={organizerRoot} className={`${s.organizer} ${details?s.withDetails:""}`} data-testid="personal-collections">
     <aside className={s.sidebar}>{scopePicker}</aside>
     <section className={s.catalog} aria-label={t.collections}>
-      <header className={s.catalogHeader}><button type="button" className={s.mobileScope} onClick={()=>setScopeOpen(true)}><Folder size={18}/><span>{scopeTitle}</span><ChevronDown size={16}/></button><h2>{scopeTitle}</h2><button type="button" aria-label={t.newCollection} onClick={()=>begin({kind:"collection"})}><Plus size={18}/><span>{t.newCollection}</span></button></header>
+      <header className={s.catalogHeader}><button type="button" className={s.mobileScope} onClick={()=>setScopeOpen(true)}><Folder size={18}/><span>{scopeTitle}</span><ChevronDown size={16}/></button><h2>{scopeTitle}</h2>{!selectedReceived&&<button type="button" aria-label={t.newCollection} onClick={()=>begin({kind:"collection"})}><Plus size={18}/><span>{t.newCollection}</span></button>}</header>
       <div className={s.filters}><SearchField><input aria-label={t.search} placeholder={t.search} maxLength={200} value={query} onChange={event=>{setQuery(Array.from(event.target.value).slice(0,100).join(''));setPageSize(20);}}/></SearchField><CollectionSortControl locale={locale} value={sort} onChange={value=>{setSort(value);setPageSize(20);}}/></div>
       {labels.error && !editor && <p role="alert">{message(labels.error)} <button onClick={()=>void labels.refresh()} disabled={labels.busy}>{t.retry}</button></p>}
       {groupSharingEnabled&&sharedLabels.status==='error'&&<p role="alert">{t.sharingStatusError} <button onClick={()=>void sharedLabels.refresh()}>{t.retry}</button></p>}

@@ -1,4 +1,5 @@
 import {expect,test} from 'vitest';
+import {parseReceivedCatalogQuery} from '@/lib/collections/sharing/receivedCatalogContract';
 import {parsePersonalCatalogPage,parsePersonalCatalogQuery} from '@/lib/collections/sharing/personalCatalogContract';
 const id='75600000-0000-4000-8000-000000000001';
 const row={id,name:'Lesson',createdAt:'2026-01-01T00:00:00Z',ownership:'received',isShared:true,itemCount:3,labelIds:[]};
@@ -14,4 +15,9 @@ test('personal ownership defaults all and cannot be inferred from publication',(
  for(const ownership of ['shared','private',null,''])expect(parsePersonalCatalogQuery({ownership})).toBeNull();
  const page={revision:0,collections:[row],nextCursor:null};expect(parsePersonalCatalogPage(page,50,'received')).not.toBeNull();expect(parsePersonalCatalogPage(page,50,'owned')).toBeNull();
  expect(parsePersonalCatalogPage({...page,collections:[{...row,ownership:'owned',isShared:true}]},50,'received')).toBeNull();
+});
+
+test('received groups have a separate scope without broadening the personal-label or received catalog query',()=>{
+ expect(parsePersonalCatalogQuery({scope:'group',labelId:id,languageCode:'nl'})).toMatchObject({scope:'group',labelId:id,languageCode:'nl'});
+ expect(parseReceivedCatalogQuery({scope:'group',labelId:id})).toBeNull();expect(parsePersonalCatalogQuery({scope:'group'})).toBeNull();expect(parsePersonalCatalogQuery({scope:'group',labelId:'bad'})).toBeNull();
 });
