@@ -69,6 +69,7 @@ jobs:
           cache-dependency-path: apps/ui/package-lock.json
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e:received-groups
       - run: npm run test:e2e
       - run: npm run test:e2e:i18n
       - run: npm run test:e2e:training-reliability

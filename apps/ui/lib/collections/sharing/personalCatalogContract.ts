@@ -1,7 +1,7 @@
 import {parseSourceOwnership,type SourceOwnership} from './sourceOwnershipContract';
 import {copyUuid} from '@/lib/platform/independentEntryCopyContract';
 import {parseReceivedCatalogQuery,parseReceivedCatalogCursor,type ReceivedCatalogQuery,type ReceivedCatalogCursor} from './receivedCatalogContract';
-export type PersonalCatalogQuery=ReceivedCatalogQuery&{languageCode:string|null;ownership?:SourceOwnership};
+export type PersonalCatalogQuery=Omit<ReceivedCatalogQuery,'scope'>&{scope:ReceivedCatalogQuery['scope']|'group';languageCode:string|null;ownership?:SourceOwnership};
 export type PersonalCollection={id:string;name:string;createdAt:string;ownership:'owned'|'received';isShared:boolean;itemCount:number;labelIds:string[]};
 export type PersonalCatalogPage={revision:number;collections:PersonalCollection[];nextCursor:ReceivedCatalogCursor|null};
 const record=(v:unknown):v is Record<string,unknown>=>Boolean(v)&&typeof v==='object'&&!Array.isArray(v);
@@ -10,7 +10,8 @@ const text=(v:unknown,max:number):v is string=>typeof v==='string'&&[...v].lengt
 export function parsePersonalCatalogQuery(value:unknown): (PersonalCatalogQuery&{ownership:SourceOwnership})|null{
  if(!record(value))return null;const {languageCode,ownership,...rest}=value;const kind=parseSourceOwnership(ownership);if(!kind)return null;
  if(languageCode!==null&&languageCode!==undefined&&(!text(languageCode,16)||!languageCode.trim()))return null;
- const query=parseReceivedCatalogQuery(rest);return query?{...query,languageCode:typeof languageCode==='string'?languageCode.trim():null,ownership:kind}:null;
+ const group=rest.scope==='group';if(group&&!copyUuid(rest.labelId))return null;
+ const query=parseReceivedCatalogQuery(group?{...rest,scope:'all',labelId:null}:rest);return query?{...query,...(group?{scope:'group' as const,labelId:String(rest.labelId).toLowerCase()}:{}),languageCode:typeof languageCode==='string'?languageCode.trim():null,ownership:kind}:null;
 }
 export function parsePersonalCatalogPage(value:unknown,limit:number,ownership:SourceOwnership='all'):PersonalCatalogPage|null{
  if(!Number.isInteger(limit)||limit<1||limit>100||!record(value)||!exact(value,['revision','collections','nextCursor'])||!Number.isInteger(value.revision)||Number(value.revision)<0||Number(value.revision)>2147483646||!Array.isArray(value.collections)||value.collections.length>limit)return null;

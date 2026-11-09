@@ -45,3 +45,11 @@ test('personal ownership is enum-closed and server projections must match it',as
  expect((await catalogGET(new NextRequest('http://localhost/api/library/collections/catalog?ownership=owned'))).status).toBe(502);
  mock.rpc.mockClear();for(const suffix of ['ownership=shared','ownership=owned&ownership=received'])expect((await catalogGET(new NextRequest('http://localhost/api/library/collections/catalog?'+suffix))).status).toBe(400);expect(mock.rpc).not.toHaveBeenCalled();
 });
+
+test('received group scope is passed to the authoritative RPC and unavailable groups are not found',async()=>{
+ mock.abort.mockResolvedValueOnce({data:{revision:0,collections:[],nextCursor:null},error:null});
+ const url=`http://localhost/api/library/collections/catalog?scope=group&labelId=${label}&languageCode=nl`;
+ expect((await catalogGET(new NextRequest(url))).status).toBe(200);expect(mock.rpc).toHaveBeenLastCalledWith('read_personal_collection_catalog_v2',expect.objectContaining({p_scope:'group',p_label_id:label,p_language_code:'nl'}));
+ mock.abort.mockResolvedValueOnce({data:null,error:{message:'label_not_found'}});expect((await catalogGET(new NextRequest(url))).status).toBe(404);
+ mock.rpc.mockClear();expect((await catalogGET(new NextRequest(url+'&userId='+id))).status).toBe(400);expect(mock.rpc).not.toHaveBeenCalled();
+});

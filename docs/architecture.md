@@ -179,6 +179,11 @@ Removing one path preserves other accepted paths and the learner's progress.
 Rotating an invitation keeps existing subscribers; closing and reopening creates
 a new lifetime that requires an explicit new acceptance.
 
+Selecting a received shared label in Collections uses the ordinary main catalog,
+not a contents dialog. The server validates the current accepted group lifetime
+and applies the group boundary before language, search, sorting and pagination.
+Received groups are navigation scopes, never editable personal parent labels.
+
 A received collection placed in a shared label remains a reference to its
 original publication. It never grants access transitively. Publishing borrowed
 private entries requires the independent-copy workflow first.
