@@ -748,9 +748,9 @@
         "undo": "Undo",
         "failed": "Could not complete the action. Try again.",
         "dismiss": "Dismiss",
-        "headwordLabel": "Exclude",
-        "headwordHelp": "Exclude from training in both directions",
-        "headwordDone": "Meaning excluded from word training"
+        "headwordLabel": "Mark both directions as known",
+        "headwordHelp": "I already know this meaning in both directions",
+        "headwordDone": "Both directions marked as known"
       },
       "completedOne": "{count} exercise completed",
       "completedFew": "{count} exercises completed",
@@ -788,7 +788,23 @@
       "knownResult": "Known",
       "excludedResult": "Excluded",
       "completedZero": "{count} exercises completed",
-      "completedTwo": "{count} exercises completed"
+      "completedTwo": "{count} exercises completed",
+      "knownChoice": {
+        "known": "Already know",
+        "learning": "Still learning",
+        "returnToLearning": "Return to learning",
+        "markKnown": "Mark as known",
+        "back": "Go back",
+        "next": "Next",
+        "direct": "Meaning from word",
+        "reverse": "Word from meaning",
+        "loading": "Loading learning status…",
+        "failed": "Could not save your choices. Try again.",
+        "conflict": "Learning status has changed. Go back and try again.",
+        "loadFailed": "Could not load learning status. Go back and try again.",
+        "saving": "Saving…",
+        "choiceLabel": "Choose which directions you know"
+      }
     },
     "cardActions": {
       "knownHelp": "Only this direction",

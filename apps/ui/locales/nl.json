@@ -748,9 +748,9 @@
         "undo": "Ongedaan maken",
         "failed": "De actie is niet gelukt. Probeer opnieuw.",
         "dismiss": "Sluiten",
-        "headwordLabel": "Uitsluiten",
-        "headwordHelp": "In beide richtingen uitsluiten van training",
-        "headwordDone": "Betekenis uitgesloten van woordtraining"
+        "headwordLabel": "Beide richtingen als bekend markeren",
+        "headwordHelp": "Ik ken deze betekenis in beide richtingen",
+        "headwordDone": "Beide richtingen als bekend gemarkeerd"
       },
       "completedOne": "{count} oefening voltooid",
       "completedFew": "{count} oefeningen voltooid",
@@ -788,7 +788,23 @@
       "knownResult": "Bekend",
       "excludedResult": "Uitgesloten",
       "completedZero": "{count} oefeningen voltooid",
-      "completedTwo": "{count} oefeningen voltooid"
+      "completedTwo": "{count} oefeningen voltooid",
+      "knownChoice": {
+        "known": "Ken ik al",
+        "learning": "Nog aan het leren",
+        "returnToLearning": "Weer oefenen",
+        "markKnown": "Markeren als bekend",
+        "back": "Terug",
+        "next": "Verder",
+        "direct": "Betekenis bij het woord",
+        "reverse": "Woord bij de betekenis",
+        "loading": "Leerstatus laden…",
+        "failed": "Je keuzes konden niet worden opgeslagen. Probeer het opnieuw.",
+        "conflict": "De leerstatus is gewijzigd. Ga terug en probeer het opnieuw.",
+        "loadFailed": "De leerstatus kon niet worden geladen. Ga terug en probeer het opnieuw.",
+        "saving": "Opslaan…",
+        "choiceLabel": "Kies welke richtingen je al kent"
+      }
     },
     "cardActions": {
       "knownHelp": "Alleen deze richting",

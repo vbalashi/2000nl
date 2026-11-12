@@ -1,3 +1,5 @@
+const progressRead=vi.hoisted(()=>vi.fn());
+vi.mock("@/lib/platform/meaningProgressClient",()=>({fetchMeaningProgress:progressRead}));
 import { trainingLifecyclePresentationContract } from "./support/trainingLifecycleContract";
 const recordedStudy = vi.hoisted(() => vi.fn());
 vi.mock("@/components/training/useRecordedStudyTime", () => ({ useRecordedStudyTime: recordedStudy }));
@@ -424,23 +426,25 @@ describe("TrainingSenseCardV2Session", () => {
     rerender(view(false)); expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
   });
 
-  test("approved exclusion menu forwards the existing known capability without excluding", async () => {
+  test("known action stages directions and Back preserves the original card without a write", async () => {
     try {
       const onProgressActionAccepted = vi.fn();
-      const markKnown = singleSenseEntry.capabilities.find(capability => capability.actionId === "mark-known")!;
-      performAction.mockResolvedValueOnce({contractVersion:"platform-action-v2", actionId:"mark-known",
-        clientEventId:"known-menu-event", accepted:true, card:singleSenseEntry.card});
+      progressRead.mockResolvedValue({entryId:word.id,revision:"a".repeat(64),exclusionId:null,directions:[{cardTypeId:"word-to-definition",knownMarkId:null},{cardTypeId:"definition-to-word",knownMarkId:null}]});
       render(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition"
         trainingSessionId="existing-session" contentLanguageCode="nl"
         translationTargetLanguageCode="en" interfaceLanguage="en"
         onProgressActionAccepted={onProgressActionAccepted} />);
       await screen.findByRole("heading", {name:"hand"});
-      const exclusion = getUiMessages("en").trainingSession.exclusion;
-      fireEvent.click(screen.getByRole("button", {name:exclusion.headwordHelp}));
+      fireEvent.click(screen.getByRole("button",{name:"Show answer"}));
+      fireEvent.click(screen.getByRole("button",{name:"Mark as known"}));
+      await screen.findByRole("button",{name:"Return to learning"});
+      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
       expect(performAction).not.toHaveBeenCalled();
-      fireEvent.click(screen.getByRole("menuitem", {name:platformV2Message("en",markKnown.messageKey)}));
-      await waitFor(() => expect(onProgressActionAccepted).toHaveBeenCalledWith(markKnown));
-      expect(performAction).toHaveBeenCalledOnce();
+      expect(onProgressActionAccepted).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole("button",{name:"Go back"}));
+      expect(screen.getByRole("button",{name:"Again"})).toBeVisible();
+      expect(screen.getByRole("button",{name:"Mark as known"})).toHaveFocus();
+      expect(performAction).not.toHaveBeenCalled();
       expect(fetchSingleSense).toHaveBeenCalledOnce();
     } finally { vi.unstubAllEnvs(); }
   });

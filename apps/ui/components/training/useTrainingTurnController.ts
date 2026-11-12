@@ -908,7 +908,7 @@ export function useTrainingTurnController(input: Inputs) {
   );
 
   const acceptPlatformProgressAction = useCallback(
-    async (capability: PlatformV2TrainingActionCapability | { actionId: "exclude-pair" | "exclude-headword" }, transitionId?: string) => {
+    async (capability: PlatformV2TrainingActionCapability | { actionId: "exclude-pair" | "exclude-headword" | "set-known-directions" }, transitionId?: string) => {
       if (!currentWord || actionLoadingRef.current) {
         return "accepted-next-unavailable" as const;
       }
@@ -917,7 +917,7 @@ export function useTrainingTurnController(input: Inputs) {
       try {
         // Exclusion affects both directions: a prefetched reverse card may now
         // be unavailable and must return through the authoritative selector.
-        if (capability.actionId === "exclude-pair" || capability.actionId === "exclude-headword") resetPreparedNextTurn();
+        if (capability.actionId === "exclude-pair" || capability.actionId === "exclude-headword" || capability.actionId === "set-known-directions") resetPreparedNextTurn();
         const transition = beginAcceptedCardTransition(transitionId);
         if (!transition) return "accepted-next-unavailable" as const;
         return await finishAcceptedCardTransition(transition, {
