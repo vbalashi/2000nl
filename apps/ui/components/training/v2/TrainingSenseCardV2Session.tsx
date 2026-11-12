@@ -211,6 +211,7 @@ export function TrainingSenseCardV2Session({
   const [busy, setBusy] = React.useState(false);
   const [acceptedActionRecoveryPending, setAcceptedActionRecoveryPending] =
     React.useState(false);
+  const [knownChoiceDockHeight,setKnownChoiceDockHeight]=React.useState(76);
   const [knownChoiceIdentity,setKnownChoiceIdentity]=React.useState<string|null>(null);
   const [knownChoiceReturnIdentity,setKnownChoiceReturnIdentity]=React.useState<string|null>(null);
   const knownActionRef=React.useRef<HTMLButtonElement>(null);
@@ -838,7 +839,7 @@ export function TrainingSenseCardV2Session({
           key={JSON.stringify([cacheOwnerId,trainingSessionId,cardIdentity])}
           entryId={word.id} sessionId={trainingSessionId} direction={mode}
           headword={model.plainHeadword ?? model.headword} definition={selectTrainingReversePrompt([...model.definitions,...model.examples])?.text ?? model.definitions[0]?.text ?? ""}
-          language={interfaceLanguage} contentLanguage={contentLanguageCode} disabled={interactionDisabled}
+          language={interfaceLanguage} contentLanguage={contentLanguageCode} disabled={interactionDisabled} dockHeight={knownChoiceDockHeight}
           onBack={()=>{setKnownChoiceReturnIdentity(JSON.stringify([cacheOwnerId,trainingSessionId,cardIdentity]));setKnownChoiceIdentity(null);}} onPendingChange={onProgressActionPendingChange} onStarting={onProgressActionStarting}
           onAccepted={async()=>{await onProgressActionAccepted({actionId:"set-known-directions"});}}
         /> : <TrainingSenseCardStage
@@ -872,7 +873,11 @@ export function TrainingSenseCardV2Session({
           exclusionAction={exclusion.available ? (
             <TrainingExcludeAction language={interfaceLanguage}
               buttonRef={knownActionRef}
-              onChooseKnown={ordinaryRecall ? ()=>{setKnownChoiceReturnIdentity(null);setKnownChoiceIdentity(JSON.stringify([cacheOwnerId,trainingSessionId,cardIdentity]));} : undefined}
+              onChooseKnown={ordinaryRecall ? ()=>{
+                // Preserve the current action footprint, including wrapped review buttons.
+                const dock=knownActionRef.current?.closest("footer");
+                if(dock)setKnownChoiceDockHeight(dock.getBoundingClientRect().height);
+                setKnownChoiceReturnIdentity(null);setKnownChoiceIdentity(JSON.stringify([cacheOwnerId,trainingSessionId,cardIdentity]));} : undefined}
               scope={mode === "word-to-definition" || mode === "definition-to-word" ? "headword" : "pair"}
               knownAction={model.markKnownCapability ? {
                 label: platformV2Message(interfaceLanguage, model.markKnownCapability.messageKey),

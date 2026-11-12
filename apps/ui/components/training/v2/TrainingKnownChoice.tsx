@@ -8,17 +8,18 @@ import { fetchMeaningProgress } from "@/lib/platform/meaningProgressClient";
 import { saveTrainingKnownChoice } from "@/lib/platform/trainingKnownChoiceClient";
 import type { MeaningLearningProgress } from "../../../../../packages/shared/types/meaningLearningProgress";
 import { meaningDirections, type MeaningDirection, type TrainingKnownChoiceRequest } from "../../../../../packages/shared/types/trainingKnownChoice";
+import { TrainingCardShell, trainingStageClassName } from "./TrainingCardTemplates";
 import approved from "../approvedTrainingCard.module.css";
 import s from "./TrainingKnownChoice.module.css";
 
 type Props = {
   entryId: string; sessionId: string; direction: MeaningDirection; headword: string; definition: string;
-  language: OnboardingLanguage; contentLanguage: string; disabled?: boolean;
+  language: OnboardingLanguage; contentLanguage: string; disabled?: boolean; dockHeight?: number;
   onBack: () => void; onAccepted: () => Promise<void>; onPendingChange?: (pending: boolean, token: object) => void;
   onStarting?: () => void;
 };
 /** Local draft only. Freeze one complete intent at submission, including retries. */
-export function TrainingKnownChoice({entryId, sessionId, direction, headword, definition, language, contentLanguage, disabled=false, onBack, onAccepted, onPendingChange, onStarting}: Props) {
+export function TrainingKnownChoice({entryId, sessionId, direction, headword, definition, language, contentLanguage, disabled=false, dockHeight=76, onBack, onAccepted, onPendingChange, onStarting}: Props) {
   const t=getUiMessages(language).trainingSession.knownChoice;
   const [progress,setProgress]=React.useState<MeaningLearningProgress|null>(null);
   const [known,setKnown]=React.useState<MeaningDirection[]>([]);
@@ -53,8 +54,8 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
   };
   // An uncertain write must be reconciled with the same intent, not silently cancelled.
   const frozenUncertain=Boolean(frozen.current)&&!accepted.current&&error!=="conflict";
-  return <section className={s.stage} aria-label={t.choiceLabel}>
-    <div className={s.shell}>
+  return <section className={trainingStageClassName()} aria-label={t.choiceLabel}>
+    <TrainingCardShell answerVisible={false}>
       <div className={s.body}>
         <LogOut size={40} strokeWidth={1.4} className={s.icon} aria-hidden="true"/>
         {!progress&&!error?<p className={s.loading} role="status">{t.loading}</p>:null}
@@ -71,7 +72,9 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
         {error?<p role="alert" className={s.error}>{t[error]}</p>:null}
         <button type="button" className={`${s.link} ${s.back}`} disabled={busy||disabled||frozenUncertain||accepted.current} onClick={onBack}>{t.back}</button>
       </div>
+    </TrainingCardShell>
+    <footer data-testid="training-sense-card-dock" className="shrink-0" style={{height:dockHeight}}>
       <button type="button" ref={nextRef} className={`${approved.primary} ${s.next}`} disabled={!progress||busy||handedOff||disabled||error==="conflict"} onClick={()=>void submit()}>{busy?t.saving:t.next}</button>
-    </div>
+    </footer>
   </section>;
 }
