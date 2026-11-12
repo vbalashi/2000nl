@@ -76,20 +76,20 @@ export function TrainingCardShell({
       className={`relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden ${approved.shell} ${answerVisible ? "gap-[6px] p-[18px]" : ""}`}
     >
       <CompactAnswerContext.Provider value={compact}>
-        {compact ? <CompactAnswerReading label={contentLabel} scrollMoreLabel={scrollMoreLabel} onReachEnd={onReachEnd}>{reminder}{children}</CompactAnswerReading> : <>{reminder}{children}</>}
+        <CompactAnswerReading compact={compact} label={contentLabel} scrollMoreLabel={scrollMoreLabel} onReachEnd={onReachEnd}>{reminder}{children}</CompactAnswerReading>
       </CompactAnswerContext.Provider>
     </article>
   );
 }
 
-function CompactAnswerReading({label,scrollMoreLabel,onReachEnd,children}: {label:string; scrollMoreLabel:string; onReachEnd?:()=>void; children:React.ReactNode}) {
+function CompactAnswerReading({compact,label,scrollMoreLabel,onReachEnd,children}: {compact:boolean; label:string; scrollMoreLabel:string; onReachEnd?:()=>void; children:React.ReactNode}) {
   const {preferences} = useTrainingInteractions();
   const focusPending = React.useRef(false);
   const viewport = React.useRef<HTMLDivElement>(null);
   const [scroll, setScroll] = React.useState({top:false,bottom:false});
   const update = React.useCallback(() => {
     const node = viewport.current;
-    if (!node) return;
+    if (!node || !compact) return;
     const remaining = node.scrollHeight - node.clientHeight - node.scrollTop;
     if (remaining <= 2 && focusPending.current) {
       focusPending.current = false;
@@ -99,23 +99,23 @@ function CompactAnswerReading({label,scrollMoreLabel,onReachEnd,children}: {labe
       const next = {top:node.scrollTop > 2, bottom:remaining > 2};
       return previous.top === next.top && previous.bottom === next.bottom ? previous : next;
     });
-  }, [onReachEnd]);
+  }, [compact, onReachEnd]);
   React.useLayoutEffect(() => {
     const node = viewport.current;
-    if (!node) return;
+    if (!node || !compact) return;
     update();
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
     observer?.observe(node);
     if (node.firstElementChild) observer?.observe(node.firstElementChild);
     return () => observer?.disconnect();
-  }, [children, update]);
+  }, [children, compact, update]);
   const maskImage = scrollMask(scroll.top, scroll.bottom);
-  return <div className="relative min-h-0 flex-1">
-    <div ref={viewport} data-testid="training-answer-scroll" role="region" aria-label={label} tabIndex={0}
-      data-scroll-top={scroll.top ? "faded" : "clear"} data-scroll-bottom={scroll.bottom ? "faded" : "clear"}
-      onScroll={update} onKeyDown={event => { if (event.key === " ") event.stopPropagation(); }}
-      style={{maskImage, WebkitMaskImage:maskImage}} className={approved.compactAnswerScroll}><div>{children}</div></div>
-    {scroll.bottom ? <button type="button" aria-label={scrollMoreLabel} className={chrome.scrollCue}
+  return <div className={compact ? "relative min-h-0 flex-1" : "contents"}>
+    <div ref={viewport} data-testid={compact ? "training-answer-scroll" : undefined} data-reading-layout={compact ? "compact" : undefined} role={compact ? "region" : undefined} aria-label={compact ? label : undefined} tabIndex={compact ? 0 : undefined}
+      data-scroll-top={compact ? (scroll.top ? "faded" : "clear") : undefined} data-scroll-bottom={compact ? (scroll.bottom ? "faded" : "clear") : undefined}
+      onScroll={compact ? update : undefined} onKeyDown={event => { if (compact && event.key === " ") event.stopPropagation(); }}
+      style={compact ? {maskImage, WebkitMaskImage:maskImage} : undefined} className={compact ? approved.compactAnswerScroll : "contents"}><div className={compact ? undefined : "contents"}>{children}</div></div>
+    {compact && scroll.bottom ? <button type="button" aria-label={scrollMoreLabel} className={chrome.scrollCue}
       onClick={() => { focusPending.current = true; viewport.current?.scrollBy({top:Math.max(120,(viewport.current?.clientHeight ?? 0)*0.65),behavior:preferences.animation && !window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "auto"}); }}>
       <ChevronDown aria-hidden="true" className="h-4 w-4" /></button> : null}
   </div>;
@@ -430,6 +430,7 @@ export function TrainingCardAnswerBody({
       <div
         ref={scrollRef}
         data-testid={compact ? undefined : "training-answer-scroll"}
+        data-reading-layout={compact ? undefined : "regular"}
         role={compact ? undefined : "region"}
         aria-label={compact ? undefined : t("senseCard.training.content")}
         tabIndex={compact ? undefined : 0}

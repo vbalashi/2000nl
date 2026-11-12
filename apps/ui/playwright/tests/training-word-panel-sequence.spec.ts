@@ -23,6 +23,7 @@ for (const width of [320, 390, 1024]) {
     ));
     const stage = page.getByTestId("training-sense-card-stage");
     const opener = stage.getByRole("button", { name: /Word details|Woorddetails|Сведения о слове/i });
+    await opener.evaluate(node => node.setAttribute("data-qa-stable-opener", "true"));
     await opener.click();
     const panel = page.getByRole("dialog", { name: /Word details|Woorddetails|Сведения о слове/i });
     await expect(panel).toBeVisible();
@@ -66,6 +67,8 @@ for (const width of [320, 390, 1024]) {
     await expect.poll(()=>reading.evaluate(node=>node.scrollTop)).toBeGreaterThan(0);
     expect(await panel.evaluate(node=>node.scrollWidth<=node.clientWidth)).toBe(true);
     await page.setViewportSize({width,height:844});
+    // The dialog's saved focus target must survive both layout transitions.
+    await expect(stage.locator('[data-onboarding="details"]')).toHaveAttribute("data-qa-stable-opener", "true");
     await panel.getByRole("button", { name: /Close|Sluiten|Закрыть/, exact: true }).focus();
     await page.keyboard.press("Shift+Tab");
     // Native modality permits browser chrome focus, but never the page behind it.
