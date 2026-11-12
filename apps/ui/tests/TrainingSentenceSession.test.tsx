@@ -53,6 +53,8 @@ const content = (() => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockReset().mockResolvedValue(candidate);
+  vi.mocked(loadSentenceExerciseContent).mockReset();
   focusedNotes.read.mockReset().mockResolvedValue([]);focusedNotes.refresh=undefined;
   vi.mocked(requestPlatformV2LibraryTranslation).mockResolvedValue("pending");
   vi.mocked(readTranslationTrainingStats).mockResolvedValue({ contractVersion: "training-translation-stats-v1", newCardsToday: 1, reviewCardsDone: 0, reviewCardsDue: 0, totalCardsStarted: 1, totalCardsInScope: 1 });
@@ -102,7 +104,9 @@ test("sentence session reveals the selected translation, grades the same identit
   expect(await screen.findByText("Переведённый пример.")).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
   expect(screen.getByText(content.sentence.text)).toBeVisible();
-  expect(screen.getByText("Переведённый пример.")).toBeVisible();
+  expect(screen.getByTestId("training-question-reminder")).toHaveTextContent("Переведённый пример.");
+  const answerTranslation = screen.getAllByText("Переведённый пример.").find(element => element.dataset.contentTranslation === "true");
+  expect(answerTranslation).toBeVisible();
   fireEvent.click(screen.getByRole("button", { name: "Good" }));
   await waitFor(() => expect(performPlatformV2TranslationExerciseAction).toHaveBeenCalledWith(expect.objectContaining({ trainingSessionId: session.sessionId, candidate: expect.objectContaining({ targetId: candidate.targetId, family: "translation", direction: "recall" }), reviewResult: "success" })));
   expect(await screen.findByText("Session complete")).toBeVisible();
