@@ -173,7 +173,8 @@ test("failure remains recoverable without exposing rating controls", async ({
     page.getByRole("button", { name: "Sessie sluiten" }),
   ).toBeVisible();
   await expect(page.getByTestId("training-sense-card-dock")).toBeHidden();
-  await expect(failure.getByRole("button")).toHaveCount(2);
+  await expect(failure.getByRole("button")).toHaveCount(1);
+  await expect(failure.getByRole("button", { name: /Opnieuw proberen|Повторить|Try again/i })).toBeEnabled();
   await page.screenshot({
     path: testInfo.outputPath("phone-light-failure.png"),
   });
