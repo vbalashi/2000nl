@@ -23,5 +23,21 @@ BEGIN
   RAISE EXCEPTION 'db-contract-gate: Known choice event/mapping RLS'; END IF;
  IF has_table_privilege('authenticated','private.training_known_choice_events','SELECT') OR has_table_privilege('service_role','private.meaning_exclusion_known_conversions','UPDATE') THEN
   RAISE EXCEPTION 'db-contract-gate: Known choice event/mapping privileges'; END IF;
+ IF has_function_privilege('service_role','private.perform_legacy_pair_exclusion_as_principal_v1(uuid,text,uuid,uuid,text,uuid,uuid,uuid)','EXECUTE')
+  OR has_function_privilege('service_role','private.convert_ordinary_pair_to_known_v1(uuid)','EXECUTE')
+  OR has_table_privilege('service_role','private.ordinary_pair_known_conversions','UPDATE') THEN RAISE EXCEPTION 'db-contract-gate: pair conversion owner exposed'; END IF;
+ IF NOT(SELECT relrowsecurity FROM pg_class WHERE oid='private.ordinary_pair_known_conversions'::regclass) THEN RAISE EXCEPTION 'db-contract-gate: pair conversion RLS'; END IF;
+ IF EXISTS(SELECT 1 FROM private.training_headword_exclusions WHERE restored_at IS NULL)
+  OR EXISTS(SELECT 1 FROM private.training_pair_exclusions WHERE restored_at IS NULL) THEN
+  RAISE EXCEPTION 'db-contract-gate: ordinary exclusion transfer incomplete'; END IF;
+ IF NOT(SELECT relrowsecurity FROM pg_class WHERE oid='private.training_exercise_known_marks'::regclass)
+  OR has_table_privilege('authenticated','private.training_exercise_known_marks','SELECT')
+  OR has_table_privilege('service_role','private.training_exercise_known_marks','UPDATE')
+  OR has_function_privilege('service_role','private.set_training_exercise_known_v1(uuid,uuid,boolean,uuid)','EXECUTE')
+  OR has_function_privilege('anon','public.get_training_exercise_known_state_v1(uuid)','EXECUTE')
+  OR NOT has_function_privilege('authenticated','public.get_training_exercise_known_state_v1(uuid)','EXECUTE')
+  OR has_function_privilege('anon','public.get_training_exercise_known_choices_v1(uuid)','EXECUTE')
+  OR NOT has_function_privilege('authenticated','public.get_training_exercise_known_choices_v1(uuid)','EXECUTE') THEN
+  RAISE EXCEPTION 'db-contract-gate: content Known authority boundary'; END IF;
 END; $known_choice$;
 COMMIT;

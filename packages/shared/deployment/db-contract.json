@@ -351,12 +351,12 @@
     {
       "migrationId": 365,
       "file": "db/migrations/365_meaning_exclusion_known_compatibility.sql",
-      "sha256": "a59f96bb758ba38b3ac496707ae86ccc7595445d9f97d38a9a5d9aeec6662aa7"
+      "sha256": "d2ce463d684ec0c9f7af843f7dc7555db7c2730d97058c9bca04a0343318f884"
     },
     {
       "migrationId": 366,
       "file": "db/migrations/366_training_history_actions.sql",
-      "sha256": "7c00104babe2ac9d35d6b78bd6bd104b2d28f6c9f8e10461dd37111240d2eab0"
+      "sha256": "6a7adbe93ba309a0fb27bc9b0b8ebe04241cd427598f2be7baf8c7c32cd0000e"
     },
     {
       "migrationId": 367,

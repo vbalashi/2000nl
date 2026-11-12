@@ -65,3 +65,18 @@ Independent content-bound idiom/translation exercises and audio have distinct
 identity and state owners. They must not acquire ordinary Entry Known marks merely
 because their parent meaning is known. No temporary freeze action is introduced
 by this editor.
+
+Historical exclusions preserve their old blocking scope: whole meanings and
+ordinary recall pair keys become Known in both recall directions; audio remains
+specific to listen-recognize/type. An old idiom pair becomes Known for both own
+content-bound directions; sentence translation becomes Known for its own recall
+target. None of these exercise marks changes the source meaning's learning state.
+The persisted pair predicate owns scope, regardless of which side initiated the
+original request. Old receipts and actual reviews remain immutable.
+
+Library → meaning → learning progress permanently lists converted idioms and
+translations, their actual directions and Return to learning. This recovery path
+uses authenticated own-user state and the original receipt owner; it does not
+depend on the transient undo notification. Active training blocks the Library
+mutation. Shared conversion ownership preserves other exclusions, pre-existing
+Known marks, and replacement marks on exact undo.

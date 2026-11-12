@@ -7,7 +7,7 @@ CREATE INDEX training_known_events_recent_idx ON public.user_card_action_events 
 -- Their original exclusion remains the user action; do not invent new history.
 CREATE FUNCTION private.training_history_is_conversion_event_v1(p_user uuid,p_entry uuid,p_event uuid,p_action text,p_created timestamptz)
 RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO pg_catalog,public,private,pg_temp AS $$
-DECLARE converted boolean := false;
+DECLARE converted boolean := false; pair_converted boolean := false; exercise_converted boolean := false;
 BEGIN
  IF to_regclass('private.meaning_exclusion_known_conversions') IS NOT NULL THEN
   EXECUTE $query$
@@ -15,10 +15,23 @@ BEGIN
     JOIN public.user_card_known_marks k ON k.id=ANY(c.introduced_mark_ids)
     WHERE c.user_id=$1 AND c.entry_id=$2 AND k.user_id=$1 AND k.entry_id=$2
       AND (($4='mark-known' AND k.mark_event_id=$3)
-        OR ($4='undo-known' AND k.undo_event_id=$3 AND c.undone_at=$5)))
+        OR ($4='undo-known' AND k.undo_event_id=$3 AND $3=ANY(c.undo_event_ids))))
   $query$ INTO converted USING p_user,p_entry,p_event,p_action,p_created;
  END IF;
- RETURN converted;
+ IF to_regclass('private.ordinary_pair_known_conversions') IS NOT NULL THEN
+  EXECUTE $query$
+   SELECT EXISTS (SELECT 1 FROM private.ordinary_pair_known_conversions c
+    JOIN public.user_card_known_marks k ON k.id=ANY(c.introduced_mark_ids)
+    WHERE c.user_id=$1 AND c.entry_id=$2 AND k.user_id=$1 AND k.entry_id=$2
+      AND (($4='mark-known' AND k.mark_event_id=$3)
+        OR ($4='undo-known' AND k.undo_event_id=$3 AND $3=ANY(c.undo_event_ids))))
+  $query$ INTO pair_converted USING p_user,p_entry,p_event,p_action,p_created;
+ END IF;
+ SELECT EXISTS(SELECT 1 FROM private.ordinary_pair_known_conversions c JOIN private.training_exercise_known_marks k ON k.id=ANY(c.introduced_mark_ids)
+   JOIN private.platform_v2_training_exercise_targets t ON t.id=k.target_id
+   WHERE c.user_id=p_user AND c.entry_id=p_entry AND k.user_id=p_user AND t.entry_id=p_entry
+    AND ((p_action='mark-known' AND k.mark_event_id=p_event) OR(p_action='undo-known' AND k.undo_event_id=p_event AND p_event=ANY(c.undo_event_ids)))) INTO exercise_converted;
+ RETURN converted OR pair_converted OR exercise_converted;
 END $$;
 REVOKE ALL ON FUNCTION private.training_history_is_conversion_event_v1(uuid,uuid,uuid,text,timestamptz) FROM PUBLIC,anon,authenticated,service_role;
 DO $$ BEGIN
@@ -183,18 +196,20 @@ BEGIN
    ORDER BY e.created_at DESC,e.id DESC LIMIT v_limit+1)
   UNION ALL
   (SELECT 'pair-exclusion:'||e.id::text,w.id,w.headword,w.part_of_speech,
-    CASE e.action WHEN 'exclude-pair' THEN CASE WHEN x.family='meaning' THEN 'known' ELSE 'excluded' END ELSE 'restored' END,
-    CASE WHEN x.family='meaning' THEN CASE
+    CASE e.action WHEN 'exclude-pair' THEN CASE WHEN x.family='meaning' OR conversion.target_id IS NOT NULL THEN 'known' ELSE 'excluded' END ELSE 'restored' END,
+    CASE WHEN x.family='meaning' THEN COALESCE(conversion.card_type_id,CASE
       WHEN x.pair_key LIKE '%:recall' THEN 'both-directions'
       WHEN x.pair_key LIKE '%:listen-recognize' THEN 'listen-recognize'
-      WHEN x.pair_key LIKE '%:listen-type' THEN 'listen-type' END END,
+      WHEN x.pair_key LIKE '%:listen-type' THEN 'listen-type' END) END,
     CASE WHEN x.family='meaning' THEN 'meaning' ELSE x.family END,
-    NULL::text,NULL::uuid,
+    CASE WHEN x.family='idiom' THEN NULL ELSE exercise_target.direction END,conversion.target_id,
     CASE WHEN w.archived_at IS NULL AND n.source_text_fingerprint=x.source_text_fingerprint
       THEN NULLIF(btrim(n.canonical_source_text),'') END,e.created_at
    FROM private.training_pair_exclusion_events e
    JOIN private.training_pair_exclusions x ON x.id=e.exclusion_id AND x.user_id=e.user_id
    JOIN public.word_entries w ON w.id=x.entry_id
+   LEFT JOIN private.ordinary_pair_known_conversions conversion ON conversion.exclusion_id=x.id AND conversion.user_id=x.user_id
+   LEFT JOIN private.platform_v2_training_exercise_targets exercise_target ON exercise_target.id=conversion.target_id AND exercise_target.entry_id=w.id
    LEFT JOIN private.platform_v2_content_nodes n ON n.id=x.content_node_id AND n.entry_id=w.id
    WHERE e.user_id=v_user AND private.training_history_entry_access_v1(v_user,w.id)
    ORDER BY e.created_at DESC,e.id DESC LIMIT v_limit+1)

@@ -107,8 +107,8 @@ const projectHistoryRow = (
   }
 
   const ordinary = row.exercise_family === "meaning";
-  const exclusionExercise = (row.review_result === "excluded" || row.review_result === "restored") &&
-    (row.exercise_family === "idiom" || row.exercise_family === "translation") && row.exercise_direction === null && row.target_id === null;
+  const exclusionExercise = (row.review_result === "excluded" || row.review_result === "restored" || row.review_result === "known") &&
+    (row.exercise_family === "idiom" || row.exercise_family === "translation") && row.exercise_direction === null && (row.target_id === null || isString(row.target_id));
   const exercise = (row.exercise_family === "idiom" &&
     (row.exercise_direction === "direct" || row.exercise_direction === "reverse")) ||
     (row.exercise_family === "translation" && row.exercise_direction === "recall");
