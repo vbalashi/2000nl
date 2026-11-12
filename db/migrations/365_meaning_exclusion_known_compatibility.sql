@@ -25,7 +25,7 @@ CREATE FUNCTION private.set_training_exercise_known_v1(p_user uuid,p_target uuid
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public,private,extensions,pg_temp AS $$
 DECLARE target private.platform_v2_training_exercise_targets%rowtype; mark private.training_exercise_known_marks%rowtype; event_id uuid:=gen_random_uuid(); client_id uuid:=gen_random_uuid();
 BEGIN
- IF auth.uid() IS DISTINCT FROM p_user THEN RAISE EXCEPTION 'unauthorized' USING ERRCODE='42501'; END IF;
+ IF (select auth.uid()) IS DISTINCT FROM p_user THEN RAISE EXCEPTION 'unauthorized' USING ERRCODE='42501'; END IF;
  SELECT * INTO target FROM private.platform_v2_training_exercise_targets WHERE id=p_target AND family IN ('idiom','translation');
  IF NOT FOUND THEN RAISE EXCEPTION 'training_exercise_target_unavailable'; END IF;
  PERFORM private.lock_shared_learning_source_v1(p_user,target.entry_id);

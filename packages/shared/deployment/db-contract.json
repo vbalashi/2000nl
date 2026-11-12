@@ -351,7 +351,7 @@
     {
       "migrationId": 365,
       "file": "db/migrations/365_meaning_exclusion_known_compatibility.sql",
-      "sha256": "d2ce463d684ec0c9f7af843f7dc7555db7c2730d97058c9bca04a0343318f884"
+      "sha256": "12a4398d5d07427fd77fe3e19745bb7adf39c044196baa8e560b7bc2023b8dfc"
     },
     {
       "migrationId": 366,
@@ -372,6 +372,6 @@
   "postflightProbe": "db/deploy-contract/postflight-368.sql",
   "readOnlyPostflightProbe": {
     "file": "db/deploy-contract/read-only-postflight-368.sql",
-    "sha256": "5906e87f3e206fce909cbe332d4cf7901fb0ae9bf90b97fdf77167dee7c39be0"
+    "sha256": "ae3b24f90953aa2f644e224e2a56052dc54d84c7cde1267262f638de8f9866e3"
   }
 }
