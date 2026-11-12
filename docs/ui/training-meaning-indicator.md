@@ -16,8 +16,8 @@ and distinct source ordinals covering 1 through N.
 User dictionaries have per-entry sharing. Their visible rows cannot prove full
 membership, even when their ordinals are consecutive. Unknown dictionary kinds,
 partial pages, over-bound groups and inconsistent identity also provide no total.
-The current-card reader's pre-existing count is discarded before this optional
-read, including when the read fails. Only a validated total is projected; the
+The RPC row's pre-existing count is never used, including when the optional
+read fails. Only a validated total is projected; the
 exact entry remains renderable when a total is unavailable. Neither hidden entry
 IDs nor a count of inaccessible members is added to the response.
 
@@ -27,3 +27,16 @@ full-membership/access check, not a client inference or just consecutive numbers
 
 History has its own access-checked batch projection. Keep its completeness and
 source-identity semantics aligned without using history row positions as ordinals.
+
+The lookup projection reads totals only from an internal map populated by that
+completeness check, never directly from an RPC row's `meanings_count`. Permit
+reads populate it from the optional article read. First loads and prefetch run
+the same check on their existing exact training-group response; they need no
+additional RPC. Other lookup paths leave the map empty. This map is server-local
+and is not part of the response contract.
+
+The training model requires the explicit validated `meaningCount` field. It never
+substitutes `group.entryCount`: that value is the number of visible projected rows,
+which can be a partial shared article. The regression test drives the real lookup
+service through the training HTTP transport, first-fetch/prefetch consumption,
+and the training model for both gapped and consecutive shared subsets.
