@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { LogOut } from "lucide-react";
+import { ArrowLeft, ArrowRight, LogOut } from "lucide-react";
 import { DirectionCard } from "@/components/practice/builder/DirectionCard";
 import { getUiMessages } from "@/lib/uiMessages";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -10,6 +10,7 @@ import type { MeaningLearningProgress } from "../../../../../packages/shared/typ
 import { meaningDirections, type MeaningDirection, type TrainingKnownChoiceRequest } from "../../../../../packages/shared/types/trainingKnownChoice";
 import { TrainingCardShell, trainingStageClassName } from "./TrainingCardTemplates";
 import approved from "../approvedTrainingCard.module.css";
+import builder from "../pilot/approvedTrainingBuilder.module.css";
 import s from "./TrainingKnownChoice.module.css";
 
 type Props = {
@@ -62,8 +63,8 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
         {progress?<div className={s.cards}>{meaningDirections.map(d=>{
           const isKnown=known.includes(d),direct=d==="word-to-definition";
           return <div key={d} className={s.direction} data-known={isKnown} role="group" aria-label={direct?t.direct:t.reverse}>
-            <DirectionCard label={direct?t.direct:t.reverse} selected={false} prompt={direct?headword:definition} answer={direct?definition:headword} promptLanguage={contentLanguage} answerLanguage={contentLanguage}
-              classes={{card:s.preview,heading:s.heading,check:"hidden",prompt:s.prompt,arrow:s.arrow,answer:s.answer}}/>
+            <DirectionCard label={direct?t.direct:t.reverse} labelIcon={direct?<ArrowRight size={14} aria-hidden="true"/>:<ArrowLeft size={14} aria-hidden="true"/>} selected={false} prompt={direct?headword:definition} answer={direct?definition:headword} promptLanguage={contentLanguage} answerLanguage={contentLanguage}
+              classes={{card:s.preview,heading:`${builder.directionHeading} ${s.heading}`,headingLabel:builder.directionHeadingLabel,check:"hidden",prompt:builder.prompt,arrow:builder.directionArrow,answer:builder.answer}}/>
             <div className={s.status}><span role="status">{isKnown?t.known:t.learning}</span>
               <button type="button" className={s.link} disabled={busy||disabled||Boolean(frozen.current)} onClick={()=>setKnown(current=>isKnown?current.filter(value=>value!==d):[...current,d])}>{isKnown?t.returnToLearning:t.markKnown}</button>
             </div>
