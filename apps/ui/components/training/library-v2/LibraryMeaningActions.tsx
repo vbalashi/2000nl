@@ -3,7 +3,7 @@ import { localizedField } from "@/lib/i18n/catalog";
 
 import React from "react";
 import { RatingControls, type Rating } from "@/components/practice/RatingControls";
-import { Check, EyeOff, Flag, List, MoreHorizontal, ChartNoAxesColumn, LockKeyhole, Plus, Minus, Archive, Copy, StickyNote } from "lucide-react";
+import { Check, Flag, List, MoreHorizontal, ChartNoAxesColumn, LockKeyhole, Plus, Minus, Archive, Copy, StickyNote } from "lucide-react";
 import { ActionMenu, type ActionMenuItem } from "@/components/practice/ui/ActionMenu";
 import { getUiMessages } from "@/lib/uiMessages";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -49,7 +49,7 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
   const blocked = Boolean(meaning.meaningProgress?.exclusionId || meaning.meaningProgress?.directions.some(d=>d.knownMarkId) || meaning.undoKnown);
   const items: ActionMenuItem[] = [];
   if(onProgress)items.push({id:"progress",label:getUiMessages(language).learningProgress.title,icon:<ChartNoAxesColumn size={15} aria-hidden="true"/>,onSelect:()=>{close();onProgress();}});
-  if (onExclude) items.push({id:"exclude",label:getUiMessages(language).trainingSession.exclusion.headwordLabel,description:activeTraining ? protectionCopy.actionHint : headwordTrainingBlocked ? protectionCopy.headwordHint : getUiMessages(language).trainingSession.exclusion.headwordHelp,icon:<EyeOff size={15} aria-hidden="true"/>,disabled:busy || exclusionDisabled || activeTraining || headwordTrainingBlocked,
+  if (onExclude) items.push({id:"exclude",label:getUiMessages(language).trainingSession.exclusion.headwordLabel,description:activeTraining ? protectionCopy.actionHint : headwordTrainingBlocked ? protectionCopy.headwordHint : getUiMessages(language).trainingSession.exclusion.headwordHelp,icon:<Check size={15} aria-hidden="true"/>,disabled:busy || exclusionDisabled || activeTraining || headwordTrainingBlocked,
     onSelect:()=>{if(activeTraining || headwordTrainingBlocked)return;close();onExclude();}});
   if (meaning.markKnown) items.push({id:"known",label:t(meaning.markKnown.messageKey),description:activeTraining ? protectionCopy.actionHint : getUiMessages(language).cardActions.knownHelp,icon:<Check size={15} aria-hidden="true"/>,disabled:busy || activeTraining,
     onSelect:()=>{if(activeTraining)return;close();onAction(meaning.markKnown!);}});

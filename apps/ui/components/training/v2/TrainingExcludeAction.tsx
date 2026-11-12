@@ -13,8 +13,12 @@ export function TrainingExcludeAction({
   disabled,
   onClick,
   knownAction,
+  onChooseKnown,
+  buttonRef,
   scope = "pair",
 }: {
+  onChooseKnown?: () => void;
+  buttonRef?: React.RefObject<HTMLButtonElement>;
   scope?: "headword" | "pair";
   language: OnboardingLanguage;
   disabled: boolean;
@@ -25,6 +29,7 @@ export function TrainingExcludeAction({
   const t = scope === "headword" ? {...copy,label:copy.headwordLabel,help:copy.headwordHelp} : copy;
   const [anchor, setAnchor] = React.useState<HTMLButtonElement | null>(null);
   const trigger = React.useRef<HTMLButtonElement>(null);
+  React.useImperativeHandle(buttonRef,()=>trigger.current!,[]);
   const close = React.useCallback(() => {
     setAnchor(null);
     trigger.current?.focus({ preventScroll: true });
@@ -36,15 +41,15 @@ export function TrainingExcludeAction({
       type="button"
       className={`${senseCardQuietAction()} min-w-0 max-w-full whitespace-normal`}
       disabled={disabled}
-      onClick={event => anchor ? close() : setAnchor(event.currentTarget)}
-      aria-haspopup="menu"
-      aria-expanded={Boolean(anchor)}
-      title={t.help}
-      aria-label={t.help}
+      onClick={event => onChooseKnown ? onChooseKnown() : anchor ? close() : setAnchor(event.currentTarget)}
+      aria-haspopup={onChooseKnown ? undefined : "menu"}
+      aria-expanded={onChooseKnown ? undefined : Boolean(anchor)}
+      title={onChooseKnown ? getUiMessages(language).trainingSession.knownChoice.choiceLabel : t.help}
+      aria-label={onChooseKnown ? getUiMessages(language).trainingSession.knownChoice.markKnown : t.help}
     >
-      <EyeOff size={16} className="shrink-0" aria-hidden="true" />
-      <span className="min-w-0 break-words text-left">{t.label}</span>
-      {(anchor
+      {onChooseKnown ? <Check size={16} className="shrink-0" aria-hidden="true" /> : <EyeOff size={16} className="shrink-0" aria-hidden="true" />}
+      <span className="min-w-0 break-words text-left">{onChooseKnown ? getUiMessages(language).trainingSession.knownChoice.markKnown : t.label}</span>
+      {!onChooseKnown && (anchor
         ? <ChevronUp size={14} className="shrink-0" aria-hidden="true" />
         : <ChevronDown size={14} className="shrink-0" aria-hidden="true" />)}
     </button>
