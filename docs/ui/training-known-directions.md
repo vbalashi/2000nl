@@ -31,9 +31,15 @@ Changing owner, entry, direction or session discards the old local editor.
 The authenticated first-party `/api/training/known-choice` boundary derives its
 principal on the server. The RPC checks the active run, current ordered member,
 entry access and the revision of both directions. It owns the marks, receipt and
-member consumption in one transaction. After Known acceptance, the client reads
-and acknowledges the revised session plan before selecting the successor. This
-prevents a later authority check from discarding an already presented card. Other directions of the meaning must pass
+member consumption in one transaction. A choice within the active session keeps
+its frozen plan: all existing members, ordinals and unrelated state remain intact.
+The current member is consumed once. If its other direction is selected as Known
+and still pending in that session, it is marked unavailable with reason `known`;
+it is not counted as an answered card and no replacement is added. Returning a
+Known direction does not add it back into the current run. When no pending members
+remain, the session completes through the existing exhausted-pool behavior.
+This action does not increment the external plan revision or trigger a replan.
+The periodic authority check still handles genuine external changes. Other directions of the meaning must pass
 through the authoritative selector after commit; a cached sibling cannot bypass
 its new Known state.
 

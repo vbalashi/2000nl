@@ -9,6 +9,10 @@ BEGIN
   RAISE EXCEPTION 'db-contract-gate: Known choice trusted boundary'; END IF;
  IF strpos(pg_get_functiondef(writer),'meaning_progress_conflict')=0 OR strpos(pg_get_functiondef(writer),'consume_training_session_member')=0
   OR strpos(pg_get_functiondef(writer),'known_choice_idempotency_conflict')=0 THEN RAISE EXCEPTION 'db-contract-gate: Known choice atomic/retry boundary'; END IF;
+ IF strpos(pg_get_functiondef(writer),'original_external_revision')=0
+  OR strpos(pg_get_functiondef(writer),'remaining_members')=0
+  OR strpos(pg_get_functiondef(writer),$$unavailable_reason='known'$$)=0 THEN
+  RAISE EXCEPTION 'db-contract-gate: Known choice must preserve the frozen plan'; END IF;
  IF has_function_privilege('anon',converter,'EXECUTE') OR has_function_privilege('authenticated',converter,'EXECUTE') OR has_function_privilege('service_role',converter,'EXECUTE') THEN
   RAISE EXCEPTION 'db-contract-gate: historical conversion is operator-only'; END IF;
  IF has_function_privilege('service_role','private.perform_legacy_meaning_exclusion_as_principal_v1(uuid,text,uuid,uuid,text,uuid,uuid)','EXECUTE') THEN

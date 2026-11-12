@@ -4848,7 +4848,7 @@ test('changing the editor language keeps its visible surface while the catalog l
  } finally {await act(async()=>release([]));}
 });
 
-test("Known acceptance reconciles the plan before presentation and avoids delayed reload", async () => {
+test("Known acceptance retains the plan without a new snapshot or delayed reload", async () => {
   await writeTrainingSessionResume({
     sessionId: "session-replan-count", userId: "user-1", languageCode: "nl",
     listId: "list-1", listType: "curated", scenarioId: "understanding",
@@ -4875,7 +4875,7 @@ test("Known acceptance reconciles the plan before presentation and avoids delaye
 
   mockV2ActionId = "set-known-directions";
   fetchTrainingSessionSnapshot.mockResolvedValue({
-    ...initial, planRevision: 1, completedActions: 1,
+    ...initial, planRevision: 0, completedActions: 1,
     members: [
       { ...firstMember, consumedAt: "2026-09-10T12:01:00Z" },
       { ...firstMember, ordinal: 2, entryId: overrideWord.id },
@@ -4885,6 +4885,7 @@ test("Known acceptance reconciles the plan before presentation and avoids delaye
   fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
   await waitFor(() => expect(mockV2ProgressActionCompleted).toHaveBeenCalledWith("accepted-next-presented"));
   await screen.findByRole("heading", { name: "boom" });
+  expect(fetchTrainingSessionSnapshot).toHaveBeenCalledTimes(1);
   const reads = fetchNextTrainingWordByScenario.mock.calls.length;
   act(() => window.dispatchEvent(new Event("focus")));
   await waitFor(() => expect(fetchTrainingSessionSnapshot.mock.calls.length).toBeGreaterThanOrEqual(2));

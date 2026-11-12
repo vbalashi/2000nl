@@ -346,7 +346,7 @@
     {
       "migrationId": 364,
       "file": "db/migrations/364_training_known_choice.sql",
-      "sha256": "a1d9810b0a8a2b927f38efd270aad4fe6b09de7c2713c7439c52b5ba751984b8"
+      "sha256": "0f914b716cbb0f890a67513dbddd29f6d0be591ceefebed1be278c69493b62f4"
     },
     {
       "migrationId": 365,

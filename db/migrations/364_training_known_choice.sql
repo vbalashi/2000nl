@@ -27,6 +27,8 @@ DECLARE
   mark public.user_card_known_marks%rowtype;
   consumption jsonb;
   response jsonb;
+  original_external_revision bigint;
+  remaining_members integer;
 BEGIN
   IF COALESCE(NULLIF(current_setting('request.jwt.claim.role',true),''),
     (NULLIF(current_setting('request.jwt.claims',true),'')::jsonb)->>'role') IS DISTINCT FROM 'service_role'
@@ -66,6 +68,7 @@ BEGIN
   -- Consume before changing eligibility. Any later failure rolls this back too.
   consumption:=private.consume_training_session_member(p_user_id,p_session_id,p_entry_id,p_current_direction);
   IF consumption->>'status' NOT IN ('consumed','consumed-complete') THEN RAISE EXCEPTION 'training_session_member_unavailable'; END IF;
+  SELECT external_state_revision INTO original_external_revision FROM public.training_sessions WHERE id=p_session_id;
   IF progress->>'exclusionId' IS NOT NULL THEN
     PERFORM public.perform_training_headword_exclusion_as_principal_v1(p_user_id,'restore-headword',gen_random_uuid(),p_entry_id,NULL,(progress->>'exclusionId')::uuid,NULL);
   END IF;
@@ -86,7 +89,25 @@ BEGIN
         NULL,NULL,NULL,gen_random_uuid(),NULL,'first_party',NULL);
     END IF;
   END LOOP;
-  UPDATE public.training_sessions SET external_state_revision=external_state_revision+1 WHERE id=p_session_id AND user_id=p_user_id;
+  -- This is an action inside the frozen run, not an external scope change.
+  -- Keep every member and ordinal. Only skip a selected, still-pending sibling;
+  -- returning knowledge does not resurrect a member skipped earlier in this run.
+  UPDATE public.training_session_members
+  SET unavailable_at=private.training_reference_now_v1(), unavailable_reason='known'
+  WHERE session_id=p_session_id AND entry_id=p_entry_id
+    AND card_type_id<>p_current_direction AND card_type_id=ANY(p_known_directions)
+    AND consumed_at IS NULL AND unavailable_at IS NULL;
+  SELECT count(*)::integer INTO remaining_members FROM public.training_session_members
+    WHERE session_id=p_session_id AND consumed_at IS NULL AND unavailable_at IS NULL;
+  -- Legacy exclusion restoration can invalidate the active run. Its effects are
+  -- reconciled above within this transaction, so retain the prior revision.
+  UPDATE public.training_sessions SET external_state_revision=original_external_revision,
+    completed_at=CASE WHEN remaining_members=0 THEN COALESCE(completed_at,private.training_reference_now_v1()) ELSE completed_at END,
+    exhausted_at=CASE WHEN remaining_members=0 AND completed_at IS NULL THEN private.training_reference_now_v1() ELSE exhausted_at END,
+    completion_reason=CASE WHEN remaining_members=0 THEN COALESCE(completion_reason,'exhausted') ELSE completion_reason END
+    WHERE id=p_session_id AND user_id=p_user_id;
+  consumption:=consumption || jsonb_build_object('remaining',remaining_members,
+    'status',CASE WHEN remaining_members=0 THEN 'consumed-complete' ELSE consumption->>'status' END);
   response:=jsonb_build_object('status','accepted','clientEventId',p_client_event_id,'entryId',p_entry_id,
     'trainingSessionId',p_session_id,'consumption',consumption,'progress',public.get_meaning_learning_progress_v1(p_entry_id));
   INSERT INTO private.training_known_choice_events(user_id,client_event_id,entry_id,session_id,request_hash,response)

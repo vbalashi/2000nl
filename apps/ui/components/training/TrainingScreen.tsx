@@ -905,21 +905,6 @@ function TrainingScreenContent({
     refreshAfterAccepted,
     onSessionCardAccepted: recordSessionCardAccepted,
   });
-  const acceptReconciledV2ProgressAction = useCallback(async (
-    ...args: Parameters<typeof handleV2ProgressActionAccepted>
-  ) => {
-    if (args[0].actionId === "set-known-directions" && trainingSessionId) {
-      // Known changes invalidate the finite plan. Reconcile before selecting a
-      // successor, rather than letting the authority poll replace it later.
-      const snapshot = await fetchTrainingSessionSnapshot(user.id, trainingSessionId);
-      if (trainingSessionIdRef.current !== trainingSessionId) throw new Error("training_session_changed");
-      if (!snapshot || snapshot.runStatus === "superseded") throw new Error("training_session_superseded");
-      setLatchedSessionPlan(snapshot);
-      setSessionPlannedTotal(snapshot.plannedTotal);
-      reconciledSessionPlanRef.current = {sessionId:trainingSessionId,revision:snapshot.planRevision ?? 0};
-    }
-    return handleV2ProgressActionAccepted(...args);
-  }, [handleV2ProgressActionAccepted, trainingSessionId, user.id]);
   const [presentationResetKey, setPresentationResetKey] = useState(0);
   const navigationBlocked = actionLoading || platformProgressActionPending;
   const currentPresentationIdentity =
@@ -2395,7 +2380,7 @@ function TrainingScreenContent({
             focusOnPresentation={isSubsequentSessionCard}
             onPlayResolvedAudio={(url, label) => playAudio(url, label)}
             onOpenDetails={handleShowCurrentWordDetails} onCurrentCardContextChange={handleCurrentCardContextChange}
-            onProgressActionAccepted={acceptReconciledV2ProgressAction}
+            onProgressActionAccepted={handleV2ProgressActionAccepted}
             onProgressActionStarting={prepareV2ProgressAction}
             onProgressActionPendingChange={
               handlePlatformProgressActionPendingChange

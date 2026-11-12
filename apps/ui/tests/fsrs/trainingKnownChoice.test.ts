@@ -115,6 +115,51 @@ const url=getDbUrl();
    await c.query('savepoint conflict');await expect(save(c,user,f,[],event)).rejects.toThrow('known_choice_idempotency_conflict');await c.query('rollback to savepoint conflict');
   },user);
  });
+ test.each([false,true])("keeps the frozen plan and skips only a selected sibling (both=%s)",async both=>{
+  const user=randomUUID();await withTransaction(pool,async c=>{
+   const f=await fixture(c,user);
+   const sibling=f.direction==='word-to-definition'?'definition-to-word':'word-to-definition';
+   const a=await insertWord(c,`stable-a-${randomUUID()}`),b=await insertWord(c,`stable-b-${randomUUID()}`);
+   await c.query('delete from training_session_members where session_id=$1',[f.session]);
+   await c.query(`insert into training_session_members(session_id,ordinal,entry_id,card_type_id,queue_source)
+    values($1,1,$2,$3,'new'),($1,2,$4,$3,'new'),($1,3,$2,$5,'new'),($1,4,$6,$3,'new')`,[f.session,f.entry,f.direction,a,sibling,b]);
+   await c.query('update training_sessions set planned_total=4,planned_new=4 where id=$1',[f.session]);
+   const members=()=>c.query('select * from training_session_members where session_id=$1 order by ordinal',[f.session]);
+   const before=(await members()).rows;
+   const revision=(await c.query('select external_state_revision,planned_state_revision from training_sessions where id=$1',[f.session])).rows[0];
+   const event=randomUUID(),known=both?[f.direction,sibling]:[f.direction];
+   await save(c,user,f,known,event);
+   // This is the same read used by the periodic authority check.
+   await c.query('select get_training_session_snapshot($1,$2)',[user,f.session]);
+   const after=(await members()).rows;
+   expect(after.map(m=>[m.ordinal,m.entry_id,m.card_type_id])).toEqual(before.map(m=>[m.ordinal,m.entry_id,m.card_type_id]));
+   expect(after[0].consumed_at).not.toBeNull();
+   expect(after[1]).toEqual(before[1]);expect(after[3]).toEqual(before[3]);
+   expect(after[2].consumed_at).toBeNull();
+   expect(Boolean(after[2].unavailable_at)).toBe(both);
+   if(both)expect(after[2].unavailable_reason).toBe('known');
+   expect((await c.query('select external_state_revision,planned_state_revision from training_sessions where id=$1',[f.session])).rows[0]).toEqual(revision);
+   await save(c,user,f,known,event);
+   expect((await members()).rows).toEqual(after);
+  },user);
+ });
+ test("counts current once and completes when only the skipped sibling remains",async()=>{
+  const user=randomUUID();await withTransaction(pool,async c=>{
+   const f=await fixture(c,user),sibling=f.direction==='word-to-definition'?'definition-to-word':'word-to-definition';
+   await c.query('delete from training_session_members where session_id=$1',[f.session]);
+   await c.query(`insert into training_session_members(session_id,ordinal,entry_id,card_type_id,queue_source)
+    values($1,1,$2,$3,'new'),($1,2,$2,$4,'new')`,[f.session,f.entry,f.direction,sibling]);
+   const event=randomUUID(),known=[f.direction,sibling];
+   const value=(await save(c,user,f,known,event)).rows[0].value;
+   expect(value.consumption).toMatchObject({status:'consumed-complete',remaining:0,completedActions:1});
+   const session=(await c.query('select completed_at,completion_reason from training_sessions where id=$1',[f.session])).rows[0];
+   expect(session.completed_at).not.toBeNull();expect(session.completion_reason).toBe('exhausted');
+   const snapshot=(await c.query('select get_training_session_snapshot($1,$2) value',[user,f.session])).rows[0].value;
+   expect(snapshot.members).toHaveLength(2);
+   expect((await save(c,user,f,known,event)).rows[0].value.status).toBe('duplicate');
+   expect((await c.query('select count(*)::int n from training_session_members where session_id=$1 and consumed_at is not null',[f.session])).rows[0].n).toBe(1);
+  },user);
+ });
  test("supports one direction and no selected directions",async()=>{
   for(const selectCurrent of [true,false]){const user=randomUUID();await withTransaction(pool,async c=>{
    const f=await fixture(c,user);const value=(await save(c,user,f,selectCurrent?[f.direction]:[])).rows[0].value;
