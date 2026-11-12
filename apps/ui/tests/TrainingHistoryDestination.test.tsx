@@ -222,3 +222,19 @@ test('links the existing history row to its exact current meaning',async()=>{
  await userEvent.click(await screen.findByRole('button',{name:'bank'}));expect(onOpenMeaning).toHaveBeenCalledWith(item);
  expect(screen.getByText('Good')).toBeInTheDocument();
 });
+
+test("shows meaning, direction and known actions alongside grades",async()=>{
+ fetchRecentTrainingHistory.mockResolvedValueOnce({items:[
+ {activityId:"known-1",entryId:"one",headword:"bank",meaningText:"a seat",partOfSpeech:null,reviewResult:"known",cardTypeId:"word-to-definition",reviewedAt:"2026-08-21T11:59:00Z"},
+ {activityId:"known-2",entryId:"two",headword:"bank",meaningText:"a financial institution",meaningPosition:{ordinal:2,total:2},partOfSpeech:null,reviewResult:"known",cardTypeId:"both-directions",reviewedAt:"2026-08-21T11:58:00Z"},
+ {activityId:"review",entryId:"one",headword:"bank",partOfSpeech:null,reviewResult:"review_fail",cardTypeId:"definition-to-word",reviewedAt:"2026-08-21T11:57:00Z"}
+ ],hasMore:false});
+ render(<TrainingHistoryDestination open userId="history-known" interfaceLanguage="en" onReturnToTraining={()=>{}}/>);
+ expect(await screen.findByText("a seat")).toBeInTheDocument();
+ expect(screen.getByText("a financial institution")).toBeInTheDocument();
+ expect(screen.getByRole("button",{name:"Meaning 2 of 2"})).toBeInTheDocument();
+ expect(screen.getByText("Word ↔ meaning")).toBeInTheDocument();
+ expect(screen.getByText("Word → meaning")).toBeInTheDocument();
+ expect(screen.getAllByText("Known")).toHaveLength(2);
+ expect(screen.getByText("Again")).toBeInTheDocument();
+});

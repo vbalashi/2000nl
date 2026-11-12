@@ -2521,7 +2521,7 @@ function TrainingScreenContent({
         onHistory={openTrainingHistory}
       />
       <TrainingHistoryDestination
-        onOpenMeaning={item=>{setHistoryMeaningIntent({ownerId:user.id,key:crypto.randomUUID(),entryId:item.entryId,headword:item.headword,contentLanguageCode:currentTrainingLanguage});onRequestDestination("library");}}
+        onOpenMeaning={item=>{setHistoryMeaningIntent({ownerId:user.id,key:crypto.randomUUID(),entryId:item.entryId,headword:item.headword,contentLanguageCode:item.contentLanguageCode ?? currentTrainingLanguage});onRequestDestination("library");}}
         open={destination === TRAINING_HISTORY_DESTINATION}
         userId={user.id}
         interfaceLanguage={onboardingLang}
