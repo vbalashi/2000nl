@@ -325,3 +325,10 @@
 
 /* Let the fitter measure overflowing whole words within the actual prompt width. */
 .facePrompt > p { min-width: 0; }
+
+/* Scoped to settled failures; completion and loading keep their existing roles. */
+.failureContent h1 { font-family: var(--practice-font-ui); font-size: var(--practice-text-body-lg); font-weight: 300; }
+.failureIcon { display: grid; place-items: center; width: 42px; height: 42px; margin: 0 auto var(--practice-space-content); border-radius: 50%; background: var(--practice-selected); color: var(--practice-selected-text); }
+.failureIcon svg { width: 23px; height: 23px; }
+.failureActions > button { border: 0; background: transparent; color: var(--practice-text); font-weight: 400; text-decoration: underline; text-underline-offset: 3px; }
+.failureActions > button:hover { background: transparent; color: var(--practice-text-secondary); }

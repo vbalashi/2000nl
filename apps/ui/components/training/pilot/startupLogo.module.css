@@ -18,3 +18,9 @@
 .status button { min-height:44px; cursor:pointer; margin-top:16px; border:1px solid currentColor; border-radius:8px; padding:8px 16px; background:transparent; color:inherit; }
 /* Do not fade each readiness gate separately: that produces repeated flashes. */
 .ready { min-height:0; }
+
+.failureIcon { display:grid; place-items:center; width:42px; height:42px; margin:0 auto 10px; border-radius:50%; background:var(--practice-startup-accent); color:var(--practice-startup-surface); }
+.failureIcon svg { width:23px; height:23px; }
+.status .failure h1,.status .failure .failureTitle { margin:0; font-family:var(--practice-startup-font-ui); font-size:var(--practice-startup-failure-size); line-height:1.4; font-weight:300; }
+.status .failure button { border:0; background:transparent; text-decoration:underline; text-underline-offset:3px; font:inherit; }
+.status .failure button:focus-visible { outline:2px solid currentColor; outline-offset:2px; }

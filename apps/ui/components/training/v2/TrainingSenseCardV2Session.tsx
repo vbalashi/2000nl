@@ -801,6 +801,7 @@ export function TrainingSenseCardV2Session({
           state={failureState}
           interfaceLanguage={interfaceLanguage}
           detail={error}
+          hasClose={Boolean(sessionChrome)}
           onExit={onExit}
           onRetry={currentCard.missingTarget ? undefined : () => {
             if (currentCard.failed) { currentCard.retry(); return; }
@@ -941,19 +942,21 @@ function SessionV2Failure({
   detail,
   onRetry,
   onExit,
+  hasClose,
 }: {
   state: Exclude<TrainingV2SessionState, "loading" | "ready">;
   interfaceLanguage: OnboardingLanguage;
   detail: string | null;
+  hasClose: boolean;
   onRetry?: () => void;
   onExit?: () => void;
 }) {
   return (
     <div className="h-full min-h-0" data-testid="training-v2-failure" data-training-renderer="v2" data-training-v2-state={state}>
-      <TrainingSessionState announcement="alert" title={platformV2Message(interfaceLanguage, "senseCard.training.loadFailed")}
+      <TrainingSessionState failure announcement="alert" title={platformV2Message(interfaceLanguage, "senseCard.training.loadFailed")}
         action={onRetry ? { label: platformV2Message(interfaceLanguage, "senseCard.training.retry"), onClick: onRetry }
           : onExit ? { label: getUiMessages(interfaceLanguage).trainingSession.back, onClick: onExit } : undefined}
-        secondaryAction={onRetry && onExit ? { label: getUiMessages(interfaceLanguage).trainingSession.back, onClick: onExit } : undefined} />
+        secondaryAction={onRetry && onExit && !hasClose ? { label: getUiMessages(interfaceLanguage).trainingSession.back, onClick: onExit } : undefined} />
       {detail ? <span className="sr-only">{detail}</span> : null}
     </div>
   );

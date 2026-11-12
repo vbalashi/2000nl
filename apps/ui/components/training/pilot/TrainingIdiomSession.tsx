@@ -175,12 +175,11 @@ export function TrainingIdiomSession({
         />
       }
     >
-      {currentCard.enabled && candidate && !loading && !currentCard.ready ? <TrainingSessionState loading={!currentCard.failed} title={currentCard.failed ? t.failed : t.loading}
+      {currentCard.enabled && candidate && !loading && !currentCard.ready ? <TrainingSessionState failure={currentCard.failed} loading={!currentCard.failed} title={currentCard.failed ? t.failed : t.loading}
         action={currentCard.failed ? {label:t.retry,onClick:currentCard.retry} : undefined} /> : null}
       {loading ? <TrainingSessionState loading title={t.loading} /> : null}
-      {preparationFailed ? <TrainingSessionState title={t.failed} announcement="alert"
-        action={{label:t.retry,onClick:()=>void runtime.retry()}}
-        secondaryAction={{label:getUiMessages(interfaceLanguage).trainingSession.back,onClick:onExit}} /> : null}
+      {preparationFailed ? <TrainingSessionState failure title={t.failed} announcement="alert"
+        action={{label:t.retry,onClick:()=>void runtime.retry()}} /> : null}
       {!loading && terminal ? <TrainingCompletion sessionSize={sessionSize} empty={terminal==="empty"} emptyDetail={cardFilter==="review" && session.plannedTotal===0?localizedField("idiomSession", "noDue")[interfaceLanguage]:undefined} ownerId={userId} sessionId={session.sessionId} interfaceLanguage={interfaceLanguage} completedCount={completedCount} onExit={onExit} onRestart={onRestart} onEdit={onEdit} pending={pending} startFailed={startFailed} /> : null}
       {!loading && !terminal && currentCard.ready && candidate && content ? (
         <TrainingIdiomCard
