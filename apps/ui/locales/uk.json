@@ -340,6 +340,9 @@
       "list": "Нещодавні дії в тренуванні",
       "truncated": "Показано 50 останніх дій у тренуванні.",
       "events": {
+        "known": "Знаю",
+        "restored": "Повернено до тренування",
+        "excluded": "Виключено",
         "learning_started": "Початок вивчення",
         "review_fail": "Знову",
         "review_hard": "Важко",
@@ -347,6 +350,7 @@
         "review_easy": "Легко"
       },
       "exercises": {
+        "idiom": "Вираз",
         "idiomDirect": "Вираз → значення",
         "idiomReverse": "Значення → вираз",
         "translation": "Переклад речення"
@@ -1174,6 +1178,11 @@
       "sharedReadersFew": "Спільна · {count} підписники",
       "sharedReadersMany": "Спільна · {count} підписників",
       "sharedReadersOther": "Спільна · {count} підписника"
+    },
+    "training": {
+      "meaningPosition": "Значення {ordinal} з {total}",
+      "meaningDetailsHint": "Щоб переглянути всі значення, натисніть кнопку {button}.",
+      "meaningDetailsFrontHint": "Щоб переглянути всі значення, відкрийте відповідь і натисніть кнопку {button} на звороті картки."
     },
     "collectionComposition": {
       "title": "Спільна колекція",

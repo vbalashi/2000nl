@@ -70,3 +70,4 @@
 \i db/migrations/363_received_group_catalog_scope.sql
 \i db/migrations/364_training_known_choice.sql
 \i db/migrations/365_meaning_exclusion_known_compatibility.sql
+\i db/migrations/366_training_history_actions.sql

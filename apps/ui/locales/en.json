@@ -340,6 +340,9 @@
       "list": "Recent training activity",
       "truncated": "Showing the 50 most recent training activities.",
       "events": {
+        "known": "Known",
+        "restored": "Returned to practice",
+        "excluded": "Excluded",
         "learning_started": "Started learning",
         "review_fail": "Again",
         "review_hard": "Hard",
@@ -347,6 +350,7 @@
         "review_easy": "Easy"
       },
       "exercises": {
+        "idiom": "Idiom",
         "idiomDirect": "Idiom → meaning",
         "idiomReverse": "Meaning → idiom",
         "translation": "Sentence translation"
@@ -1174,6 +1178,11 @@
       "sharedReadersFew": "Shared · {count} subscribers",
       "sharedReadersMany": "Shared · {count} subscribers",
       "sharedReadersOther": "Shared · {count} subscribers"
+    },
+    "training": {
+      "meaningPosition": "Meaning {ordinal} of {total}",
+      "meaningDetailsHint": "To see all meanings, use the {button} button.",
+      "meaningDetailsFrontHint": "To see all meanings, reveal the answer and use the {button} button on the back of the card."
     },
     "collectionComposition": {
       "title": "Shared collection",

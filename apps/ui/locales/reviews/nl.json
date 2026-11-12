@@ -7286,5 +7286,21 @@
   "ui.training.meaningDetailsFrontHint": {
     "source": "To see all meanings, reveal the answer and use the {button} button on the back of the card.",
     "translationHash": "4e20df053630a01a49244fae2cdb9fe444e558b05675b997487ada28ae6ad172"
+  },
+  "ui.trainingHistory.events.known": {
+    "source": "Known",
+    "translationHash": "40e50a52fe9e54114264fc19be811b3f240abf9be7b40235508960756d9f8a99"
+  },
+  "ui.trainingHistory.events.restored": {
+    "source": "Returned to practice",
+    "translationHash": "527f3e39ab8392d029de1052ef6b8222d0987bb9df7083b7b11cb2088134f248"
+  },
+  "ui.trainingHistory.events.excluded": {
+    "source": "Excluded",
+    "translationHash": "58c87b73da32738aec7b789f58fd8a1ae89909ccc7546238acc59118087b9f79"
+  },
+  "ui.trainingHistory.exercises.idiom": {
+    "source": "Idiom",
+    "translationHash": "f1befb481f14863c1599a4919d415c04d0b75b4c1055d966e183f23bc84b2200"
   }
 }
