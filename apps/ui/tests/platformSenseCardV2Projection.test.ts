@@ -488,6 +488,7 @@ describe("Platform V2 SenseCard projection", () => {
               kind: "sense-card",
               entryId: "entry-1",
               meaningOrdinal: 1,
+              meaningCount: 1,
               partOfSpeech: {
                 termId: "part-of-speech.zn",
                 messageKey: "partOfSpeech.zn",
@@ -881,4 +882,26 @@ test("note limits apply across article entries in the complete projected respons
   const entry=group.entries[0];if(entry.kind!=="sense-card")throw new Error("sense card required");
   group.entries=[{...entry,noteMaterial:notes("first")},{...entry,noteMaterial:notes("second")}];
   expect(isPlatformLookupV2Response(response)).toBe(false);
+});
+
+
+test.each([
+  {total:3,expected:3},
+  {total:undefined,expected:undefined},
+  {total:0,expected:undefined},
+  {total:-1,expected:undefined},
+  {total:1.5,expected:undefined},
+])("projects only authoritative positive integer meaning totals: $total", ({total,expected}) => {
+  const input=projectionInput({stateRevision:"meaning-total",knownMark:null});
+  const source={...input.entries[0].entry,meaningsCount:total};
+  input.entries[0].entry=source;
+  const group=projectPlatformLookupV2(input).groups[0];
+  expect(group.entryCount).toBe(1);
+  expect(group.entries).toHaveLength(1);
+  const entry=group.entries[0];
+  expect(entry.kind).toBe("sense-card");
+  if(entry.kind!=="sense-card")throw new Error("sense card required");
+  expect(entry.meaningCount).toBe(expected);
+  expect(entry.entryId).toBe(source.id);
+  expect(Object.prototype.hasOwnProperty.call(entry,"meaningCount")).toBe(expected!==undefined);
 });
