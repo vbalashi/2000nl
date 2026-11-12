@@ -3,6 +3,7 @@ import React from "react";
 import { ArrowLeft, ArrowRight, LogOut } from "lucide-react";
 import { DirectionCard } from "@/components/practice/builder/DirectionCard";
 import { getUiMessages } from "@/lib/uiMessages";
+import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { fetchMeaningProgress } from "@/lib/platform/meaningProgressClient";
 import { saveTrainingKnownChoice } from "@/lib/platform/trainingKnownChoiceClient";
@@ -66,7 +67,7 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
   return <section className={trainingStageClassName()} data-side={originSide} aria-label={t.choiceLabel} onFocusCapture={event=>{lastFocused.current=event.target as HTMLElement;}} onBlurCapture={event=>{
     if(event.relatedTarget instanceof Node&&!event.currentTarget.contains(event.relatedTarget))lastFocused.current=null;
   }}>
-    <TrainingCardShell answerVisible={originSide==="answer"}>
+    <TrainingCardShell answerVisible={originSide==="answer"} contentLabel={platformV2Message(language,"senseCard.training.content")} scrollMoreLabel={platformV2Message(language,"senseCard.scroll.more")}>
       <div className={s.body}>
         <div className={s.content}>
         <LogOut size={40} strokeWidth={1.4} className={s.icon} aria-hidden="true"/>
