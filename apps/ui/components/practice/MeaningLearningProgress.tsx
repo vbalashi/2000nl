@@ -159,7 +159,8 @@ export function MeaningLearningProgress({
             )}
           </>
         )}
-        <ExerciseKnownChoices entryId={entryId} language={language} blocked={mutationBlocked} onChanged={onChanged}/>
+        {/* Supplied snapshots are self-contained (for example, the onboarding demo). */}
+        {!initialProgress && <ExerciseKnownChoices entryId={entryId} language={language} blocked={mutationBlocked} onChanged={onChanged}/>}
       </div>
     </DialogSurface>
   );
