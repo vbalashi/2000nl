@@ -1409,7 +1409,16 @@
       "preview": "Preview",
       "cards": "cards",
       "progressHelp": "Shows your progress through a training session. Thread follows a straight line; Wave follows a curved line. In sessions of up to 30 cards, each dot represents one card. Above 30, both use a continuous line with a moving marker. Off hides the animation and shows the card count.",
-      "countHelp": "Adds the number of completed cards next to the progress animation in a limited session. The count is always visible in unlimited sessions or when progress animation is Off."
+      "countHelp": "Adds the number of completed cards next to the progress animation in a limited session. The count is always visible in unlimited sessions or when progress animation is Off.",
+      "showQuestionOnAnswer": "Show question with answer",
+      "questionHelp": "Shows the original question when you reveal the answer, so you can remember what you were asked to recall.",
+      "questionWordMeaning": "Word → meaning question",
+      "questionMeaningWord": "Meaning → word question",
+      "questionIdiomMeaning": "Idiom → meaning question",
+      "questionMeaningIdiom": "Meaning → idiom question",
+      "questionTranslation": "Translation question",
+      "questionPreviewWord": "de fiets",
+      "questionPreviewDefinition": "Een voertuig met twee wielen."
     },
     "readingSettings": {
       "title": "Reading text",

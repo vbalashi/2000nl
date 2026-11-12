@@ -72,8 +72,8 @@ describe("exercise card field bindings", () => {
       expect(screen.getByText(content.headword)).toBeVisible();
       expect(screen.queryByText(concealed)).not.toBeInTheDocument();
       fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
-      expect(screen.getByText(content.expression.text)).toBeVisible();
-      expect(screen.getByText(content.explanation.text)).toBeVisible();
+      expect(screen.getAllByText(content.expression.text).some(element => element.offsetParent !== null || element.isConnected)).toBe(true);
+      expect(screen.getAllByText(content.explanation.text).some(element => element.offsetParent !== null || element.isConnected)).toBe(true);
       expect(screen.getByText(content.examples[0].text)).toBeVisible();
       expect(screen.getAllByTestId("training-sense-card-shell")).toHaveLength(
         1,

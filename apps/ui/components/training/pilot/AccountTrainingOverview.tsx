@@ -73,7 +73,7 @@ export function AccountTrainingOverview(p:Props){
   <TrainingOverview launchPending={p.launchPending} interfaceLanguage={p.interfaceLanguage}
    state={p.accountStatus==="error"?{status:"error",message:accountCopy.loadFailed}:p.accountStatus!=="ready"?{status:"loading"}:{status:"ready",trainings:items,availability:p.availability,mainId:resolveHighlightedTraining(trainings,selectedId,p.snapshot.document.mainTrainingId)??defaultTraining.id,emptyTraining:p.emptyTraining,
     resume:p.ownedSession?{sessionId:p.ownedSession.id,trainingId:savedSessionTraining?.id??sessionTraining.id,completed:p.ownedSession.completed,total:p.ownedSession.total,training:{...item(sessionTraining),id:savedSessionTraining?.id??sessionTraining.id,canLaunch:!p.continueDisabled}}:undefined}}
-   onAvailabilityRetry={p.onAvailabilityRetry} onSelect={id=>select(id,"load")} onEarlyReview={p.onEarlyReview?id=>{const saved=trainings.find(training=>training.id===id);if(saved)p.onEarlyReview?.(saved);}:undefined} onLaunch={id=>select(id,"launch")} onEdit={(id,section)=>select(id,section==="session"?"edit-session":"edit")} onCreate={p.onCreate} onRetry={p.onRetry} onResume={p.onContinue}/>
+   onAvailabilityRetry={p.onAvailabilityRetry} onSelect={id=>select(id,"load")} onEarlyReview={p.onEarlyReview?id=>{const selectedTraining=trainings.find(training=>training.id===id)??(id===defaultTraining.id?defaultTraining:undefined);if(selectedTraining)p.onEarlyReview?.(selectedTraining);}:undefined} onLaunch={id=>select(id,"launch")} onEdit={(id,section)=>select(id,section==="session"?"edit-session":"edit")} onCreate={p.onCreate} onRetry={p.onRetry} onResume={p.onContinue}/>
  </ProductionArticleReading></div>
   <div className={s.notices}>{p.children}</div>
  </div>;

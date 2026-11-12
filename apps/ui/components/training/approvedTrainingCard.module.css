@@ -238,9 +238,11 @@
   margin: 0;
   max-width: min(34rem, 100%);
   font-family: var(--practice-font-ui);
-  font-size: var(--practice-text-body);
-  font-weight: 400;
-  line-height: 1.5;
+  font-size: var(--practice-text-label);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  font-weight: 500;
+  line-height: 1.4;
   color: var(--practice-text-muted);
 }
 .recallTarget, .faceContext {
@@ -325,3 +327,7 @@
 
 /* Let the fitter measure overflowing whole words within the actual prompt width. */
 .facePrompt > p { min-width: 0; }
+
+.questionReminder { flex-shrink:0; margin-bottom:12px; background:color-mix(in srgb,var(--practice-selected) 9%,var(--practice-canvas)); border-radius:8px; padding:10px 12px; max-height:35%; overflow:auto; }
+.questionReminder h3 { font-size:var(--practice-text-label); letter-spacing:1px; text-transform:uppercase; font-weight:500; color:var(--practice-text-muted); margin:0 0 8px; }
+.questionReminder p { border-inline-start:2px solid var(--practice-selected); padding-inline-start:10px; margin:0; font-family:var(--practice-font-reading); font-size:var(--practice-literary-size); line-height:var(--practice-literary-leading); color:var(--practice-text-secondary); overflow-wrap:anywhere; }

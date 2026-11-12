@@ -1409,7 +1409,16 @@
       "preview": "Voorbeeld",
       "cards": "kaarten",
       "progressHelp": "Toont je voortgang door een oefensessie. Draad volgt een rechte lijn; Golf volgt een gebogen lijn. In sessies met maximaal 30 kaarten staat elke stip voor één kaart. Boven 30 gebruiken beide een doorlopende lijn met een bewegende markering. Uit verbergt de animatie en toont het aantal kaarten.",
-      "countHelp": "Toont het aantal voltooide kaarten naast de voortgangsanimatie in een beperkte sessie. Het aantal is altijd zichtbaar in onbeperkte sessies of als de voortgangsanimatie uit staat."
+      "countHelp": "Toont het aantal voltooide kaarten naast de voortgangsanimatie in een beperkte sessie. Het aantal is altijd zichtbaar in onbeperkte sessies of als de voortgangsanimatie uit staat.",
+      "showQuestionOnAnswer": "Toon de vraag bij het antwoord",
+      "questionHelp": "Toont de oorspronkelijke vraag bij het antwoord, zodat je weet wat je moest onthouden.",
+      "questionWordMeaning": "Woord → betekenis: vraag",
+      "questionMeaningWord": "Betekenis → woord: vraag",
+      "questionIdiomMeaning": "Uitdrukking → betekenis: vraag",
+      "questionMeaningIdiom": "Betekenis → uitdrukking: vraag",
+      "questionTranslation": "Vertaalvraag",
+      "questionPreviewWord": "de fiets",
+      "questionPreviewDefinition": "Een voertuig met twee wielen."
     },
     "readingSettings": {
       "title": "Leestekst",

@@ -1803,5 +1803,14 @@
   "features.collectionDetails.urlHint": {"source":"Use a website address, for example www.example.com.","translationHash":"8ff86c9bf3a9201ab879ccb0b95c881aae0026bae5ff232d32ee3c4a7eadb526"},
   "features.labelSharing.openInCollections": {"source":"Open in collections","translationHash":"e62529be058ceffa2d4fda1dd2a9783c37c029b664ba568c9eddb5a28c554abd"},
   "features.labelSharing.accessViaGroup": {"source":"Access through {groups}","translationHash":"093ea69f3989319553b71935cf0391c4b0958556a6c82ab915637a1187a10a62"},
-  "features.labelSharing.publishedSeparately": {"source":"Published separately","translationHash":"ab0b647f562ec29210bc3f771222f42a53c3a60294e89163c0647d43044b00c6"}
+  "features.labelSharing.publishedSeparately": {"source":"Published separately","translationHash":"ab0b647f562ec29210bc3f771222f42a53c3a60294e89163c0647d43044b00c6"},
+  "features.interactionSettings.showQuestionOnAnswer": {"source":"Show question with answer","translationHash":"7aed14d1dc745d96aa8775ed8f30944ecac07c2e1674b9da064710282c74c6ca"},
+  "features.interactionSettings.questionHelp": {"source":"Shows the original question when you reveal the answer, so you can remember what you were asked to recall.","translationHash":"f38a54905766b44f9390212dd73faaf0ff24e8627dfc96c380d6696fa50f17e6"},
+  "features.interactionSettings.questionWordMeaning": {"source":"Word → meaning question","translationHash":"2bbb5baf4fbf9e9be4c13962271b5b7cb24bfb3079e53679197c2804e56de592"},
+  "features.interactionSettings.questionMeaningWord": {"source":"Meaning → word question","translationHash":"b1ad3150d4209bf192c8de1dc3b365a69abbea31f32a38d1db4bf379c48cdef5"},
+  "features.interactionSettings.questionIdiomMeaning": {"source":"Idiom → meaning question","translationHash":"d50823543523de6ff938e2cd04c03ff3cadfb764a7a499ebc31e61f61673bb5d"},
+  "features.interactionSettings.questionMeaningIdiom": {"source":"Meaning → idiom question","translationHash":"7b2fc1ebec7ca25e0187545a0c6edb20d6fae62024eecabb8f8916af8e25f611"},
+  "features.interactionSettings.questionTranslation": {"source":"Translation question","translationHash":"7dfade6c842cc02dcae0914b4d042c367ee5c9dba8a4af6dab6d0862c25dc265"},
+  "features.interactionSettings.questionPreviewWord": {"source":"de fiets","translationHash":"5993aad462907c08a4c73a2a15388d097cd19e27cec15b47b6d0010c46897e67"},
+  "features.interactionSettings.questionPreviewDefinition": {"source":"Een voertuig met twee wielen.","translationHash":"829ff9486440eb8a5b6ad6bd1ddb834a932ef17fd36ec04f421b57c3c4055b15"}
 }

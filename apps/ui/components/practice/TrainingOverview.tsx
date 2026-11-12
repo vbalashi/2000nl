@@ -89,7 +89,7 @@ export function TrainingOverview({state:incomingState,launchPending=false,interf
  const emptyAction=<button type="button" className={s.start} data-empty="true" disabled aria-describedby={emptyMessage?reasonId:undefined}>{noCards}</button>;
  return <div className={s.home} lang={interfaceLanguage} aria-busy={launchPending}>
   <h1 className={s.srOnly}>{navigation.training}</h1>
-  {main?<section className={s.hero} data-recipe="selected" aria-label={resume?copy.currentTraining:copy.mainTraining}>
+  {main?<section className={s.hero} data-recipe="selected" data-resuming={resume ? "true" : undefined} aria-label={resume?copy.currentTraining:copy.mainTraining}>
    <div className={s.heroTop}><span className={s.eyebrow}>{main.language}{main.sourceKind&&<span className={s.sourceIcon} role="img" aria-label={main.sourceLabel} title={main.sourceLabel}><SourceKindIcon kind={main.sourceKind}/></span>}{resume?` · ${copy.inProgress}`:""}</span><IconAction className={s.icon} label={formatUiMessage(copy.edit,{name:main.name})} onClick={()=>onEdit(main.id)}><EditGlyph/></IconAction></div>
    <div className={s.heroIntro}><h2 title={main.name}>{main.name}</h2><p className={s.description} title={main.accessibleDescription??main.description}><OverviewSummary item={main} text={main.description} accessibleText={main.accessibleDescription}/></p></div>
    <dl className={s.numbers} aria-busy={pending} style={{"--metrics-count":metrics.length} as React.CSSProperties}>{metrics.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{pending?<span className={s.pulse} aria-label={copy.loading}/>:<span key={`${main.id}:${value}`} className={s.count}>{value??"—"}</span>}</dd></div>)}</dl>

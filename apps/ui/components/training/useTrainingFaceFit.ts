@@ -24,7 +24,15 @@ export function useTrainingFaceFit(contentKey: string) {
       texts.forEach(text => { text.style.fontSize = ""; text.style.overflowWrap = "normal"; });
       const sizes = texts.map(text => parseFloat(getComputedStyle(text).fontSize));
       const apply = (scale: number) => texts.forEach((text, index) => { text.style.fontSize = `${Math.max(Math.min(sizes[index], 22), sizes[index] * scale)}px`; });
-      const fits = () => node.scrollHeight <= node.clientHeight + 1 && node.scrollWidth <= node.clientWidth + 1 && texts.every(text => text.scrollWidth <= text.clientWidth);
+      const longestFits = () => texts.every(text => {
+        const style = getComputedStyle(text);
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return true;
+        ctx.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        return text.innerText.split(/\s+/).every(word => ctx.measureText(word).width <= text.clientWidth + 1);
+      });
+      const fits = () => longestFits() && node.scrollHeight <= node.clientHeight + 1 && node.scrollWidth <= node.clientWidth + 1 && texts.every(text => text.scrollWidth <= text.clientWidth);
       if (texts.length && !fits()) {
         apply(0);
         if (fits()) {

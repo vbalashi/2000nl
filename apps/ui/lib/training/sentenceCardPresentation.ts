@@ -28,6 +28,7 @@ export function buildSentenceCardPresentation({
     }],
   });
   return {
+    questionKind: "translation",
     promptTarget: { contentNodeId: content.sentence.contentNodeId, kind: "translation" },
     label: localizedField("sentencePrompt", "translate")[interfaceLanguage],
     prompt: { kind: "explanation", text: prompt.text },

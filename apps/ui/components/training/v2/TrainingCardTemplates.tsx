@@ -40,19 +40,27 @@ export function trainingStageClassName() {
 
 export function TrainingCardShell({
   answerVisible,
+  question,
   children,
 }: {
   answerVisible: boolean;
+  question?: {title: string; text: string};
   children: React.ReactNode;
 }) {
+  const {preferences} = useTrainingInteractions();
   return (
     <article
       data-testid="training-sense-card-shell"
       className={`relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden ${approved.shell} ${answerVisible ? "gap-[6px] p-[18px]" : ""}`}
     >
+      {answerVisible && question && preferences.showQuestionOnAnswer ? <TrainingQuestionReminder {...question} /> : null}
       {children}
     </article>
   );
+}
+
+export function TrainingQuestionReminder({title,text}: {title:string; text:string}) {
+ return <section className={approved.questionReminder} data-testid="training-question-reminder"><h3>{title}</h3><p>{text}</p></section>;
 }
 
 const reviewTone = {
