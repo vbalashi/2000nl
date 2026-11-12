@@ -446,6 +446,8 @@ export type PlatformSenseCardEntryV2 = {
   kind: "sense-card";
   entryId: string;
   meaningOrdinal: number | null;
+  /** Server-owned total, including meanings omitted from an exact-entry response. */
+  meaningCount?: number;
   partOfSpeech?: PlatformSemanticTermV2;
   card: PlatformSenseCardStateV2 | null;
   contentRevision: string;

@@ -292,6 +292,8 @@ export function TrainingSenseCardStage({
           />
         ) : (
           <TrainingCardFace
+            meaning={model.meaning}
+            interfaceLanguage={interfaceLanguage}
             scrollMoreLabel={t("senseCard.scroll.more")}
             prompt={
               mode === "definition-to-word"

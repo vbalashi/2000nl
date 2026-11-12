@@ -7,6 +7,7 @@ export type TrainingCardPrompt =
 import type {PlatformEntryNoteMaterialV2,PlatformWordDetailsV2} from "../../../../packages/shared/types/platformV2";
 
 export type TrainingCardAnswer = {
+  meaning?: {ordinal:number;total:number};
   noteMaterial?:PlatformEntryNoteMaterialV2[];
   wordDetails?:PlatformWordDetailsV2;
   headword: string;

@@ -151,6 +151,8 @@ export function TrainingCardAnswerHeader({
         </div>
       </div>
       <SenseCardHeadwordLockup
+        meaning={model.meaning}
+        interfaceLanguage={interfaceLanguage}
         article={model.article}
         headword={model.headword}
         plainHeadword={model.plainHeadword}
@@ -173,6 +175,8 @@ function trainingPartOfSpeechLabel(value: string) {
 
 export function TrainingCardFace({
   prompt,
+  meaning,
+  interfaceLanguage = "en",
   label,
   partOfSpeech,
   recallTarget,
@@ -184,6 +188,8 @@ export function TrainingCardFace({
   scrollMoreLabel,
 }: {
   prompt: TrainingCardPrompt;
+  meaning?: {ordinal:number;total:number};
+  interfaceLanguage?: OnboardingLanguage;
   label?: string;
   partOfSpeech?: string;
   recallTarget?: string;
@@ -249,6 +255,8 @@ export function TrainingCardFace({
             </>
           ) : (
             <SenseCardHeadwordLockup
+              meaning={meaning}
+              interfaceLanguage={interfaceLanguage}
               article={prompt.article}
               headword={prompt.text}
               plainHeadword={prompt.plainText}

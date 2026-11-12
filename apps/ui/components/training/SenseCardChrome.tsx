@@ -1,5 +1,7 @@
 import {useTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
 import React from "react";
+import {MeaningIndicator, type MeaningPosition} from "./MeaningIndicator";
+import type {OnboardingLanguage} from "@/lib/onboardingI18n";
 import translationFeedback from "@/components/practice/article/translationFeedback.module.css";
 import {useHeadwordFit} from "./useHeadwordFit";
 import { BookOpen, Repeat2 } from "lucide-react";
@@ -16,6 +18,8 @@ export function senseCardQuietAction() {
 
 export function SenseCardHeadwordLockup({
   article,
+  meaning,
+  interfaceLanguage = "en",
   headword,
   plainHeadword,
   partOfSpeech,
@@ -27,6 +31,8 @@ export function SenseCardHeadwordLockup({
   showMetadata = true,
   variant = "default",
 }: {
+  meaning?: MeaningPosition;
+  interfaceLanguage?: OnboardingLanguage;
   article?: string | null;
   headword: string;
   plainHeadword?: string;
@@ -109,6 +115,7 @@ export function SenseCardHeadwordLockup({
           <div className="flex min-w-0 items-center font-sense-serif">
             <div
               ref={fit.row}
+              style={meaning && variant === "training-face" ? {display:"grid",gridTemplateColumns:"minmax(0, 1fr) auto minmax(0, 1fr)"} : undefined}
               className={`flex w-full min-w-0 items-baseline ${variant === "training-face" ? "justify-center text-center" : ""} ${training ? `${trainingWordSize} ${variant === "article" ? "gap-[0.22em]" : "gap-[0.22rem]"}` : "gap-[0.22em]"} ${
                 longHeadword ? "flex-1" : ""
               }`}
@@ -116,6 +123,7 @@ export function SenseCardHeadwordLockup({
               {article ? (
                 <span
                   ref={fit.article}
+                  style={meaning && variant === "training-face" ? {gridColumn:1,justifySelf:"end"} : undefined}
                   className={`shrink-0 leading-none ${mutedText} ${
                     training
                       ? "pb-[0.16em] text-[0.5em]"
@@ -127,6 +135,7 @@ export function SenseCardHeadwordLockup({
               ) : null}
               <h2
                 ref={fit.word}
+                style={meaning ? {position:"relative",gridColumn:variant === "training-face" ? 2 : undefined} : undefined}
                 aria-label={plainHeadword ?? headword.replace(/[·ˈˌ]/g, "")}
                 data-long-headword={longHeadword ? "true" : "false"}
                 className={`${chrome.wordFit} min-w-0 break-words tracking-[-0.035em] ${primaryText} ${
@@ -138,6 +147,7 @@ export function SenseCardHeadwordLockup({
                 }`}
               >
                 <HeadwordWithPronunciationBreaks text={headword} plainText={plainHeadword} />
+                {meaning ? <MeaningIndicator meaning={meaning} language={interfaceLanguage} side={variant === "training-face" ? "front" : "back"}/> : null}
               </h2>
             </div>
           </div>

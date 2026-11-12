@@ -458,6 +458,7 @@ describe("/api/platform/v2/lookup", () => {
         headwordGroupId:
           sourceDictionary.id === "dict-2" ? "group-decoy" : "group-target",
         meaningOrdinal: meaningId,
+        reportContentRevision: null,
         contentNodeBindings: [
           {
             contentNodeId: `node-${id}`,
@@ -596,6 +597,7 @@ describe("/api/platform/v2/lookup", () => {
         entryId: targetEntryId,
         headwordGroupId: "group-target",
         meaningOrdinal: 1,
+        reportContentRevision: null,
         contentNodeBindings: [
           {
             contentNodeId: "node-definition",
