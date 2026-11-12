@@ -340,6 +340,9 @@
       "list": "Недавние действия в тренировке",
       "truncated": "Показаны 50 самых недавних действий в тренировке.",
       "events": {
+        "known": "Отмечено знакомым",
+        "restored": "Возвращено в тренировку",
+        "excluded": "Исключено",
         "learning_started": "Начало изучения",
         "review_fail": "Снова",
         "review_hard": "Трудно",
@@ -347,6 +350,7 @@
         "review_easy": "Легко"
       },
       "exercises": {
+        "idiom": "Выражение",
         "idiomDirect": "Выражение → значение",
         "idiomReverse": "Значение → выражение",
         "translation": "Перевод предложения"
@@ -1158,6 +1162,11 @@
       "sharedReadersFew": "Общая · {count} подписчика",
       "sharedReadersMany": "Общая · {count} подписчиков",
       "sharedReadersOther": "Общая · {count} подписчика"
+    },
+    "training": {
+      "meaningPosition": "Значение {ordinal} из {total}",
+      "meaningDetailsHint": "Чтобы посмотреть все значения, нажмите кнопку {button}.",
+      "meaningDetailsFrontHint": "Чтобы посмотреть все значения, откройте ответ и нажмите кнопку {button} на обратной стороне карточки."
     },
     "collectionComposition": {
       "title": "Общая коллекция",

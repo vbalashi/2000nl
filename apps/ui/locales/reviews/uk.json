@@ -1803,5 +1803,12 @@
   "features.collectionDetails.urlHint": {"source":"Use a website address, for example www.example.com.","translationHash":"8ff86c9bf3a9201ab879ccb0b95c881aae0026bae5ff232d32ee3c4a7eadb526"},
   "features.labelSharing.openInCollections": {"source":"Open in collections","translationHash":"e62529be058ceffa2d4fda1dd2a9783c37c029b664ba568c9eddb5a28c554abd"},
   "features.labelSharing.accessViaGroup": {"source":"Access through {groups}","translationHash":"093ea69f3989319553b71935cf0391c4b0958556a6c82ab915637a1187a10a62"},
-  "features.labelSharing.publishedSeparately": {"source":"Published separately","translationHash":"ab0b647f562ec29210bc3f771222f42a53c3a60294e89163c0647d43044b00c6"}
+  "features.labelSharing.publishedSeparately": {"source":"Published separately","translationHash":"ab0b647f562ec29210bc3f771222f42a53c3a60294e89163c0647d43044b00c6"},
+  "ui.trainingHistory.events.known": {"source":"Known","translationHash":"0f87268f164ea48de0b759f369ea544a143a48b640e8255828e7da33a8c14664"},
+  "ui.trainingHistory.events.restored": {"source":"Returned to practice","translationHash":"95ae2db42f446eeb3203b085cf4e059de13931ed79ca004a0ea5f1d9f1fecae1"},
+  "ui.trainingHistory.events.excluded": {"source":"Excluded","translationHash":"7ef7a861b739e0b71915e5319db7528d7e74a29e43802940b03e715b61f0f461"},
+  "ui.trainingHistory.exercises.idiom": {"source":"Idiom","translationHash":"84ed3ba9aafc75d6ec817a49ab0ee5d5cc136817a79e8844baea7b6d105dfce5"},
+  "ui.training.meaningPosition": {"source":"Meaning {ordinal} of {total}","translationHash":"3b02c771dc02450dc63394de31c5fa16a9debd6448cebec0c60014099350de0e"},
+  "ui.training.meaningDetailsHint": {"source":"To see all meanings, use the {button} button.","translationHash":"9382a5e77d9756ab42d05ae83917a6ec1e6ff1045b12c11cf0ecb9c1cbd0ab78"},
+  "ui.training.meaningDetailsFrontHint": {"source":"To see all meanings, reveal the answer and use the {button} button on the back of the card.","translationHash":"533eaae9a05b5d8f4ec0b98d636848c8cf932ef973ff7fccdbf27545432926ee"}
 }

@@ -340,6 +340,9 @@
       "list": "Recente trainingsactiviteit",
       "truncated": "De 50 meest recente trainingsactiviteiten worden getoond.",
       "events": {
+        "known": "Bekend",
+        "restored": "Terug in training",
+        "excluded": "Uitgesloten",
         "learning_started": "Gestart met leren",
         "review_fail": "Opnieuw",
         "review_hard": "Moeilijk",
@@ -347,6 +350,7 @@
         "review_easy": "Makkelijk"
       },
       "exercises": {
+        "idiom": "Uitdrukking",
         "idiomDirect": "Uitdrukking → betekenis",
         "idiomReverse": "Betekenis → uitdrukking",
         "translation": "Zinsvertaling"
@@ -1158,6 +1162,11 @@
       "sharedReadersFew": "Gedeeld · {count} abonnees",
       "sharedReadersMany": "Gedeeld · {count} abonnees",
       "sharedReadersOther": "Gedeeld · {count} abonnees"
+    },
+    "training": {
+      "meaningPosition": "Betekenis {ordinal} van {total}",
+      "meaningDetailsHint": "Gebruik de knop {button} om alle betekenissen te bekijken.",
+      "meaningDetailsFrontHint": "Toon het antwoord en gebruik de knop {button} op de achterkant om alle betekenissen te bekijken."
     },
     "collectionComposition": {
       "title": "Gedeelde collectie",

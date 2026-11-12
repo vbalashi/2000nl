@@ -47,7 +47,7 @@ describe("recent Training history", () => {
       ],
       hasMore: true,
     });
-    expect(rpc).toHaveBeenCalledWith("get_recent_training_activity_v1", {
+    expect(rpc).toHaveBeenCalledWith("get_recent_training_activity_v2", {
       p_limit: 50,
     });
   });
@@ -200,4 +200,23 @@ test("forwards a history read cancellation signal to the RPC", async () => {
   const controller = new AbortController();
   await fetchRecentTrainingHistory(controller.signal);
   expect(abortSignal).toHaveBeenCalledWith(controller.signal);
+});
+
+test("projects known marks and their precise direction", async () => {
+  rpc.mockResolvedValueOnce({data:[{...exerciseRow, exercise_family:"meaning", exercise_direction:null, target_id:null, exercise_text:null, card_type_id:"definition-to-word", review_result:"known", meaning_text:"a place to sit", content_language_code:"nl", meaning_ordinal:2, meaning_count:3}],error:null});
+  expect((await fetchRecentTrainingHistory()).items[0]).toMatchObject({reviewResult:"known", cardTypeId:"definition-to-word", meaningText:"a place to sit", contentLanguageCode:"nl", meaningPosition:{ordinal:2,total:3}});
+});
+
+test("projects legacy exclusions of both directions and exercise exclusions without invented direction", async () => {
+  rpc.mockResolvedValueOnce({data:[{...exerciseRow, exercise_family:"meaning",exercise_direction:null,target_id:null,exercise_text:null,card_type_id:"both-directions",review_result:"known"},{...exerciseRow,exercise_direction:null,target_id:null,review_result:"excluded"}],error:null});
+  const {items}=await fetchRecentTrainingHistory();
+  expect(items[0]).toMatchObject({reviewResult:"known",cardTypeId:"both-directions"});
+  expect(items[1]).toMatchObject({reviewResult:"excluded",exercise:{family:"idiom",direction:null,targetId:null}});
+});
+
+test("rejects an inconsistent meaning badge", async () => {
+ const diagnostic=vi.spyOn(console,"error").mockImplementation(()=>undefined);
+ rpc.mockResolvedValueOnce({data:[{...exerciseRow,meaning_ordinal:8,meaning_count:2}],error:null});
+ await expect(fetchRecentTrainingHistory()).rejects.toThrow("training_history_contract_mismatch");
+ diagnostic.mockRestore();
 });

@@ -20,3 +20,6 @@
 @media(max-width:700px) { .history,.state { padding: 0 18px 24px; } }
 
 .wordLink{padding:0;background:transparent;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer;text-decoration:underline;text-decoration-color:var(--practice-border);text-underline-offset:3px}.wordLink:hover{text-decoration-color:currentColor}.wordLink:focus-visible{outline:2px solid var(--practice-focus);outline-offset:3px}
+
+.wordTitle { position: relative; display: inline-block; }
+.history .wordTitle { color: inherit; font-size: inherit; line-height: inherit; }
