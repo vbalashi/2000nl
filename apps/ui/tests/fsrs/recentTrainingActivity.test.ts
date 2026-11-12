@@ -127,10 +127,12 @@ async function auth(client: PoolClient, user: string) {
     await withTransaction(pool, async client => {
       const user=randomUUID(); await ensureUserWithSettings(client,user);
       const entry=await insertWord(client,`converted-${randomUUID()}`), eventId=randomUUID(), undoId=randomUUID(), markId=randomUUID();
-      await client.query(`create table private.meaning_exclusion_known_conversions (user_id uuid,entry_id uuid,introduced_mark_ids uuid[],undone_at timestamptz)`);
+      const exclusionId=randomUUID(), groupId=randomUUID();
+      await client.query(`insert into private.platform_v2_headword_groups(id,dictionary_id,management_kind,identity_scheme_version,source_group_key) select $1::uuid,dictionary_id,'source','test',($1::uuid)::text from word_entries where id=$2`,[groupId,entry]);
+      await client.query(`insert into private.training_headword_exclusions(id,user_id,entry_id,headword_group_id,created_at,restored_at) values($1,$2,$3,$4,now(),now())`,[exclusionId,user,entry,groupId]);
       await client.query(`insert into user_card_action_events(id,user_id,entry_id,card_type_id,action,action_payload_hash,created_at) values($1,$3,$4,'word-to-definition','mark-known','test',now()-interval '1 hour'),($2,$3,$4,'word-to-definition','undo-known','test',now())`,[eventId,undoId,user,entry]);
       await client.query(`insert into user_card_known_marks(id,user_id,entry_id,card_type_id,mark_event_id,cleared_at,undo_event_id) values($1,$2,$3,'word-to-definition',$4,now(),$5)`,[markId,user,entry,eventId,undoId]);
-      await client.query(`insert into private.meaning_exclusion_known_conversions values($1,$2,array[$3::uuid],null)`,[user,entry,markId]);
+      await client.query(`insert into private.meaning_exclusion_known_conversions(exclusion_id,user_id,entry_id,introduced_mark_ids) values($1,$2,$3,array[$4::uuid])`,[exclusionId,user,entry,markId]);
       await auth(client,user);
       const rows=(await client.query("select * from get_recent_training_activity_v2(50)")).rows;
       expect(rows.map(r=>r.review_result)).toEqual(['restored']);

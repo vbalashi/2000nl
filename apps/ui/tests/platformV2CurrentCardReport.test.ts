@@ -118,10 +118,14 @@ describe.each(["current", "library"] as const)("%s reader report identity", (rea
       expect(payload.groups).toHaveLength(1);
       expect(payload.groups[0].entries).toHaveLength(1);
       expect(payload.groups[0].entries[0].entryId).toBe(entryId);
-      expect(payload.groups[0].entries[0].meaningCount).toBe(articleState === "ready" ? 2 : undefined);
-      expect(rpc).toHaveBeenCalledWith("read_platform_v2_training_group", {
-        p_user_id:"owner",p_entry_id:entryId,p_group_entry_bound:50,
-      });
+      if (reader === "current") {
+        expect(payload.groups[0].entries[0].meaningCount).toBe(articleState === "ready" ? 2 : undefined);
+        expect(rpc).toHaveBeenCalledWith("read_platform_v2_training_group", {
+          p_user_id:"owner",p_entry_id:entryId,p_group_entry_bound:50,
+        });
+      } else {
+        expect(rpc).not.toHaveBeenCalledWith("read_platform_v2_training_group", expect.anything());
+      }
       expect(payload.groups[0].entries[0].reportContentRevision).toBe(
         revisionState === "null" ? null : "a".repeat(64),
       );

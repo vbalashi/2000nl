@@ -71,5 +71,5 @@
 \i db/migrations/364_training_known_choice.sql
 \i db/migrations/365_meaning_exclusion_known_compatibility.sql
 \i db/migrations/366_training_history_actions.sql
-\i db/migrations/364_training_question_reminder_preference.sql
-\i db/migrations/364_starter_editorial_collection.sql
+\i db/migrations/367_training_question_reminder_preference.sql
+\i db/migrations/368_starter_editorial_collection.sql

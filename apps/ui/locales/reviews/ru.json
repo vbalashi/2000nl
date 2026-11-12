@@ -2264,16 +2264,16 @@
     "translationHash": "a7a4033657e89fc91b2c512f19a15d0f3c11a113b23192193db9063e2283f908"
   },
   "ui.trainingSession.exclusion.headwordLabel": {
-    "source": "Exclude",
-    "translationHash": "970575549a13e75bf13abf212f946e651179c1e414fd57917ee810a29aa2dd50"
+    "source": "Mark both directions as known",
+    "translationHash": "198f67f68b6fcd8c4604232b765849d23068135e6179f577b2ce20802b159a62"
   },
   "ui.trainingSession.exclusion.headwordHelp": {
-    "source": "Exclude from training in both directions",
-    "translationHash": "ac8affc6104b20559c39a573710a9df092b5cadcb13bc1f22dce167f144f80d7"
+    "source": "I already know this meaning in both directions",
+    "translationHash": "53d39f66deddda0a33aaaf0ca5402ee15999fb62e41374a109752d5671177df3"
   },
   "ui.trainingSession.exclusion.headwordDone": {
-    "source": "Meaning excluded from word training",
-    "translationHash": "e2d1cb4ed90c11721d4db950c280aedf4a34e99debcb0f224b0d408f11b902bb"
+    "source": "Both directions marked as known",
+    "translationHash": "73ddc696b7c3f040b5f115c7560c19c4f22b8f2ec55a06385ff8ff396926ccf3"
   },
   "ui.trainingSession.completedOne": {
     "source": "{count} exercise completed",
