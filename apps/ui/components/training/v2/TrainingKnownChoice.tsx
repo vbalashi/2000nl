@@ -58,6 +58,7 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
   return <section className={trainingStageClassName()} aria-label={t.choiceLabel}>
     <TrainingCardShell answerVisible={false}>
       <div className={s.body}>
+        <div className={s.content}>
         <LogOut size={40} strokeWidth={1.4} className={s.icon} aria-hidden="true"/>
         {!progress&&!error?<p className={s.loading} role="status">{t.loading}</p>:null}
         {progress?<div className={s.cards}>{meaningDirections.map(d=>{
@@ -65,12 +66,13 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
           return <div key={d} className={s.direction} data-known={isKnown} role="group" aria-label={direct?t.direct:t.reverse}>
             <DirectionCard label={direct?t.direct:t.reverse} labelIcon={direct?<ArrowRight size={14} aria-hidden="true"/>:<ArrowLeft size={14} aria-hidden="true"/>} selected={false} prompt={direct?headword:definition} answer={direct?definition:headword} promptLanguage={contentLanguage} answerLanguage={contentLanguage}
               classes={{card:s.preview,heading:`${builder.directionHeading} ${s.heading}`,headingLabel:builder.directionHeadingLabel,check:"hidden",prompt:builder.prompt,arrow:builder.directionArrow,answer:builder.answer}}/>
-            <div className={s.status}><span role="status">{isKnown?t.known:t.learning}</span>
+            <div className={s.status}><span role="status" className={s.stateLabel}>{isKnown?t.known:t.learning}</span>
               <button type="button" className={s.link} disabled={busy||disabled||Boolean(frozen.current)} onClick={()=>setKnown(current=>isKnown?current.filter(value=>value!==d):[...current,d])}>{isKnown?t.returnToLearning:t.markKnown}</button>
             </div>
           </div>;
         })}</div>:null}
         {error?<p role="alert" className={s.error}>{t[error]}</p>:null}
+        </div>
         <button type="button" className={`${s.link} ${s.back}`} disabled={busy||disabled||frozenUncertain||accepted.current} onClick={onBack}>{t.back}</button>
       </div>
     </TrainingCardShell>
