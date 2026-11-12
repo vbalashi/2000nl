@@ -372,6 +372,6 @@
   "postflightProbe": "db/deploy-contract/postflight-368.sql",
   "readOnlyPostflightProbe": {
     "file": "db/deploy-contract/read-only-postflight-368.sql",
-    "sha256": "0c03f30623be281ad2caa85385594aff09666ad98ac26df21aefa1dbcf5fb461"
+    "sha256": "5906e87f3e206fce909cbe332d4cf7901fb0ae9bf90b97fdf77167dee7c39be0"
   }
 }
