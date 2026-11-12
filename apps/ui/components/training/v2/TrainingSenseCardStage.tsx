@@ -46,6 +46,7 @@ type Props = {
   onRetryTranslation?: () => void;
   busy?: boolean;
   focusOnMount?: boolean;
+  restoringChoice?: boolean;
   onPlayAudio?: () => void;
   onOpenDetails?: () => void;
   reportAction?: React.ReactNode;
@@ -68,6 +69,7 @@ export function TrainingSenseCardStage({
   onRetryTranslation,
   busy = false,
   focusOnMount = false,
+  restoringChoice = false,
   onPlayAudio,
   onOpenDetails,
   reportAction,
@@ -141,9 +143,9 @@ export function TrainingSenseCardStage({
   useCardVerticalSwipe({ root: stageRef, audioEnabled: !busy && !moving && Boolean(model.audioCapability && onPlayAudio), onPlayAudio, enabled: answerVisible && !busy && !moving && (hasDisplayTranslation || translationActionAvailable || Boolean(additionalLanguage)), onToggle: toggleTranslation });
 
   React.useEffect(() => {
-    if (!focusOnMount) return;
+    if (!focusOnMount || restoringChoice) return;
     window.requestAnimationFrame(() => stageRef.current?.focus());
-  }, [focusOnMount]);
+  }, [focusOnMount, restoringChoice]);
 
   React.useEffect(() => {
     setHintVisible(false);
@@ -165,8 +167,8 @@ export function TrainingSenseCardStage({
     });
   }, [answerVisible, t, moving]);
   React.useEffect(() => {
-    if (answerVisible && !moving) primaryAnswerActionRef.current?.focus();
-  }, [answerVisible, moving]);
+    if (answerVisible && !moving && !restoringChoice) primaryAnswerActionRef.current?.focus();
+  }, [answerVisible, moving, restoringChoice]);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

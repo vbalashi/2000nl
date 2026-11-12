@@ -272,6 +272,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
     plannedAt: new Date(0).toISOString(),
   };
   const consumedSessionEntryIds = new Set<string>();
+  const knownChoiceRequests: Record<string, unknown>[] = [];
   const unavailableSessionEntryIds = new Set<string>();
   const statsRequests: Record<string, unknown>[] = [];
   const requestTimes = {
@@ -441,6 +442,33 @@ export async function setupAuthenticatedTrainingAttributionPage(
       },
       "lookup",
     );
+  });
+
+  const meaningProgress = (entryId: string, known: string[] = []) => ({
+    entryId, headword: entries.find(entry => entry.id === entryId)?.headword ?? "fixture",
+    exclusionId: null, revision: "a".repeat(64),
+    directions: ["word-to-definition", "definition-to-word"].map(cardTypeId => ({
+      cardTypeId, stateRevision: "untracked", phase: "new", presentations: 0,
+      gradedAttempts: 0, lastGrade: null, lastReviewedAt: null, nextReviewAt: null,
+      stability: null, difficulty: null,
+      knownMarkId: known.includes(cardTypeId) ? `known-${cardTypeId}` : null,
+      knownMarkRevision: known.includes(cardTypeId) ? "1" : null,
+      knownMarkedAt: known.includes(cardTypeId) ? "2026-11-12T10:00:00Z" : null,
+    })),
+  });
+  await page.route("**/api/training/meaning-progress?*", async route => {
+    const entryId = new URL(route.request().url()).searchParams.get("entryId")!;
+    await fulfillJson(route, meaningProgress(entryId), "meaning-progress");
+  });
+  await page.route("**/api/training/known-choice", async route => {
+    const body = route.request().postDataJSON() as Record<string, unknown>;
+    knownChoiceRequests.push(body);
+    consumeSessionMember({trainingSessionId:body.trainingSessionId,target:{entryId:body.entryId}});
+    await fulfillJson(route, {
+      status: "accepted", clientEventId: body.clientEventId, entryId: body.entryId,
+      trainingSessionId: body.trainingSessionId, consumption: {status:"consumed"},
+      progress: meaningProgress(String(body.entryId), body.knownDirections as string[]),
+    }, "known-choice");
   });
 
   await page.route("**/api/platform/v2/actions", async (route) => {
@@ -1078,6 +1106,7 @@ export async function setupAuthenticatedTrainingAttributionPage(
       session: sessionRequests,
       activeScope: activeScopeRequests,
       progressActions: progressActionRequests,
+      knownChoices: knownChoiceRequests,
       progressActionReconciliations: progressActionReconciliationRequests,
       projectionLookups: projectionLookupRequests,
       currentCards,

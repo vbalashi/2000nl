@@ -15,12 +15,12 @@ import s from "./TrainingKnownChoice.module.css";
 
 type Props = {
   entryId: string; sessionId: string; direction: MeaningDirection; headword: string; definition: string;
-  language: OnboardingLanguage; contentLanguage: string; disabled?: boolean; dockHeight?: number;
+  language: OnboardingLanguage; contentLanguage: string; disabled?: boolean; dockHeight?: number; originSide?: "face"|"answer";
   onBack: () => void; onAccepted: () => Promise<void>; onPendingChange?: (pending: boolean, token: object) => void;
   onStarting?: () => void;
 };
 /** Local draft only. Freeze one complete intent at submission, including retries. */
-export function TrainingKnownChoice({entryId, sessionId, direction, headword, definition, language, contentLanguage, disabled=false, dockHeight=76, onBack, onAccepted, onPendingChange, onStarting}: Props) {
+export function TrainingKnownChoice({entryId, sessionId, direction, headword, definition, language, contentLanguage, disabled=false, dockHeight=76, originSide="face", onBack, onAccepted, onPendingChange, onStarting}: Props) {
   const t=getUiMessages(language).trainingSession.knownChoice;
   const [progress,setProgress]=React.useState<MeaningLearningProgress|null>(null);
   const [known,setKnown]=React.useState<MeaningDirection[]>([]);
@@ -31,6 +31,14 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
   const frozen=React.useRef<TrainingKnownChoiceRequest|null>(null), accepted=React.useRef(false), running=React.useRef(false);
   const mounted=React.useRef(true);
   const nextRef=React.useRef<HTMLButtonElement>(null);
+  const lastFocused=React.useRef<HTMLElement|null>(null);
+  const wasDisabled=React.useRef(disabled);
+  React.useLayoutEffect(()=>{
+    if(wasDisabled.current&&!disabled&&document.activeElement===document.body&&lastFocused.current?.isConnected){
+      lastFocused.current.focus({preventScroll:true});
+    }
+    wasDisabled.current=disabled;
+  },[disabled]);
   React.useEffect(()=>{
     mounted.current=true;
     const controller=new AbortController();
@@ -55,8 +63,10 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
   };
   // An uncertain write must be reconciled with the same intent, not silently cancelled.
   const frozenUncertain=Boolean(frozen.current)&&!accepted.current&&error!=="conflict";
-  return <section className={trainingStageClassName()} aria-label={t.choiceLabel}>
-    <TrainingCardShell answerVisible={false}>
+  return <section className={trainingStageClassName()} data-side={originSide} aria-label={t.choiceLabel} onFocusCapture={event=>{lastFocused.current=event.target as HTMLElement;}} onBlurCapture={event=>{
+    if(event.relatedTarget instanceof Node&&!event.currentTarget.contains(event.relatedTarget))lastFocused.current=null;
+  }}>
+    <TrainingCardShell answerVisible={originSide==="answer"}>
       <div className={s.body}>
         <div className={s.content}>
         <LogOut size={40} strokeWidth={1.4} className={s.icon} aria-hidden="true"/>

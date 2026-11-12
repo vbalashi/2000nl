@@ -840,7 +840,7 @@ export function TrainingSenseCardV2Session({
           key={JSON.stringify([cacheOwnerId,trainingSessionId,cardIdentity])}
           entryId={word.id} sessionId={trainingSessionId} direction={mode}
           headword={model.plainHeadword ?? model.headword} definition={selectTrainingReversePrompt([...model.definitions,...model.examples])?.text ?? model.definitions[0]?.text ?? ""}
-          language={interfaceLanguage} contentLanguage={contentLanguageCode} disabled={interactionDisabled} dockHeight={knownChoiceDockHeight}
+          language={interfaceLanguage} contentLanguage={contentLanguageCode} disabled={interactionDisabled} dockHeight={knownChoiceDockHeight} originSide={cardSide}
           onBack={()=>{setKnownChoiceReturnIdentity(JSON.stringify([cacheOwnerId,trainingSessionId,cardIdentity]));setKnownChoiceIdentity(null);}} onPendingChange={onProgressActionPendingChange} onStarting={onProgressActionStarting}
           onAccepted={async()=>{await onProgressActionAccepted({actionId:"set-known-directions"});}}
         /> : <TrainingSenseCardStage
@@ -861,6 +861,7 @@ export function TrainingSenseCardV2Session({
           interfaceLanguage={interfaceLanguage}
           busy={busy || exclusion.busy || exclusion.failed || interactionDisabled || acceptedActionRecoveryPending}
           focusOnMount={handlePresentation}
+          restoringChoice={knownChoiceReturnIdentity===JSON.stringify([cacheOwnerId,trainingSessionId,cardIdentity])}
           onPlayAudio={
             result.group.header.audio && onPlayResolvedAudio
               ? () => void handlePlayAudio()
@@ -914,7 +915,7 @@ export function TrainingSenseCardV2Session({
             ) : undefined
           }
           side={cardSide}
-          onSideChange={setCardSide}
+          onSideChange={side=>{setKnownChoiceReturnIdentity(null);setCardSide(side);}}
           onAction={(capability) => void handleAction(capability)}
         />}
         <SessionError
