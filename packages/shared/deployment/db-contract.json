@@ -356,7 +356,7 @@
     {
       "migrationId": 366,
       "file": "db/migrations/366_training_history_actions.sql",
-      "sha256": "ebb109613829abadde55b5b7bca6aa1a3f3f627bd95ada28ccd228b84fb05f1e"
+      "sha256": "7c00104babe2ac9d35d6b78bd6bd104b2d28f6c9f8e10461dd37111240d2eab0"
     },
     {
       "migrationId": 367,
