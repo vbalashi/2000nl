@@ -1,3 +1,4 @@
+import {completeTrainingMeaningCount} from "./trainingMeaningCount";
 import type { CurrentTrainingCardRead } from "./currentTrainingCardRequest";
 import { withLexicalRelationTranslations } from "./platformV2LexicalRelationTranslations";
 import {parseMeaningLearningProgress,type MeaningLearningProgress} from '../../../../packages/shared/types/meaningLearningProgress';
@@ -669,14 +670,17 @@ async function resolveExactReadableGroup(
   // bounded, access-checked article for presentation totals without expanding
   // the current-card payload or granting authority to any sibling.
   if (currentCard) {
+    // The permit payload may contain a filtered count. Discard it before any
+    // optional read, including failures and shared/partial article responses.
+    delete exactEntry.meanings_count;
     try {
       const article = await context.service.supabase.rpc("read_platform_v2_training_group", {
         p_user_id: context.auth.user.id,
         p_entry_id: request.entryId,
         p_group_entry_bound: LOOKUP_GROUP_ENTRY_SAFETY_BOUND,
       });
-      const siblings = !article.error && !asRecord(article.data).error ? lookupEntries(article.data) : [];
-      if (siblings.some(entry => entry.id === exactEntry.id)) exactEntry.meanings_count = siblings.length;
+      const total = !article.error ? completeTrainingMeaningCount(article.data, exactEntry, LOOKUP_GROUP_ENTRY_SAFETY_BOUND) : undefined;
+      if (total !== undefined) exactEntry.meanings_count = total;
     } catch {
       // Optional meaning chrome cannot prevent the owned card from rendering.
     }

@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import { performPlatformV2Lookup } from "@/lib/platform/platformV2LookupService";
 
 describe.each(["current", "library"] as const)("%s reader report identity", (reader) => {
- test.each((["missing", "null", "present"] as const).flatMap(revisionState => (["ready", "error", "throws"] as const).map(articleState => ({revisionState, articleState}))))(
+ test.each((["missing", "null", "present"] as const).flatMap(revisionState => (["ready", "shared-gap", "shared-prefix", "error", "throws"] as const).map(articleState => ({revisionState, articleState}))))(
   "preserves report identity: $revisionState / $articleState",
   async ({revisionState, articleState}) => {
     vi.stubEnv("PLATFORM_V2_ACTIONS_ENABLED", "1");
@@ -32,13 +32,14 @@ describe.each(["current", "library"] as const)("%s reader report identity", (rea
       headword: "huis",
       meaning_id: 1,
       part_of_speech: "zn",
+      meanings_count: 99,
       raw: { meanings: [{ definition: "woning" }] },
       dictionary: {
         id: "dictionary",
         language_code: "nl",
         slug: "demo",
         name: "Demo",
-        kind: "curated",
+        kind: articleState.startsWith("shared") ? "user" : "curated",
         visibility: "system",
         schema_key: "nl-example-v2",
         schema_version: 1,
@@ -70,7 +71,11 @@ describe.each(["current", "library"] as const)("%s reader report identity", (rea
       if (name === "read_platform_v2_training_group") {
         if (articleState === "throws") throw new Error("article transport failed");
         if (articleState === "error") return {data:null,error:{message:"unavailable"}};
-        return {data:{items:[entry,{...entry,id:"sibling-entry"}]},error:null};
+        const shared=articleState.startsWith("shared");
+        const kind=shared ? "user" : "curated";
+        const first={...entry,dictionary:{...entry.dictionary,kind}};
+        const second={...first,id:"sibling-entry",platform_v2_identity:{...identity,entryId:"sibling-entry",meaningOrdinal:articleState === "shared-gap" ? 3 : 2,reportContentRevision:null}};
+        return {data:{items:[first,second],page:{selectedTierComplete:true,nextGroupCursor:null}},error:null};
       }
       if (name === "read_platform_v2_presentation_identity")
         return {
@@ -120,6 +125,9 @@ describe.each(["current", "library"] as const)("%s reader report identity", (rea
       expect(payload.groups[0].entries[0].entryId).toBe(entryId);
       if (reader === "current") {
         expect(payload.groups[0].entries[0].meaningCount).toBe(articleState === "ready" ? 2 : undefined);
+        expect(JSON.stringify(payload)).not.toContain("sibling-entry");
+        expect(JSON.stringify(payload)).not.toContain('"meanings_count"');
+        expect(JSON.stringify(payload)).not.toContain('"meaningCount":99');
         expect(rpc).toHaveBeenCalledWith("read_platform_v2_training_group", {
           p_user_id:"owner",p_entry_id:entryId,p_group_entry_bound:50,
         });
