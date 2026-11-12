@@ -5,7 +5,12 @@ results into one bounded, reverse-chronological list. A meaning is identified by
 `entry_id`, not by headword or by an ordinal inferred from the current view.
 The history shows the currently available definition without requesting a
 translation; this is not a snapshot of what the learner saw when the event was
-recorded. Opening a row passes the entry's own content language to the library.
+recorded. All history branches, including the legacy v1 read used by v2,
+authorize the individual entry before ordering and limiting. A live shared
+author entry remains visible to an eligible subscriber; after the last access
+path is revoked it is withheld. An archived author entry remains in its owner’s
+history without definition or exercise text, but not in a subscriber’s history.
+A malformed user entry without a dictionary fails closed. Opening a row passes the entry's own content language to the library.
 The meaning badge uses source-group identity and its recorded ordinal, never the
 position of a history row. It is shown only for a complete, accessible group of
 2–50 active entries with distinct, consecutive ordinals. Otherwise it is hidden.
