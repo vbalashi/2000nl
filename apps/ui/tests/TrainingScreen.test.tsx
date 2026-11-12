@@ -264,6 +264,7 @@ const preloadPlatformV2Audio = vi.fn().mockResolvedValue(undefined);
 const clearPlatformV2TrainingClientCaches = vi.fn();
 const mockV2ProgressAction = vi.fn();
 const mockV2ProgressActionCompleted = vi.fn();
+let mockV2ActionId = "review-card";
 let mockV2AcceptanceGate: Promise<void> | null = null;
 let mockV2Superseded: undefined | (()=>void);
 let mockV2SessionState: "ready" | "loading" = "ready";
@@ -795,7 +796,7 @@ vi.mock("@/components/training/v2/TrainingSenseCardV2Session", () => ({
                 // acceptance. Do not turn a click into a synchronous receipt.
                 await Promise.resolve();
                 const result = await onProgressActionAccepted({
-                  actionId: "review-card",
+                  actionId: mockV2ActionId,
                 });
                 if (mockV2AcceptanceGate) await mockV2AcceptanceGate;
                 mockV2ProgressActionCompleted(result);
@@ -911,6 +912,7 @@ beforeEach(() => {
   fetchNextTrainingWordByScenario.mockReset().mockResolvedValue(mockWord);
   fetchStats.mockReset().mockResolvedValue(defaultTrainingStats);
   mockV2SessionState = "ready";
+  mockV2ActionId = "review-card";
   mockV2AcceptanceGate = null;
   prefetchPlatformV2TrainingEntry.mockReset().mockResolvedValue({
     state: "ready",
@@ -4844,4 +4846,51 @@ test('changing the editor language keeps its visible surface while the catalog l
   expect(screen.queryByTestId('training-startup-gate')).not.toBeInTheDocument();
   expect(source.isConnected).toBe(true);
  } finally {await act(async()=>release([]));}
+});
+
+test("Known acceptance reconciles the plan before presentation and avoids delayed reload", async () => {
+  await writeTrainingSessionResume({
+    sessionId: "session-replan-count", userId: "user-1", languageCode: "nl",
+    listId: "list-1", listType: "curated", scenarioId: "understanding",
+    modes: ["word-to-definition"], cardFilter: "both", newReviewRatio: 2,
+    focusFilter: { dateWindow: "all" }, sessionSize: 5,
+  });
+  const firstMember = {
+    ordinal: 1, entryId: "word-1", cardTypeId: "word-to-definition",
+    queueSource: "new", consumedAt: null, unavailableAt: null,
+  };
+  const initial = {
+    sessionId: "session-replan-count", runStatus: "active" as const,
+    runGeneration: 1, sessionSize: 5 as const, plannedNew: 2, plannedReview: 3,
+    plannedPractice: 0, plannedTotal: 5, requestedTotal: 5,
+    plannedAt: "2026-09-10T12:00:00Z", planRevision: 0, completedActions: 0,
+    members: [firstMember],
+  };
+  fetchTrainingSessionSnapshot.mockResolvedValue(initial);
+  fetchNextTrainingWordByScenario.mockResolvedValue(mockWord);
+  render(<TrainingScreen user={user} trainingTodaySetupEnabled />);
+  await screen.findByTestId("mock-training-sense-card-v2");
+  await waitFor(() => expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0"));
+  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuemax", "5");
+
+  mockV2ActionId = "set-known-directions";
+  fetchTrainingSessionSnapshot.mockResolvedValue({
+    ...initial, planRevision: 1, completedActions: 1,
+    members: [
+      { ...firstMember, consumedAt: "2026-09-10T12:01:00Z" },
+      { ...firstMember, ordinal: 2, entryId: overrideWord.id },
+    ],
+  });
+  fetchNextTrainingWordByScenario.mockResolvedValue(overrideWord);
+  fireEvent.click(screen.getByRole("button", { name: "Mock V2 grade" }));
+  await waitFor(() => expect(mockV2ProgressActionCompleted).toHaveBeenCalledWith("accepted-next-presented"));
+  await screen.findByRole("heading", { name: "boom" });
+  const reads = fetchNextTrainingWordByScenario.mock.calls.length;
+  act(() => window.dispatchEvent(new Event("focus")));
+  await waitFor(() => expect(fetchTrainingSessionSnapshot.mock.calls.length).toBeGreaterThanOrEqual(2));
+  expect(fetchNextTrainingWordByScenario.mock.calls.length).toBe(reads);
+  await screen.findByRole("heading", { name: "boom" });
+  await waitFor(() => expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "1"));
+  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuemax", "5");
+  expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
 });
