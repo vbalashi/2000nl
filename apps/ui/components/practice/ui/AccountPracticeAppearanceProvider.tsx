@@ -1,4 +1,5 @@
 "use client";
+import { FailureIcon } from "@/components/system/FailureIcon";
 import { useUserEventHints } from "@/lib/events/userEventHints";
 import React from "react";
 import { cacheStartupAppearance } from "@/lib/preferences/startupAppearance";
@@ -109,8 +110,9 @@ function AccountAppearanceSession({
   if (requireReady && loadStatus !== "ready") {
     if (loadStatus !== "error") return <StartupStatus language={interfaceLanguage} />;
     const copy = getUiMessages(interfaceLanguage).appearancePreferences;
-    return <StartupLogoScreen><div role={loadStatus === "error" ? "alert" : "status"}>
-      <p>{loadStatus === "error" ? copy.loadError : copy.loading}</p>
+    return <StartupLogoScreen><div className={startup.failure} role={loadStatus === "error" ? "alert" : "status"}>
+      <FailureIcon className={startup.failureIcon} />
+      <p className={startup.failureTitle}>{loadStatus === "error" ? copy.loadError : copy.loading}</p>
       {loadStatus === "error" ? <button onClick={() => setAttempt(current => current + 1)}>{copy.retry}</button> : null}
     </div></StartupLogoScreen>;
   }

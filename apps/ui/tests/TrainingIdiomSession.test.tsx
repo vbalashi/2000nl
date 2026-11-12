@@ -599,7 +599,10 @@ for (const language of ["en", "nl", "ru"] as const) {
     fireEvent.click(screen.getByRole("button", {name:labels.trainingExercises.idiom.retry}));
     await waitFor(()=>expect(loadIdiomExerciseContent).toHaveBeenCalledTimes(2));
     await screen.findByRole("alert");
-    fireEvent.click(screen.getByRole("button", {name:labels.trainingSession.back}));
+    expect(screen.queryByRole("button", {name:labels.trainingSession.back})).not.toBeInTheDocument();
+    const close = screen.getByTestId("training-session-chrome").querySelector<HTMLButtonElement>('[data-onboarding="session-close"]');
+    expect(close).toBeEnabled();
+    fireEvent.click(close!);
     expect(onExit).toHaveBeenCalledOnce();
     expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
     expect(markPlatformV2IdiomTrainingSessionMemberUnavailable).not.toHaveBeenCalled();

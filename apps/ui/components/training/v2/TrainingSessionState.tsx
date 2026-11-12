@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { FailureIcon } from "@/components/system/FailureIcon";
 import { LoadingIndicator } from "@/components/system/LoadingIndicator";
 import approved from "../approvedTrainingCard.module.css";
 
@@ -13,6 +14,7 @@ export function TrainingSessionState({
   tertiaryAction,
   announcement = "status",
   heading = !loading,
+  failure = false,
 }: {
   title: string;
   detail?: string;
@@ -22,17 +24,18 @@ export function TrainingSessionState({
   tertiaryAction?: { label: string; onClick: () => void; disabled?: boolean };
   announcement?: "status" | "alert";
   heading?: boolean;
+  failure?: boolean;
 }) {
   return (
     <section className={approved.state} data-testid="training-session-state" data-state={loading ? "loading" : "terminal"} aria-busy={loading || undefined}>
       <div className={approved.stateReading} role="region" aria-label={title} tabIndex={0}>
-        <div className={approved.stateContent} role={announcement}>
-          {loading ? <LoadingIndicator /> : null}
+        <div className={`${approved.stateContent} ${failure ? approved.failureContent : ""}`} role={announcement}>
+          {loading ? <LoadingIndicator /> : failure ? <FailureIcon className={approved.failureIcon} /> : null}
           {heading ? <h1>{title}</h1> : <p>{title}</p>}
           {detail ? <p>{detail}</p> : null}
         </div>
       </div>
-      {action || secondaryAction || tertiaryAction ? <footer className={approved.stateActions}>
+      {action || secondaryAction || tertiaryAction ? <footer className={`${approved.stateActions} ${failure ? approved.failureActions : ""}`}>
         {action ? <button type="button" className={approved.primary} disabled={action.disabled} onClick={action.onClick}>{action.label}</button> : null}
         {secondaryAction ? <button type="button" className={approved.primary} data-kind="secondary" disabled={secondaryAction.disabled} onClick={secondaryAction.onClick}>{secondaryAction.label}</button> : null}
         {tertiaryAction ? <button type="button" className={approved.primary} data-kind="secondary" disabled={tertiaryAction.disabled} onClick={tertiaryAction.onClick}>{tertiaryAction.label}</button> : null}
