@@ -10,6 +10,12 @@ The quiet **Mark as known** action opens a two-card editor in the existing card
 area. The current direction is selected; the other starts with its actual state.
 Each preview shows the question and answer in the appropriate order. Both preview
 panels share equal height. Their status and underlined action are centred.
+The editor reuses the training shell and preserves its bounds and the current
+action dock height, including wrapped review controls. Next replaces the main
+action in that dock. The choice group is vertically centred inside the shell.
+Known state uses a quiet theme background without an accent border; status text
+is stronger than the action links, and the icon follows the current theme.
+Preview typography and direction arrows match the training builder.
 
 English statuses/actions are Already know / Return to learning and Still learning /
 Mark as known. Russian uses Уже знаю / Вернуть в обучение and Ещё изучаю /
