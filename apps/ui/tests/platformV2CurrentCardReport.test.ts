@@ -2,9 +2,9 @@ import { describe, expect, test, vi } from "vitest";
 import { performPlatformV2Lookup } from "@/lib/platform/platformV2LookupService";
 
 describe.each(["current", "library"] as const)("%s reader report identity", (reader) => {
- test.each(["missing", "null", "present"] as const)(
-  "preserves report identity: %s",
-  async (revisionState) => {
+ test.each((["missing", "null", "present"] as const).flatMap(revisionState => (["ready", "error", "throws"] as const).map(articleState => ({revisionState, articleState}))))(
+  "preserves report identity: $revisionState / $articleState",
+  async ({revisionState, articleState}) => {
     vi.stubEnv("PLATFORM_V2_ACTIONS_ENABLED", "1");
     const entryId = "75400000-0000-4000-8000-000000000001";
     const currentCard = {
@@ -67,6 +67,11 @@ describe.each(["current", "library"] as const)("%s reader report identity", (rea
           },
           error: null,
         };
+      if (name === "read_platform_v2_training_group") {
+        if (articleState === "throws") throw new Error("article transport failed");
+        if (articleState === "error") return {data:null,error:{message:"unavailable"}};
+        return {data:{items:[entry,{...entry,id:"sibling-entry"}]},error:null};
+      }
       if (name === "read_platform_v2_presentation_identity")
         return {
           data: {
@@ -110,6 +115,13 @@ describe.each(["current", "library"] as const)("%s reader report identity", (rea
       );
       expect(result.status, JSON.stringify(result.payload)).toBe(200);
       const payload = result.payload as any;
+      expect(payload.groups).toHaveLength(1);
+      expect(payload.groups[0].entries).toHaveLength(1);
+      expect(payload.groups[0].entries[0].entryId).toBe(entryId);
+      expect(payload.groups[0].entries[0].meaningCount).toBe(articleState === "ready" ? 2 : undefined);
+      expect(rpc).toHaveBeenCalledWith("read_platform_v2_training_group", {
+        p_user_id:"owner",p_entry_id:entryId,p_group_entry_bound:50,
+      });
       expect(payload.groups[0].entries[0].reportContentRevision).toBe(
         revisionState === "null" ? null : "a".repeat(64),
       );

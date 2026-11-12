@@ -158,6 +158,7 @@ function entry(value: unknown): value is PlatformEntryPresentationV2 {
   if (value.noteMaterial !== undefined && !isPlatformEntryNoteMaterialV2(value.noteMaterial)) return false;
   if (value.sourceVersion !== undefined && (!Number.isSafeInteger(value.sourceVersion) || Number(value.sourceVersion)<1)) return false;
   return (value.meaningOrdinal === null || finiteNumber(value.meaningOrdinal)) &&
+      (value.meaningCount === undefined || (Number.isInteger(value.meaningCount) && Number(value.meaningCount) > 0)) &&
     (value.partOfSpeech === undefined || semanticTerm(value.partOfSpeech)) &&
     (value.card === null || card(value.card)) && string(value.contentRevision) &&
     nullableString(value.summaryContentNodeId) && arrayOf(value.contentNodes, contentNode) &&

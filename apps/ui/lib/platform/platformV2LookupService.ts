@@ -665,6 +665,22 @@ async function resolveExactReadableGroup(
       result: { payload: { error: "exact_group_contract_invalid" }, status: 409 },
     };
   }
+  // A current-card permit intentionally projects only its exact entry. Read the
+  // bounded, access-checked article for presentation totals without expanding
+  // the current-card payload or granting authority to any sibling.
+  if (currentCard) {
+    try {
+      const article = await context.service.supabase.rpc("read_platform_v2_training_group", {
+        p_user_id: context.auth.user.id,
+        p_entry_id: request.entryId,
+        p_group_entry_bound: LOOKUP_GROUP_ENTRY_SAFETY_BOUND,
+      });
+      const siblings = !article.error && !asRecord(article.data).error ? lookupEntries(article.data) : [];
+      if (siblings.some(entry => entry.id === exactEntry.id)) exactEntry.meanings_count = siblings.length;
+    } catch {
+      // Optional meaning chrome cannot prevent the owned card from rendering.
+    }
+  }
   return {
     ok: true,
     query: exactEntry.headword,
