@@ -100,7 +100,9 @@ export function buildTrainingSenseCardModel({
 
   return {
     entryId: entry.entryId,
-    ...((entry.meaningCount ?? group.entryCount) > 1 && entry.meaningOrdinal != null ? {meaning:{ordinal:entry.meaningOrdinal,total:entry.meaningCount ?? group.entryCount}} : {}),
+    ...(entry.meaningCount != null && Number.isSafeInteger(entry.meaningCount) && entry.meaningCount > 1 && entry.meaningCount <= 50 &&
+      entry.meaningOrdinal != null && Number.isSafeInteger(entry.meaningOrdinal) && entry.meaningOrdinal > 0 && entry.meaningOrdinal <= entry.meaningCount
+      ? {meaning:{ordinal:entry.meaningOrdinal,total:entry.meaningCount}} : {}),
     ...(entry.noteMaterial !== undefined ? {noteMaterial:entry.noteMaterial} : {}),
     ...(entry.wordDetails?{wordDetails:entry.wordDetails}:{}),
     headword: group.header.displayPronunciation ?? group.header.text,

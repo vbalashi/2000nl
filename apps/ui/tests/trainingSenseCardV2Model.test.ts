@@ -13,11 +13,16 @@ import {
 
 describe("buildTrainingSenseCardModel", () => {
   test("uses the server meaning ordinal and total without changing entry identity", () => {
-    const model=buildTrainingSenseCardModel({group:{...singleSenseGroup,entryCount:5},entry:{...singleSenseEntry,meaningOrdinal:5},interfaceLanguage:"en"});
+    const model=buildTrainingSenseCardModel({group:{...singleSenseGroup,entryCount:5},entry:{...singleSenseEntry,meaningOrdinal:5,meaningCount:5},interfaceLanguage:"en"});
     expect(model.meaning).toEqual({ordinal:5,total:5});
     expect(model.entryId).toBe(singleSenseEntry.entryId);
     expect(buildTrainingSenseCardModel({group:{...singleSenseGroup,entryCount:1},entry:{...singleSenseEntry,meaningOrdinal:2,meaningCount:3},interfaceLanguage:"en"}).meaning).toEqual({ordinal:2,total:3});
     expect(buildTrainingSenseCardModel({group:{...singleSenseGroup,entryCount:1},entry:singleSenseEntry,interfaceLanguage:"en"}).meaning).toBeUndefined();
+  });
+
+  test("does not infer a meaning total from visible group rows without verified metadata", () => {
+    const model=buildTrainingSenseCardModel({group:{...singleSenseGroup,entryCount:3},entry:{...singleSenseEntry,meaningOrdinal:1},interfaceLanguage:"en"});
+    expect(model.meaning).toBeUndefined();
   });
 
   test("carries provided notes without fabricating content nodes, report capabilities or study identity",()=>{
