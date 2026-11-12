@@ -57,3 +57,6 @@
 .directionIcon{display:inline-flex;vertical-align:middle;color:var(--practice-text-muted)}
 
 .sourceIcon{display:inline-flex;vertical-align:middle;margin-inline-start:8px;color:var(--practice-text-muted);letter-spacing:normal}
+
+/* The progress bar adds a fifth row to a resumed training card. */
+@media (min-width:651px) { .hero[data-recipe][data-resuming="true"] { gap:10px; } }

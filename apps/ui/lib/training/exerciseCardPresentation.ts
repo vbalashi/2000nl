@@ -24,6 +24,7 @@ export type TrainingCardAnswer = {
 
 export type TrainingExercisePresentation = {
   label: string;
+  questionKind?: "idiomDirect" | "idiomReverse" | "translation";
   /** Presentation identity of the same question on the answer, never inferred from text. */
   promptTarget: { contentNodeId: string; kind: "text" | "translation" };
   answerTranslationInitiallyVisible?: boolean;

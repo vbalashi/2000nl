@@ -28,3 +28,11 @@ test('a previously owned session can resume while starter setup is pending',()=>
  show({...emptyTrainingSetups(),starterStatus:'pending'},true);
  expect(screen.getByRole('button',{name:'Continue training'})).toBeEnabled();
 });
+
+test('early review starts the unsaved current setup',()=>{
+ const onEarlyReview=vi.fn();
+ const draft={family:'meaning' as const,scenarioId:'understanding',modes:['word-to-definition' as const],cardFilter:'review' as const,listValue:'',sourceValue:'all',newReviewRatio:2,dateWindow:'all' as const,sessionSize:10,materialMode:'all-dictionaries' as const};
+ render(<AccountTrainingOverview ownerId="test" interfaceLanguage="en" languageCode="nl" languageOptions={[{value:'nl',label:'Dutch'}]} lists={[]} dictionaries={[{value:'demo',label:'Demo'}]} scenarios={[{value:'understanding',label:'Words',modes:['word-to-definition']}]} snapshot={{...emptyTrainingSetups(),starterStatus:'superseded'}} accountStatus="ready" initialDraft={draft} availability={{trainingId:'current-setup',status:'ready',dueToday:0,totalReviews:4,stillNew:0}} pending={false} ready continueDisabled={false} materialUnavailable="Unavailable" partialMaterialNotice="Partial" setupUnavailable="Unavailable" translationUnavailable="Unavailable" translationLanguage="en" onEarlyReview={onEarlyReview} onSelect={vi.fn()} onCreate={vi.fn()} onDefaultLaunch={vi.fn()} onContinue={vi.fn()} onRetry={vi.fn()}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Review ahead'}));
+ expect(onEarlyReview).toHaveBeenCalledWith(expect.objectContaining({id:'current-setup',draft}));
+});

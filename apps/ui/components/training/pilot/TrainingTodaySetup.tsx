@@ -444,7 +444,7 @@ export function TrainingTodaySetup({
   }
 
   if (screen === "today") {
-    return <TrainingScreenTransition screen="today"><AccountTrainingOverview availability={availability} onAvailabilityRetry={availabilityResult.reload} selectedTrainingId={selectedTrainingId} ownerId={userId} emptyTraining={emptyTraining} onEarlyReview={training=>void requestStart({...training.draft,cardFilter:"review"},training.name,{trainingId:training.id,reviewTiming:"early"})} interfaceLanguage={interfaceLanguage} languageCode={trainingLanguageCode??"nl"}
+    return <TrainingScreenTransition screen="today"><AccountTrainingOverview availability={availability} onAvailabilityRetry={availabilityResult.reload} selectedTrainingId={selectedTrainingId} ownerId={userId} emptyTraining={emptyTraining} onEarlyReview={training=>void requestStart({...training.draft,cardFilter:"review"},training.name,{...(training.id === "current-setup" ? {} : {trainingId:training.id}),reviewTiming:"early"})} interfaceLanguage={interfaceLanguage} languageCode={trainingLanguageCode??"nl"}
       languageOptions={trainingLanguageOptions} lists={lists} dictionaries={dictionaries} scenarios={scenarios}
       snapshot={account.snapshot} accountStatus={account.status} initialDraft={initialDraft}
       ownedSession={hasOwnedSession?ownedSession:undefined} activeSessionLabel={activeSessionLabel}

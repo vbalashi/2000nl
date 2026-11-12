@@ -7302,5 +7302,41 @@
   "ui.trainingHistory.exercises.idiom": {
     "source": "Idiom",
     "translationHash": "0f74c136ce01e03602169690975247258b5323aefec205e865ba4eecc93490b5"
+  },
+  "features.interactionSettings.showQuestionOnAnswer": {
+    "source": "Show question with answer",
+    "translationHash": "53ce433f80d76ba2f5d97e7bc31e63651a7f93f6ee247b06eceea574df45ec91"
+  },
+  "features.interactionSettings.questionHelp": {
+    "source": "Shows the original question when you reveal the answer, so you can remember what you were asked to recall.",
+    "translationHash": "186fa736c8e98bbd7586e7b3c4ef099e49e5ee8385b4caaeba73211c09445dbf"
+  },
+  "features.interactionSettings.questionWordMeaning": {
+    "source": "Word → meaning question",
+    "translationHash": "f951025c6373a708a29b770a07b433e47408c2432583b3b51c495f46efcf818e"
+  },
+  "features.interactionSettings.questionMeaningWord": {
+    "source": "Meaning → word question",
+    "translationHash": "ffc70da895e0cc9f533f2d3f6f9fb8da29d74997955dc7e79030c1abcd682c10"
+  },
+  "features.interactionSettings.questionIdiomMeaning": {
+    "source": "Idiom → meaning question",
+    "translationHash": "fc63d81f26a05979f23ce75a40f74e59c56f3dface7717d942bb92c49328f314"
+  },
+  "features.interactionSettings.questionMeaningIdiom": {
+    "source": "Meaning → idiom question",
+    "translationHash": "b21ad6b1268eb58420f7a87bc84b846ebeb387aeb2987e668c5c8e6ae7072dfd"
+  },
+  "features.interactionSettings.questionTranslation": {
+    "source": "Translation question",
+    "translationHash": "45bdf59fbada100dad2c7d08ee9997f4ef7ba96e3b6aae3545ed639ccda04330"
+  },
+  "features.interactionSettings.questionPreviewWord": {
+    "source": "de fiets",
+    "translationHash": "5993aad462907c08a4c73a2a15388d097cd19e27cec15b47b6d0010c46897e67"
+  },
+  "features.interactionSettings.questionPreviewDefinition": {
+    "source": "Een voertuig met twee wielen.",
+    "translationHash": "829ff9486440eb8a5b6ad6bd1ddb834a932ef17fd36ec04f421b57c3c4055b15"
   }
 }
