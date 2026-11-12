@@ -231,3 +231,31 @@ test('a tall viewport keeps the answer header fixed while its content scrolls', 
   expect(await header.boundingBox()).toEqual(headerBefore);
   expect(await reminder.boundingBox()).toEqual(reminderBefore);
 });
+
+test('reading focus follows the answer region across viewport changes without stealing button focus', async ({page}) => {
+  await page.setViewportSize({width:390,height:568});
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.goto('/dev/sense-card-gate?prototype=reading&fixture=long&clean=1');
+  await assertTestFontsReady(page);
+  const stage=page.getByTestId('training-sense-card-stage');
+  await stage.getByRole('button',{name:'Antwoord tonen',exact:true}).click();
+  const reading=page.getByTestId('training-answer-scroll');
+  await expect(reading).toHaveAttribute('data-reading-layout','compact');
+  await reading.focus();
+  await expect(reading).toBeFocused();
+  await page.setViewportSize({width:390,height:844});
+  await expect(reading).toHaveAttribute('data-reading-layout','regular');
+  await expect(reading).toBeFocused();
+  await reading.press('End');
+  await expect.poll(()=>reading.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);
+  await page.setViewportSize({width:390,height:568});
+  await expect(reading).toHaveAttribute('data-reading-layout','compact');
+  await expect(reading).toBeFocused();
+  await reading.press('End');
+  await expect.poll(()=>reading.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);
+  const action=stage.getByRole('button',{name:'Opnieuw',exact:true});
+  await action.focus();
+  await page.setViewportSize({width:390,height:844});
+  await expect(reading).toHaveAttribute('data-reading-layout','regular');
+  await expect(action).toBeFocused();
+});

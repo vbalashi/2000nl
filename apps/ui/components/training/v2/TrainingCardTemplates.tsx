@@ -40,11 +40,19 @@ export function trainingStageClassName() {
 
 const CompactAnswerContext = React.createContext(false);
 
-function useCompactAnswerReading() {
+function useCompactAnswerReading(onLayoutWillChange: () => void) {
   const [compact, setCompact] = React.useState(false);
+  const current = React.useRef(false);
+  const beforeChange = React.useRef(onLayoutWillChange);
+  beforeChange.current = onLayoutWillChange;
   React.useEffect(() => {
     const query = window.matchMedia("(max-height: 600px)");
-    const update = () => setCompact(query.matches);
+    const update = () => {
+      if (query.matches === current.current) return;
+      beforeChange.current();
+      current.current = query.matches;
+      setCompact(query.matches);
+    };
     update();
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
@@ -68,10 +76,23 @@ export function TrainingCardShell({
   children: React.ReactNode;
 }) {
   const {preferences} = useTrainingInteractions();
-  const compact = useCompactAnswerReading() && answerVisible;
+  const shell = React.useRef<HTMLElement>(null);
+  const previousReading = React.useRef<HTMLElement | null>(null);
+  const compact = useCompactAnswerReading(() => {
+    const reading = shell.current?.querySelector<HTMLElement>('[data-testid="training-answer-scroll"]');
+    previousReading.current = reading && document.activeElement === reading ? reading : null;
+  }) && answerVisible;
+  React.useLayoutEffect(() => {
+    const previous = previousReading.current;
+    previousReading.current = null;
+    if (!previous || (document.activeElement !== previous && document.activeElement !== document.body)) return;
+    const next = shell.current?.querySelector<HTMLElement>('[data-testid="training-answer-scroll"]');
+    if (next !== previous) next?.focus({preventScroll:true});
+  }, [compact]);
   const reminder = answerVisible && question && preferences.showQuestionOnAnswer ? <TrainingQuestionReminder {...question} /> : null;
   return (
     <article
+      ref={shell}
       data-testid="training-sense-card-shell"
       className={`relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden ${approved.shell} ${answerVisible ? "gap-[6px] p-[18px]" : ""}`}
     >
