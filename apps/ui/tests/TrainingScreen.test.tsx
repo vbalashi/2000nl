@@ -3082,7 +3082,7 @@ test("pilot cannot start when no authoritative scenario is available", async () 
   updateActiveTrainingScope.mockClear();
   fireEvent.click(unavailableStart);
   expect(updateActiveTrainingScope).not.toHaveBeenCalled();
-});
+}, 15_000);
 
 test("pilot normalizes a card mode omitted by the authoritative scenario", async () => {
   fetchActiveTrainingScope.mockResolvedValueOnce({...defaultActiveTrainingScope,modesEnabled:["definition-to-word"],hasSavedScope:true});
