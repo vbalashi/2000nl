@@ -1165,6 +1165,11 @@
       "failed": "De collectie kon niet worden bijgewerkt. Controleer en probeer opnieuw.",
       "storage": "De bevestiging kon niet op dit apparaat worden bewaard. Probeer opnieuw.",
       "pending": "Het resultaat is nog niet beschikbaar. Controleer opnieuw voordat u het opnieuw probeert."
+    },
+    "training": {
+      "meaningPosition": "Betekenis {ordinal} van {total}",
+      "meaningDetailsHint": "Gebruik de knop {button} om alle betekenissen te bekijken.",
+      "meaningDetailsFrontHint": "Toon het antwoord en gebruik de knop {button} op de achterkant om alle betekenissen te bekijken."
     }
   },
   "wordDetails": {

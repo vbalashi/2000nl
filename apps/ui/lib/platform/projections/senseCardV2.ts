@@ -305,6 +305,7 @@ function projectSenseCard(
     ...(item.entry.sourceVersion ? { sourceVersion: item.entry.sourceVersion } : {}),
     entryId: item.entry.id,
     meaningOrdinal: item.meaningOrdinal ?? item.entry.meaningId ?? null,
+    ...(typeof item.entry.meaningsCount === "number" && Number.isInteger(item.entry.meaningsCount) && item.entry.meaningsCount > 0 ? {meaningCount:item.entry.meaningsCount} : {}),
     ...(item.entry.partOfSpeech
       ? {
           partOfSpeech: semanticTerm(

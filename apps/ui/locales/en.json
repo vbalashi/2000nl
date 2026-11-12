@@ -1165,6 +1165,11 @@
       "failed": "Could not update this collection. Review it and try again.",
       "storage": "Could not save the confirmation on this device. Try again.",
       "pending": "The result is not available yet. Check again before retrying."
+    },
+    "training": {
+      "meaningPosition": "Meaning {ordinal} of {total}",
+      "meaningDetailsHint": "To see all meanings, use the {button} button.",
+      "meaningDetailsFrontHint": "To see all meanings, reveal the answer and use the {button} button on the back of the card."
     }
   },
   "wordDetails": {

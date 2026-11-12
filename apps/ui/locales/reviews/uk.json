@@ -1803,5 +1803,8 @@
   "features.collectionDetails.urlHint": {"source":"Use a website address, for example www.example.com.","translationHash":"8ff86c9bf3a9201ab879ccb0b95c881aae0026bae5ff232d32ee3c4a7eadb526"},
   "features.labelSharing.openInCollections": {"source":"Open in collections","translationHash":"e62529be058ceffa2d4fda1dd2a9783c37c029b664ba568c9eddb5a28c554abd"},
   "features.labelSharing.accessViaGroup": {"source":"Access through {groups}","translationHash":"093ea69f3989319553b71935cf0391c4b0958556a6c82ab915637a1187a10a62"},
-  "features.labelSharing.publishedSeparately": {"source":"Published separately","translationHash":"ab0b647f562ec29210bc3f771222f42a53c3a60294e89163c0647d43044b00c6"}
+  "features.labelSharing.publishedSeparately": {"source":"Published separately","translationHash":"ab0b647f562ec29210bc3f771222f42a53c3a60294e89163c0647d43044b00c6"},
+  "ui.training.meaningPosition": {"source":"Meaning {ordinal} of {total}","translationHash":"3b02c771dc02450dc63394de31c5fa16a9debd6448cebec0c60014099350de0e"},
+  "ui.training.meaningDetailsHint": {"source":"To see all meanings, use the {button} button.","translationHash":"9382a5e77d9756ab42d05ae83917a6ec1e6ff1045b12c11cf0ecb9c1cbd0ab78"},
+  "ui.training.meaningDetailsFrontHint": {"source":"To see all meanings, reveal the answer and use the {button} button on the back of the card.","translationHash":"533eaae9a05b5d8f4ec0b98d636848c8cf932ef973ff7fccdbf27545432926ee"}
 }

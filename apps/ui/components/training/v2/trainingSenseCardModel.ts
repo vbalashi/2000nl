@@ -17,6 +17,7 @@ export type TrainingSenseCardContent = PlatformV2SenseContentNode;
 
 export type TrainingSenseCardModel = {
   entryId: string;
+  meaning?: {ordinal:number;total:number};
   noteMaterial?: PlatformEntryNoteMaterialV2[];
   wordDetails?:PlatformWordDetailsV2;
   headword: string;
@@ -99,6 +100,7 @@ export function buildTrainingSenseCardModel({
 
   return {
     entryId: entry.entryId,
+    ...((entry.meaningCount ?? group.entryCount) > 1 && entry.meaningOrdinal != null ? {meaning:{ordinal:entry.meaningOrdinal,total:entry.meaningCount ?? group.entryCount}} : {}),
     ...(entry.noteMaterial !== undefined ? {noteMaterial:entry.noteMaterial} : {}),
     ...(entry.wordDetails?{wordDetails:entry.wordDetails}:{}),
     headword: group.header.displayPronunciation ?? group.header.text,
