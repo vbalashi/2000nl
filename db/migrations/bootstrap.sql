@@ -68,3 +68,4 @@
 \i db/migrations/361_collection_details.sql
 \i db/migrations/362_source_ownership_paging.sql
 \i db/migrations/363_received_group_catalog_scope.sql
+\i db/migrations/364_starter_editorial_collection.sql
