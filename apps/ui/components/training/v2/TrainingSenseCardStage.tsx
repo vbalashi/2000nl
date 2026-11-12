@@ -234,7 +234,7 @@ export function TrainingSenseCardStage({
         {announcement}
       </span>
       <TrainingAnswerTranslationProvider currentCard={currentCard} entryId={model.entryId} contentLanguage={contentLanguage}>
-      <TrainingCardShell answerVisible={answerVisible} question={question}>
+      <TrainingCardShell answerVisible={answerVisible} question={question} contentLabel={t("senseCard.training.content")} scrollMoreLabel={t("senseCard.scroll.more")} onReachEnd={() => primaryAnswerActionRef.current?.focus()}>
         {model.audioCapability &&
         onPlayAudio &&
         mode === "word-to-definition" &&

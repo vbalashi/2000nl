@@ -38,25 +38,87 @@ export function trainingStageClassName() {
   return approvedTrainingCardStageClassName;
 }
 
+const CompactAnswerContext = React.createContext(false);
+
+function useCompactAnswerReading() {
+  const [compact, setCompact] = React.useState(false);
+  React.useEffect(() => {
+    const query = window.matchMedia("(max-height: 600px)");
+    const update = () => setCompact(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  return compact;
+}
+
 export function TrainingCardShell({
   answerVisible,
   question,
+  contentLabel,
+  scrollMoreLabel,
+  onReachEnd,
   children,
 }: {
   answerVisible: boolean;
   question?: {title: string; text: string};
+  contentLabel: string;
+  scrollMoreLabel: string;
+  onReachEnd?: () => void;
   children: React.ReactNode;
 }) {
   const {preferences} = useTrainingInteractions();
+  const compact = useCompactAnswerReading() && answerVisible;
+  const reminder = answerVisible && question && preferences.showQuestionOnAnswer ? <TrainingQuestionReminder {...question} /> : null;
   return (
     <article
       data-testid="training-sense-card-shell"
       className={`relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden ${approved.shell} ${answerVisible ? "gap-[6px] p-[18px]" : ""}`}
     >
-      {answerVisible && question && preferences.showQuestionOnAnswer ? <TrainingQuestionReminder {...question} /> : null}
-      {children}
+      <CompactAnswerContext.Provider value={compact}>
+        {compact ? <CompactAnswerReading label={contentLabel} scrollMoreLabel={scrollMoreLabel} onReachEnd={onReachEnd}>{reminder}{children}</CompactAnswerReading> : <>{reminder}{children}</>}
+      </CompactAnswerContext.Provider>
     </article>
   );
+}
+
+function CompactAnswerReading({label,scrollMoreLabel,onReachEnd,children}: {label:string; scrollMoreLabel:string; onReachEnd?:()=>void; children:React.ReactNode}) {
+  const {preferences} = useTrainingInteractions();
+  const focusPending = React.useRef(false);
+  const viewport = React.useRef<HTMLDivElement>(null);
+  const [scroll, setScroll] = React.useState({top:false,bottom:false});
+  const update = React.useCallback(() => {
+    const node = viewport.current;
+    if (!node) return;
+    const remaining = node.scrollHeight - node.clientHeight - node.scrollTop;
+    if (remaining <= 2 && focusPending.current) {
+      focusPending.current = false;
+      window.requestAnimationFrame(() => onReachEnd?.());
+    }
+    setScroll(previous => {
+      const next = {top:node.scrollTop > 2, bottom:remaining > 2};
+      return previous.top === next.top && previous.bottom === next.bottom ? previous : next;
+    });
+  }, [onReachEnd]);
+  React.useLayoutEffect(() => {
+    const node = viewport.current;
+    if (!node) return;
+    update();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
+    observer?.observe(node);
+    if (node.firstElementChild) observer?.observe(node.firstElementChild);
+    return () => observer?.disconnect();
+  }, [children, update]);
+  const maskImage = scrollMask(scroll.top, scroll.bottom);
+  return <div className="relative min-h-0 flex-1">
+    <div ref={viewport} data-testid="training-answer-scroll" role="region" aria-label={label} tabIndex={0}
+      data-scroll-top={scroll.top ? "faded" : "clear"} data-scroll-bottom={scroll.bottom ? "faded" : "clear"}
+      onScroll={update} onKeyDown={event => { if (event.key === " ") event.stopPropagation(); }}
+      style={{maskImage, WebkitMaskImage:maskImage}} className={approved.compactAnswerScroll}><div>{children}</div></div>
+    {scroll.bottom ? <button type="button" aria-label={scrollMoreLabel} className={chrome.scrollCue}
+      onClick={() => { focusPending.current = true; viewport.current?.scrollBy({top:Math.max(120,(viewport.current?.clientHeight ?? 0)*0.65),behavior:preferences.animation && !window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "auto"}); }}>
+      <ChevronDown aria-hidden="true" className="h-4 w-4" /></button> : null}
+  </div>;
 }
 
 export function TrainingQuestionReminder({title,text}: {title:string; text:string}) {
@@ -317,6 +379,7 @@ export function TrainingCardAnswerBody({
   translationLanguage?: string;
   onReachEnd: () => void;
 }) {
+  const compact = React.useContext(CompactAnswerContext);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const continuationFocusPendingRef = React.useRef(false);
   const [scrollState, setScrollState] = React.useState({
@@ -363,13 +426,13 @@ export function TrainingCardAnswerBody({
 
   const maskImage = scrollMask(scrollState.top, scrollState.bottom);
   return (
-    <div className="relative min-h-0 flex-1">
+    <div className={compact ? "relative" : "relative min-h-0 flex-1"}>
       <div
         ref={scrollRef}
-        data-testid="training-answer-scroll"
-        role="region"
-        aria-label={t("senseCard.training.content")}
-        tabIndex={0}
+        data-testid={compact ? undefined : "training-answer-scroll"}
+        role={compact ? undefined : "region"}
+        aria-label={compact ? undefined : t("senseCard.training.content")}
+        tabIndex={compact ? undefined : 0}
         onKeyDown={event => {
           // Space scrolls reading content rather than turning the card over.
           if (event.key === " ") event.stopPropagation();
@@ -377,8 +440,8 @@ export function TrainingCardAnswerBody({
         data-scroll-top={scrollState.top ? "faded" : "clear"}
         data-scroll-bottom={scrollState.bottom ? "faded" : "clear"}
         onScroll={updateScrollState}
-        style={{ maskImage, WebkitMaskImage: maskImage }}
-        className={`h-full overflow-y-auto pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${approved.answerScroll}`}
+        style={compact ? undefined : { maskImage, WebkitMaskImage: maskImage }}
+        className={compact ? "pb-5 pt-2" : `h-full overflow-y-auto pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${approved.answerScroll}`}
       >
         <ProductionArticleReading>
           {definitions.map(node=><ArticleContentNode key={node.contentNodeId} node={node} lead interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} translationPending={translationPending} translationFailed={translationFailed} onRetryTranslation={onRetryTranslation}/>)}
@@ -387,7 +450,7 @@ export function TrainingCardAnswerBody({
         </ProductionArticleReading>
 
       </div>
-      {scrollState.bottom ? (
+      {!compact && scrollState.bottom ? (
         <button
           type="button"
           aria-label={t("senseCard.scroll.more")}

@@ -162,7 +162,7 @@ export function TrainingExerciseCard({
     >
       {notice}
       <TrainingAnswerTranslationProvider currentCard={currentCard} entryId={entryId} contentLanguage={contentLanguage}>
-      <TrainingCardShell answerVisible={revealed} question={{title: localizedSection("interactionSettings")[interfaceLanguage][presentation.questionKind === "idiomDirect" ? "questionIdiomMeaning" : presentation.questionKind === "idiomReverse" ? "questionMeaningIdiom" : "questionTranslation"], text: presentation.prompt.text}}>
+      <TrainingCardShell answerVisible={revealed} contentLabel={t("senseCard.training.content")} scrollMoreLabel={t("senseCard.scroll.more")} onReachEnd={() => firstGradeRef.current?.focus()} question={{title: localizedSection("interactionSettings")[interfaceLanguage][presentation.questionKind === "idiomDirect" ? "questionIdiomMeaning" : presentation.questionKind === "idiomReverse" ? "questionMeaningIdiom" : "questionTranslation"], text: presentation.prompt.text}}>
         {revealed ? (
           <>
             <TrainingCardAnswerHeader
