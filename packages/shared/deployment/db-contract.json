@@ -351,7 +351,7 @@
     {
       "migrationId": 365,
       "file": "db/migrations/365_meaning_exclusion_known_compatibility.sql",
-      "sha256": "b50ede873a822aa467a08ac923d71c132076b82aab02901ce3678a808f7734ea"
+      "sha256": "a59f96bb758ba38b3ac496707ae86ccc7595445d9f97d38a9a5d9aeec6662aa7"
     },
     {
       "migrationId": 366,

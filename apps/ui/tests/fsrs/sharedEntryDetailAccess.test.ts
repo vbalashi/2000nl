@@ -314,13 +314,24 @@ const fetchEntry=async(c:PoolClient,id:string)=>(await c.query("select fetch_dic
       await c.query("select set_config('request.jwt.claim.role','service_role',true)");await c.query("set local role service_role");
       const event=randomUUID();
       const exclude=async()=>(await c.query("select perform_training_headword_exclusion_as_principal_v1($1,'exclude-headword',$2,$3,null,null,null) payload",[f.viewer,event,f.selected])).rows[0].payload;
-      expect((await exclude()).status).toBe("accepted");
+      const legacyReceipt=await exclude();
+      expect(legacyReceipt.status).toBe("accepted");
+      expect(legacyReceipt.exclusionId).toBeTruthy();
+      expect(legacyReceipt.excluded).toBe(true);
       const before=(await c.query("select get_meaning_learning_progress_v1($1) payload",[f.selected])).rows[0].payload;
-      expect(before.exclusionId).toBeTruthy();
+      expect(before.exclusionId).toBeNull();
+      expect(before.directions).toHaveLength(2);
+      expect(before.directions.every((item:{knownMarkId:string|null})=>item.knownMarkId)).toBe(true);
+      // The old receipt remains the undo identity even though the new read model is Known.
+      expect((await exclude()).exclusionId).toBe(legacyReceipt.exclusionId);
+      await c.query("reset role");
+      expect((await c.query("select introduced_mark_ids from private.meaning_exclusion_known_conversions where exclusion_id=$1",[legacyReceipt.exclusionId])).rows).toHaveLength(1);
+      await c.query("set local role service_role");
       const resumeEvent=randomUUID();
       const resume=async()=>(await c.query("select resume_meaning_learning_as_principal_v1($1,$2,$3,$4) payload",[f.viewer,f.selected,before.revision,resumeEvent])).rows[0].payload;
       const restored=await resume();expect(restored.status).toBe("accepted");
       expect(restored.progress.exclusionId).toBeNull();
+      expect(restored.progress.directions.every((item:{knownMarkId:string|null})=>!item.knownMarkId)).toBe(true);
       expect(restored.progress.directions.every((item:{phase:string})=>item.phase==="learning")).toBe(true);
       await c.query("reset role");await user(c,f.owner);
       for(const list of f.lists) await c.query("select private.mutate_collection_share_v1($1,'close',$2,1)",[randomUUID(),list]);
@@ -331,6 +342,28 @@ const fetchEntry=async(c:PoolClient,id:string)=>(await c.query("select fetch_dic
       await c.query("rollback to savepoint new_exclusion");await c.query("reset role");
       expect((await c.query("select count(*)::int n from user_card_status where user_id=$1",[f.owner])).rows[0].n).toBe(0);
       expect((await c.query("select count(*)::int n from user_review_log where user_id=$1",[f.viewer])).rows[0].n).toBe(0);
+    });
+  });
+
+  test("converted legacy undo checks live access even when both Known marks predate exclusion",async()=>{
+    await withTransaction(pool,async c=>{
+      const f=await fixture(c);
+      await c.query("select set_config('request.jwt.claim.role','service_role',true)");
+      for(const direction of ['word-to-definition','definition-to-word'])await c.query("select perform_platform_v2_card_action_as_principal($1,'mark-known',$2,$3,COALESCE((select state_revision::text from user_card_status where user_id=$1 and entry_id=$2 and card_type_id=$3),'untracked'),null,null,null,$4,null,'first_party',null,null::uuid)",[f.viewer,f.selected,direction,randomUUID()]);
+      await c.query("set local role service_role");
+      const event=randomUUID();
+      const receipt=(await c.query("select perform_training_headword_exclusion_as_principal_v1($1,'exclude-headword',$2,$3,null,null,null) payload",[f.viewer,event,f.selected])).rows[0].payload;
+      await c.query("reset role");
+      const before=(await c.query("select * from private.meaning_exclusion_known_conversions where exclusion_id=$1",[receipt.exclusionId])).rows[0];
+      expect(before.introduced_mark_ids).toEqual([]);
+      await user(c,f.owner);for(const list of f.lists)await c.query("select private.mutate_collection_share_v1($1,'close',$2,1)",[randomUUID(),list]);
+      await user(c,f.viewer);await c.query("set local role service_role");
+      expect((await c.query("select perform_training_headword_exclusion_as_principal_v1($1,'exclude-headword',$2,$3,null,null,null) payload",[f.viewer,event,f.selected])).rows[0].payload.status).toBe('duplicate');
+      await c.query('savepoint revoked_undo');
+      await expect(c.query("select perform_training_headword_exclusion_as_principal_v1($1,'restore-headword',$2,$3,null,$4,null)",[f.viewer,randomUUID(),f.selected,receipt.exclusionId])).rejects.toThrow('exclusion_target_unavailable');
+      await c.query('rollback to savepoint revoked_undo');await c.query('reset role');
+      expect((await c.query("select * from private.meaning_exclusion_known_conversions where exclusion_id=$1",[receipt.exclusionId])).rows[0]).toEqual(before);
+      expect((await c.query("select count(*)::int n from user_card_known_marks where user_id=$1 and entry_id=$2 and cleared_at is null",[f.viewer,f.selected])).rows[0].n).toBe(2);
     });
   });
 

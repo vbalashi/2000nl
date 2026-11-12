@@ -13,6 +13,8 @@ BEGIN
   OR strpos(pg_get_functiondef(writer),'remaining_members')=0
   OR strpos(pg_get_functiondef(writer),$$unavailable_reason='known'$$)=0 THEN
   RAISE EXCEPTION 'db-contract-gate: Known choice must preserve the frozen plan'; END IF;
+ IF strpos(pg_get_functiondef('public.perform_training_headword_exclusion_as_principal_v1(uuid,text,uuid,uuid,text,uuid,uuid)'::regprocedure),'private.entry_access_v1')=0 THEN
+  RAISE EXCEPTION 'db-contract-gate: converted legacy undo must check live entry access'; END IF;
  IF has_function_privilege('anon',converter,'EXECUTE') OR has_function_privilege('authenticated',converter,'EXECUTE') OR has_function_privilege('service_role',converter,'EXECUTE') THEN
   RAISE EXCEPTION 'db-contract-gate: historical conversion is operator-only'; END IF;
  IF has_function_privilege('service_role','private.perform_legacy_meaning_exclusion_as_principal_v1(uuid,text,uuid,uuid,text,uuid,uuid)','EXECUTE') THEN

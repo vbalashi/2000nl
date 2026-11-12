@@ -86,6 +86,10 @@ BEGIN
  END IF;
  PERFORM pg_advisory_xact_lock(hashtext('training-active-run:'||p_user_id::text));
  PERFORM private.lock_shared_learning_source_v1(p_user_id,p_entry_id);
+ IF NOT EXISTS(SELECT 1 FROM private.active_word_entries entry
+   WHERE entry.id=p_entry_id AND private.entry_access_v1(p_user_id,entry.id,'train')) THEN
+  RAISE EXCEPTION 'exclusion_target_unavailable';
+ END IF;
  PERFORM pg_advisory_xact_lock(hashtext('training-headword:'||p_user_id::text||':'||private.training_headword_group_v1(p_entry_id)::text));
  PERFORM pg_advisory_xact_lock(hashtext('shared-meaning-known:'||p_user_id::text||':'||p_entry_id::text));
  SELECT * INTO conversion FROM private.meaning_exclusion_known_conversions WHERE exclusion_id=p_exclusion_id FOR UPDATE;
