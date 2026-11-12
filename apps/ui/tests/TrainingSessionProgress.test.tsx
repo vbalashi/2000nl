@@ -21,7 +21,7 @@ test('reduced motion snaps to the accepted position and wave follows its path',(
  const {rerender,container}=render(<TrainingSessionProgress presentation={planned} language="en" variant="wave"/>);
  rerender(<TrainingSessionProgress presentation={{...planned,position:10,fraction:10/15}} language="en" variant="wave"/>);
  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow','10');
- expect(container.querySelectorAll('path')[1]).toHaveAttribute('stroke-dasharray',`${9/14} 1`);
+ expect(container.querySelectorAll('path')[1]).toHaveAttribute('stroke-dasharray',`${10/14} 1`);
  match.mockRestore();
 });
 test('progress preferences accept all three modes and recover invalid legacy values',()=>{
@@ -38,15 +38,15 @@ test('dots land on a mark instead of stopping partway through a jump',()=>{
 
 test('completed dots are joined by a subtle thread',()=>{
  const {container}=render(<TrainingSessionProgress presentation={planned} language="en" variant="dots"/>);
- expect(container.querySelector('polyline')?.getAttribute('points')?.split(' ')).toHaveLength(7);
+ expect(container.querySelector('polyline')?.getAttribute('points')?.split(' ')).toHaveLength(8);
 });
 
 test.each([4,6])('twenty-card plan has one dot per card and %i completed marks', completed=>{
  const {container}=render(<TrainingSessionProgress presentation={{kind:'planned',position:completed,total:20,fraction:completed/20}} language="en" variant="dots"/>);
  const marks=Array.from(container.querySelectorAll('span')).slice(0,-1);
  expect(marks).toHaveLength(20);
- expect(marks.filter(mark=>mark.style.opacity==='0.48')).toHaveLength(completed);
- expect(container.querySelector('polyline')?.getAttribute('points')?.split(' ')).toHaveLength(completed);
+ expect(marks.filter(mark=>mark.style.opacity==='0.48')).toHaveLength(completed + 1);
+ expect(container.querySelector('polyline')?.getAttribute('points')?.split(' ')).toHaveLength(completed + 1);
  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow',String(completed));
 });
 
@@ -55,7 +55,7 @@ test.each([20,30,40,50])('straight progress at %i cards', total=>{
  const marks=Array.from(container.querySelectorAll('span'));
  expect(marks).toHaveLength(total<=30?total+1:1);
  expect(marks.every(mark=>mark.style.top==='8px')).toBe(true);
- if(total>30)expect(marks[0].style.left).toBe(`${6/total*100}%`);
+ if(total>30)expect(marks[0].style.left).toBe(`${6/(total-1)*100}%`);
 });
 
 // The same renderer powers live sessions and Appearance previews.
@@ -63,14 +63,28 @@ test.each(['dots','wave'] as const)('%s uses exact marks through 30 and continuo
  const {container,rerender}=render(<TrainingSessionProgress presentation={{kind:'planned',position:6,total:30,fraction:6/30}} language="en" variant={variant}/>);
  const marks=Array.from(container.querySelectorAll<HTMLElement>('[data-progress-mark]'));
  expect(marks).toHaveLength(30);
- expect(marks.filter(mark=>mark.style.opacity==='0.48')).toHaveLength(6);
+ expect(marks.filter(mark=>mark.style.opacity==='0.48')).toHaveLength(7);
  const runner=container.querySelectorAll('span')[30];
- expect(runner.style.left).toBe(marks[5].style.left);
- expect(runner.style.top).toBe(marks[5].style.top);
+ expect(runner.style.left).toBe(marks[6].style.left);
+ expect(runner.style.top).toBe(marks[6].style.top);
  if(variant==='wave') expect(new Set(marks.map(mark=>mark.style.top)).size).toBeGreaterThan(2);
  rerender(<TrainingSessionProgress presentation={{kind:'planned',position:6,total:31,fraction:6/31}} language="en" variant={variant}/>);
  expect(container.querySelectorAll('[data-progress-mark]')).toHaveLength(0);
  expect(container.querySelectorAll('span')).toHaveLength(1);
- expect(container.querySelectorAll('path')[1]).toHaveAttribute('stroke-dasharray',`${6/31} 1`);
+ expect(container.querySelectorAll('path')[1]).toHaveAttribute('stroke-dasharray',`${6/30} 1`);
  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuemax','31');
+});
+
+
+test.each([1, 2, 15])('current card is highlighted independently of completed answers (%i cards)', total => {
+ const match=vi.spyOn(window,'matchMedia').mockReturnValue({matches:true,addEventListener:vi.fn(),removeEventListener:vi.fn()} as unknown as MediaQueryList);
+ const {container, rerender} = render(<TrainingSessionProgress presentation={{kind:'planned',position:0,total,fraction:0}} language="en" variant="dots"/>);
+ const check = (completed: number, highlighted: number) => {
+  expect(Array.from(container.querySelectorAll<HTMLElement>('[data-progress-mark]')).filter(mark => mark.style.opacity === '0.48')).toHaveLength(highlighted);
+  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', String(completed));
+ };
+ check(0, 1);
+ rerender(<TrainingSessionProgress presentation={{kind:'planned',position:total,total,fraction:1}} language="en" variant="dots"/>);
+ check(total, total);
+ match.mockRestore();
 });

@@ -24,7 +24,12 @@ export function TrainingSessionProgress({ presentation, language, variant }: {
   const fraction = presentation.kind === "planned" ? Math.max(0, Math.min(1, presentation.fraction)) : 0;
   const exactDots = presentation.kind === "planned" && presentation.total <= MAX_EXACT_SESSION_DOTS;
   const line = variant === "dots" && !exactDots;
-  const target = exactDots ? Math.round(fraction * count) / count : fraction;
+  // The bead indicates the current card; the accessible value remains completed answers.
+  const target = presentation.kind === "planned"
+    ? exactDots
+      ? Math.max(1, Math.min(presentation.position + 1, count)) / count
+      : presentation.total > 1 ? Math.max(0, Math.min(presentation.position / (presentation.total - 1), 1)) : 0
+    : fraction;
   const [position, setPosition] = useState(target);
   const current = useRef(target);
   useEffect(() => {

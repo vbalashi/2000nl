@@ -1,8 +1,9 @@
-import { expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { performPlatformV2Lookup } from "@/lib/platform/platformV2LookupService";
 
-test.each(["missing", "null", "present"] as const)(
-  "preserves report identity from the current-card reader: %s",
+describe.each(["current", "library"] as const)("%s reader report identity", (reader) => {
+ test.each(["missing", "null", "present"] as const)(
+  "preserves report identity: %s",
   async (revisionState) => {
     vi.stubEnv("PLATFORM_V2_ACTIONS_ENABLED", "1");
     const entryId = "75400000-0000-4000-8000-000000000001";
@@ -53,7 +54,7 @@ test.each(["missing", "null", "present"] as const)(
       },
     };
     const rpc = vi.fn(async (name: string) => {
-      if (name === "read_current_training_entry_v1")
+      if (name === "read_current_training_entry_v1" || name === "read_platform_v2_library_group")
         return {
           data: {
             items: [entry],
@@ -102,10 +103,10 @@ test.each(["missing", "null", "present"] as const)(
           contentLanguageCode: "nl",
           translationTargetLanguageCode: "ru",
           cardTypeId: "word-to-definition",
-          intent: "training-review",
+          intent: reader === "current" ? "training-review" : "dictionary-lookup",
         },
         undefined,
-        currentCard,
+        reader === "current" ? currentCard : undefined,
       );
       expect(result.status, JSON.stringify(result.payload)).toBe(200);
       const payload = result.payload as any;
@@ -127,3 +128,5 @@ test.each(["missing", "null", "present"] as const)(
     }
   },
 );
+
+});
