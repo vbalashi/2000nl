@@ -40,6 +40,10 @@ export function trainingStageClassName() {
 
 const CompactAnswerContext = React.createContext(false);
 
+export function useCompactAnswerLayout() {
+  return React.useContext(CompactAnswerContext);
+}
+
 function useCompactAnswerReading(onLayoutWillChange: () => void) {
   const [compact, setCompact] = React.useState(false);
   const current = React.useRef(false);

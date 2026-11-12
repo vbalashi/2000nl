@@ -9,7 +9,7 @@ import { fetchMeaningProgress } from "@/lib/platform/meaningProgressClient";
 import { saveTrainingKnownChoice } from "@/lib/platform/trainingKnownChoiceClient";
 import type { MeaningLearningProgress } from "../../../../../packages/shared/types/meaningLearningProgress";
 import { meaningDirections, type MeaningDirection, type TrainingKnownChoiceRequest } from "../../../../../packages/shared/types/trainingKnownChoice";
-import { TrainingCardShell, trainingStageClassName } from "./TrainingCardTemplates";
+import { TrainingCardShell, trainingStageClassName, useCompactAnswerLayout } from "./TrainingCardTemplates";
 import approved from "../approvedTrainingCard.module.css";
 import builder from "../pilot/approvedTrainingBuilder.module.css";
 import s from "./TrainingKnownChoice.module.css";
@@ -68,7 +68,7 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
     if(event.relatedTarget instanceof Node&&!event.currentTarget.contains(event.relatedTarget))lastFocused.current=null;
   }}>
     <TrainingCardShell answerVisible={originSide==="answer"} contentLabel={platformV2Message(language,"senseCard.training.content")} scrollMoreLabel={platformV2Message(language,"senseCard.scroll.more")}>
-      <div className={s.body}>
+      <KnownChoiceBody originSide={originSide} label={platformV2Message(language,"senseCard.training.content")}>
         <div className={s.content}>
         <LogOut size={40} strokeWidth={1.4} className={s.icon} aria-hidden="true"/>
         {!progress&&!error?<p className={s.loading} role="status">{t.loading}</p>:null}
@@ -85,10 +85,18 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
         {error?<p role="alert" className={s.error}>{t[error]}</p>:null}
         </div>
         <button type="button" className={`${s.link} ${s.back}`} disabled={busy||disabled||frozenUncertain||accepted.current} onClick={onBack}>{t.back}</button>
-      </div>
+      </KnownChoiceBody>
     </TrainingCardShell>
     <footer data-testid="training-sense-card-dock" className="shrink-0" style={{height:dockHeight}}>
       <button type="button" ref={nextRef} className={`${approved.primary} ${s.next}`} disabled={!progress||busy||handedOff||disabled||error==="conflict"} onClick={()=>void submit()}>{busy?t.saving:t.next}</button>
     </footer>
   </section>;
+}
+
+function KnownChoiceBody({originSide,label,children}: {originSide:"face"|"answer"; label:string; children:React.ReactNode}) {
+  const compact=useCompactAnswerLayout();
+  const regularAnswer=originSide==="answer"&&!compact;
+  return <div className={s.body} data-testid={regularAnswer?"training-answer-scroll":undefined}
+    data-reading-layout={regularAnswer?"regular":undefined} role={regularAnswer?"region":undefined}
+    aria-label={regularAnswer?label:undefined} tabIndex={regularAnswer?0:undefined}>{children}</div>;
 }

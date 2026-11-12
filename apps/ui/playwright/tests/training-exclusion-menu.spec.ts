@@ -2,6 +2,37 @@ import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 import { getUiMessages } from "../../lib/uiMessages";
 import { platformV2Message } from "../../lib/platform/platformV2ClientI18n";
+
+test("Known choice transfers reading focus on resize without stealing button focus", async ({page}) => {
+  await page.setViewportSize({width:320,height:568});
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await setupAuthenticatedTrainingAttributionPage(page,0,{visualProfile:"answer",useUuidEntryIds:true,useUuidSessionId:true,settingsOverrides:{preferences:{onboardingCompleted:true,onboardingLanguage:"en"}}});
+  const copy=getUiMessages("en").trainingSession.knownChoice;
+  await page.getByRole("button",{name:/^Start training$/i}).click();
+  const stage=page.getByTestId("training-sense-card-stage");
+  await stage.getByRole("button",{name:platformV2Message("en","senseCard.answer.show"),exact:true}).click();
+  await stage.getByRole("button",{name:copy.markKnown,exact:true}).click();
+  const choice=page.getByRole("region",{name:copy.choiceLabel,exact:true});
+  const next=choice.getByRole("button",{name:copy.next,exact:true});
+  await expect(next).toBeEnabled();
+  const reading=choice.getByTestId("training-answer-scroll");
+  await expect(reading).toHaveAttribute("data-reading-layout","compact");
+  await reading.focus();
+  await expect(reading).toBeFocused();
+  await page.setViewportSize({width:320,height:844});
+  await expect(reading).toHaveAttribute("data-reading-layout","regular");
+  await expect(reading).toBeFocused();
+  await page.setViewportSize({width:320,height:568});
+  await expect(reading).toHaveAttribute("data-reading-layout","compact");
+  await expect(reading).toBeFocused();
+  await next.focus();
+  await page.setViewportSize({width:320,height:844});
+  await expect(reading).toHaveAttribute("data-reading-layout","regular");
+  await expect(next).toBeFocused();
+  await page.setViewportSize({width:320,height:568});
+  await expect(reading).toHaveAttribute("data-reading-layout","compact");
+  await expect(next).toBeFocused();
+});
 for (const language of ["en", "nl", "ru"] as const) {
   test(`${language}: Known choices stay bounded and Back cancels on either card side`, async ({page}, testInfo) => {
     await page.setViewportSize({width:320, height:568});
