@@ -163,6 +163,7 @@ export function TrainingLibraryShell({ user, startupSnapshot, invitationCode, on
       onRequestDestination={requestDestination}
       onReturnFromHistory={returnFromHistory}
       onNavigationBlockedChange={setNavigationBlocked}
+      navigationGuardBlocked={navigationBlocked}
     />
   );
 }

@@ -166,6 +166,7 @@ type Props = {
   onRequestDestination: (destination: AppDestination) => void;
   onReturnFromHistory?: () => void;
   onNavigationBlockedChange?: (blocked: boolean) => void;
+  navigationGuardBlocked?: boolean;
   trainingTodaySetupEnabled?: boolean;
 };
 
@@ -199,6 +200,7 @@ function TrainingScreenContent({
   onRequestDestination,
   onReturnFromHistory,
   onNavigationBlockedChange,
+  navigationGuardBlocked = false,
   trainingTodaySetupEnabled = process.env
     .NEXT_PUBLIC_TRAINING_TODAY_SETUP_V1 === "true",
 }: Props) {
@@ -2219,7 +2221,7 @@ function TrainingScreenContent({
   return (
     <OnboardingProvider key={user.id} userId={user.id} language={onboardingLang}
       autoStart={!initialPreferences.preferences.onboardingCompleted && (!trainingTodaySetupEnabled || homeStartupSettled) && sessionResumeResolved && !invitationCode && !hasResumableSession && !navigationBlocked}
-      port={{prepare:prepareOnboarding,pause:pauseOnboarding,canNavigate:!navigationBlocked,destination,isPrepared:(topic,step)=>destination===onboardingDestination(topic,step),interrupted:(topic,step)=>destination==='settings'&&onboardingDestination(topic,step)!=='settings',completeCore:()=>{void completeOnboarding();},enter:(topic,step)=>{if(topic==='appearance'&&step===1){setOpenTrainingEditor(false);trainingPilot.returnToToday();onRequestDestination('training');}}}}>
+      port={{prepare:prepareOnboarding,pause:pauseOnboarding,canNavigate:!navigationBlocked&&!navigationGuardBlocked,destination,isPrepared:(topic,step)=>destination===onboardingDestination(topic,step),interrupted:(topic,step)=>destination==='settings'&&onboardingDestination(topic,step)!=='settings',completeCore:()=>{void completeOnboarding();},enter:(topic,step)=>{if(topic==='appearance'&&step===1){setOpenTrainingEditor(false);trainingPilot.returnToToday();onRequestDestination('training');}}}}>
     <CollectionSelectionContext.Provider value={{userId:user.id,languageCode:currentTrainingLanguage,onTrainingResolved:(ids,rows)=>rememberTrainingReferences(ids,rows.map(row=>({id:row.id,name:row.name,type:'user',ownership:row.ownership,item_count:row.availableItemCount,available_item_count:row.availableItemCount})))}}>
     <CardTranslationLanguagesProvider ownerId={user.id} primary={translationLang} secondary={secondaryTranslationLang}>
     <TrainingStartupGate

@@ -4895,3 +4895,34 @@ test("Known acceptance retains the plan without a new snapshot or delayed reload
   expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuemax", "5");
   expect(mockV2ProgressAction).toHaveBeenCalledTimes(1);
 });
+
+test('onboarding resume waits for the real screen navigation guard to clear', async () => {
+  let release!: () => void;
+  mockV2AcceptanceGate = new Promise<void>(resolve => { release = resolve; });
+  localStorage.setItem('2000nl:onboarding:v1:user-1', JSON.stringify({version:1,topic:'collections',step:0,status:'paused',coreCompleted:true}));
+  const requests: AppDestination[] = [];
+  function Host() {
+    const [destination, setDestination] = React.useState<AppDestination>('training');
+    const [blocked, setBlocked] = React.useState(false);
+    return <><button onClick={() => setDestination('settings')}>Force settings during pending action</button>
+      <output data-testid="navigation-blocked">{String(blocked)}</output>
+      <output data-testid="test-destination">{destination}</output>
+      <TrainingScreen user={user} destination={destination} navigationGuardBlocked={blocked} onNavigationBlockedChange={setBlocked} onRequestDestination={next=>{requests.push(next);if(!blocked)setDestination(next);}} />
+    </>;
+  }
+  try {
+    render(<Host/>);
+    fireEvent.click(await screen.findByRole('button',{name:'Mock V2 grade'}));
+    await waitFor(()=>expect(screen.getByTestId('navigation-blocked')).toHaveTextContent('true'));
+    fireEvent.click(screen.getByRole('button',{name:'Force settings during pending action'}));
+    fireEvent.click(await screen.findByRole('button',{name:'Resume introduction'}));
+    expect(screen.getByTestId('test-destination')).toHaveTextContent('settings');
+    expect(requests).not.toContain('training');
+    expect(JSON.parse(localStorage.getItem('2000nl:onboarding:v1:user-1')!).status).toBe('paused');
+    await act(async()=>release());
+    await waitFor(()=>expect(screen.getByTestId('navigation-blocked')).toHaveTextContent('false'));
+    await waitFor(()=>expect(screen.getByTestId('test-destination')).toHaveTextContent('training'));
+    await waitFor(()=>expect(JSON.parse(localStorage.getItem('2000nl:onboarding:v1:user-1')!).status).toBe('running'));
+    expect(requests).toContain('training');
+  } finally { release(); mockV2AcceptanceGate = null; }
+});
