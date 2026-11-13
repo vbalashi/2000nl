@@ -54,6 +54,14 @@ The [directional knowledge contract](ui/training-known-directions.md) describes
 retry ownership, the accepted interface and compatibility with previous meaning
 exclusions. Managed conversion and deployment retain their separate release gate.
 
+Independent idiom and sentence-translation exercises use their own Known marks,
+never the parent meaning's marks. Idioms offer direct and reverse choices; a
+sentence translation offers recall only. The choice is a local draft until Next.
+The server compares the saved mark revision, applies the selected directions and
+consumes the current exercise member in one transaction. A retry uses the same
+request identity and cannot grade or consume the member again. Individual marks
+can be returned to learning from the meaning's Library progress panel.
+
 ## Meaning card spacing
 
 Decision: [ADR-0001](adr/0001-meaning-direction-spacing.md).

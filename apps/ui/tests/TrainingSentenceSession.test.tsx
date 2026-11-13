@@ -1,3 +1,5 @@
+import {fetchExerciseChoice,saveExerciseChoice} from "@/lib/platform/exerciseChoiceClient";
+vi.mock("@/lib/platform/exerciseChoiceClient",()=>({fetchExerciseChoice:vi.fn(),saveExerciseChoice:vi.fn()}));
 import {TrainingInteractionPreferencesProvider, defaultTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
 import { trainingLifecyclePresentationContract } from "./support/trainingLifecycleContract";
 const focusedNotes=vi.hoisted(()=>({read:vi.fn(),refresh:undefined as undefined|(()=>void|Promise<unknown>)}));
@@ -53,6 +55,8 @@ const content = (() => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(fetchExerciseChoice).mockResolvedValue({targetId:"target-sentence",entryId:"entry-goed",family:"translation",direction:"recall",marks:{},revision:"revision"});
+  vi.mocked(saveExerciseChoice).mockResolvedValue(undefined);
   vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockReset().mockResolvedValue(candidate);
   vi.mocked(loadSentenceExerciseContent).mockReset();
   focusedNotes.read.mockReset().mockResolvedValue([]);focusedNotes.refresh=undefined;
@@ -321,4 +325,32 @@ test.each(["face","answer"])("upward audio on %s keeps the exercise and controls
   swipe();expect(resolvePlatformV2Audio).toHaveBeenCalledOnce();
   await act(async()=>finish("blob:exercise"));
   expect(play).toHaveBeenCalledOnce();
+});
+
+test.each([false,true])('sentence Known choice before/after reveal: %s',async revealed=>{
+ vi.mocked(fetchNextPlatformV2TranslationTrainingSessionExercise).mockResolvedValueOnce(candidate).mockResolvedValueOnce({status:'completed',sessionId:session.sessionId,completedActions:1,requestedTotal:1});
+ vi.mocked(loadSentenceExerciseContent).mockResolvedValue({state:'ready',content} as never);
+ render(<TrainingSentenceSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()}/>);
+ if(revealed)fireEvent.click(await screen.findByRole('button',{name:'Show answer'}));
+ fireEvent.click(await screen.findByRole('button',{name:'Mark as known'}));
+ await screen.findByRole('button',{name:'Return to learning'});expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+ expect(screen.getAllByRole('group')).toHaveLength(1);expect(saveExerciseChoice).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByRole('button',{name:'Next'}));await screen.findByText('Session complete');
+ expect(saveExerciseChoice).toHaveBeenCalledWith(expect.objectContaining({targetId:'target-sentence',knownDirections:['recall']}),'entry-goed');
+ expect(performPlatformV2TranslationExerciseAction).not.toHaveBeenCalled();
+});
+
+test('sentence choice stays disabled while loading and Back cancels without writing',async()=>{
+ let resolve!:(value:Awaited<ReturnType<typeof fetchExerciseChoice>>)=>void;
+ vi.mocked(fetchExerciseChoice).mockReturnValue(new Promise(r=>{resolve=r;}));
+ vi.mocked(loadSentenceExerciseContent).mockResolvedValue({state:'ready',content} as never);
+ const view=render(<TrainingSentenceSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()}/>);
+ fireEvent.click(await screen.findByRole('button',{name:'Mark as known'}));
+ expect(screen.getByRole('button',{name:'Next'})).toBeDisabled();
+ await act(async()=>resolve({targetId:candidate.targetId,entryId:candidate.entryId,family:'translation',direction:'recall',marks:{},revision:'revision'}));
+ await screen.findByRole('button',{name:'Return to learning'});
+ view.rerender(<TrainingSentenceSession interactionDisabled userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()}/>);
+ expect(screen.getByRole('button',{name:'Next'})).toBeDisabled();expect(screen.getByRole('button',{name:'Go back'})).toBeDisabled();
+ view.rerender(<TrainingSentenceSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode="ru" interfaceLanguage="en" onExit={vi.fn()}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Go back'}));expect(saveExerciseChoice).not.toHaveBeenCalled();expect(performTrainingExclusion).not.toHaveBeenCalled();
 });

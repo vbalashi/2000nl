@@ -26,7 +26,7 @@ import { TrainingSessionChrome } from "../v2/TrainingSessionChrome";
 import { TrainingSessionStatsFooter } from "../TrainingSessionStatsFooter";
 import { useIdiomTrainingStats } from "./useIdiomTrainingStats";
 
-import { useTrainingExclusion } from "../v2/useTrainingExclusion";
+import { TrainingExerciseKnownChoice } from "../v2/TrainingExerciseKnownChoice";
 import { trainingExclusionCopy } from "../v2/TrainingExcludeAction";
 import { TrainingIdiomCard } from "./TrainingIdiomCard";
 
@@ -104,17 +104,11 @@ export function TrainingIdiomSession({
   const additionalTranslationLanguage = useAdditionalTranslationLanguage();
   useLatchedTranslationBuffer({ ownerId: userId, sessionId: session.sessionId, generation: session.runGeneration, currentEntryId: candidate?.entryId, currentOrdinal: session.members.find(member => member.targetId === candidate?.targetId)?.ordinal, targetLanguageCode: translationTargetLanguageCode, additionalTargetLanguageCode: additionalTranslationLanguage, members: session.members });
 
-  const exclusion = useTrainingExclusion({
-    userId,
-    onSessionSuperseded: replaceSession,
-    identity: candidate?.targetKey ?? "none",
-    sessionId: session.sessionId,
-    target: { kind: "exercise", targetId: candidate?.targetId ?? "" },
-    onStarting:runtime.prepareExternalAcceptance, onAccepted: runtime.acceptAndAdvance,
-  });
+  const [choiceIdentity,setChoiceIdentity]=React.useState<string|null>(null);
+  const choiceOpen=choiceIdentity===`${session.sessionId}:${candidate?.targetId}`;
 
   useRecordedStudyTime({ ownerId: userId, sessionId: session.sessionId, family: "idiom", entryId: candidate?.entryId, targetId: candidate?.targetId,
-    enabled: studyTimeEnabled && currentCard.ready && Boolean(candidate && content) && !loading && !terminal && !submitting && !exclusion.busy && !exclusion.failed });
+    enabled: studyTimeEnabled && currentCard.ready && Boolean(candidate && content) && !loading && !terminal && !submitting && !choiceOpen });
 
   const preparationFailed = error && !candidate && !loading && !terminal;
   const sessionPresentation = {
@@ -130,7 +124,7 @@ export function TrainingIdiomSession({
 
   return (
     <TrainingSessionV2Layout
-      authorityRefreshing={authorityRefreshing && !submitting && !exclusion.busy}
+      authorityRefreshing={authorityRefreshing && !submitting && !choiceOpen}
       approvedPresentation={true}
             phase={loading || (candidate && !currentCard.ready && !currentCard.failed) ? "loading" : currentCard.failed || (error && !candidate) ? "failure" : "ready"}
       chrome={
@@ -149,25 +143,10 @@ export function TrainingIdiomSession({
           unlimited={sessionSize === "all-due-today"}
           onHistory={onHistory}
           onClose={onExit}
-          disabled={submitting || exclusion.busy}
+          disabled={submitting || choiceOpen}
         />
       }
-      notice={
-        !preparationFailed && (error || exclusion.failed) ? (
-          <TrainingSessionNotice
-            notice={{
-              kind: "error",
-              message: exclusion.failed
-                ? trainingExclusionCopy[interfaceLanguage].failed
-                : t.failed,
-              retryLabel: t.retry,
-              retryDisabled: submitting || loading,
-              onRetry: () =>
-                exclusion.failed ? void exclusion.exclude() : void runtime.retry(),
-            }}
-          />
-        ) : null
-      }
+      notice={!preparationFailed && error ? <TrainingSessionNotice notice={{kind:"error",message:t.failed,retryLabel:t.retry,retryDisabled:submitting||loading,onRetry:()=>void runtime.retry()}} /> : null}
       footer={
         <TrainingSessionStatsFooter
           {...footerStats}
@@ -182,7 +161,7 @@ export function TrainingIdiomSession({
         action={{label:t.retry,onClick:()=>void runtime.retry()}} /> : null}
       {!loading && terminal ? <TrainingCompletion sessionSize={sessionSize} empty={terminal==="empty"} emptyDetail={cardFilter==="review" && session.plannedTotal===0?localizedField("idiomSession", "noDue")[interfaceLanguage]:undefined} ownerId={userId} sessionId={session.sessionId} interfaceLanguage={interfaceLanguage} completedCount={completedCount} onExit={onExit} onRestart={onRestart} onEdit={onEdit} pending={pending} startFailed={startFailed} /> : null}
       {!loading && !terminal && currentCard.ready && candidate && content ? (
-        <TrainingIdiomCard
+        choiceOpen ? <TrainingExerciseKnownChoice key={choiceIdentity!} targetId={candidate.targetId} entryId={candidate.entryId} sessionId={session.sessionId} family="idiom" direction={candidate.direction} prompt={content.expression.text} answer={content.explanation.text} language={interfaceLanguage} contentLanguage={contentLanguageCode} originSide={revealed?"answer":"face"} disabled={interactionDisabled||submitting} onBack={()=>setChoiceIdentity(null)} onStarting={runtime.prepareExternalAcceptance} onAccepted={runtime.acceptAndAdvance} onSuperseded={runtime.replaceSession}/> : <TrainingIdiomCard
           presentationActive={presentationActive}
           currentCard={currentCard.context}
           key={`${session.sessionId}:${candidate.targetKey}:${translationTargetLanguageCode ?? "off"}`}
@@ -196,9 +175,9 @@ export function TrainingIdiomSession({
           interfaceLanguage={interfaceLanguage}
           revealed={revealed}
           onReveal={() => setRevealed(true)}
-          busy={interactionDisabled || submitting || exclusion.busy || exclusion.failed || runtime.actionRetryRequired}
-          onExclude={() => void exclusion.exclude()}
-          onGrade={(result) => { if(!interactionDisabled && currentCard.ready && !exclusion.busy)void runtime.grade(result); }}
+          busy={interactionDisabled || submitting || choiceOpen || false || runtime.actionRetryRequired}
+          onExclude={() => setChoiceIdentity(`${session.sessionId}:${candidate.targetId}`)}
+          onGrade={(result) => { if(!interactionDisabled && currentCard.ready && !choiceOpen)void runtime.grade(result); }}
         />
       ) : null}
     </TrainingSessionV2Layout>
