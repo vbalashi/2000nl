@@ -915,3 +915,22 @@ test('upward audio gesture uses the word player on Face and Answer',()=>{
  swipe();expect(onPlayAudio).toHaveBeenCalledOnce();
  fireEvent.click(screen.getByRole('button',{name:'Show answer'}));swipe();expect(onPlayAudio).toHaveBeenCalledTimes(2);
 });
+
+test('translation prompt and answer reminder preserve only the current meaning translations',()=>{
+ const model={...buildTrainingSenseCardModel({group:singleSenseGroup,entry:singleSenseEntry,interfaceLanguage:'en'}),entryTranslation:'путешествовать',entryTranslationAlternatives:['ездить','путешествовать']};
+ render(<TrainingSenseCardStage model={model} mode="definition-to-word" interfaceLanguage="en" onAction={vi.fn()} contextPrompt={{recallTarget:'путешествовать',text:'Она ездит на поезде.',sourceText:'Zij reist met de trein.',contentNodeId:'selected',sourceTextFingerprint:'fingerprint'}}/>);
+ expect(screen.getByTestId('training-face-recall-target')).toHaveTextContent('путешествовать · ездить');
+ expect(screen.queryByTestId('training-question-reminder')).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'Show answer'}));
+ expect(screen.getByTestId('training-question-reminder')).toHaveTextContent('Translation question');
+ expect(screen.getByTestId('training-question-reminder')).toHaveTextContent('путешествовать · ездить');
+ expect(screen.getByTestId('training-question-reminder')).not.toHaveTextContent('Она ездит на поезде.');
+});
+
+test('disabling question reminder preserves the answer card',()=>{
+ const model=buildTrainingSenseCardModel({group:singleSenseGroup,entry:singleSenseEntry,interfaceLanguage:'en'});
+ render(<TrainingInteractionPreferencesProvider userId="test" initial={{...defaultTrainingInteractions,showQuestionOnAnswer:false}}><TrainingSenseCardStage model={model} mode="word-to-definition" interfaceLanguage="en" onAction={vi.fn()}/></TrainingInteractionPreferencesProvider>);
+ fireEvent.click(screen.getByRole('button',{name:'Show answer'}));
+ expect(screen.queryByTestId('training-question-reminder')).toBeNull();
+ expect(screen.getByTestId('training-answer-scroll')).toBeInTheDocument();
+});

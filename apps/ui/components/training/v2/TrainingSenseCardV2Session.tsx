@@ -9,6 +9,7 @@ import { readCurrentTrainingCard, type CurrentTrainingCardContext } from "@/lib/
 import { useWordContextPrompt } from "./useWordContextPrompt";
 import { TrainingSessionState } from "./TrainingSessionState";
 import { getUiMessages } from "@/lib/uiMessages";
+import { TrainingKnownChoice } from "./TrainingKnownChoice";
 import { useTrainingExclusion } from "./useTrainingExclusion";
 import { TrainingExcludeAction, trainingExclusionCopy } from "./TrainingExcludeAction";
 
@@ -104,7 +105,7 @@ type Props = {
     state: Exclude<TrainingV2SessionState, "loading" | "ready">,
   ) => void | Promise<void>;
   onProgressActionAccepted: (
-    capability: PlatformV2TrainingActionCapability | { actionId: "exclude-pair" | "exclude-headword" },
+    capability: PlatformV2TrainingActionCapability | { actionId: "exclude-pair" | "exclude-headword" | "set-known-directions" },
     transitionId?: string,
   ) => Promise<
     Extract<
@@ -210,7 +211,14 @@ export function TrainingSenseCardV2Session({
   const [busy, setBusy] = React.useState(false);
   const [acceptedActionRecoveryPending, setAcceptedActionRecoveryPending] =
     React.useState(false);
+  const [knownChoiceDockHeight,setKnownChoiceDockHeight]=React.useState(76);
+  const [knownChoiceIdentity,setKnownChoiceIdentity]=React.useState<string|null>(null);
+  const [knownChoiceReturnIdentity,setKnownChoiceReturnIdentity]=React.useState<string|null>(null);
+  const knownActionRef=React.useRef<HTMLButtonElement>(null);
   const cardIdentity = presentationIdentity ?? `${word.id}:${mode}`;
+  const knownChoiceOpen=knownChoiceIdentity===JSON.stringify([cacheOwnerId,trainingSessionId,cardIdentity]);
+  React.useEffect(()=>{if(!knownChoiceOpen&&knownChoiceReturnIdentity===JSON.stringify([cacheOwnerId,trainingSessionId,cardIdentity]))knownActionRef.current?.focus({preventScroll:true});},[knownChoiceOpen,knownChoiceReturnIdentity,cacheOwnerId,trainingSessionId,cardIdentity]);
+  const ordinaryRecall=mode==="word-to-definition"||mode==="definition-to-word";
   const [cardPresentation, setCardPresentation] = React.useState<{
     identity: string;
     side: "face" | "answer";
@@ -722,11 +730,11 @@ export function TrainingSenseCardV2Session({
   });
 
   useRecordedStudyTime({ ownerId: cacheOwnerId, sessionId: trainingSessionId, family: "meaning", entryId: word.id, cardTypeId: mode,
-    enabled: studyTimeEnabled && sessionState === "ready" && !busy && !interactionDisabled && !acceptedActionRecoveryPending && !exclusion.busy && !exclusion.failed });
+    enabled: !knownChoiceOpen && studyTimeEnabled && sessionState === "ready" && !busy && !interactionDisabled && !acceptedActionRecoveryPending && !exclusion.busy && !exclusion.failed });
 
   const {preferences: interactionPreferences} = useTrainingInteractions();
   const swipeSurface = useTrainingCardSwipeSurface({
-    enabled: interactionPreferences.gradeSwipe && sessionState === "ready" && cardSide === "answer",
+    enabled: !knownChoiceOpen && interactionPreferences.gradeSwipe && sessionState === "ready" && cardSide === "answer",
     busy: busy || exclusion.busy || exclusion.failed || interactionDisabled || acceptedActionRecoveryPending,
     identity: cardIdentity,
     left: swipeLeftCapability
@@ -801,6 +809,7 @@ export function TrainingSenseCardV2Session({
           state={failureState}
           interfaceLanguage={interfaceLanguage}
           detail={error}
+          hasClose={Boolean(sessionChrome)}
           onExit={onExit}
           onRetry={currentCard.missingTarget ? undefined : () => {
             if (currentCard.failed) { currentCard.retry(); return; }
@@ -827,7 +836,14 @@ export function TrainingSenseCardV2Session({
         {exclusion.failed ? <p role="alert" className="text-sm text-rose-600">
           {trainingExclusionCopy[interfaceLanguage].failed}
         </p> : null}
-        <TrainingSenseCardStage
+        {knownChoiceOpen && ordinaryRecall && trainingSessionId ? <TrainingKnownChoice
+          key={JSON.stringify([cacheOwnerId,trainingSessionId,cardIdentity])}
+          entryId={word.id} sessionId={trainingSessionId} direction={mode}
+          headword={model.plainHeadword ?? model.headword} definition={selectTrainingReversePrompt([...model.definitions,...model.examples])?.text ?? model.definitions[0]?.text ?? ""}
+          language={interfaceLanguage} contentLanguage={contentLanguageCode} disabled={interactionDisabled} dockHeight={knownChoiceDockHeight} originSide={cardSide}
+          onBack={()=>{setKnownChoiceReturnIdentity(JSON.stringify([cacheOwnerId,trainingSessionId,cardIdentity]));setKnownChoiceIdentity(null);}} onPendingChange={onProgressActionPendingChange} onStarting={onProgressActionStarting}
+          onAccepted={async()=>{await onProgressActionAccepted({actionId:"set-known-directions"});}}
+        /> : <TrainingSenseCardStage
           currentCard={currentCard.context}
           contentLanguage={contentLanguageCode}
           translationLanguage={translationTargetLanguageCode && translationTargetLanguageCode !== "off" ? translationTargetLanguageCode : undefined}
@@ -845,6 +861,7 @@ export function TrainingSenseCardV2Session({
           interfaceLanguage={interfaceLanguage}
           busy={busy || exclusion.busy || exclusion.failed || interactionDisabled || acceptedActionRecoveryPending}
           focusOnMount={handlePresentation}
+          restoringChoice={knownChoiceReturnIdentity===JSON.stringify([cacheOwnerId,trainingSessionId,cardIdentity])}
           onPlayAudio={
             result.group.header.audio && onPlayResolvedAudio
               ? () => void handlePlayAudio()
@@ -857,6 +874,12 @@ export function TrainingSenseCardV2Session({
           }
           exclusionAction={exclusion.available ? (
             <TrainingExcludeAction language={interfaceLanguage}
+              buttonRef={knownActionRef}
+              onChooseKnown={ordinaryRecall ? ()=>{
+                // Preserve the current action footprint, including wrapped review buttons.
+                const dock=knownActionRef.current?.closest("footer");
+                if(dock)setKnownChoiceDockHeight(dock.getBoundingClientRect().height);
+                setKnownChoiceReturnIdentity(null);setKnownChoiceIdentity(JSON.stringify([cacheOwnerId,trainingSessionId,cardIdentity]));} : undefined}
               scope={mode === "word-to-definition" || mode === "definition-to-word" ? "headword" : "pair"}
               knownAction={model.markKnownCapability ? {
                 label: platformV2Message(interfaceLanguage, model.markKnownCapability.messageKey),
@@ -892,9 +915,9 @@ export function TrainingSenseCardV2Session({
             ) : undefined
           }
           side={cardSide}
-          onSideChange={setCardSide}
+          onSideChange={side=>{setKnownChoiceReturnIdentity(null);setCardSide(side);}}
           onAction={(capability) => void handleAction(capability)}
-        />
+        />}
         <SessionError
           error={error}
           tone={noticeTone}
@@ -941,19 +964,21 @@ function SessionV2Failure({
   detail,
   onRetry,
   onExit,
+  hasClose,
 }: {
   state: Exclude<TrainingV2SessionState, "loading" | "ready">;
   interfaceLanguage: OnboardingLanguage;
   detail: string | null;
+  hasClose: boolean;
   onRetry?: () => void;
   onExit?: () => void;
 }) {
   return (
     <div className="h-full min-h-0" data-testid="training-v2-failure" data-training-renderer="v2" data-training-v2-state={state}>
-      <TrainingSessionState announcement="alert" title={platformV2Message(interfaceLanguage, "senseCard.training.loadFailed")}
+      <TrainingSessionState failure announcement="alert" title={platformV2Message(interfaceLanguage, "senseCard.training.loadFailed")}
         action={onRetry ? { label: platformV2Message(interfaceLanguage, "senseCard.training.retry"), onClick: onRetry }
           : onExit ? { label: getUiMessages(interfaceLanguage).trainingSession.back, onClick: onExit } : undefined}
-        secondaryAction={onRetry && onExit ? { label: getUiMessages(interfaceLanguage).trainingSession.back, onClick: onExit } : undefined} />
+        secondaryAction={onRetry && onExit && !hasClose ? { label: getUiMessages(interfaceLanguage).trainingSession.back, onClick: onExit } : undefined} />
       {detail ? <span className="sr-only">{detail}</span> : null}
     </div>
   );

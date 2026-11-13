@@ -4,3 +4,12 @@
 .preview { margin: 0 0 20px; padding: 14px 16px; border: 1px solid var(--practice-border); border-radius: 12px; background: var(--practice-surface); color: var(--practice-accent); }
 .previewExample + .previewExample { margin-top: 14px; }
 .previewHeading { display: flex; justify-content: space-between; gap: 12px; color: var(--practice-text-muted); font-size: var(--practice-text-caption); }
+
+.questionPreview { color:var(--practice-text); }
+.questionPreviewWord { font-family:var(--practice-font-reading); font-size:var(--practice-text-title); line-height:1.2; }
+.questionPreviewDefinition { font-family:var(--practice-font-reading); font-size:var(--practice-text-body); color:var(--practice-text-secondary); margin-top:4px; }
+
+.questionPreviewReveal { display:grid; grid-template-rows:0fr; opacity:0; visibility:hidden; transition:grid-template-rows 220ms ease, opacity 180ms ease, visibility 0s linear 220ms; }
+.questionPreviewReveal[data-open="true"] { grid-template-rows:1fr; opacity:1; visibility:visible; transition-delay:0s; }
+.questionPreviewClip { min-height:0; overflow:hidden; }
+@media (prefers-reduced-motion:reduce) { .questionPreviewReveal { transition:none; } }

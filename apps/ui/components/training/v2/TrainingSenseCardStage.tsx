@@ -1,5 +1,5 @@
 "use client";
-import { localizedField } from "@/lib/i18n/catalog";
+import { localizedField, localizedSection } from "@/lib/i18n/catalog";
 
 import type { CurrentTrainingCardContext } from "@/lib/platform/trainingCurrentCardClient";
 import { TrainingAnswerTranslationProvider } from "./TrainingAnswerTranslation";
@@ -46,6 +46,7 @@ type Props = {
   onRetryTranslation?: () => void;
   busy?: boolean;
   focusOnMount?: boolean;
+  restoringChoice?: boolean;
   onPlayAudio?: () => void;
   onOpenDetails?: () => void;
   reportAction?: React.ReactNode;
@@ -68,6 +69,7 @@ export function TrainingSenseCardStage({
   onRetryTranslation,
   busy = false,
   focusOnMount = false,
+  restoringChoice = false,
   onPlayAudio,
   onOpenDetails,
   reportAction,
@@ -124,6 +126,9 @@ export function TrainingSenseCardStage({
     model.requestTranslationCapability,
   );
   const contextTarget = contextPrompt ? (contextPrompt.recallTarget?.trim() || model.entryTranslation?.trim()) : undefined;
+  const contextTargets = contextTarget ? [contextTarget, ...(model.entryTranslationAlternatives ?? [])].map(value => value.trim()).filter((value,index,all) => value && all.indexOf(value) === index) : [];
+  const questionCopy = localizedSection("interactionSettings")[interfaceLanguage];
+  const question = contextPrompt ? (contextTargets.length ? {title:questionCopy.questionTranslation,text:contextTargets.join(" · ")} : undefined) : mode === "word-to-definition" ? {title:questionCopy.questionWordMeaning,text:[model.article,model.plainHeadword ?? model.headword].filter(Boolean).join(" ")} : mode === "definition-to-word" && reversePrompt?.text ? {title:questionCopy.questionMeaningWord,text:reversePrompt.text} : undefined;
   const listeningMode = mode === "listen-recognize";
   const { capture, moving } = useTrainingPromptReveal({ root: stageRef, revealed: answerVisible,
     enabled: !listeningMode, identity: model.entryId });
@@ -138,9 +143,9 @@ export function TrainingSenseCardStage({
   useCardVerticalSwipe({ root: stageRef, audioEnabled: !busy && !moving && Boolean(model.audioCapability && onPlayAudio), onPlayAudio, enabled: answerVisible && !busy && !moving && (hasDisplayTranslation || translationActionAvailable || Boolean(additionalLanguage)), onToggle: toggleTranslation });
 
   React.useEffect(() => {
-    if (!focusOnMount) return;
+    if (!focusOnMount || restoringChoice) return;
     window.requestAnimationFrame(() => stageRef.current?.focus());
-  }, [focusOnMount]);
+  }, [focusOnMount, restoringChoice]);
 
   React.useEffect(() => {
     setHintVisible(false);
@@ -162,8 +167,8 @@ export function TrainingSenseCardStage({
     });
   }, [answerVisible, t, moving]);
   React.useEffect(() => {
-    if (answerVisible && !moving) primaryAnswerActionRef.current?.focus();
-  }, [answerVisible, moving]);
+    if (answerVisible && !moving && !restoringChoice) primaryAnswerActionRef.current?.focus();
+  }, [answerVisible, moving, restoringChoice]);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -231,7 +236,7 @@ export function TrainingSenseCardStage({
         {announcement}
       </span>
       <TrainingAnswerTranslationProvider currentCard={currentCard} entryId={model.entryId} contentLanguage={contentLanguage}>
-      <TrainingCardShell answerVisible={answerVisible}>
+      <TrainingCardShell answerVisible={answerVisible} question={question} contentLabel={t("senseCard.training.content")} scrollMoreLabel={t("senseCard.scroll.more")} onReachEnd={() => primaryAnswerActionRef.current?.focus()}>
         {model.audioCapability &&
         onPlayAudio &&
         mode === "word-to-definition" &&
@@ -292,6 +297,8 @@ export function TrainingSenseCardStage({
           />
         ) : (
           <TrainingCardFace
+            meaning={model.meaning}
+            interfaceLanguage={interfaceLanguage}
             scrollMoreLabel={t("senseCard.scroll.more")}
             prompt={
               mode === "definition-to-word"
@@ -307,7 +314,7 @@ export function TrainingSenseCardStage({
             hintVisible={hintVisible}
             label={contextPrompt ? (contextTarget ? localizedField("sensePrompt", "wordFor") : localizedField("sensePrompt", "wordInSentence"))[interfaceLanguage] : mode === "definition-to-word" ? localizedField("sensePrompt", "wordFromMeaning")[interfaceLanguage] : undefined}
             partOfSpeech={mode === "definition-to-word" || mode === "word-to-definition" ? model.partOfSpeech : undefined}
-            recallTarget={contextTarget}
+            recallTarget={contextTargets.length ? contextTargets.join(" · ") : undefined}
             contextLabel={contextPrompt ? localizedField("sensePrompt", "context")[interfaceLanguage] : undefined}
             hintLabel={contextPrompt ? t("senseCard.sections.definition") : t("senseCard.hint.example")}
             contentLabel={t("senseCard.training.content")}

@@ -1,3 +1,4 @@
+import { ExclusionFeedbackPrototype } from "./ExclusionFeedbackPrototype";
 import { TranslationFeedbackGate } from "./TranslationFeedbackGate";
 import { TranslationTabSyncGate } from "./TranslationTabSyncGate";
 import {RelatedWordGate} from "./RelatedWordGate";
@@ -33,6 +34,7 @@ export default async function SenseCardGatePage({
   if (process.env.NODE_ENV === "production") {
     return <main className="p-8">Not available in production.</main>;
   }
+  if (searchParams?.prototype === "exclusion-feedback") return <ExclusionFeedbackPrototype/>;
   if (searchParams?.prototype === "translation-feedback") return <TranslationFeedbackGate/>;
   if (searchParams?.prototype === "release-review") return <ReleaseReviewGate/>;
   if (searchParams?.prototype === "progress-density") return <ProgressDensityGate/>;

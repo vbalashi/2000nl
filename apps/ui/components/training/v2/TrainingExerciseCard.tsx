@@ -3,6 +3,7 @@ import type { CurrentTrainingCardContext } from "@/lib/platform/trainingCurrentC
 import { TrainingAnswerTranslationProvider } from "./TrainingAnswerTranslation";
 import React from "react";
 import {useAdditionalTranslationLanguage} from "@/components/practice/article/AdditionalCardTranslation";
+import { localizedSection } from "@/lib/i18n/catalog";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
@@ -161,7 +162,7 @@ export function TrainingExerciseCard({
     >
       {notice}
       <TrainingAnswerTranslationProvider currentCard={currentCard} entryId={entryId} contentLanguage={contentLanguage}>
-      <TrainingCardShell answerVisible={revealed}>
+      <TrainingCardShell answerVisible={revealed} contentLabel={t("senseCard.training.content")} scrollMoreLabel={t("senseCard.scroll.more")} onReachEnd={() => firstGradeRef.current?.focus()} question={{title: localizedSection("interactionSettings")[interfaceLanguage][presentation.questionKind === "idiomDirect" ? "questionIdiomMeaning" : presentation.questionKind === "idiomReverse" ? "questionMeaningIdiom" : "questionTranslation"], text: presentation.prompt.text}}>
         {revealed ? (
           <>
             <TrainingCardAnswerHeader

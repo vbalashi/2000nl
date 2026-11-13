@@ -50,3 +50,10 @@ test("disabled controls preserve their owner", () => {
   expect(exclude).not.toHaveBeenCalled();
   expect(known).not.toHaveBeenCalled();
 });
+
+test("directional knowledge opens the editor directly without the exclusion menu",()=>{
+ const onChooseKnown=vi.fn(),exclude=vi.fn();
+ render(<TrainingExcludeAction language="ru" disabled={false} onClick={exclude} onChooseKnown={onChooseKnown}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Отметить знакомым'}));
+ expect(onChooseKnown).toHaveBeenCalledOnce();expect(exclude).not.toHaveBeenCalled();expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+});

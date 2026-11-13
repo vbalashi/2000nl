@@ -14,7 +14,7 @@ test.each([
 ] as const)('accessible switches and grouped gestures in $language',({language,count,animation,grade})=>{
  render(<TrainingInteractionSettings language={language}/>);
  const switches=screen.getAllByRole('switch');
- expect(switches).toHaveLength(6);
+ expect(switches).toHaveLength(7);
  expect(screen.getAllByRole('group').find(el=>el.querySelector('[role=switch]'))!.querySelectorAll('[role=switch]')).toHaveLength(4);
  expect(screen.getByRole('switch',{name:count})).toHaveAttribute('aria-checked','false');
  expect(screen.getByRole('switch',{name:animation})).toHaveAttribute('aria-checked','true');
@@ -88,4 +88,14 @@ test('one progress help explains both variants and opens on hover or tap',()=>{
  expect(trigger).toHaveAttribute('aria-expanded','false');
  fireEvent.click(trigger);
  expect(trigger).toHaveAttribute('aria-expanded','true');
+});
+
+test('question preview follows the switch and preserves other preferences',()=>{
+ const view=render(<TrainingInteractionSettings language="en"/>);
+ expect(screen.getByTestId('training-question-reminder')).toBeVisible();
+ fireEvent.click(screen.getByRole('switch',{name:'Show question with answer'}));
+ expect(save).toHaveBeenCalledWith({...defaultTrainingInteractions,showQuestionOnAnswer:false});
+ state.preferences={...defaultTrainingInteractions,showQuestionOnAnswer:false};
+ view.rerender(<TrainingInteractionSettings language="en"/>);
+ expect(screen.getByTestId('training-question-reminder').closest('[aria-hidden]')).toHaveAttribute('aria-hidden','true');
 });

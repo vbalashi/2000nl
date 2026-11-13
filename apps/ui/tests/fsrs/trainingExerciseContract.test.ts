@@ -1,3 +1,4 @@
+import {createIdiomFixture} from "./knownExerciseFixtures";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { randomUUID } from "node:crypto";
 import { Pool, type PoolClient } from "pg";
@@ -12,69 +13,6 @@ import type { PlatformIdiomExerciseSessionV2 } from "../../../../packages/shared
 
 const dbUrl = getDbUrl();
 const describeIfDb = dbUrl ? describe : describe.skip;
-
-async function createIdiomFixture(
-  client: PoolClient,
-  userId: string,
-  options: { isNt2?: boolean } = {},
-) {
-  await ensureUserWithSettings(client, userId);
-  const entryId = await insertWord(
-    client,
-    `exercise-hardening-${randomUUID()}`,
-    { is_nt2_2000: options.isNt2 ?? true },
-  );
-  const idiomNodeId = randomUUID();
-  const explanationNodeId = randomUUID();
-
-  await client.query(
-    `insert into private.platform_v2_content_nodes (
-       id, entry_id, parent_content_node_id, kind, binding_state, first_source_revision,
-       last_source_revision, source_text_fingerprint, diagnostic_locator
-     ) values ($1, $2, null, 'idiom', 'active', 'test-revision', 'test-revision', $3, $4),
-              ($5, $2, $1, 'idiom-explanation', 'active', 'test-revision',
-               'test-revision', $6, $7)`,
-    [
-      idiomNodeId,
-      entryId,
-      `idiom-fingerprint-${idiomNodeId}`,
-      `test.idiom.${idiomNodeId}`,
-      explanationNodeId,
-      `explanation-fingerprint-${explanationNodeId}`,
-      `test.explanation.${explanationNodeId}`,
-    ],
-  );
-  await client.query(
-    `insert into public.user_card_status (
-       user_id, entry_id, card_type_id, fsrs_enabled, in_learning,
-       next_review_at
-     ) values ($1, $2, 'word-to-definition', true, true, now())`,
-    [userId, entryId],
-  );
-
-  await client.query("select set_config('request.jwt.claim.role', 'service_role', true)");
-  await client.query("set local role service_role");
-  const { rows } = await client.query(
-    `select public.ensure_platform_v2_training_exercise_target_as_principal_v1(
-       $1, $2, 'idiom', 'direct', $3, $4
-     ) target_id`,
-    [
-      entryId,
-      idiomNodeId,
-      `source-revision-${idiomNodeId}`,
-      `idiom-fingerprint-${idiomNodeId}`,
-    ],
-  );
-  const targetId = rows[0].target_id as string;
-  await client.query("reset role");
-
-  return {
-    entryId,
-    idiomNodeId,
-    targetId,
-    targetKey: `training-exercise-v1:idiom:direct:${entryId}:${idiomNodeId}`,
-  };
-}
 
 async function performIdiomAction(
   client: PoolClient,
@@ -1066,11 +1004,13 @@ describeIfDb("content-bound training exercise database contract", () => {
         `select public.start_platform_v2_idiom_training_session($1,'mixed','4',$2,null,'curated','both','{}',2) result`,
         [userId,randomUUID()])).rows[0].result as PlatformIdiomExerciseSessionV2);
       expect(session.plannedTotal).toBe(2);
-      expect(session.members.every(member=>member.entryId===remaining.entryId)).toBe(true);
-      expect(session.members.map(member=>member.direction)).toEqual(['direct','reverse']);
+      expect(session.members.some(member=>member.entryId===excluded.entryId && member.direction==='direct')).toBe(false);
+      expect(session.members.some(member=>member.entryId===excluded.entryId)).toBe(false);
+      // Keep the next target accessible only until the explicit revocation below.
+      const nextEntry=session.members[0].entryId;
       const otherOwner=randomUUID();
       await ensureUserWithSettings(client,otherOwner);
-      await client.query(`update dictionaries set visibility='private',owner_user_id=$2 where id=(select dictionary_id from word_entries where id=$1)`,[remaining.entryId,otherOwner]);
+      await client.query(`update dictionaries set visibility='private',owner_user_id=$2 where id=(select dictionary_id from word_entries where id=$1)`,[nextEntry,otherOwner]);
       expect(await readIdiomSessionNext(client,userId,session.sessionId)).toMatchObject({status:'unavailable',reason:'dictionary-access-revoked'});
       const stats=await asAuthenticated(client,async()=> (await client.query('select public.read_training_idiom_stats_v1($1) result',[session.sessionId])).rows[0].result);
       expect(stats.totalCardsInScope).toBe(0);
@@ -1370,7 +1310,7 @@ describeIfDb("content-bound training exercise database contract", () => {
       [userId,nodeId?'idiom':'meaning',entryId,nodeId,fingerprint,cardTypeId])).rows[0].excluded;
   }
 
-  test("ordinary pair exclusion preserves FSRS and Known, and reverse-side undo restores the pair", async () => {
+  test("ordinary pair conversion retains both blocked directions and reverse-side receipt undo restores them", async () => {
     const userId=randomUUID();
     await withTransaction(pool,async client=>{
       const fixture=await createIdiomFixture(client,userId);
@@ -1379,14 +1319,16 @@ describeIfDb("content-bound training exercise database contract", () => {
       const eventId=randomUUID();
       const mark=await pairAction(client,userId,'exclude-pair',eventId,target);
       expect(mark).toMatchObject({status:'accepted',excluded:true,family:'meaning',consumption:null});
-      expect(await pairExcluded(client,userId,fixture.entryId,'word-to-definition')).toBe(true);
-      expect(await pairExcluded(client,userId,fixture.entryId,'definition-to-word')).toBe(true);
+      expect(await pairExcluded(client,userId,fixture.entryId,'word-to-definition')).toBe(false);
+      expect(await pairExcluded(client,userId,fixture.entryId,'definition-to-word')).toBe(false);
       expect(await pairExcluded(client,userId,fixture.entryId,'listen-type')).toBe(false);
-      expect((await client.query('select to_jsonb(s) state from user_card_status s where user_id=$1',[userId])).rows).toEqual(before);
-      expect((await client.query('select count(*)::int count from user_card_known_marks where user_id=$1',[userId])).rows[0].count).toBe(0);
+      const after=(await client.query('select to_jsonb(s) state from user_card_status s where user_id=$1',[userId])).rows;
+      for(const row of before){const retained=after.find(r=>r.state.entry_id===row.state.entry_id&&r.state.card_type_id===row.state.card_type_id);for(const key of ['fsrs_reps','fsrs_stability','fsrs_difficulty','fsrs_last_grade','next_review_at'])expect(retained.state[key]).toEqual(row.state[key]);}
+      expect((await client.query('select card_type_id from user_card_known_marks where user_id=$1 and cleared_at is null',[userId])).rows.map(r=>r.card_type_id).sort()).toEqual(['definition-to-word','word-to-definition']);
       const restored=await pairAction(client,userId,'restore-pair',randomUUID(),
         {entryId:fixture.entryId,cardTypeId:'definition-to-word'},mark.exclusionId);
       expect(restored.excluded).toBe(false);
+      expect((await client.query('select count(*)::int n from user_card_known_marks where user_id=$1 and cleared_at is null',[userId])).rows[0].n).toBe(0);
       expect(await pairExcluded(client,userId,fixture.entryId,'word-to-definition')).toBe(false);
       // A delayed retry returns its immutable receipt; it does not re-exclude.
       expect((await pairAction(client,userId,'exclude-pair',eventId,target)).status).toBe('duplicate');
@@ -1403,14 +1345,14 @@ describeIfDb("content-bound training exercise database contract", () => {
       const eventId=randomUUID();
       const mark=await pairAction(client,userId,'exclude-pair',eventId,{targetId:fixture.targetId},null,session.sessionId);
       expect(mark.consumption).toMatchObject({status:'consumed-complete',completedActions:1});
-      expect(await pairExcluded(client,userId,fixture.entryId,'',fixture.idiomNodeId,`idiom-fingerprint-${fixture.idiomNodeId}`)).toBe(true);
+      expect((await client.query('select private.training_exercise_is_known_v1($1,$2) known',[userId,fixture.targetId])).rows[0].known).toBe(true);
       expect(await pairExcluded(client,userId,fixture.entryId,'',randomUUID(),'other-fingerprint')).toBe(false);
       expect(await pairExcluded(client,userId,fixture.entryId,'word-to-definition')).toBe(false);
       const duplicate=await pairAction(client,userId,'exclude-pair',eventId,{targetId:fixture.targetId},null,session.sessionId);
       expect(duplicate.status).toBe('duplicate');
       const {rows}=await client.query(`select
         (select count(*)::int from user_training_exercise_state where user_id=$1) states,
-        (select count(*)::int from user_training_exercise_action_events where user_id=$1) reviews,
+        (select count(*)::int from user_training_exercise_action_events where user_id=$1 and action='review-exercise') reviews,
         (select count(*)::int from training_session_exercise_members where session_id=$2 and consumed_at is not null) consumed`,[userId,session.sessionId]);
       expect(rows[0]).toEqual({states:0,reviews:0,consumed:1});
       await pairAction(client,userId,'restore-pair',randomUUID(),{targetId:fixture.targetId},mark.exclusionId);
@@ -1418,7 +1360,7 @@ describeIfDb("content-bound training exercise database contract", () => {
     },userId);
   });
 
-  test("pair exclusion removes both idiom directions from legacy and scoped selection without removing siblings", async () => {
+  test("Known preserves both blocked idiom directions in legacy and scoped selection without removing siblings", async () => {
     const userId = randomUUID();
     await withTransaction(pool, async client => {
       const excluded = await createIdiomFixture(client, userId);
@@ -1430,7 +1372,7 @@ describeIfDb("content-bound training exercise database contract", () => {
           const args = version === 1 ? "$1,$2,20,0" : "$1,$2,20,0,null,'curated','both','{}'::jsonb";
           const { rows } = await client.query(`select candidate->>'entryId' entry_id from
             private.platform_v2_idiom_exercise_candidates_v${version}(${args}) candidate`, [userId,direction]);
-          expect(rows.map(row => row.entry_id)).toEqual([sibling.entryId]);
+          expect(rows.map(row => row.entry_id).sort()).toEqual([sibling.entryId].sort());
         }
       }
       await pairAction(client, userId, 'restore-pair', randomUUID(), target, mark.exclusionId);
@@ -1447,13 +1389,10 @@ describeIfDb("content-bound training exercise database contract", () => {
       const session = await startIdiomSession(client,userId,'direct',1,randomUUID());
       await pairAction(client,userId,'exclude-pair',randomUUID(),{targetId:fixture.targetId});
       expect(await readIdiomSessionNext(client,userId,session.sessionId)).toMatchObject({
-        status:'unavailable',reason:'pair-excluded',targetId:fixture.targetId,
+        status:'exhausted',
       });
-      const result = await asAuthenticated(client,async () => (await client.query(
-        "select public.mark_platform_v2_idiom_training_session_member_unavailable($1,$2,$3,'pair-excluded') result",
-        [userId,session.sessionId,fixture.targetId])).rows[0].result);
-      expect(result.status).toBe('unavailable-exhausted');
-      expect((await client.query('select count(*)::int count from user_training_exercise_action_events where user_id=$1',[userId])).rows[0].count).toBe(0);
+      expect((await client.query("select unavailable_reason,consumed_at from training_session_exercise_members where session_id=$1",[session.sessionId])).rows).toEqual([{unavailable_reason:'known',consumed_at:null}]);
+      expect((await client.query("select count(*)::int count from user_training_exercise_action_events where user_id=$1 and action='review-exercise'",[userId])).rows[0].count).toBe(0);
     },userId);
   });
 
@@ -1474,7 +1413,7 @@ describeIfDb("content-bound training exercise database contract", () => {
     },userId);
   });
 
-  test("ordinary due statistics exclude the recall pair and preserve unrelated listening state", async () => {
+  test("ordinary due statistics omit both recall Known directions and preserve listening", async () => {
     const userId=randomUUID();
     await withTransaction(pool,async client => {
       const fixture=await createIdiomFixture(client,userId);
@@ -1509,14 +1448,14 @@ describeIfDb("content-bound training exercise database contract", () => {
       await reviewing.query("select set_config('request.jwt.claim.sub',$1,true)",[userId]);
       await reviewing.query("set local statement_timeout='2s'");
       let settled=false;
-      const pending=reviewing.query("select public.handle_card_review($1,$2,'definition-to-word','success',$3)",[userId,entryId,randomUUID()])
+      const pending=reviewing.query("select public.handle_card_review($1,$2,'word-to-definition','success',$3)",[userId,entryId,randomUUID()])
         .then(() => {settled=true;return 'accepted';},(error:Error) => {settled=true;return error.message;});
       await new Promise(resolve=>setTimeout(resolve,50));
       expect(settled).toBe(false);
       await excluding.query('commit');
-      expect(await pending).toContain('training_pair_excluded');
+      expect(await pending).toContain('card_is_known');
       await reviewing.query('rollback');
-      expect((await setup.query('select count(*)::int count from user_card_status where user_id=$1',[userId])).rows[0].count).toBe(0);
+      expect((await setup.query('select count(*)::int count from user_card_status where user_id=$1 and fsrs_reps>0',[userId])).rows[0].count).toBe(0);
     } finally {
       await excluding.query('rollback');
       await reviewing.query('rollback');
@@ -1527,18 +1466,19 @@ describeIfDb("content-bound training exercise database contract", () => {
     }
   });
 
-  test("ordinary exclusion filters both directions and legacy grades cannot bypass it", async () => {
+  test("ordinary Known filters only its direction and legacy grades cannot bypass it", async () => {
     const userId = randomUUID();
     await withTransaction(pool,async client => {
       const fixture=await createIdiomFixture(client,userId);
-      const candidates=async () => (await client.query(`select entry_id from private.training_scheduler_candidates_v2(
+      const candidates=async () => (await client.query(`select entry_id,card_type_id from private.training_scheduler_candidates_v2(
         $1,ARRAY['word-to-definition','definition-to-word'],null,'curated','both','auto',
         ARRAY[]::uuid[],ARRAY[]::text[],'{}',false,false)`,[userId])).rows;
       expect(await candidates()).not.toHaveLength(0);
       await pairAction(client,userId,'exclude-pair',randomUUID(),{entryId:fixture.entryId,cardTypeId:'definition-to-word'});
+      expect((await candidates()).every((r:{card_type_id:string})=>r.card_type_id!=='definition-to-word')).toBe(true);
       expect(await candidates()).toHaveLength(0);
       await expect(asAuthenticated(client,() => client.query(
-        "select public.handle_card_review($1,$2,'word-to-definition','success',$3)",[userId,fixture.entryId,randomUUID()]))).rejects.toThrow('training_pair_excluded');
+        "select public.handle_card_review($1,$2,'definition-to-word','success',$3)",[userId,fixture.entryId,randomUUID()]))).rejects.toThrow('card_is_known');
     },userId);
   });
 
@@ -1553,9 +1493,9 @@ describeIfDb("content-bound training exercise database contract", () => {
       await client.query('savepoint reject_grade');
       await expect(performIdiomAction(client,userId,fixture.targetId,randomUUID(), {
         stateRevision: (accepted.state as {stateRevision:string}).stateRevision,
-      })).rejects.toThrow('training_pair_excluded');
+      })).rejects.toThrow('exercise_is_known');
       await client.query('rollback to savepoint reject_grade');
-      expect((await client.query('select count(*)::int count from user_training_exercise_action_events where user_id=$1',[userId])).rows[0].count).toBe(1);
+      expect((await client.query("select count(*)::int count from user_training_exercise_action_events where user_id=$1 and action='review-exercise'",[userId])).rows[0].count).toBe(1);
     }, userId);
   });
 
@@ -1566,7 +1506,7 @@ describeIfDb("content-bound training exercise database contract", () => {
       await performIdiomAction(client, userId, fixture.targetId, randomUUID());
       const snapshot = async () => (await client.query(`select
         (select jsonb_agg(to_jsonb(s)) from user_training_exercise_state s where user_id=$1) states,
-        (select jsonb_agg(to_jsonb(e)) from user_training_exercise_action_events e where user_id=$1) events`, [userId])).rows;
+        (select jsonb_agg(to_jsonb(e)) from user_training_exercise_action_events e where user_id=$1 and action='review-exercise') events`, [userId])).rows;
       const before = await snapshot();
       const target = { targetId: fixture.targetId };
       const mark = await pairAction(client, userId, 'exclude-pair', randomUUID(), target);

@@ -340,6 +340,9 @@
       "list": "Recente trainingsactiviteit",
       "truncated": "De 50 meest recente trainingsactiviteiten worden getoond.",
       "events": {
+        "known": "Bekend",
+        "restored": "Terug in training",
+        "excluded": "Uitgesloten",
         "learning_started": "Gestart met leren",
         "review_fail": "Opnieuw",
         "review_hard": "Moeilijk",
@@ -347,6 +350,7 @@
         "review_easy": "Makkelijk"
       },
       "exercises": {
+        "idiom": "Uitdrukking",
         "idiomDirect": "Uitdrukking → betekenis",
         "idiomReverse": "Betekenis → uitdrukking",
         "translation": "Zinsvertaling"
@@ -748,9 +752,9 @@
         "undo": "Ongedaan maken",
         "failed": "De actie is niet gelukt. Probeer opnieuw.",
         "dismiss": "Sluiten",
-        "headwordLabel": "Uitsluiten",
-        "headwordHelp": "In beide richtingen uitsluiten van training",
-        "headwordDone": "Betekenis uitgesloten van woordtraining"
+        "headwordLabel": "Beide richtingen als bekend markeren",
+        "headwordHelp": "Ik ken deze betekenis in beide richtingen",
+        "headwordDone": "Beide richtingen als bekend gemarkeerd"
       },
       "completedOne": "{count} oefening voltooid",
       "completedFew": "{count} oefeningen voltooid",
@@ -788,7 +792,23 @@
       "knownResult": "Bekend",
       "excludedResult": "Uitgesloten",
       "completedZero": "{count} oefeningen voltooid",
-      "completedTwo": "{count} oefeningen voltooid"
+      "completedTwo": "{count} oefeningen voltooid",
+      "knownChoice": {
+        "known": "Ken ik al",
+        "learning": "Nog aan het leren",
+        "returnToLearning": "Weer oefenen",
+        "markKnown": "Markeren als bekend",
+        "back": "Terug",
+        "next": "Verder",
+        "direct": "Betekenis bij het woord",
+        "reverse": "Woord bij de betekenis",
+        "loading": "Leerstatus laden…",
+        "failed": "Je keuzes konden niet worden opgeslagen. Probeer het opnieuw.",
+        "conflict": "De leerstatus is gewijzigd. Ga terug en probeer het opnieuw.",
+        "loadFailed": "De leerstatus kon niet worden geladen. Ga terug en probeer het opnieuw.",
+        "saving": "Opslaan…",
+        "choiceLabel": "Kies welke richtingen je al kent"
+      }
     },
     "cardActions": {
       "knownHelp": "Alleen deze richting",
@@ -1159,12 +1179,22 @@
       "sharedReadersMany": "Gedeeld · {count} abonnees",
       "sharedReadersOther": "Gedeeld · {count} abonnees"
     },
+    "training": {
+      "meaningPosition": "Betekenis {ordinal} van {total}",
+      "meaningDetailsHint": "Gebruik de knop {button} om alle betekenissen te bekijken.",
+      "meaningDetailsFrontHint": "Toon het antwoord en gebruik de knop {button} op de achterkant om alle betekenissen te bekijken."
+    },
     "collectionComposition": {
       "title": "Gedeelde collectie",
       "audience": "Lezers: {count}. Zij kunnen deze wijziging zien.",
       "failed": "De collectie kon niet worden bijgewerkt. Controleer en probeer opnieuw.",
       "storage": "De bevestiging kon niet op dit apparaat worden bewaard. Probeer opnieuw.",
       "pending": "Het resultaat is nog niet beschikbaar. Controleer opnieuw voordat u het opnieuw probeert."
+    },
+    "training": {
+      "meaningPosition": "Betekenis {ordinal} van {total}",
+      "meaningDetailsHint": "Gebruik de knop {button} om alle betekenissen te bekijken.",
+      "meaningDetailsFrontHint": "Toon het antwoord en gebruik de knop {button} op de achterkant om alle betekenissen te bekijken."
     }
   },
   "wordDetails": {
@@ -1409,7 +1439,16 @@
       "preview": "Voorbeeld",
       "cards": "kaarten",
       "progressHelp": "Toont je voortgang door een oefensessie. Draad volgt een rechte lijn; Golf volgt een gebogen lijn. In sessies met maximaal 30 kaarten staat elke stip voor één kaart. Boven 30 gebruiken beide een doorlopende lijn met een bewegende markering. Uit verbergt de animatie en toont het aantal kaarten.",
-      "countHelp": "Toont het aantal voltooide kaarten naast de voortgangsanimatie in een beperkte sessie. Het aantal is altijd zichtbaar in onbeperkte sessies of als de voortgangsanimatie uit staat."
+      "countHelp": "Toont het aantal voltooide kaarten naast de voortgangsanimatie in een beperkte sessie. Het aantal is altijd zichtbaar in onbeperkte sessies of als de voortgangsanimatie uit staat.",
+      "showQuestionOnAnswer": "Toon de vraag bij het antwoord",
+      "questionHelp": "Toont de oorspronkelijke vraag bij het antwoord, zodat je weet wat je moest onthouden.",
+      "questionWordMeaning": "Woord → betekenis: vraag",
+      "questionMeaningWord": "Betekenis → woord: vraag",
+      "questionIdiomMeaning": "Uitdrukking → betekenis: vraag",
+      "questionMeaningIdiom": "Betekenis → uitdrukking: vraag",
+      "questionTranslation": "Vertaalvraag",
+      "questionPreviewWord": "de fiets",
+      "questionPreviewDefinition": "Een voertuig met twee wielen."
     },
     "readingSettings": {
       "title": "Leestekst",

@@ -43,6 +43,17 @@ owner/adapter seam, transition matrix, characterization tests and migration gate
 It distinguishes the intended common controller from current family differences.
 
 
+## Manual knowledge during training
+
+Ordinary word recall has one manual Known mark per meaning and direction.
+The single Mark as known action opens a local two-direction draft: the current
+direction is selected and its sibling preserves its actual state. Next saves the
+choice and consumes the current session member atomically; Go back writes nothing.
+Manual knowledge never manufactures a review grade or resets prior memory data.
+The [directional knowledge contract](ui/training-known-directions.md) describes
+retry ownership, the accepted interface and compatibility with previous meaning
+exclusions. Managed conversion and deployment retain their separate release gate.
+
 ## Meaning card spacing
 
 Decision: [ADR-0001](adr/0001-meaning-direction-spacing.md).

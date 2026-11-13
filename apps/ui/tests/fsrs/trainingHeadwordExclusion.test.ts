@@ -1,3 +1,5 @@
+// Characterizes retained historical exclusion storage. Current compatibility
+// conversion and exact undo are covered by trainingKnownChoice.test.ts.
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { randomUUID } from "node:crypto";
 import { Pool, type PoolClient } from "pg";
@@ -90,13 +92,13 @@ async function bindSourceEntries(
 
 async function action(client:PoolClient,userId:string,entryId:string,eventId:string,markId:string|null=null) {
   await client.query("select set_config('request.jwt.claim.role','service_role',true)");
-  return (await client.query(`select public.perform_training_headword_exclusion_as_principal_v1(
+  return (await client.query(`select private.perform_legacy_meaning_exclusion_as_principal_v1(
     $1,$2,$3,$4,null,$5,null) result`,[userId,markId?'restore-headword':'exclude-headword',eventId,entryId,markId])).rows[0].result;
 }
 async function excluded(client:PoolClient,userId:string,entryId:string,mode:string,family='meaning') {
   return (await client.query(`select private.training_pair_excluded_v1($1,$2,$3,null,null,$4) value`,[userId,family,entryId,mode])).rows[0].value;
 }
-describeIfDb('headword exclusion availability',()=>{
+describeIfDb('retained legacy meaning exclusion storage before Known conversion',()=>{
  const pool=new Pool({connectionString:dbUrl});
  beforeAll(async()=>{await runMigrations(pool);});
  afterAll(async()=>{await pool.end();});
@@ -209,7 +211,7 @@ describeIfDb('headword exclusion availability',()=>{
     training_filter,planned_new,planned_review,planned_total,requested_total) values($1,'5',ARRAY['word-to-definition'],'curated','both','{}',2,0,2,5) returning id`,[userId])).rows[0].id;
    await client.query(`insert into training_session_members(session_id,ordinal,entry_id,card_type_id,queue_source)
     values($1,1,$2,'word-to-definition','new'),($1,2,$3,'word-to-definition','new')`,[session,...entries]);
-   const trainingAction=async(entry:string,event:string)=>(await client.query(`select public.perform_training_headword_exclusion_as_principal_v1(
+   const trainingAction=async(entry:string,event:string)=>(await client.query(`select private.perform_legacy_meaning_exclusion_as_principal_v1(
     $1,'exclude-headword',$2,$3,'word-to-definition',null,$4) result`,[userId,event,entry,session])).rows[0].result;
    await client.query("select set_config('request.jwt.claim.role','service_role',true)");
    await client.query('savepoint out_of_order');

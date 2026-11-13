@@ -1,4 +1,5 @@
 "use client";
+import {ExerciseKnownChoices} from "./ExerciseKnownChoices";
 import { completeMeaningExclusionResume } from "../training/v2/trainingExclusionUndoStore";
 import React from "react";
 import { X } from "lucide-react";
@@ -158,6 +159,8 @@ export function MeaningLearningProgress({
             )}
           </>
         )}
+        {/* Supplied snapshots are self-contained (for example, the onboarding demo). */}
+        {!initialProgress && <ExerciseKnownChoices entryId={entryId} language={language} blocked={mutationBlocked} onChanged={onChanged}/>}
       </div>
     </DialogSurface>
   );

@@ -37,6 +37,7 @@ export function buildIdiomCardPresentation({
     })),
   });
   return {
+    questionKind: direction === "direct" ? "idiomDirect" : "idiomReverse",
     promptTarget: { contentNodeId: direction === "direct" ? content.expression.contentNodeId : content.explanation.contentNodeId, kind: "text" },
     label: direction === "direct"
       ? localizedField("idiomPrompt", "meaning")[interfaceLanguage]

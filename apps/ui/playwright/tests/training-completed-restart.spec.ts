@@ -23,6 +23,7 @@ test("@pilot completed meaning session starts a new run directly from home", asy
 });
 
 test("@pilot paused meaning session still continues the same run", async ({ page }) => {
+  await page.setViewportSize({width:683,height:953});
   const lookupRequests: Array<{ hasTarget: boolean; target: unknown }> = [];
   page.on("request", (request) => {
     if (request.url().includes("/api/platform/v2/lookup") && request.method() === "POST") {
@@ -42,6 +43,10 @@ test("@pilot paused meaning session still continues the same run", async ({ page
   await page.getByRole("button", { name: /Close session|Закрыть сессию|Sessie sluiten/i }).click();
   const resume = page.getByRole("button", { name: /Continue training|Продолжить тренировку|Training hervatten/i });
   await expect(resume).toBeEnabled();
+  const currentTraining = page.getByRole("region", { name: /Current training|Текущая тренировка|Huidige training/i });
+  await expect(currentTraining).toBeVisible();
+  const cardDimensions = await currentTraining.evaluate(element => ({client:element.clientHeight,scroll:element.scrollHeight}));
+  expect(cardDimensions.scroll).toBeLessThanOrEqual(cardDimensions.client + 1);
   await resume.click();
   await expect(page.getByTestId("training-sense-card-v2")).toBeVisible();
   expect(fixture.requests.sessionStarts).toHaveLength(1);

@@ -340,6 +340,9 @@
       "list": "Recent training activity",
       "truncated": "Showing the 50 most recent training activities.",
       "events": {
+        "known": "Known",
+        "restored": "Returned to practice",
+        "excluded": "Excluded",
         "learning_started": "Started learning",
         "review_fail": "Again",
         "review_hard": "Hard",
@@ -347,6 +350,7 @@
         "review_easy": "Easy"
       },
       "exercises": {
+        "idiom": "Idiom",
         "idiomDirect": "Idiom → meaning",
         "idiomReverse": "Meaning → idiom",
         "translation": "Sentence translation"
@@ -748,9 +752,9 @@
         "undo": "Undo",
         "failed": "Could not complete the action. Try again.",
         "dismiss": "Dismiss",
-        "headwordLabel": "Exclude",
-        "headwordHelp": "Exclude from training in both directions",
-        "headwordDone": "Meaning excluded from word training"
+        "headwordLabel": "Mark both directions as known",
+        "headwordHelp": "I already know this meaning in both directions",
+        "headwordDone": "Both directions marked as known"
       },
       "completedOne": "{count} exercise completed",
       "completedFew": "{count} exercises completed",
@@ -788,7 +792,23 @@
       "knownResult": "Known",
       "excludedResult": "Excluded",
       "completedZero": "{count} exercises completed",
-      "completedTwo": "{count} exercises completed"
+      "completedTwo": "{count} exercises completed",
+      "knownChoice": {
+        "known": "Already know",
+        "learning": "Still learning",
+        "returnToLearning": "Return to learning",
+        "markKnown": "Mark as known",
+        "back": "Go back",
+        "next": "Next",
+        "direct": "Meaning from word",
+        "reverse": "Word from meaning",
+        "loading": "Loading learning status…",
+        "failed": "Could not save your choices. Try again.",
+        "conflict": "Learning status has changed. Go back and try again.",
+        "loadFailed": "Could not load learning status. Go back and try again.",
+        "saving": "Saving…",
+        "choiceLabel": "Choose which directions you know"
+      }
     },
     "cardActions": {
       "knownHelp": "Only this direction",
@@ -1159,12 +1179,22 @@
       "sharedReadersMany": "Shared · {count} subscribers",
       "sharedReadersOther": "Shared · {count} subscribers"
     },
+    "training": {
+      "meaningPosition": "Meaning {ordinal} of {total}",
+      "meaningDetailsHint": "To see all meanings, use the {button} button.",
+      "meaningDetailsFrontHint": "To see all meanings, reveal the answer and use the {button} button on the back of the card."
+    },
     "collectionComposition": {
       "title": "Shared collection",
       "audience": "Readers: {count}. They can see this change.",
       "failed": "Could not update this collection. Review it and try again.",
       "storage": "Could not save the confirmation on this device. Try again.",
       "pending": "The result is not available yet. Check again before retrying."
+    },
+    "training": {
+      "meaningPosition": "Meaning {ordinal} of {total}",
+      "meaningDetailsHint": "To see all meanings, use the {button} button.",
+      "meaningDetailsFrontHint": "To see all meanings, reveal the answer and use the {button} button on the back of the card."
     }
   },
   "wordDetails": {
@@ -1409,7 +1439,16 @@
       "preview": "Preview",
       "cards": "cards",
       "progressHelp": "Shows your progress through a training session. Thread follows a straight line; Wave follows a curved line. In sessions of up to 30 cards, each dot represents one card. Above 30, both use a continuous line with a moving marker. Off hides the animation and shows the card count.",
-      "countHelp": "Adds the number of completed cards next to the progress animation in a limited session. The count is always visible in unlimited sessions or when progress animation is Off."
+      "countHelp": "Adds the number of completed cards next to the progress animation in a limited session. The count is always visible in unlimited sessions or when progress animation is Off.",
+      "showQuestionOnAnswer": "Show question with answer",
+      "questionHelp": "Shows the original question when you reveal the answer, so you can remember what you were asked to recall.",
+      "questionWordMeaning": "Word → meaning question",
+      "questionMeaningWord": "Meaning → word question",
+      "questionIdiomMeaning": "Idiom → meaning question",
+      "questionMeaningIdiom": "Meaning → idiom question",
+      "questionTranslation": "Translation question",
+      "questionPreviewWord": "de fiets",
+      "questionPreviewDefinition": "Een voertuig met twee wielen."
     },
     "readingSettings": {
       "title": "Reading text",

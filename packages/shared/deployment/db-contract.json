@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-363",
+  "contractId": "2000nl-db-368",
   "baseline": {
     "migrationId": 287,
     "file": "db/migrations/287_initial_schema.sql",
@@ -342,11 +342,36 @@
       "migrationId": 363,
       "file": "db/migrations/363_received_group_catalog_scope.sql",
       "sha256": "40a23e34789a59224e85ab7b91307c9ab00575f30bf6bf9e8fbed562e140fb19"
+    },
+    {
+      "migrationId": 364,
+      "file": "db/migrations/364_training_known_choice.sql",
+      "sha256": "0f914b716cbb0f890a67513dbddd29f6d0be591ceefebed1be278c69493b62f4"
+    },
+    {
+      "migrationId": 365,
+      "file": "db/migrations/365_meaning_exclusion_known_compatibility.sql",
+      "sha256": "12a4398d5d07427fd77fe3e19745bb7adf39c044196baa8e560b7bc2023b8dfc"
+    },
+    {
+      "migrationId": 366,
+      "file": "db/migrations/366_training_history_actions.sql",
+      "sha256": "6a7adbe93ba309a0fb27bc9b0b8ebe04241cd427598f2be7baf8c7c32cd0000e"
+    },
+    {
+      "migrationId": 367,
+      "file": "db/migrations/367_training_question_reminder_preference.sql",
+      "sha256": "d6a26aa17409339458069169f6478d065211df8af55f6167a83e489b687c84f4"
+    },
+    {
+      "migrationId": 368,
+      "file": "db/migrations/368_starter_editorial_collection.sql",
+      "sha256": "982173a2a2f8775f3076329299d24f190d907a6366c1442ad0e0afe313ff9596"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-363.sql",
+  "postflightProbe": "db/deploy-contract/postflight-368.sql",
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-363.sql",
-    "sha256": "60394478061dc96ec203a139ed3802517a552f4d08945431b4ba334ba25a880a"
+    "file": "db/deploy-contract/read-only-postflight-368.sql",
+    "sha256": "ae3b24f90953aa2f644e224e2a56052dc54d84c7cde1267262f638de8f9866e3"
   }
 }

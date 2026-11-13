@@ -44,10 +44,11 @@ test("a failed prepared card recovers after closing and continuing on desktop an
       "data-training-v2-state",
       "model-invalid",
     );
-    await page
-      .getByRole("button", {
-        name: /^(?:Back to training|Terug naar training|Вернуться к тренировкам)$/i,
-      })
+    await expect(failure.getByRole("button", {
+      name: /Opnieuw proberen|Повторить|Try again/i,
+    })).toBeEnabled();
+    await page.getByTestId("training-session-chrome")
+      .getByRole("button", { name: /^(?:Close session|Sessie sluiten|Закрыть сессию)$/i })
       .click();
     const currentTraining = page.getByRole("region", {
       name: /Current training|Huidige training|Текущая тренировка/i,

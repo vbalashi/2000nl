@@ -27,6 +27,7 @@ for (const profile of ["compact","long-idiom"] as const) {
   const scroll=page.getByTestId("training-answer-scroll");
   if(profile === "long-idiom"){
    await page.setViewportSize({width:393,height:400});
+   await expect(scroll).toHaveAttribute("data-reading-layout", "compact");
    await expect.poll(()=>scroll.evaluate(el=>el.scrollHeight-el.clientHeight)).toBeGreaterThan(0);
    await scroll.evaluate(el=>{el.scrollTop=el.scrollHeight;});
    expect(await scroll.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);

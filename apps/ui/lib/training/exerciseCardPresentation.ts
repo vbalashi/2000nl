@@ -7,6 +7,7 @@ export type TrainingCardPrompt =
 import type {PlatformEntryNoteMaterialV2,PlatformWordDetailsV2} from "../../../../packages/shared/types/platformV2";
 
 export type TrainingCardAnswer = {
+  meaning?: {ordinal:number;total:number};
   noteMaterial?:PlatformEntryNoteMaterialV2[];
   wordDetails?:PlatformWordDetailsV2;
   headword: string;
@@ -23,6 +24,7 @@ export type TrainingCardAnswer = {
 
 export type TrainingExercisePresentation = {
   label: string;
+  questionKind?: "idiomDirect" | "idiomReverse" | "translation";
   /** Presentation identity of the same question on the answer, never inferred from text. */
   promptTarget: { contentNodeId: string; kind: "text" | "translation" };
   answerTranslationInitiallyVisible?: boolean;

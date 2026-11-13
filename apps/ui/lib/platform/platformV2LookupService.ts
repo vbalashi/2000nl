@@ -1,3 +1,4 @@
+import {completeTrainingMeaningCount} from "./trainingMeaningCount";
 import type { CurrentTrainingCardRead } from "./currentTrainingCardRequest";
 import { withLexicalRelationTranslations } from "./platformV2LexicalRelationTranslations";
 import {parseMeaningLearningProgress,type MeaningLearningProgress} from '../../../../packages/shared/types/meaningLearningProgress';
@@ -116,6 +117,7 @@ export async function performPlatformV2Lookup(
     ? await resolveExactReadableGroup(context, request, timings, currentCard)
       : {
         ok: true as const,
+        meaningCounts: new Map<string,number>(),
         query,
         result: await measure<RpcResult>(timings, "lookup.db", async () => {
           const operation = context.service.supabase.rpc(queryRpc, {
@@ -251,15 +253,15 @@ export async function performPlatformV2Lookup(
     entries,
     embeddedIdentities,
   );
-  // The current-card reader can return an older embedded identity without the
+  // A reader can return an older embedded identity without the
   // report revision. Hydrate it through the authoritative identity reader rather
   // than silently hiding Report. Explicit null is a valid unverifiable revision.
-  const currentCardReportIdentityComplete = !currentCard || entries.every(
+  const reportIdentityComplete = entries.every(
     entry => Object.prototype.hasOwnProperty.call(
       asRecord(asRecord(entry).platform_v2_identity), "reportContentRevision",
     ),
   );
-  const identityPromise = embeddedIdentityComplete && currentCardReportIdentityComplete
+  const identityPromise = embeddedIdentityComplete && reportIdentityComplete
     ? Promise.resolve<RpcResult>({
         data: { entries: embeddedIdentities },
         error: null,
@@ -501,7 +503,8 @@ export async function performPlatformV2Lookup(
               contentFingerprint: entryContentRevision,
               raw: entry.raw,
               isNt22000: entry.is_nt2_2000 ?? null,
-              meaningsCount: entry.meanings_count ?? null,
+              // Only proof from the exact article reader can cross this seam.
+              meaningsCount: lookupResolution.meaningCounts.get(entry.id) ?? null,
             };
             const translations = translationResult.byEntryId.get(entry.id);
             return {
@@ -578,7 +581,7 @@ async function resolveExactReadableGroup(
   timings: Array<{ name: string; durationMs: number }>,
   currentCard?: CurrentTrainingCardRead,
 ): Promise<
-  | { ok: true; result: RpcResult; query: string }
+  | { ok: true; result: RpcResult; query: string; meaningCounts:Map<string,number> }
   | { ok: false; result: PlatformV2LookupOperationResult }
 > {
   if (
@@ -665,8 +668,33 @@ async function resolveExactReadableGroup(
       result: { payload: { error: "exact_group_contract_invalid" }, status: 409 },
     };
   }
+  const meaningCounts=new Map<string,number>();
+  // A current-card permit intentionally projects only its exact entry. Read the
+  // bounded, access-checked article for presentation totals without expanding
+  // the current-card payload or granting authority to any sibling.
+  if (currentCard) {
+    try {
+      const article = await context.service.supabase.rpc("read_platform_v2_training_group", {
+        p_user_id: context.auth.user.id,
+        p_entry_id: request.entryId,
+        p_group_entry_bound: LOOKUP_GROUP_ENTRY_SAFETY_BOUND,
+      });
+      const total = !article.error ? completeTrainingMeaningCount(article.data, exactEntry, LOOKUP_GROUP_ENTRY_SAFETY_BOUND) : undefined;
+      if (total !== undefined) meaningCounts.set(exactEntry.id,total);
+    } catch {
+      // Optional meaning chrome cannot prevent the owned card from rendering.
+    }
+  }
+  // First loads and prefetch have no permit, but the exact training-group
+  // reader already returned the article. Apply the identical completeness proof
+  // without another read; never trust its raw filtered meanings_count field.
+  if (!currentCard && request.intent === "training-review") {
+    const total=completeTrainingMeaningCount(payload,exactEntry,LOOKUP_GROUP_ENTRY_SAFETY_BOUND);
+    if(total!==undefined)for(const entry of lookupEntries(payload))meaningCounts.set(entry.id,total);
+  }
   return {
     ok: true,
+    meaningCounts,
     query: exactEntry.headword,
     result: exactGroupResult,
   };

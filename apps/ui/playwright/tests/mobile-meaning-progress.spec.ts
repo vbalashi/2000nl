@@ -174,7 +174,7 @@ test("@pilot shared stationary headers drag, body scrolls, pointer focus has no 
   await expect(dialog).toHaveCount(0);
 });
 for (const language of ["en", "nl", "ru"] as const)
-  test(`@pilot ${language} menu explains direction and meaning; footer has touch space`, async ({
+  test(`@pilot ${language} known choice explains directions; footer has touch space`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: 320, height: 568 });
@@ -199,7 +199,8 @@ for (const language of ["en", "nl", "ru"] as const)
     await expect(stage).toBeVisible();
     const t = getUiMessages(language);
     const opener = stage.getByRole("button", {
-      name: t.trainingSession.exclusion.headwordHelp,
+      name: t.trainingSession.knownChoice.markKnown,
+      exact: true,
     });
     const report = stage.getByRole("button", {
       name: platformV2Message(language, "senseCard.report"),
@@ -211,14 +212,12 @@ for (const language of ["en", "nl", "ru"] as const)
       (await opener.boundingBox())!.y + (await opener.boundingBox())!.height,
     ).toBeLessThanOrEqual(552);
     await opener.click();
-    const menu = page.getByRole("menu");
-    await expect(menu).toBeInViewport({ ratio: 1 });
-    await expect(
-      menu.getByText(t.trainingSession.exclusion.headwordHelp),
-    ).toBeVisible();
-    await expect(menu.getByText(t.cardActions.knownHelp)).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(opener).toHaveCSS("outline-style", "solid");
+    const choice = page.getByRole("region", { name: t.trainingSession.knownChoice.choiceLabel, exact: true });
+    await expect(choice.getByRole("group", { name: t.trainingSession.knownChoice.direct, exact: true })).toBeVisible();
+    await expect(choice.getByRole("group", { name: t.trainingSession.knownChoice.reverse, exact: true })).toBeVisible();
+    await choice.getByRole("button", { name: t.trainingSession.knownChoice.back, exact: true }).click();
+    await expect(choice).toHaveCount(0);
+    await expect(opener).toBeFocused();
     expect(
       await page.locator("meta[name=viewport]").getAttribute("content"),
     ).toContain("viewport-fit=cover");

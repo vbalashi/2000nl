@@ -119,6 +119,7 @@ test("the selected translation at the end of a long Answer remains reachable", a
   const headword = stage.getByTestId("sense-card-headword-lockup");
   const dock = stage.getByTestId("training-sense-card-dock");
   const [headwordBefore, dockBefore] = await Promise.all([headword.boundingBox(), dock.boundingBox()]);
+  await expect(scroll.getByTestId("training-question-reminder")).toBeVisible();
   const lastTranslation = scroll.locator('[data-content-translation="true"]').last();
   await expect.poll(() => scroll.evaluate(element => element.scrollHeight - element.clientHeight)).toBeGreaterThan(0);
   await scroll.press("End");
@@ -153,8 +154,11 @@ test("the selected translation at the end of a long Answer remains reachable", a
     };
   });
   expect(translationBounds.fullyVisible, JSON.stringify(translationBounds)).toBe(true);
-  expect(await headword.boundingBox()).toEqual(headwordBefore);
+  expect((await headword.boundingBox())!.y).toBeLessThan(headwordBefore!.y);
   expect(await dock.boundingBox()).toEqual(dockBefore);
+  await scroll.press("Home");
+  await expect.poll(() => scroll.evaluate(node => node.scrollTop)).toBe(0);
+  await expect(scroll.getByTestId("training-question-reminder")).toBeInViewport();
 });
 
 test("front prompt stays centred when the hint opens", async ({ page }) => {
@@ -171,4 +175,87 @@ test("front prompt stays centred when the hint opens", async ({ page }) => {
   await expect(region.locator("aside")).toBeVisible();
   const after = await prompt.boundingBox();
   expect(Math.abs(after!.y - before!.y)).toBeLessThan(1);
+});
+
+test('short answer remains readable when the question reminder is disabled', async ({page}) => {
+  await page.setViewportSize({width:640,height:400});
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await setupAuthenticatedTrainingAttributionPage(page, 0, {
+    visualProfile:'long-idiom',
+    settingsOverrides:{reading_size_phone:'extra',reading_size_desktop:'extra',training_show_question_on_answer:false,preferences:{onboardingCompleted:true,onboardingLanguage:'en'}},
+  });
+  await assertTestFontsReady(page);
+  await page.getByRole('button',{name:'Start training'}).click();
+  await page.getByRole('button',{name:'Show answer'}).click();
+  await expect(page.getByTestId('training-question-reminder')).toHaveCount(0);
+  const reading=page.getByTestId('training-answer-scroll');
+  expect((await reading.boundingBox())!.height).toBeGreaterThan(80);
+  await reading.press('End');
+  await expect.poll(()=>reading.evaluate(element=>element.scrollHeight-element.clientHeight-element.scrollTop)).toBeLessThanOrEqual(1);
+  await expect(page.getByTestId('training-review-grid')).toBeInViewport({ratio:1});
+});
+
+test('a long reverse question and answer remain reachable in a short viewport', async ({page}) => {
+  await page.setViewportSize({width:320,height:568});
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.goto('/dev/sense-card-gate?prototype=reading&mode=reverse&fixture=long&clean=1');
+  await assertTestFontsReady(page);
+  const stage=page.getByTestId('training-sense-card-stage');
+  const prompt=await stage.getByTestId('reverse-prompt').innerText();
+  await stage.getByRole('button',{name:'Antwoord tonen',exact:true}).click();
+  const reading=page.getByTestId('training-answer-scroll');
+  const reminder=reading.getByTestId('training-question-reminder');
+  await expect(reminder).toContainText(prompt);
+  expect(await reminder.evaluate(element=>element.scrollHeight)).toBeGreaterThan(80);
+  await reading.press('End');
+  await expect.poll(()=>reading.evaluate(element=>element.scrollHeight-element.clientHeight-element.scrollTop)).toBeLessThanOrEqual(1);
+  await reading.press('Home');
+  await expect.poll(()=>reading.evaluate(element=>element.scrollTop)).toBe(0);
+  await expect(reminder).toBeInViewport();
+  await expect(stage.getByTestId('training-sense-card-dock')).toBeInViewport({ratio:1});
+});
+
+test('a tall viewport keeps the answer header fixed while its content scrolls', async ({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.goto('/dev/sense-card-gate?prototype=reading&fixture=long&clean=1');
+  await assertTestFontsReady(page);
+  const stage=page.getByTestId('training-sense-card-stage');
+  await stage.getByRole('button',{name:'Antwoord tonen',exact:true}).click();
+  const reading=page.getByTestId('training-answer-scroll');
+  const header=stage.getByTestId('sense-card-headword-lockup');
+  const reminder=stage.getByTestId('training-question-reminder');
+  const [headerBefore,reminderBefore]=await Promise.all([header.boundingBox(),reminder.boundingBox()]);
+  await reading.press('End');
+  await expect.poll(()=>reading.evaluate(element=>element.scrollHeight-element.clientHeight-element.scrollTop)).toBeLessThanOrEqual(1);
+  expect(await header.boundingBox()).toEqual(headerBefore);
+  expect(await reminder.boundingBox()).toEqual(reminderBefore);
+});
+
+test('reading focus follows the answer region across viewport changes without stealing button focus', async ({page}) => {
+  await page.setViewportSize({width:390,height:568});
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.goto('/dev/sense-card-gate?prototype=reading&fixture=long&clean=1');
+  await assertTestFontsReady(page);
+  const stage=page.getByTestId('training-sense-card-stage');
+  await stage.getByRole('button',{name:'Antwoord tonen',exact:true}).click();
+  const reading=page.getByTestId('training-answer-scroll');
+  await expect(reading).toHaveAttribute('data-reading-layout','compact');
+  await reading.focus();
+  await expect(reading).toBeFocused();
+  await page.setViewportSize({width:390,height:844});
+  await expect(reading).toHaveAttribute('data-reading-layout','regular');
+  await expect(reading).toBeFocused();
+  await reading.press('End');
+  await expect.poll(()=>reading.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);
+  await page.setViewportSize({width:390,height:568});
+  await expect(reading).toHaveAttribute('data-reading-layout','compact');
+  await expect(reading).toBeFocused();
+  await reading.press('End');
+  await expect.poll(()=>reading.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);
+  const action=stage.getByRole('button',{name:'Opnieuw',exact:true});
+  await action.focus();
+  await page.setViewportSize({width:390,height:844});
+  await expect(reading).toHaveAttribute('data-reading-layout','regular');
+  await expect(action).toBeFocused();
 });

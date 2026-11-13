@@ -28,7 +28,7 @@ test("shows only the selected example after reveal, with its translation already
   expect(screen.queryByText(content.sentence.text)).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
   expect(screen.getByText(content.sentence.text)).toBeVisible();
-  expect(screen.getByText(presentation.prompt.text)).toBeVisible();
+  expect(screen.getByTestId("training-question-reminder")).toHaveTextContent(presentation.prompt.text);
   expect(presentation.answer.examples.map((node) => node.contentNodeId)).toEqual([content.sentence.contentNodeId]);
   expect(presentation.answer.definitions).toEqual([]);
   expect(presentation.promptTarget).toEqual({ contentNodeId: content.sentence.contentNodeId, kind: "translation" });

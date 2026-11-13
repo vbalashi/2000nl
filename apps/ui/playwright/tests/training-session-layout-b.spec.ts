@@ -104,10 +104,11 @@ const viewports = [
   { name: "narrow", width: 320, height: 568, inset: 10, cardWidth: 288 },
 ];
 
-test("long reading content scrolls while the word and actions stay pinned", async ({
-  page,
-}, testInfo) => {
-  await page.setViewportSize({ width: 320, height: 568 });
+for (const viewport of [
+  { name: "short", width: 320, height: 568, wordPinned: false },
+  { name: "tall", width: 390, height: 844, wordPinned: true },
+]) test(`long reading keeps actions pinned on ${viewport.name} screens`, async ({ page }, testInfo) => {
+  await page.setViewportSize({width:viewport.width,height:viewport.height});
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   await startFixture(page, "long-idiom");
   const stage = page.getByTestId("training-sense-card-stage");
@@ -115,17 +116,17 @@ test("long reading content scrolls while the word and actions stay pinned", asyn
   await stage.getByRole("button", { name: "Vertalen", exact: true }).click();
   const word = stage.getByTestId("sense-card-headword-lockup");
   const dock = stage.getByTestId("training-sense-card-dock");
-  const before = [await word.boundingBox(), await dock.boundingBox()];
-  await stage.getByRole("button", { name: "Meer kaartinhoud tonen" }).click();
   const scroll = stage.getByTestId("training-answer-scroll");
-  await expect
-    .poll(() => scroll.evaluate((el) => el.scrollTop))
-    .toBeGreaterThan(10);
-  expect([await word.boundingBox(), await dock.boundingBox()]).toEqual(before);
+  const [wordBefore,dockBefore] = await Promise.all([word.boundingBox(),dock.boundingBox()]);
+  await stage.getByRole("button", { name: "Meer kaartinhoud tonen" }).click();
+  await expect.poll(() => scroll.evaluate(el => el.scrollTop)).toBeGreaterThan(10);
+  const wordAfter = await word.boundingBox();
+  if (viewport.wordPinned) expect(wordAfter).toEqual(wordBefore);
+  else expect(wordAfter!.y).toBeLessThan(wordBefore!.y);
+  expect(await dock.boundingBox()).toEqual(dockBefore);
+  await expect(dock).toBeInViewport({ratio:1});
   await expect(scroll).toHaveAttribute("data-scroll-top", "faded");
-  await page.screenshot({
-    path: testInfo.outputPath("narrow-dark-scrolled-translation.png"),
-  });
+  await page.screenshot({path:testInfo.outputPath(`${viewport.name}-dark-scrolled-translation.png`)});
 });
 
 test("History and Settings return to the revealed card, while theme stays app-owned", async ({
@@ -173,7 +174,8 @@ test("failure remains recoverable without exposing rating controls", async ({
     page.getByRole("button", { name: "Sessie sluiten" }),
   ).toBeVisible();
   await expect(page.getByTestId("training-sense-card-dock")).toBeHidden();
-  await expect(failure.getByRole("button")).toHaveCount(2);
+  await expect(failure.getByRole("button")).toHaveCount(1);
+  await expect(failure.getByRole("button", { name: /Opnieuw proberen|Повторить|Try again/i })).toBeEnabled();
   await page.screenshot({
     path: testInfo.outputPath("phone-light-failure.png"),
   });

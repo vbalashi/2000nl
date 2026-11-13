@@ -43,8 +43,8 @@ export function TrainingHistoryDestination({
 }: Props) {
   const text = getUiMessages(interfaceLanguage).trainingHistory;
   const exerciseLabel = (item: RecentTrainingHistoryItem) => item.exercise
-    ? text.exercises[item.exercise.family === "translation" ? "translation" : item.exercise.direction === "reverse" ? "idiomReverse" : "idiomDirect"]
-    : text.modes[item.cardTypeId];
+    ? text.exercises[item.exercise.family === "translation" ? "translation" : item.exercise.direction === null ? "idiom" : item.exercise.direction === "reverse" ? "idiomReverse" : "idiomDirect"]
+    : item.cardTypeId === "both-directions" ? text.modes["word-to-definition"].replace("→", "↔") : text.modes[item.cardTypeId];
   const [requestVersion, setRequestVersion] = React.useState(0);
   const load = React.useCallback((signal: AbortSignal) => fetchRecentTrainingHistory(signal), []);
   const read = useRetainedAccountRead("recent-history", userId, load, open, requestVersion);
@@ -52,10 +52,12 @@ export function TrainingHistoryDestination({
     ? { ...read, ...read.value }
     : { ...read, items: [] as RecentTrainingHistoryItem[], hasMore: false };
   const refreshFailed = read.status === "ready" && read.refreshFailed;
-  const tones = { learning_started: "Started", review_fail: "Again", review_hard: "Hard", review_success: "Good", review_easy: "Easy" } as const;
+  const tones = { learning_started: "Started", review_fail: "Again", review_hard: "Hard", review_success: "Good", review_easy: "Easy", known: "Known", restored: "Started", excluded: "Excluded" } as const;
   const items: ActivityRow[] = visibleLoadState.items.map((item) => ({
     id: item.activityId,
     word: item.exercise?.text ?? item.headword,
+    meaning: item.meaningText,
+    meaningPosition: item.meaningPosition,
     at: item.reviewedAt,
     exercise: exerciseLabel(item),
     result: text.events[item.reviewResult],
@@ -70,7 +72,7 @@ export function TrainingHistoryDestination({
       {(visibleLoadState.status === "error" || refreshFailed) ? <div className={`${activityStyle.state} ${stateStyle.error}`} role="alert">
         <p>{text.error}</p><button type="button" className={stateStyle.button} onClick={() => setRequestVersion(version => version + 1)}>{text.retry}</button>
       </div> : null}
-      {visibleLoadState.status === "ready" && <RecentActivityList items={items} locale={interfaceLanguage}
+      {visibleLoadState.status === "ready" && <RecentActivityList items={items} locale={interfaceLanguage} directionPlacement="right"
         onSelectItem={onOpenMeaning ? id=>{const item=visibleLoadState.items.find(item=>item.activityId===id);if(item)onOpenMeaning(item);} : undefined}
         scopeLabel={text.subtitle} emptyLabel={text.empty} listLabel={text.list} />}
       {visibleLoadState.status === "ready" && visibleLoadState.hasMore && <div className={activityStyle.state}><p className={stateStyle.notice}>{text.truncated}</p></div>}

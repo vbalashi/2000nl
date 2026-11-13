@@ -38,21 +38,116 @@ export function trainingStageClassName() {
   return approvedTrainingCardStageClassName;
 }
 
+const CompactAnswerContext = React.createContext(false);
+
+export function useCompactAnswerLayout() {
+  return React.useContext(CompactAnswerContext);
+}
+
+function useCompactAnswerReading(onLayoutWillChange: () => void) {
+  const [compact, setCompact] = React.useState(false);
+  const current = React.useRef(false);
+  const beforeChange = React.useRef(onLayoutWillChange);
+  beforeChange.current = onLayoutWillChange;
+  React.useEffect(() => {
+    const query = window.matchMedia("(max-height: 600px)");
+    const update = () => {
+      if (query.matches === current.current) return;
+      beforeChange.current();
+      current.current = query.matches;
+      setCompact(query.matches);
+    };
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  return compact;
+}
+
 export function TrainingCardShell({
   answerVisible,
+  question,
+  contentLabel,
+  scrollMoreLabel,
+  onReachEnd,
   children,
 }: {
   answerVisible: boolean;
+  question?: {title: string; text: string};
+  contentLabel: string;
+  scrollMoreLabel: string;
+  onReachEnd?: () => void;
   children: React.ReactNode;
 }) {
+  const {preferences} = useTrainingInteractions();
+  const shell = React.useRef<HTMLElement>(null);
+  const previousReading = React.useRef<HTMLElement | null>(null);
+  const compact = useCompactAnswerReading(() => {
+    const reading = shell.current?.querySelector<HTMLElement>('[data-testid="training-answer-scroll"]');
+    previousReading.current = reading && document.activeElement === reading ? reading : null;
+  }) && answerVisible;
+  React.useLayoutEffect(() => {
+    const previous = previousReading.current;
+    previousReading.current = null;
+    if (!previous || (document.activeElement !== previous && document.activeElement !== document.body)) return;
+    const next = shell.current?.querySelector<HTMLElement>('[data-testid="training-answer-scroll"]');
+    if (next !== previous) next?.focus({preventScroll:true});
+  }, [compact]);
+  const reminder = answerVisible && question && preferences.showQuestionOnAnswer ? <TrainingQuestionReminder {...question} /> : null;
   return (
     <article
+      ref={shell}
       data-testid="training-sense-card-shell"
       className={`relative flex min-h-0 max-h-none flex-1 flex-col overflow-hidden ${approved.shell} ${answerVisible ? "gap-[6px] p-[18px]" : ""}`}
     >
-      {children}
+      <CompactAnswerContext.Provider value={compact}>
+        <CompactAnswerReading compact={compact} label={contentLabel} scrollMoreLabel={scrollMoreLabel} onReachEnd={onReachEnd}>{reminder}{children}</CompactAnswerReading>
+      </CompactAnswerContext.Provider>
     </article>
   );
+}
+
+function CompactAnswerReading({compact,label,scrollMoreLabel,onReachEnd,children}: {compact:boolean; label:string; scrollMoreLabel:string; onReachEnd?:()=>void; children:React.ReactNode}) {
+  const {preferences} = useTrainingInteractions();
+  const focusPending = React.useRef(false);
+  const viewport = React.useRef<HTMLDivElement>(null);
+  const [scroll, setScroll] = React.useState({top:false,bottom:false});
+  const update = React.useCallback(() => {
+    const node = viewport.current;
+    if (!node || !compact) return;
+    const remaining = node.scrollHeight - node.clientHeight - node.scrollTop;
+    if (remaining <= 2 && focusPending.current) {
+      focusPending.current = false;
+      window.requestAnimationFrame(() => onReachEnd?.());
+    }
+    setScroll(previous => {
+      const next = {top:node.scrollTop > 2, bottom:remaining > 2};
+      return previous.top === next.top && previous.bottom === next.bottom ? previous : next;
+    });
+  }, [compact, onReachEnd]);
+  React.useLayoutEffect(() => {
+    const node = viewport.current;
+    if (!node || !compact) return;
+    update();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
+    observer?.observe(node);
+    if (node.firstElementChild) observer?.observe(node.firstElementChild);
+    return () => observer?.disconnect();
+  }, [children, compact, update]);
+  const maskImage = scrollMask(scroll.top, scroll.bottom);
+  return <div className={compact ? "relative min-h-0 flex-1" : "contents"}>
+    <div ref={viewport} data-testid={compact ? "training-answer-scroll" : undefined} data-reading-layout={compact ? "compact" : undefined} role={compact ? "region" : undefined} aria-label={compact ? label : undefined} tabIndex={compact ? 0 : undefined}
+      data-scroll-top={compact ? (scroll.top ? "faded" : "clear") : undefined} data-scroll-bottom={compact ? (scroll.bottom ? "faded" : "clear") : undefined}
+      onScroll={compact ? update : undefined} onKeyDown={event => { if (compact && event.key === " ") event.stopPropagation(); }}
+      style={compact ? {maskImage, WebkitMaskImage:maskImage} : undefined} className={compact ? approved.compactAnswerScroll : "contents"}><div className={compact ? undefined : "contents"}>{children}</div></div>
+    {compact && scroll.bottom ? <button type="button" aria-label={scrollMoreLabel} className={chrome.scrollCue}
+      onClick={() => { focusPending.current = true; viewport.current?.scrollBy({top:Math.max(120,(viewport.current?.clientHeight ?? 0)*0.65),behavior:preferences.animation && !window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "auto"}); }}>
+      <ChevronDown aria-hidden="true" className="h-4 w-4" /></button> : null}
+  </div>;
+}
+
+export function TrainingQuestionReminder({title,text}: {title:string; text:string}) {
+ return <section className={approved.questionReminder} data-testid="training-question-reminder"><h3>{title}</h3><p>{text}</p></section>;
 }
 
 const reviewTone = {
@@ -151,6 +246,8 @@ export function TrainingCardAnswerHeader({
         </div>
       </div>
       <SenseCardHeadwordLockup
+        meaning={model.meaning}
+        interfaceLanguage={interfaceLanguage}
         article={model.article}
         headword={model.headword}
         plainHeadword={model.plainHeadword}
@@ -173,6 +270,8 @@ function trainingPartOfSpeechLabel(value: string) {
 
 export function TrainingCardFace({
   prompt,
+  meaning,
+  interfaceLanguage = "en",
   label,
   partOfSpeech,
   recallTarget,
@@ -184,6 +283,8 @@ export function TrainingCardFace({
   scrollMoreLabel,
 }: {
   prompt: TrainingCardPrompt;
+  meaning?: {ordinal:number;total:number};
+  interfaceLanguage?: OnboardingLanguage;
   label?: string;
   partOfSpeech?: string;
   recallTarget?: string;
@@ -249,6 +350,8 @@ export function TrainingCardFace({
             </>
           ) : (
             <SenseCardHeadwordLockup
+              meaning={meaning}
+              interfaceLanguage={interfaceLanguage}
               article={prompt.article}
               headword={prompt.text}
               plainHeadword={prompt.plainText}
@@ -301,6 +404,7 @@ export function TrainingCardAnswerBody({
   translationLanguage?: string;
   onReachEnd: () => void;
 }) {
+  const compact = React.useContext(CompactAnswerContext);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const continuationFocusPendingRef = React.useRef(false);
   const [scrollState, setScrollState] = React.useState({
@@ -347,13 +451,14 @@ export function TrainingCardAnswerBody({
 
   const maskImage = scrollMask(scrollState.top, scrollState.bottom);
   return (
-    <div className="relative min-h-0 flex-1">
+    <div className={compact ? "relative" : "relative min-h-0 flex-1"}>
       <div
         ref={scrollRef}
-        data-testid="training-answer-scroll"
-        role="region"
-        aria-label={t("senseCard.training.content")}
-        tabIndex={0}
+        data-testid={compact ? undefined : "training-answer-scroll"}
+        data-reading-layout={compact ? undefined : "regular"}
+        role={compact ? undefined : "region"}
+        aria-label={compact ? undefined : t("senseCard.training.content")}
+        tabIndex={compact ? undefined : 0}
         onKeyDown={event => {
           // Space scrolls reading content rather than turning the card over.
           if (event.key === " ") event.stopPropagation();
@@ -361,8 +466,8 @@ export function TrainingCardAnswerBody({
         data-scroll-top={scrollState.top ? "faded" : "clear"}
         data-scroll-bottom={scrollState.bottom ? "faded" : "clear"}
         onScroll={updateScrollState}
-        style={{ maskImage, WebkitMaskImage: maskImage }}
-        className={`h-full overflow-y-auto pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${approved.answerScroll}`}
+        style={compact ? undefined : { maskImage, WebkitMaskImage: maskImage }}
+        className={compact ? "pb-5 pt-2" : `h-full overflow-y-auto pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${approved.answerScroll}`}
       >
         <ProductionArticleReading>
           {definitions.map(node=><ArticleContentNode key={node.contentNodeId} node={node} lead interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} translationPending={translationPending} translationFailed={translationFailed} onRetryTranslation={onRetryTranslation}/>)}
@@ -371,7 +476,7 @@ export function TrainingCardAnswerBody({
         </ProductionArticleReading>
 
       </div>
-      {scrollState.bottom ? (
+      {!compact && scrollState.bottom ? (
         <button
           type="button"
           aria-label={t("senseCard.scroll.more")}
