@@ -6,6 +6,8 @@ import {
   type TrainingSetupDraft,
 } from "@/components/training/pilot/TrainingTodaySetup";
 import type { TrainingSetupsDocument, TrainingSetupsSnapshot } from "@/lib/training/setups/model";
+const { enabledCuratedIds } = vi.hoisted(() => ({ enabledCuratedIds: vi.fn(async () => ["nt2", "mixed"]) }));
+vi.mock("@/lib/training/material/curatedTraining", () => ({fetchEnabledCuratedTrainingListIds: enabledCuratedIds}));
 const { availabilityRequests, availabilityCounts } = vi.hoisted(() => ({ availabilityRequests: vi.fn(), availabilityCounts: {dueToday:8,totalReviews:120,newCards:20} }));
 vi.mock("@/lib/training/availability/useTrainingAvailability",()=>({useTrainingAvailability:(input: { enabled: boolean })=>{availabilityRequests(input);return {status:"ready",value:{...availabilityCounts,studyDay:"2026-10-03",timezone:"Europe/Amsterdam",asOf:"2026-10-03T10:00:00Z"},refreshing:false,refreshFailed:false,reload:vi.fn()};}}));
 const { accounts, saveFailure } = vi.hoisted(() => ({ accounts: new Map<string, TrainingSetupsSnapshot>(), saveFailure: { enabled: false } }));
@@ -585,6 +587,26 @@ test("a disabled dictionary is omitted from source choices without modifying the
   await calculateAndStart();
   expect(onStart).toHaveBeenCalledWith(expect.objectContaining({dictionaryIds:[dictionaryB]}));
   expect(accounts.get("disabled-source")?.document.trainings.find(item=>item.id===saved.id)).toEqual(saved);
+});
+
+test("disabled dictionary hides its curated collection in a new training but keeps mixed collections", async () => {
+  const { AccountMaterialProvider } = await import("@/components/practice/material/AccountMaterialProvider");
+  enabledCuratedIds.mockResolvedValueOnce(["mixed"]);
+  const repository = {
+    load: async () => ({revision:1,document:{schemaVersion:1 as const,learningLanguages:[],disabledDictionaryIds:[dictionaryA]}}),
+    save: vi.fn(),
+    languages: async () => [{code:"nl",label:"Dutch",dictionaryCount:2,curatedListCount:2,userListCount:0,hasTrainingEligibleLists:true}],
+  };
+  render(<AccountMaterialProvider userId="disabled-collection" repository={repository}>
+    <TrainingTodaySetup {...baseProps} userId="disabled-collection" trainingLanguageCode="nl" hasOwnedSession={false}
+      lists={[{value:"curated:hidden",label:"Disabled source collection"},{value:"curated:mixed",label:"Mixed collection"}]}
+      dictionaries={[{value:dictionaryA,label:"Dictionary A"},{value:dictionaryB,label:"Dictionary B"}]} />
+  </AccountMaterialProvider>);
+  fireEvent.click(await screen.findByRole("button",{name:"Create training"}));
+  await waitFor(() => expect(enabledCuratedIds).toHaveBeenCalledWith("nl"));
+  fireEvent.click(await screen.findByRole("button",{name:/^Source /}));
+  expect(screen.queryByRole("button",{name:"Disabled source collection"})).not.toBeInTheDocument();
+  expect(await screen.findByRole("button",{name:"Mixed collection"})).toBeInTheDocument();
 });
 
 test("material preference load failure blocks fresh launches but leaves resume available", async () => {

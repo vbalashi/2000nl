@@ -74,3 +74,4 @@
 \i db/migrations/367_training_question_reminder_preference.sql
 \i db/migrations/368_starter_editorial_collection.sql
 \i db/migrations/369_exercise_known_choice.sql
+\i db/migrations/370_curated_collection_access.sql

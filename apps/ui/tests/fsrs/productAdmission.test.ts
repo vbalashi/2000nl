@@ -10,9 +10,9 @@ const url = getDbUrl();
  beforeAll(() => runMigrations(pool)); afterAll(() => pool.end());
  test("both complete postflight chains retain existing checks and verify new fences", async () => {
   function expand(file: string): string { return fs.readFileSync(path.resolve(process.cwd(), "../..", file), "utf8").replace(/^\\i (.+)$/gm, (_, child: string) => expand(child.trim())); }
-  // Retain the historical286 gates through the installed368 compatibility graph.
-  await pool.query(expand("db/deploy-contract/postflight-368.sql"));
-  await pool.query(expand("db/deploy-contract/read-only-postflight-368.sql"));
+  // Retain the historical286 gates through the installed370 compatibility graph.
+  await pool.query(expand("db/deploy-contract/postflight-370.sql"));
+  await pool.query(expand("db/deploy-contract/read-only-postflight-370.sql"));
  });
  test("confirmed request, explicit approval, revoke, mode preservation, audit and unauthorized operator", async () => {
   await withTransaction(pool, async c => {
