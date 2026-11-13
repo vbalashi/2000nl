@@ -12,7 +12,7 @@ import {SettingsPanel} from '@/components/practice/settings/SettingsLayout';
 import s from './onboarding.module.css';
 import settings from '@/components/practice/settings/settings.module.css';
 import {actionTooltipBounds,tooltipBounds} from './tooltipBounds';
-export type TourPort={prepare:(topic:TourTopic,step:number)=>void;pause:()=>void;completeCore:()=>void;enter?:(topic:TourTopic,step:number)=>void};
+export type TourPort={prepare:(topic:TourTopic,step:number)=>void;pause:()=>void;completeCore:()=>void;enter?:(topic:TourTopic,step:number)=>void;canNavigate?:boolean;destination?:string;isPrepared?:(topic:TourTopic,step:number)=>boolean;interrupted?:(topic:TourTopic,step:number)=>boolean};
 const TourContext=React.createContext<ReturnType<typeof useTour>|null>(null);
 function visible(selector:string):HTMLElement|null {
  try {return Array.from(document.querySelectorAll<HTMLElement>(selector)).find(el=>el.getClientRects().length>0&&!el.closest('[aria-hidden="true"],[inert]')&&getComputedStyle(el).visibility!=='hidden'&&!(el instanceof HTMLButtonElement&&el.disabled))??null;}catch{return null;}
@@ -20,7 +20,8 @@ function visible(selector:string):HTMLElement|null {
 export function isStepReady(step:TourStep){return Boolean(!step.ready||visible(step.ready));}
 function useTour(userId:string,autoStart:boolean,language:OnboardingLanguage,port:TourPort){
  const [record,setRecord]=useState<TourRecord|null>(null),[ready,setReady]=useState(false),[saveError,setSaveError]=useState(false);
- const portRef=useRef(port);portRef.current=port;
+ const portRef=useRef(port);portRef.current=port;const recordRef=useRef(record);recordRef.current=record;
+ const [pending,setPending]=useState<TourRecord|null>(null);const requested=useRef(false);
  const loaded=useRef(false),autoStarted=useRef(false),wasCompleted=useRef(false);
  const copy=tourCopy[language];
  useEffect(()=>{if(loaded.current)return;loaded.current=true;let saved:TourRecord|null=null;try{saved=parseTourRecord(localStorage.getItem(tourStorageKey(userId)));}catch{setSaveError(true);}
@@ -28,13 +29,16 @@ function useTour(userId:string,autoStart:boolean,language:OnboardingLanguage,por
  if(saved){wasCompleted.current=saved.status==='complete';setRecord(saved.status==='complete'?saved:{...saved,status:'paused',step:0});}setReady(true);
  },[userId]);
  useEffect(()=>{if(!ready||!record)return;try{localStorage.setItem(tourStorageKey(userId),JSON.stringify(record));setSaveError(false);}catch{setSaveError(true);}},[record,ready,userId]);
- const start=useCallback((topic:TourTopic,remaining:TourTopic[]=[])=>{setRecord(prev=>({version:1,topic,step:0,status:'running',remaining,coreCompleted:prev?.coreCompleted??!autoStart,completedTopics:prev?.completedTopics??(prev?.status==='complete'?[prev.topic]:[])}));portRef.current.prepare(topic,0);},[autoStart]);
+ const start=useCallback((topic:TourTopic,remaining:TourTopic[]=[])=>{const prev=recordRef.current;const next:TourRecord={version:1,topic,step:0,status:'paused',remaining,coreCompleted:prev?.coreCompleted??!autoStart,completedTopics:prev?.completedTopics??(prev?.status==='complete'?[prev.topic]:[])};requested.current=false;setRecord(next);setPending(next);},[autoStart]);
  useEffect(()=>{if(ready&&!record&&autoStart&&!autoStarted.current){autoStarted.current=true;start('core');}},[ready,record,autoStart,start]);
- const pause=useCallback(()=>{window.dispatchEvent(new Event(ONBOARDING_PAUSE));setRecord(prev=>prev?{...prev,status:'paused',step:pausePoint(prev)}:prev);portRef.current.pause();},[]);
+ const pause=useCallback(()=>{setPending(null);requested.current=false;window.dispatchEvent(new Event(ONBOARDING_PAUSE));setRecord(prev=>prev?{...prev,status:'paused',step:pausePoint(prev)}:prev);portRef.current.pause();},[]);
  const advance=useCallback(()=>{setRecord(prev=>{if(!prev||prev.status!=='running')return prev;const last=prev.step===tourFlows[prev.topic].length-1;const selected=prev.topic==='collections'&&tourFlows[prev.topic][prev.step].id==='membership'?document.querySelector<HTMLInputElement>('[data-onboarding=member-option]:checked')?.value:undefined;return {...prev,...(selected?{collectionId:selected}:{}),step:last?prev.step:prev.step+1,status:last?'complete':'running',coreCompleted:prev.coreCompleted||last&&prev.topic==='core',completedTopics:last?Array.from(new Set([...(prev.completedTopics??[]),prev.topic])):prev.completedTopics};});},[]);
  useEffect(()=>{if(record?.status==='running')portRef.current.enter?.(record.topic,record.step);},[record]);
  useEffect(()=>{if(record?.status==='complete'&&!wasCompleted.current){wasCompleted.current=true;window.dispatchEvent(new Event(ONBOARDING_PAUSE));if(record.topic==='core')portRef.current.completeCore();if(record.remaining?.length){const [next,...rest]=record.remaining;start(next,rest);}else portRef.current.pause();}else if(record&&record.status!=='complete')wasCompleted.current=false;},[record,start]);
- const resume=()=>{if(!record)return;portRef.current.prepare(record.topic,record.step);setRecord({...record,status:'running'});};
+ const resume=()=>{if(!record)return;requested.current=false;setPending(record);};
+ useEffect(()=>{if(!pending)return;if(port.canNavigate===false){requested.current=false;return;}if(!requested.current){requested.current=true;port.prepare(pending.topic,pending.step);}if(!port.isPrepared||port.isPrepared(pending.topic,pending.step)){setRecord({...pending,status:'running'});setPending(null);}},[pending,port]);
+ const previousDestination=useRef(port.destination);
+ useEffect(()=>{const previous=previousDestination.current;previousDestination.current=port.destination;if(previous!==undefined&&previous!==port.destination&&record?.status==='running'&&port.interrupted?.(record.topic,record.step))pause();},[record,port.destination,port.interrupted,pause]);
  return {record,ready,saveError,start,pause,advance,resume,copy,language};
 }
 export function OnboardingProvider({userId,autoStart,language,port,children}:{userId:string;autoStart:boolean;language:OnboardingLanguage;port:TourPort;children:React.ReactNode}){

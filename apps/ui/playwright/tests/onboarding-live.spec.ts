@@ -159,3 +159,19 @@ for(const topic of ['languages','appearance','card'] as const)test(`live ${topic
   }
  }
 });
+
+test('leaving a running collections tour for settings pauses it and resume returns to the target',async({page})=>{
+ await page.setViewportSize({width:1024,height:768});
+ await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingCompleted:true,onboardingLanguage:'en'}}});
+ await page.locator('[data-tour="settings-button"]').click();
+ await page.getByRole('button',{name:tourCopy.en.tourName,exact:true}).first().click();
+ await page.getByRole('button',{name:tourCopy.en.collectionsTopic,exact:true}).click();
+ const guide=page.locator('[data-training-hotkeys-suspended="true"]');
+ await expect(guide).toContainText('1 / 16');
+ await page.goBack();
+ await expect(page.getByRole('button',{name:tourCopy.en.resume,exact:true})).toBeVisible();
+ await expect(guide).toHaveCount(0);
+ await page.getByRole('button',{name:tourCopy.en.resume,exact:true}).click();
+ await expect(guide).toContainText('1 / 16');
+ await expect(page.locator('[data-onboarding="nav-library"]:visible').first()).toBeVisible();
+});
