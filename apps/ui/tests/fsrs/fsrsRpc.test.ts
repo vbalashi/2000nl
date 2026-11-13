@@ -1898,6 +1898,7 @@ describeIfDb("FSRS RPC integration", () => {
         [userId, `Mixed user ${Date.now()}`],
       );
       const nlWordId = await insertWord(client, `available-nl-${Date.now()}`);
+      await client.query(`insert into word_list_items (list_id, word_id) values ($1, $2)`, [curatedRows[0].id, nlWordId]);
       const { rows: deDictionaryRows } = await client.query(
         `insert into dictionaries (
           language_code, slug, name, kind, visibility, schema_key, schema_version

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 for (const family of ["Direct", "Reverse", "Sentence"]) {
-  test(`${family}: whole-card reveal keeps grading locked until motion ends`, async ({ page }) => {
+  test(`${family}: whole-card reveal keeps grading available throughout motion`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ reducedMotion: "no-preference" });
     await page.goto("/dev/sense-card-gate?prototype=exercise");
@@ -33,7 +33,7 @@ for (const family of ["Direct", "Reverse", "Sentence"]) {
     expect(firstFrame.top).toBeCloseTo(origin!.y, 1);
     expect(firstFrame.width).toBeCloseTo(origin!.width, 1);
     expect(firstFrame.height).toBeCloseTo(origin!.height, 1);
-    await expect(card.getByRole("button", { name: "Again", exact: true })).toBeDisabled();
+    await expect(card.getByRole("button", { name: "Again", exact: true })).toBeEnabled();
     await expect(overlay).toHaveCount(0);
     await expect(card.getByRole("button", { name: "Again", exact: true })).toBeEnabled();
     await expect(card.getByRole("button", { name: "Again", exact: true })).toBeFocused();
@@ -42,5 +42,26 @@ for (const family of ["Direct", "Reverse", "Sentence"]) {
     await card.getByRole("button", { name: "Again", exact: true }).click();
     await expect(card).toHaveAttribute("data-side", "face");
     await expect(overlay).toHaveCount(0);
+  });
+}
+
+for (const family of ["Direct", "Reverse", "Sentence"]) {
+  test(`${family}: first touch during reveal grades once`, async ({ browser }) => {
+    const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,reducedMotion:"no-preference"});
+    const page=await context.newPage();
+    await page.addInitScript(() => {
+      const original=Element.prototype.animate;
+      Element.prototype.animate=function(frames, options) {const animation=original.call(this,frames,options);animation.playbackRate=0.03;return animation;};
+    });
+    await page.goto("/dev/sense-card-gate?prototype=exercise");
+    await page.getByRole("button",{name:family,exact:true}).click();
+    const card=page.getByTestId("training-exercise-card");
+    await card.getByRole("button",{name:"Show answer",exact:true}).tap();
+    await expect(page.locator("[data-training-reveal-overlay]")).toHaveCount(1);
+    const rating=card.getByRole("button",{name:"Again",exact:true});
+    await expect(rating).toBeEnabled(); await rating.tap();
+    await expect(card).toHaveAttribute("data-side","face");
+    await expect(page.locator("[data-training-reveal-overlay]")).toHaveCount(0);
+    await context.close();
   });
 }

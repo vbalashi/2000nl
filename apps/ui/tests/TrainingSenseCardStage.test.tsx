@@ -40,6 +40,26 @@ function TrainingSenseCardStage(
 }
 
 describe("TrainingSenseCardStage", () => {
+  test("accepts the first rating during reveal animation and blocks it while saving", () => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({left:0,top:0,width:300,height:400} as DOMRect);
+    const previous = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "animate");
+    Object.defineProperty(HTMLElement.prototype, "animate", { configurable: true, value: () => ({onfinish:null, oncancel:null, cancel:vi.fn()}) });
+    try {
+      const model = buildTrainingSenseCardModel({group: singleSenseGroup, entry: singleSenseEntry, interfaceLanguage: "en"});
+      const onAction = vi.fn();
+      function Card() {
+        const [busy, setBusy] = React.useState(false);
+        return <TrainingInteractionPreferencesProvider userId="animation-test" initial={{...defaultTrainingInteractions, animation:true}}><TrainingSenseCardStage model={model} mode="word-to-definition" interfaceLanguage="en" busy={busy} onAction={(action)=>{onAction(action);setBusy(true);}} /></TrainingInteractionPreferencesProvider>;
+      }
+      render(<Card />); fireEvent.click(screen.getByRole("button", {name:"Show answer"}));
+      expect(screen.getByTestId("training-sense-card-stage")).toHaveAttribute("data-reveal-moving", "true");
+      const good=screen.getByRole("button", {name:"Good"}); expect(good).toBeEnabled(); fireEvent.click(good);
+      expect(onAction).toHaveBeenCalledOnce(); expect(good).toBeDisabled(); fireEvent.click(good); expect(onAction).toHaveBeenCalledOnce();
+    } finally {
+      vi.restoreAllMocks();
+      if (previous) Object.defineProperty(HTMLElement.prototype, "animate", previous); else delete (HTMLElement.prototype as Partial<HTMLElement>).animate;
+    }
+  });
   test("direct word front shows the same localized POS as the answer", () => {
     const model = buildTrainingSenseCardModel({group: singleSenseGroup, entry: singleSenseEntry, interfaceLanguage: "en"});
     render(<TrainingSenseCardStage model={model} mode="word-to-definition" interfaceLanguage="en" onAction={vi.fn()} onPlayAudio={vi.fn()}/>);

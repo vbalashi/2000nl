@@ -245,6 +245,7 @@ export function TrainingIdiomCard({
                 language={interfaceLanguage}
                 disabled={busy || actionBusy}
                 onClick={onExclude}
+                onChooseKnown={onExclude}
               />
             ) : null}
           </TrainingCardSecondaryActions>

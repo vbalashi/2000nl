@@ -346,7 +346,7 @@ describeIfDb("dictionary publication access boundary", () => {
     });
   });
 
-  test("preserves user and curated list references while returning a non-identifying source availability summary", async () => {
+  test("hides inaccessible curated lists while preserving user list references and restoring access", async () => {
     await withTransaction(pool, async (client) => {
       const member = randomUUID();
       await ensureUserWithSettings(client, member);
@@ -399,13 +399,54 @@ describeIfDb("dictionary publication access boundary", () => {
 
       await client.query(`select replace_dictionary_access_group($1, $2, $3::uuid[])`, ["trusted", "Trusted", []]);
       const unavailableLists = await readCollections();
-      expectAvailability(unavailableLists, curatedListId, "word_list_items", 0, 1);
+      expect(unavailableLists.find((item) => item.id === curatedListId)).toBeUndefined();
+      expect((await client.query(`select get_word_list_summary($1,$2,'curated') as value`, [member,curatedListId])).rows[0].value).toBeNull();
       expectAvailability(unavailableLists, userListId, "user_word_list_items", 0, 1);
+
+      const { rows: readableDictionary } = await client.query(
+        `insert into dictionaries (language_code, slug, name, kind, publication_state)
+         values ('nl', $1, 'Readable mixed source', 'curated', 'general') returning id`,
+        [`readable-list-source-${randomUUID()}`],
+      );
+      const { rows: readableEntry } = await client.query(
+        `insert into word_entries (dictionary_id, language_code, headword, meaning_id, part_of_speech, raw)
+         values ($1, 'nl', $2, 1, 'noun', '{"meanings":[{"definition":"readable"}]}'::jsonb) returning id`,
+        [readableDictionary[0].id, `readable${randomUUID().replaceAll("-", "")}`],
+      );
+      await client.query(`insert into word_list_items (list_id, word_id) values ($1, $2)`, [curatedListId, readableEntry[0].id]);
+      await client.query(`insert into user_word_list_items (list_id, word_id) values ($1, $2)`, [userListId, readableEntry[0].id]);
+      const mixedLists = await readCollections();
+      const mixed = mixedLists.find((item) => item.id === curatedListId);
+      expect(mixed?.word_list_items[0]).toMatchObject({count: 2, available_count: 1, unavailable_source_count: 1});
+      const mixedUserList = mixedLists.find((item) => item.id === userListId);
+      expect(mixedUserList?.user_word_list_items[0]).toMatchObject({count: 2, available_count: 1, unavailable_source_count: 1});
+      await client.query(`delete from word_list_items where list_id=$1 and word_id=$2`, [curatedListId, readableEntry[0].id]);
+      await client.query(`delete from user_word_list_items where list_id=$1 and word_id=$2`, [userListId, readableEntry[0].id]);
 
       await client.query(`select replace_dictionary_access_group($1, $2, $3::uuid[])`, ["trusted", "Trusted", [member]]);
       const restoredLists = await readCollections();
       expectAvailability(restoredLists, curatedListId, "word_list_items", 1, 0);
       expectAvailability(restoredLists, userListId, "user_word_list_items", 1, 0);
+
+      // A readable dictionary may have an operator-limited collection in its catalog.
+      await client.query(`update dictionaries set publication_state='general' where id=$1`, [dictionaryId]);
+      const group = (await client.query(`select id from dictionary_access_groups where key='trusted'`)).rows[0].id;
+      await client.query(`insert into private.curated_collection_catalog_groups(collection_id,group_id) values ($1,$2)`, [curatedListId, group]);
+      await client.query(`select replace_dictionary_access_group($1, $2, $3::uuid[])`, ["trusted", "Trusted", []]);
+      expect((await readCollections()).find((item) => item.id === curatedListId)).toBeUndefined();
+      expect((await client.query(`select get_word_list_summary($1,$2,'curated') as value`, [member,curatedListId])).rows[0].value).toBeNull();
+      expect((await client.query(`select get_training_material_progress_v1('nl') as payload`)).rows[0].payload.materials.find((item: any) => item.id === curatedListId)).toBeUndefined();
+      await client.query(`select replace_dictionary_access_group($1, $2, $3::uuid[])`, ["trusted", "Trusted", [member]]);
+      expectAvailability(await readCollections(), curatedListId, "word_list_items", 1, 0);
+      expect((await client.query(`select get_training_material_progress_v1('nl') as payload`)).rows[0].payload.materials.find((item: any) => item.id === curatedListId)).toBeDefined();
+
+      // Disabling an entitled dictionary changes only new-training selection.
+      await client.query(`update user_settings set material_preferences=jsonb_build_object('schemaVersion',1,'learningLanguages','[]'::jsonb,'disabledDictionaryIds',jsonb_build_array($2::text)) where user_id=$1`, [member,dictionaryId]);
+      const trainingIds = async () => (await client.query(`select id from public.get_enabled_curated_training_list_ids_v1('nl')`)).rows.map((row) => row.id);
+      expect(await trainingIds()).not.toContain(curatedListId);
+      expect((await readCollections()).find((item) => item.id === curatedListId)).toBeDefined();
+      await client.query(`insert into word_list_items (list_id,word_id) values ($1,$2)`, [curatedListId,readableEntry[0].id]);
+      expect(await trainingIds()).toContain(curatedListId);
     });
   });
 });

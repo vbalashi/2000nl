@@ -16,3 +16,5 @@
 
 .stateLabel{font-size:var(--practice-text-body);font-weight:600;line-height:1.4;color:var(--practice-text)}
 .direction[data-known=true] .stateLabel{color:var(--practice-accent)}
+
+.cards[data-single=true]{grid-template-columns:minmax(0,1fr);max-width:330px}

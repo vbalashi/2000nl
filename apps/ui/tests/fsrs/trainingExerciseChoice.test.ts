@@ -1,0 +1,55 @@
+import {afterAll,beforeAll,describe,expect,test} from 'vitest';
+import {randomUUID} from 'node:crypto';
+import {Pool} from 'pg';
+import {createIdiomFixture} from './knownExerciseFixtures';
+import {ensureUserWithSettings,insertWord,getDbUrl,runMigrations,withTransaction} from './dbTestUtils';
+const url=getDbUrl();
+(url?describe:describe.skip)('exercise Known choice',()=>{
+ const pool=new Pool({connectionString:url});beforeAll(()=>runMigrations(pool));afterAll(()=>pool.end());
+ test.each(['direct','reverse'] as const)('saves %s only and consumes once without changing meaning or reviews',async direction=>withTransaction(pool,async c=>{
+  const user=randomUUID(),fixture=await createIdiomFixture(c,user);
+  await c.query("select set_config('request.jwt.claim.sub',$1,true)",[user]);
+  await c.query("select set_config('request.jwt.claim.role','authenticated',true)");
+  const session=(await c.query("select public.start_platform_v2_idiom_training_session($1,$2,'1',$3) value",[user,direction,randomUUID()])).rows[0].value;
+  const target=session.members[0].targetId;
+  await c.query("insert into public.user_training_exercise_state(user_id,target_id,fsrs_enabled,in_learning,fsrs_reps,fsrs_stability,fsrs_difficulty,seen_count) values($1,$2,true,true,3,4.2,5.1,3)",[user,target]);
+  await c.query("insert into public.user_training_exercise_action_events(user_id,target_id,action,result,client_event_id,action_payload_hash) values($1,$2,'review-exercise','success',$3,'existing-review')",[user,target,randomUUID()]);
+  const exerciseBefore=(await c.query('select row_to_json(s) value from public.user_training_exercise_state s where user_id=$1 and target_id=$2',[user,target])).rows[0].value;
+  const snapshot=(await c.query('select public.get_training_exercise_choice_v1($1) value',[target])).rows[0].value;
+  expect(snapshot.direction).toBe(direction);
+  const before=(await c.query('select row_to_json(s) value from public.user_card_status s where user_id=$1 and entry_id=$2',[user,fixture.entryId])).rows[0].value;
+  await c.query("select set_config('request.jwt.claim.role','service_role',true)");
+  const event=randomUUID();const args=[user,target,session.sessionId,[direction],snapshot.revision,event];
+  const sql='select public.set_training_exercise_choice_as_principal_v1($1,$2,$3,$4,$5,$6) value';
+  const first=(await c.query(sql,args)).rows[0].value;const second=(await c.query(sql,args)).rows[0].value;
+  expect(first.status).toBe('accepted');expect(second.status).toBe('duplicate');expect(first.consumption.status).toBe('consumed-complete');
+  const marks=(await c.query('select t.direction from private.training_exercise_known_marks k join private.platform_v2_training_exercise_targets t on t.id=k.target_id where k.user_id=$1 and k.cleared_at is null',[user])).rows;
+  expect(marks.map(x=>x.direction)).toEqual([direction]);
+  expect((await c.query('select count(*)::int n from public.user_card_known_marks where user_id=$1',[user])).rows[0].n).toBe(0);
+  expect((await c.query("select count(*)::int n from public.user_training_exercise_action_events where user_id=$1 and action='review-exercise'",[user])).rows[0].n).toBe(1);
+  expect((await c.query('select row_to_json(s) value from public.user_training_exercise_state s where user_id=$1 and target_id=$2',[user,target])).rows[0].value).toEqual(exerciseBefore);
+  expect((await c.query('select row_to_json(s) value from public.user_card_status s where user_id=$1 and entry_id=$2',[user,fixture.entryId])).rows[0].value).toEqual(before);
+ }));
+ test('sentence choice persists recall, permits Library restoration and preserves memory history',async()=>withTransaction(pool,async c=>{
+  const user=randomUUID();await ensureUserWithSettings(c,user);const entry=await insertWord(c,`sentence-known-${randomUUID()}`);const node=randomUUID();
+  await c.query(`insert into private.platform_v2_content_nodes(id,entry_id,kind,binding_state,first_source_revision,last_source_revision,source_text_fingerprint,diagnostic_locator) values($1,$2,'example','active','v1','v1',$3,'raw.meanings[0].examples[0]')`,[node,entry,`sentence-${node}`]);
+  await c.query("insert into user_card_status(user_id,entry_id,card_type_id,fsrs_enabled,in_learning) values($1,$2,'word-to-definition',true,true)",[user,entry]);
+  await c.query("select set_config('request.jwt.claim.sub',$1,true)",[user]);await c.query("select set_config('request.jwt.claim.role','authenticated',true)");
+  const session=(await c.query("select start_platform_v2_translation_training_session_scoped($1,'1',$2,null,'curated','both','{}'::jsonb,3) value",[user,randomUUID()])).rows[0].value;
+  const target=session.members[0].targetId;const snapshot=(await c.query('select get_training_exercise_choice_v1($1) value',[target])).rows[0].value;
+  const before=(await c.query('select row_to_json(s) value from user_card_status s where user_id=$1 and entry_id=$2',[user,entry])).rows[0].value;
+  await c.query("select set_config('request.jwt.claim.role','service_role',true)");
+  const event=randomUUID();const args=[user,target,session.sessionId,['recall'],snapshot.revision,event];
+  const sql='select set_training_exercise_choice_as_principal_v1($1,$2,$3,$4,$5,$6) value';
+  expect((await c.query(sql,args)).rows[0].value.status).toBe('accepted');expect((await c.query(sql,args)).rows[0].value.status).toBe('duplicate');
+  expect((await c.query('select row_to_json(s) value from user_card_status s where user_id=$1 and entry_id=$2',[user,entry])).rows[0].value).toEqual(before);
+  expect((await c.query("select count(*)::int n from user_training_exercise_action_events where user_id=$1 and action='review-exercise'",[user])).rows[0].n).toBe(0);
+  expect((await c.query('select count(*)::int n from user_card_known_marks where user_id=$1',[user])).rows[0].n).toBe(0);
+  await c.query("select set_config('request.jwt.claim.role','authenticated',true)");
+  const choices=(await c.query('select get_training_exercise_known_choices_v1($1) value',[entry])).rows[0].value;expect(choices).toHaveLength(1);expect(choices[0]).toMatchObject({targetId:target,family:'translation',directions:['recall'],kind:'mark'});
+  const restore=randomUUID();const restored=(await c.query('select restore_training_exercise_mark_v1($1,$2) value',[choices[0].exclusionId,restore])).rows[0].value;
+  expect((await c.query('select restore_training_exercise_mark_v1($1,$2) value',[choices[0].exclusionId,restore])).rows[0].value).toEqual(restored);
+  expect((await c.query('select get_training_exercise_known_choices_v1($1) value',[entry])).rows[0].value).toEqual([]);
+ }));
+
+});

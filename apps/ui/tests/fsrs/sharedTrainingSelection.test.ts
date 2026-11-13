@@ -58,6 +58,14 @@ async function fixture(c:PoolClient){
  }));
  test('own/curated selections remain compatible and foreign private/outsider selections stay denied',async()=>withTransaction(pool,async c=>{
   const f=await fixture(c);
+  // Empty curated collections are not discoverable; compatibility is tested
+  // with real, readable curated material rather than an empty catalog shell.
+  expect(await summary(c,f.viewer,f.curated,'curated')).toBeNull();
+  await c.query('reset role');
+  const dictionary=(await c.query("insert into dictionaries(language_code,slug,name,kind,visibility,publication_state) values('nl',$1,'Open curated source','curated','public','general') returning id",[randomUUID()])).rows[0].id;
+  const entry=(await c.query("insert into word_entries(dictionary_id,language_code,headword,raw) values($1,'nl',$2,'{\"definition\":\"curated meaning\"}') returning id",[dictionary,randomUUID()])).rows[0].id;
+  await c.query('insert into word_list_items(list_id,word_id) values($1,$2)',[f.curated,entry]);
+  await c.query('set local role authenticated');
   const own=await select(c,f.viewer,f.own);expect(own).toMatchObject({active_list_id:f.own,is_valid:true});expect(own).not.toHaveProperty('active_list_ownership');
   expect(await summary(c,f.viewer,f.own)).toMatchObject({id:f.own,name:'Own empty lesson',user_word_list_items:[{count:0}]});
   expect(await select(c,f.viewer,f.curated,'curated')).toMatchObject({active_list_id:f.curated,active_list_type:'curated',is_valid:true});

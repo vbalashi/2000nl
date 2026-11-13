@@ -73,3 +73,18 @@ test('invitation step targets the check action while retaining the preview readi
  expect(step.ready).toBe('[data-onboarding="invitation-preview"]');
  form.remove();
 });
+
+test('resume waits for guarded navigation and pauses if the learner leaves for settings',async()=>{
+ let blocked=true;let destination='settings';let rerenderHost:()=>void=()=>{};
+ function Host(){const [,refresh]=React.useState(0);rerenderHost=()=>refresh(n=>n+1);return <OnboardingProvider userId="one" autoStart={false} language="en" port={{
+  prepare:()=>{if(!blocked){destination='training';rerenderHost();}},pause:()=>{destination='settings';},completeCore:()=>{},
+  canNavigate:!blocked,destination,isPrepared:()=>destination==='training',interrupted:()=>destination==='settings',
+ }}><OnboardingSettings collections sharing/><Locked/></OnboardingProvider>;}
+ localStorage.setItem(tourStorageKey('one'),JSON.stringify({...record,step:0}));render(<Host/>);
+ fireEvent.click(await screen.findByRole('button',{name:tourCopy.en.resume}));
+ expect(screen.getByTestId('locked')).toHaveTextContent('false');
+ blocked=false;act(()=>rerenderHost());
+ await waitFor(()=>expect(screen.getByTestId('locked')).toHaveTextContent('true'));
+ destination='settings';act(()=>rerenderHost());
+ await waitFor(()=>expect(screen.getByTestId('locked')).toHaveTextContent('false'));
+});

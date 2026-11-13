@@ -426,6 +426,18 @@ describe("TrainingSenseCardV2Session", () => {
     rerender(view(false)); expect(recordedStudy.mock.lastCall?.[0].enabled).toBe(false);
   });
 
+  test("word with context uses the ordinary meaning direction editor", async () => {
+    progressRead.mockResolvedValue({entryId:word.id,revision:"a".repeat(64),exclusionId:null,directions:[{cardTypeId:"word-to-definition",knownMarkId:null},{cardTypeId:"definition-to-word",knownMarkId:null}]});
+    loadContextPrompt.mockResolvedValue({state:"ready",prompt:{recallTarget:"hand",text:"She held the letter.",sourceText:singleSenseEntry.contentNodes[1].text,contentNodeId:"example-1",sourceTextFingerprint:"example-fingerprint"}});
+    render(<TestTrainingSenseCardV2Session word={word} mode="definition-to-word" wordInContext trainingSessionId="context-known" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" onProgressActionAccepted={vi.fn()}/>);
+    fireEvent.click(await screen.findByRole("button",{name:"Mark as known"}));
+    await screen.findByRole("button",{name:"Return to learning"});
+    expect(progressRead).toHaveBeenCalledWith(word.id,expect.any(AbortSignal));
+    expect(screen.getByRole("group",{name:"Word from meaning"})).toHaveTextContent("Already know");
+    expect(screen.getByRole("group",{name:"Meaning from word"})).toHaveTextContent("Still learning");
+    fireEvent.click(screen.getByRole("button",{name:"Go back"}));expect(performAction).not.toHaveBeenCalled();
+  });
+
   test("known action stages directions and Back preserves the original card without a write", async () => {
     try {
       const onProgressActionAccepted = vi.fn();
@@ -642,6 +654,18 @@ describe("TrainingSenseCardV2Session", () => {
         Object.defineProperty(HTMLElement.prototype, "offsetWidth", original);
       }
     }
+  });
+
+  test("does not submit a second rating while the first is pending", async () => {
+    let resolveAction!: (value: unknown) => void;
+    performAction.mockImplementationOnce(() => new Promise(resolve => { resolveAction = resolve; }));
+    render(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="nl" onProgressActionAccepted={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", {name:"Antwoord tonen"}));
+    const good = screen.getByRole("button", {name:"Goed"});
+    fireEvent.click(good); await waitFor(() => expect(performAction).toHaveBeenCalledOnce());
+    expect(good).toBeDisabled(); fireEvent.click(good); expect(performAction).toHaveBeenCalledOnce();
+    await act(async () => resolveAction({contractVersion:"platform-action-v2",actionId:"review-card",clientEventId:"event-1",accepted:true,card:singleSenseEntry.card}));
+    expect(performAction).toHaveBeenCalledOnce();
   });
 
   test("ignores answer swipes while a review action is busy", async () => {

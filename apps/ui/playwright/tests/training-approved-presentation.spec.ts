@@ -42,7 +42,7 @@ for (const width of [402, 1024]) {
   });
 }
 
-test("the whole outgoing card starts at its face origin and unlocks ratings after the shift", async ({ page }) => {
+test("the whole outgoing card starts at its face origin and finishes the shift with ratings available", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await setupAuthenticatedTrainingAttributionPage(page, 0, { visualProfile: "answer" });
@@ -70,7 +70,7 @@ test("the whole outgoing card starts at its face origin and unlocks ratings afte
   expect(initial.width).toBeCloseTo(origin!.width, 1);
   expect(initial.height).toBeCloseTo(origin!.height, 1);
   const again = page.getByRole("button", { name: /Again|Opnieuw|Снова/i });
-  await expect(again).toBeDisabled();
+  await expect(again).toBeEnabled();
   await expect(overlay).toHaveCount(0);
   await expect(again).toBeEnabled();
   await expect(heading).toBeVisible();
@@ -96,4 +96,27 @@ test("reverse definition remains in the outgoing card, with reduced-motion bypas
   await page.getByRole("button", { name: "Antwoord tonen", exact: true }).click();
   await expect(overlay).toHaveCount(0);
   await expect(page.getByTestId("training-sense-card-stage")).not.toHaveAttribute("data-reveal-moving", "true");
+});
+
+test("first touch rates during reveal and a pending request prevents a second submission", async ({ browser }) => {
+  const context = await browser.newContext({viewport:{width:390,height:844},hasTouch:true,reducedMotion:"no-preference"});
+  const page = await context.newPage();
+  await page.addInitScript(() => {
+    const original = Element.prototype.animate;
+    Element.prototype.animate = function (frames, options) {
+      const animation = original.call(this, frames, options); animation.playbackRate = 0.03; return animation;
+    };
+  });
+  await setupAuthenticatedTrainingAttributionPage(page, 0, {visualProfile:"answer",actionDelayMs:2000});
+  let submissions = 0;
+  page.on("request", request => { if (new URL(request.url()).pathname === "/api/platform/v2/actions" && request.method() === "POST") submissions++; });
+  await page.getByRole("button", {name:/Training starten|Start training|Начать тренировку/i}).click();
+  await page.getByRole("button", {name:/Show answer|Antwoord tonen|Показать ответ/i}).click();
+  const stage=page.getByTestId("training-sense-card-stage");
+  await expect(stage).toHaveAttribute("data-reveal-moving","true");
+  const rating=stage.getByRole("button",{name:/Again|Opnieuw|Снова/i});
+  await expect(rating).toBeEnabled(); await rating.tap();
+  await expect.poll(()=>submissions).toBe(1); await expect(rating).toBeDisabled();
+  const box=await rating.boundingBox(); await page.touchscreen.tap(box!.x+box!.width/2,box!.y+box!.height/2);
+  expect(submissions).toBe(1); await context.close();
 });

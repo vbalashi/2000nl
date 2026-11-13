@@ -1,3 +1,5 @@
+import {fetchExerciseChoice,saveExerciseChoice} from "@/lib/platform/exerciseChoiceClient";
+vi.mock("@/lib/platform/exerciseChoiceClient",()=>({fetchExerciseChoice:vi.fn(),saveExerciseChoice:vi.fn()}));
 import {TrainingInteractionPreferencesProvider, defaultTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
 import { trainingLifecyclePresentationContract } from "./support/trainingLifecycleContract";
 const focusedNotes=vi.hoisted(()=>({read:vi.fn(),refresh:undefined as undefined|(()=>void|Promise<unknown>)}));
@@ -21,7 +23,7 @@ import * as reportClient from "@/lib/feedback/diagnosticReportClient";
 import React from "react";
 import { readIdiomTrainingStats } from "@/lib/training/idiomStatsClient";
 vi.mock("@/lib/training/idiomStatsClient", () => ({ readIdiomTrainingStats: vi.fn() }));
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { TrainingIdiomSession } from "@/components/training/pilot/TrainingIdiomSession";
 import {
@@ -141,6 +143,8 @@ const content = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(fetchExerciseChoice).mockResolvedValue({targetId:"target-1",entryId:"entry-1",family:"idiom",direction:"direct",marks:{},revision:"revision"});
+  vi.mocked(saveExerciseChoice).mockResolvedValue(undefined);
   focusedNotes.read.mockReset().mockResolvedValue([]);focusedNotes.refresh=undefined;
   vi.mocked(requestPlatformV2Translation).mockReset().mockResolvedValue("pending");
   rememberExclusionUndo(null);
@@ -258,80 +262,47 @@ test("the idiom answer exposes the same header and secondary actions as word car
   expect(screen.getByRole("button", { name: "Report" })).toBeInTheDocument();
 });
 
-test("excludes the idiom pair, advances once, and keeps Undo available after completion", async () => {
-  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise)
-    .mockResolvedValueOnce(candidate)
-    .mockResolvedValueOnce({
-      status: "completed",
-      sessionId: session.sessionId,
-      completedActions: 1,
-      requestedTotal: 1,
-    });
-  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({
-    state: "ready",
-    content,
-  } as never);
-  vi.mocked(performTrainingExclusion)
-    .mockResolvedValueOnce({
-      status: "accepted",
-      actionId: "exclude-pair",
-      clientEventId: "event",
-      exclusionId: "mark",
-      excluded: true,
-      family: "idiom",
-    })
-    .mockResolvedValueOnce({
-      status: "accepted",
-      actionId: "restore-pair",
-      clientEventId: "undo",
-      exclusionId: "mark",
-      excluded: false,
-      family: "idiom",
-    });
-  render(
-    <>
-      <TrainingIdiomSession
-        userId="user-1"
-        session={session}
-        contentLanguageCode="nl"
-        translationTargetLanguageCode="en"
-        interfaceLanguage="en"
-        onExit={() => {}}
-      />
-      <TrainingExclusionUndoNotice userId="user-1" language="en" />
-    </>,
-  );
-  fireEvent.click(
-    await screen.findByRole("button", {
-      name: getUiMessages("en").trainingSession.exclusion.help,
-    }),
-  );
-  expect(performTrainingExclusion).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("menuitem", { name: getUiMessages("en").trainingSession.exclusion.label }));
-  expect(await screen.findByText("Session complete")).toBeInTheDocument();
-  expect(performTrainingExclusion).toHaveBeenNthCalledWith(
-    1,
-    expect.objectContaining({
-      actionId: "exclude-pair",
-      trainingSessionId: "session-1",
-      target: { kind: "exercise", targetId: "target-1" },
-    }),
-  );
+test.each([['direct',false],['direct',true],['reverse',false],['reverse',true]] as const)("Known choice for %s, revealed=%s", async (direction,revealed) => {
+  const current={...candidate,direction,targetKey:`idiom:target-1:${direction}`};
+  vi.mocked(fetchExerciseChoice).mockResolvedValue({targetId:current.targetId,entryId:current.entryId,family:'idiom',direction,marks:direction==='direct'?{reverse:'mark'}:{direct:'mark'},revision:'revision'});
+  vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValueOnce(current).mockResolvedValueOnce({status:'completed',sessionId:session.sessionId,completedActions:1,requestedTotal:1});
+  vi.mocked(loadIdiomExerciseContent).mockResolvedValue({state:'ready',content} as never);
+  render(<TrainingIdiomSession userId="user-1" session={{...session,direction}} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()}/>);
+  if(revealed)fireEvent.click(await screen.findByRole('button',{name:'Show answer'}));
+  fireEvent.click(await screen.findByRole('button',{name:'Mark as known'}));
+  expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  await screen.findAllByRole('button',{name:'Return to learning'});
+  expect(saveExerciseChoice).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button',{name:'Go back'}));
+  expect(saveExerciseChoice).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button',{name:'Mark as known'}));
+  await screen.findAllByRole('button',{name:'Return to learning'});
+  fireEvent.click(screen.getByRole('button',{name:'Next'}));
+  expect(await screen.findByText('Session complete')).toBeInTheDocument();
+  expect(saveExerciseChoice).toHaveBeenCalledWith(expect.objectContaining({targetId:'target-1',trainingSessionId:'session-1',knownDirections:expect.arrayContaining(['direct','reverse'])}),'entry-1');
   expect(performPlatformV2IdiomExerciseAction).not.toHaveBeenCalled();
-  fireEvent.click(screen.getByRole("button", { name: "Undo" }));
-  await waitFor(() =>
-    expect(performTrainingExclusion).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        actionId: "restore-pair",
-        exclusionId: "mark",
-        target: { kind: "exercise", targetId: "target-1" },
-      }),
-    ),
-  );
-  expect(fetchNextPlatformV2IdiomTrainingSessionExercise).toHaveBeenCalledTimes(
-    2,
-  );
+});
+
+test('idiom selection submits only the chosen direction',async()=>{
+ vi.mocked(fetchExerciseChoice).mockResolvedValue({targetId:'target-1',entryId:'entry-1',family:'idiom',direction:'direct',marks:{reverse:'existing'},revision:'revision'});
+ vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValueOnce(candidate).mockResolvedValueOnce({status:'completed',sessionId:session.sessionId,completedActions:1,requestedTotal:1});
+ vi.mocked(loadIdiomExerciseContent).mockResolvedValue({state:'ready',content} as never);
+ render(<TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()}/>);
+ fireEvent.click(await screen.findByRole('button',{name:'Mark as known'}));await screen.findAllByRole('button',{name:'Return to learning'});
+ const reverse=screen.getByRole('group',{name:getUiMessages('en').trainingHistory.exercises.idiomReverse});
+ fireEvent.click(within(reverse).getByRole('button',{name:'Return to learning'}));fireEvent.click(screen.getByRole('button',{name:'Next'}));
+ await screen.findByText('Session complete');expect(saveExerciseChoice).toHaveBeenCalledWith(expect.objectContaining({knownDirections:['direct']}),'entry-1');
+});
+
+test('uncertain Known retry keeps the original intent',async()=>{
+ vi.mocked(fetchNextPlatformV2IdiomTrainingSessionExercise).mockResolvedValueOnce(candidate).mockResolvedValueOnce({status:'completed',sessionId:session.sessionId,completedActions:1,requestedTotal:1});
+ vi.mocked(loadIdiomExerciseContent).mockResolvedValue({state:'ready',content} as never);
+ vi.mocked(saveExerciseChoice).mockRejectedValueOnce(new Error('timeout')).mockResolvedValueOnce(undefined);
+ render(<TrainingIdiomSession userId="user-1" session={session} contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en" onExit={vi.fn()}/>);
+ fireEvent.click(await screen.findByRole('button',{name:'Mark as known'}));await screen.findByRole('button',{name:'Return to learning'});
+ fireEvent.click(screen.getByRole('button',{name:'Next'}));await screen.findByRole('alert');
+ expect(screen.getByRole('button',{name:'Go back'})).toBeDisabled();fireEvent.click(screen.getByRole('button',{name:'Next'}));
+ await screen.findByText('Session complete');expect(vi.mocked(saveExerciseChoice).mock.calls[1]).toEqual(vi.mocked(saveExerciseChoice).mock.calls[0]);
 });
 
 test("header actions use the selected content and do not consume a review", async () => {
