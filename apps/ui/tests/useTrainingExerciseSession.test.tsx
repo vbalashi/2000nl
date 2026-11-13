@@ -73,3 +73,10 @@ test.each(["one","external","partial"] as const)("a deferred grade reconciles %s
  const expected=consumed==="external"?2:1;
  expect(hook.result.current.completed).toBe(expected);expect(hook.progress).toHaveBeenLastCalledWith({sessionId:"run",completedActions:expected,completionReason:null});expect(hook.actClient).toHaveBeenCalledOnce();
 });
+
+test("a second grade while the first receipt is pending is not submitted",async()=>{
+ const hook=setup();await waitFor(()=>expect(hook.result.current.candidate).not.toBeNull());
+ const receipt=deferred<unknown>();hook.actClient.mockReturnValueOnce(receipt.promise);
+ let first!:Promise<void>,second!:Promise<void>;act(()=>{first=hook.result.current.grade("success");second=hook.result.current.grade("fail");});
+ expect(hook.actClient).toHaveBeenCalledOnce();await act(async()=>{receipt.resolve({});await Promise.all([first,second]);});expect(hook.actClient).toHaveBeenCalledOnce();expect(hook.progress).toHaveBeenCalledOnce();
+});

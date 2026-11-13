@@ -202,7 +202,7 @@ export function TrainingExerciseCard({
       </TrainingAnswerTranslationProvider>
       <footer className="shrink-0 flex flex-col gap-2">
         {revealed ? (
-          <RatingControls language={interfaceLanguage} height="adaptive" disabled={actionBusy}
+          <RatingControls language={interfaceLanguage} height="adaptive" disabled={busy}
             label={t("senseCard.sections.reviewPrompt")} firstRef={firstGradeRef}
             options={(Object.keys(ratingGrades) as Rating[]).map(rating => ({ rating, label: t(`senseCard.review.${ratingGrades[rating]}`) }))}
             onRate={rating => onGrade(ratingGrades[rating])} />

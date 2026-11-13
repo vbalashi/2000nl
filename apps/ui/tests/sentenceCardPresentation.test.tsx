@@ -4,6 +4,7 @@ import { expect, test, vi } from "vitest";
 import { buildSentenceCardPresentation } from "@/lib/training/sentenceCardPresentation";
 import { resolveSentenceExerciseContent } from "@/lib/training/sentenceExerciseContent";
 import { TrainingExerciseCard } from "@/components/training/v2/TrainingExerciseCard";
+import {TrainingInteractionPreferencesProvider,defaultTrainingInteractions} from "@/components/practice/ui/TrainingInteractionPreferences";
 import { goedGroup } from "./platformV2IdiomHierarchyFixture";
 
 function model() {
@@ -50,4 +51,18 @@ test("sentence answer keeps exact-entry instructional notes without turning them
  const {content}=model();const notes=[{noteId:"teacher-note",ownerUserId:"teacher",text:"Teaching addition",revision:"1",isOwn:false}];
  const presentation=buildSentenceCardPresentation({content:{...content,entry:{...content.entry,noteMaterial:notes}},interfaceLanguage:"en",translationTargetLanguageCode:"ru"})!;
  expect(presentation.answer.noteMaterial).toEqual(notes);expect(presentation.prompt.text).not.toContain("Teaching addition");
+});
+
+test("accepts the first exercise rating during animation and blocks it while saving",()=>{
+ vi.spyOn(HTMLElement.prototype,"getBoundingClientRect").mockReturnValue({left:0,top:0,width:300,height:400} as DOMRect);
+ const previous=Object.getOwnPropertyDescriptor(HTMLElement.prototype,"animate");
+ Object.defineProperty(HTMLElement.prototype,"animate",{configurable:true,value:()=>({onfinish:null,oncancel:null,cancel:vi.fn()})});
+ try {
+  const {presentation}=model();const onGrade=vi.fn();
+  function Card(){const [revealed,setRevealed]=React.useState(false),[busy,setBusy]=React.useState(false);return <TrainingInteractionPreferencesProvider userId="animation-test" initial={{...defaultTrainingInteractions,animation:true}}><TrainingExerciseCard presentation={presentation} interfaceLanguage="en" revealed={revealed} onReveal={()=>setRevealed(true)} busy={busy} onGrade={grade=>{onGrade(grade);setBusy(true);}}/></TrainingInteractionPreferencesProvider>}
+  render(<Card/>);fireEvent.click(screen.getByRole("button",{name:"Show answer"}));
+  expect(document.querySelector('[data-training-reveal-overlay]')).not.toBeNull();
+  const good=screen.getByRole("button",{name:"Good"});expect(good).toBeEnabled();fireEvent.click(good);
+  expect(onGrade).toHaveBeenCalledOnce();expect(onGrade).toHaveBeenCalledWith("success");expect(good).toBeDisabled();fireEvent.click(good);expect(onGrade).toHaveBeenCalledOnce();
+ } finally {vi.restoreAllMocks();if(previous)Object.defineProperty(HTMLElement.prototype,"animate",previous);else delete (HTMLElement.prototype as Partial<HTMLElement>).animate;}
 });

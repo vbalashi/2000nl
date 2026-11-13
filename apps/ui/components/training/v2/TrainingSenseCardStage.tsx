@@ -340,6 +340,7 @@ export function TrainingSenseCardStage({
             model={model}
             mode={mode}
             busy={busy || moving}
+            ratingBusy={busy}
             interfaceLanguage={interfaceLanguage}
             primaryActionRef={primaryAnswerActionRef}
             onAction={onAction}
@@ -491,6 +492,7 @@ function AnswerDock({
   model,
   mode,
   busy,
+  ratingBusy,
   interfaceLanguage,
   primaryActionRef,
   onAction,
@@ -500,6 +502,7 @@ function AnswerDock({
   model: TrainingSenseCardModel;
   mode: TrainingMode;
   busy: boolean;
+  ratingBusy: boolean;
   interfaceLanguage: OnboardingLanguage;
   primaryActionRef: React.RefObject<HTMLButtonElement>;
   onAction: (capability: PlatformSenseCardCapabilityV2) => void;
@@ -553,7 +556,7 @@ function AnswerDock({
           <RatingControls
             language={interfaceLanguage}
             height="adaptive"
-            disabled={busy}
+            disabled={ratingBusy}
             label={t("senseCard.sections.reviewPrompt")}
             firstRef={primaryActionRef}
             options={reviewCapabilities.map((capability) => ({

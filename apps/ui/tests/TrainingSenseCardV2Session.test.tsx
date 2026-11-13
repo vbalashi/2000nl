@@ -656,6 +656,18 @@ describe("TrainingSenseCardV2Session", () => {
     }
   });
 
+  test("does not submit a second rating while the first is pending", async () => {
+    let resolveAction!: (value: unknown) => void;
+    performAction.mockImplementationOnce(() => new Promise(resolve => { resolveAction = resolve; }));
+    render(<TestTrainingSenseCardV2Session word={word} mode="word-to-definition" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="nl" onProgressActionAccepted={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", {name:"Antwoord tonen"}));
+    const good = screen.getByRole("button", {name:"Goed"});
+    fireEvent.click(good); await waitFor(() => expect(performAction).toHaveBeenCalledOnce());
+    expect(good).toBeDisabled(); fireEvent.click(good); expect(performAction).toHaveBeenCalledOnce();
+    await act(async () => resolveAction({contractVersion:"platform-action-v2",actionId:"review-card",clientEventId:"event-1",accepted:true,card:singleSenseEntry.card}));
+    expect(performAction).toHaveBeenCalledOnce();
+  });
+
   test("ignores answer swipes while a review action is busy", async () => {
     const original = Object.getOwnPropertyDescriptor(
       HTMLElement.prototype,
