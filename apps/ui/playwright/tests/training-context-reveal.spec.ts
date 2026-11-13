@@ -31,7 +31,7 @@ test("context question stays in the outgoing card until the answer is ready", as
   expect(firstFrame.width).toBeCloseTo(origin!.width, 1);
   expect(firstFrame.height).toBeCloseTo(origin!.height, 1);
   const again = stage.getByRole("button", { name: "Opnieuw", exact: true });
-  await expect(again).toBeDisabled();
+  await expect(again).toBeEnabled();
   await expect(overlay).toHaveCount(0);
   await expect(again).toBeEnabled();
   const matchingTranslation = stage.locator('[data-content-translation="true"]').filter({ hasText: question! });
