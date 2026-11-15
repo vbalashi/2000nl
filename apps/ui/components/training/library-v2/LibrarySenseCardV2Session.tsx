@@ -773,7 +773,11 @@ function SenseCardV2Session({
     }).catch(() => { /* load exposes retry. */ });
   }, activeMeaningId && translationLanguage && translationLanguage !== "off" ? { entryId: activeMeaningId, targetLanguageCode: translationLanguage } : undefined), [activeMeaningId,cardTypeId,detailIdentity,handleRequestTranslation,load,loading,translationLanguage]);
 
-  const translationEntryIdsKey = JSON.stringify(group?.entries.filter(entry => entry.kind === "sense-card").map(entry => entry.entryId).sort() ?? []);
+  // A previous article may even contain the newly selected sibling meaning.
+  // Subscribe only after this exact detail selection has been revalidated.
+  const translationEntryIdsKey = JSON.stringify(noteAuthority?.scope === detailIdentity && noteAuthority.group === group
+    ? group?.entries.filter(entry => entry.kind === "sense-card").map(entry => entry.entryId).sort() ?? []
+    : []);
   React.useEffect(() => {
     if (!translationLanguage || translationLanguage === "off") return;
     const entryIds = JSON.parse(translationEntryIdsKey) as string[];

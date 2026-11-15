@@ -37,10 +37,11 @@ import type { EntryLearningListMembership } from "@/lib/types";
 
 import { publishDictionaryTranslationReady } from "@/lib/translation/dictionaryTranslationEvents";
 
-const firstJoin = vi.hoisted(() => ({ enabled: false, subscriptions: 0 }));
+const firstJoin = vi.hoisted(() => ({ enabled: false, subscriptions: 0, scopes: [] as string[] }));
 vi.mock("@/lib/translation/dictionaryTranslationEvents", async importOriginal => {
   const actual = await importOriginal<typeof import("@/lib/translation/dictionaryTranslationEvents")>();
   return {...actual, onDictionaryTranslationReady: (listener: Parameters<typeof actual.onDictionaryTranslationReady>[0], scope?: Parameters<typeof actual.onDictionaryTranslationReady>[1]) => {
+    if (scope) firstJoin.scopes.push(scope.entryId);
     const stop = actual.onDictionaryTranslationReady(listener, scope);
     if (firstJoin.enabled && scope) { firstJoin.subscriptions++; listener(scope); }
     return stop;
@@ -1757,6 +1758,36 @@ test("first-join hints for all meanings share one read without resubscribing on 
     expect(fetchGroup).toHaveBeenCalledTimes(3);
     expect(firstJoin.subscriptions).toBe(entryCount);
   } finally { view.unmount(); firstJoin.enabled = false; }
+});
+
+test("does not subscribe to the previous article's translations while opening another article", async () => {
+  const oldGroup = singleSenseGroup("old-group", financeEntry.entryId, "old", "Old definition");
+  const newGroup = singleSenseGroup("new-group", furnitureEntry.entryId, "new", "New definition");
+  const pending = deferred<PlatformHeadwordGroupV2>();
+  fetchGroup.mockReset().mockResolvedValueOnce(oldGroup).mockImplementationOnce(() => pending.promise);
+  const view = render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} headword="old" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" />);
+  await screen.findByText("Old definition");
+  firstJoin.scopes.length = 0;
+  view.rerender(<LibrarySenseCardV2Session entryId={furnitureEntry.entryId} headword="new" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" />);
+  expect(firstJoin.scopes).not.toContain(financeEntry.entryId);
+  await act(async () => publishDictionaryTranslationReady({entryId: financeEntry.entryId, targetLanguageCode: "en"}));
+  expect(fetchGroup).toHaveBeenCalledTimes(2);
+  await act(async () => pending.resolve(newGroup));
+  expect(await screen.findByText("New definition")).toBeVisible();
+});
+
+test("waits for the new selection's authority before subscribing to sibling meanings", async () => {
+  const pending = deferred<PlatformHeadwordGroupV2>();
+  fetchGroup.mockReset().mockResolvedValueOnce(multiSenseBankGroup).mockImplementationOnce(() => pending.promise);
+  const view = render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" />);
+  await screen.findByTestId("library-sense-card-group");
+  firstJoin.scopes.length = 0;
+  view.rerender(<LibrarySenseCardV2Session entryId={furnitureEntry.entryId} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode="en" interfaceLanguage="en" />);
+  expect(firstJoin.scopes).toEqual([]);
+  await act(async () => publishDictionaryTranslationReady({entryId: financeEntry.entryId, targetLanguageCode: "en"}));
+  expect(fetchGroup).toHaveBeenCalledTimes(2);
+  await act(async () => pending.resolve(multiSenseBankGroup));
+  expect(await screen.findByTestId(`library-sense-card-${furnitureEntry.entryId}`)).toBeVisible();
 });
 
 test("a ready hint during a group read schedules one newer authoritative read", async () => {
