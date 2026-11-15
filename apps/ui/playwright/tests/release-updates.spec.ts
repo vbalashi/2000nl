@@ -212,3 +212,20 @@ test("active training defers notification and disables update in Settings", asyn
   ).toHaveCount(0);
   await expect(page.getByRole("status")).toContainText("Finish your training");
 });
+
+for (const language of ["ru", "nl"] as const) {
+  test(`English release text remains visible in ${language} interface`, async ({ page }) => {
+    await page.addInitScript((locale) => localStorage.setItem("onboarding_language", locale), language);
+    await page.route("**/api/app-release?*", (route) => route.fulfill({
+      json: {schemaVersion: 1, build: {version: "0.18.1339", commit: "c".repeat(40), buildTimestamp: "2026-10-17T09:00:00Z"}, announcement},
+    }));
+    await setupAuthenticatedTrainingAttributionPage(page, 0, {
+      devTestLogin: false,
+      visualProfile: "answer",
+      settingsOverrides: {preferences: {onboardingLanguage: language}},
+    });
+    const summary = page.getByText(announcement.summary, {exact: true});
+    await expect(summary).toBeVisible();
+    await expect(summary).toHaveAttribute("lang", "en");
+  });
+}

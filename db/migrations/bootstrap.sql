@@ -75,3 +75,4 @@
 \i db/migrations/368_starter_editorial_collection.sql
 \i db/migrations/369_exercise_known_choice.sql
 \i db/migrations/370_curated_collection_access.sql
+\i db/migrations/371_release_notes_english_fallback.sql

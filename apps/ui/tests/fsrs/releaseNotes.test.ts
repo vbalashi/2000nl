@@ -95,6 +95,22 @@ describe.skipIf(!url)("editable version-bound release notes", () => {
         summary: "Corrected text.",
       });
     }));
+  test("English is required and missing translations fall back until added", async () =>
+    withTransaction(pool, async (c) => {
+      const english = { en: { title: "English", summary: "First version." } };
+      const publish = async (content: object, revision: number | null) => c.query(
+        "select public.write_app_release_notes_v1($1,$2,$3,$4,$5,false)",
+        ["0.19.22", "a".repeat(40), "2026-01-01T00:00:00Z", content, revision],
+      );
+      await publish(english, null);
+      expect((await read(c, "0.19.22", "ru")).items[0]).toMatchObject({locale: "en", title: "English"});
+      expect((await read(c, "0.19.22", "nl")).items[0]).toMatchObject({locale: "en", title: "English"});
+      await publish({en: {title: "Updated", summary: "Updated English."}, ru: {title: "Русский", summary: "Перевод."}}, 1);
+      expect((await read(c, "0.19.22", "ru")).items[0]).toMatchObject({locale: "ru", title: "Русский"});
+      expect((await read(c, "0.19.22", "nl")).items[0]).toMatchObject({locale: "en", title: "Updated"});
+      const editor = (await c.query("select public.read_app_release_notes_editor_v1('0.19.22') result")).rows[0].result;
+      expect(Object.keys(editor.translations).sort()).toEqual(["en", "ru"]);
+    }));
   test("redeploy does not overwrite an editorial correction and stale editors are rejected", async () =>
     withTransaction(pool, async (c) => {
       await write(c);
@@ -154,7 +170,7 @@ describe.skipIf(!url)("editable version-bound release notes", () => {
     withTransaction(pool, async (c) => {
       await write(c);
       for (const bad of [
-        { en: { title: "Incomplete", summary: "One locale" } },
+        { nl: { title: "Incomplete", summary: "One locale" } },
         translations("x".repeat(241)),
         {
           ...translations(),
