@@ -18,6 +18,9 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: apps/ui/package-lock.json
+      - name: Test browser profile selection
+        working-directory: .
+        run: node --test scripts/ci/browser-profile.test.mjs
       - run: npm ci
       - run: npm run i18n:check
       - run: npm run i18n:check-registration
@@ -62,17 +65,44 @@ jobs:
         working-directory: apps/ui
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: apps/ui/package-lock.json
+      - name: Choose conservative browser profile
+        id: profile
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          BEFORE: ${{ github.event.before }}
+          HEAD: ${{ github.sha }}
+        run: |
+          base="$BEFORE"
+          if [[ "$EVENT_NAME" == 'pull_request' ]]; then base="$PR_BASE"; fi
+          # Run the selector from the trusted base, never the proposed change.
+          # If absent/invalid/non-ancestor, keep the full suite.
+          profile=full
+          if [[ "$base" =~ ^[a-f0-9]{40}$ ]] && git show "$base:scripts/ci/browser-profile.mjs" > "$RUNNER_TEMP/browser-profile.mjs" 2>/dev/null; then
+            profile=$(node "$RUNNER_TEMP/browser-profile.mjs" "$base" "$HEAD") || profile=full
+          fi
+          [[ "$profile" == 'release' || "$profile" == 'full' ]] || profile=full
+          echo "profile=$profile" >> "$GITHUB_OUTPUT"
+          echo "Browser profile: $profile"
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e:received-groups
-      - run: npm run test:e2e
-      - run: npm run test:e2e:i18n
-      - run: npm run test:e2e:training-reliability
+      - if: steps.profile.outputs.profile == 'release'
+        run: npx playwright test playwright/tests/release-updates.spec.ts
+      - if: steps.profile.outputs.profile == 'full'
+        run: npm run test:e2e:received-groups
+      - if: steps.profile.outputs.profile == 'full'
+        run: npm run test:e2e
+      - if: steps.profile.outputs.profile == 'full'
+        run: npm run test:e2e:i18n
+      - if: steps.profile.outputs.profile == 'full'
+        run: npm run test:e2e:training-reliability
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
