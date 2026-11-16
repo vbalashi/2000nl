@@ -3,7 +3,8 @@ export function reportReturnPath(value: string | null, origin: string, permissio
   if (!value) return null;
   try {
     const url = new URL(value, origin);
-    if (url.origin !== origin || url.pathname !== '/admin/reports/') return null;
+    // Next canonicalizes trailing-slash links before the browser records a return.
+    if (url.origin !== origin || !['/admin/reports', '/admin/reports/'].includes(url.pathname)) return null;
     const permission=url.searchParams.get('view')==='notifications'?'notifications.manage':'feedback.read';
     if(!permissions.includes(permission))return null;
     return url.pathname + url.search;
