@@ -1,11 +1,83 @@
 BEGIN;
 
+-- Notification administration extends existing capabilities.
+ALTER TABLE public.admin_operators DROP CONSTRAINT admin_operators_permissions_allowed;
+ALTER TABLE public.admin_operators ADD CONSTRAINT admin_operators_permissions_allowed CHECK (permissions <@ ARRAY['dictionaries.read','audit.read','publication.manage','dictionary.content.read','users.read','admission.manage','feedback.read','editorial.edit','notifications.manage']::text[]);
+ALTER TABLE public.admin_audit_events DROP CONSTRAINT admin_audit_events_action_allowed;
+ALTER TABLE public.admin_audit_events ADD CONSTRAINT admin_audit_events_action_allowed CHECK (action = ANY (ARRAY['auth.sign_in','auth.sign_in_denied','auth.sign_out','access.denied','dictionary.registry.read','dictionary.metadata.read','dictionary.content.read','dictionary.publication.updated','dictionary.audience.updated','audit.journal.read','user.registry.read','user.profile.read','admission.approve','admission.reject','admission.revoke','admission.invite','admission.mode','admission.auto_approve','feedback.registry.read','feedback.detail.read','operator.permissions.updated','notifications.configuration.read','notifications.configuration.updated']::text[]));
+
+
 CREATE TABLE private.operator_notification_settings (
  singleton boolean PRIMARY KEY DEFAULT true CHECK (singleton),
  enabled boolean NOT NULL DEFAULT false
 );
 INSERT INTO private.operator_notification_settings(singleton) VALUES(true);
 REVOKE ALL ON private.operator_notification_settings FROM PUBLIC,anon,authenticated,service_role;
+
+-- Metadata only. Credentials live in the dedicated external secret store.
+CREATE TABLE private.operator_notification_bots (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ name text NOT NULL CHECK (length(btrim(name)) BETWEEN 1 AND 80),
+ credential_state text NOT NULL DEFAULT 'missing' CHECK (credential_state IN ('missing','pending','ready','failed')),
+ secret_version text,
+ revision integer NOT NULL DEFAULT 1 CHECK (revision>0),
+ created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+ updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+ CHECK ((credential_state='ready') = (secret_version IS NOT NULL))
+);
+CREATE TABLE private.operator_notification_routes (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ bot_id uuid NOT NULL REFERENCES private.operator_notification_bots(id) ON DELETE RESTRICT,
+ kind text NOT NULL CHECK (kind IN ('admission-request','feedback')),
+ chat_id text NOT NULL CHECK (chat_id ~ '^-?[1-9][0-9]{0,19}$'),
+ topic_id bigint CHECK (topic_id BETWEEN 1 AND 9007199254740991),
+ enabled boolean NOT NULL DEFAULT false,
+ revision integer NOT NULL DEFAULT 1 CHECK (revision>0),
+ created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+ updated_at timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+CREATE INDEX operator_notification_routes_bot ON private.operator_notification_routes(bot_id);
+ALTER TABLE private.operator_notification_bots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE private.operator_notification_routes ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON private.operator_notification_bots,private.operator_notification_routes FROM PUBLIC,anon,authenticated,service_role;
+
+CREATE FUNCTION private.require_notification_manager_v1(p_operator uuid) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+BEGIN
+ PERFORM 1 FROM public.admin_operators WHERE user_id=p_operator AND is_active
+  AND 'notifications.manage'=ANY(permissions) FOR SHARE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'notification_manager_required' USING ERRCODE='42501'; END IF;
+END; $$;
+
+CREATE FUNCTION public.admin_notification_configuration_v1(p_operator uuid,p_request uuid) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE result jsonb;
+BEGIN
+ PERFORM private.require_notification_manager_v1(p_operator);
+ IF p_request IS NULL THEN RAISE EXCEPTION 'request_id_required' USING ERRCODE='22023'; END IF;
+ SELECT jsonb_build_object(
+  'bots',coalesce((SELECT jsonb_agg(jsonb_build_object('id',b.id,'name',b.name,'credentialState',b.credential_state,'revision',b.revision) ORDER BY b.created_at,b.id) FROM private.operator_notification_bots b),'[]'::jsonb),
+  'routes',coalesce((SELECT jsonb_agg(jsonb_build_object('id',r.id,'botId',r.bot_id,'kind',r.kind,'chatId',r.chat_id,'topicId',r.topic_id,'enabled',r.enabled,'revision',r.revision) ORDER BY r.created_at,r.id) FROM private.operator_notification_routes r),'[]'::jsonb)) INTO result;
+ INSERT INTO public.admin_audit_events(operator_user_id,action,outcome,target_type,target_id,request_id)
+ VALUES(p_operator,'notifications.configuration.read','success','notification_configuration','all',p_request);
+ RETURN result;
+END; $$;
+
+CREATE FUNCTION public.admin_notification_create_bot_v1(p_operator uuid,p_request uuid,p_name text) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE bot private.operator_notification_bots;
+BEGIN
+ PERFORM private.require_notification_manager_v1(p_operator);
+ IF p_request IS NULL OR p_name IS NULL OR length(btrim(p_name)) NOT BETWEEN 1 AND 80 THEN
+  RAISE EXCEPTION 'invalid_bot' USING ERRCODE='22023'; END IF;
+ INSERT INTO private.operator_notification_bots(name) VALUES(btrim(p_name)) RETURNING * INTO bot;
+ INSERT INTO public.admin_audit_events(operator_user_id,action,outcome,target_type,target_id,request_id)
+ VALUES(p_operator,'notifications.configuration.updated','success','notification_bot',bot.id::text,p_request);
+ RETURN jsonb_build_object('id',bot.id,'name',bot.name,'credentialState',bot.credential_state,'revision',bot.revision);
+END; $$;
+REVOKE ALL ON FUNCTION private.require_notification_manager_v1(uuid) FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON FUNCTION public.admin_notification_configuration_v1(uuid,uuid),public.admin_notification_create_bot_v1(uuid,uuid,text) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.admin_notification_configuration_v1(uuid,uuid),public.admin_notification_create_bot_v1(uuid,uuid,text) TO service_role;
 
 -- The queue stores references, not snapshots of email or report evidence.  Workers
 -- are privileged server-side consumers; it is never exposed to browser roles.

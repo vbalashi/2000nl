@@ -150,4 +150,23 @@ describeIfDb('operator notification events',()=>{
   }
  },10000);
 
+ test('configuration requires its own permission and audits multiple bots without secrets',async()=>{
+  await withTransaction(pool,async client=>{
+   const operator=randomUUID();await ensureUserWithSettings(client,operator);
+   await client.query("insert into public.admin_operators(email,user_id,is_active,permissions) values($1,$2,true,ARRAY['feedback.read'])",[`${operator}@example.test`,operator]);
+   await client.query('savepoint denied_config');
+   await expect(client.query('select public.admin_notification_create_bot_v1($1,$2,$3)',[operator,randomUUID(),'Reports'])).rejects.toMatchObject({code:'42501'});
+   await client.query('rollback to savepoint denied_config');
+   await client.query("update public.admin_operators set permissions=ARRAY['notifications.manage'] where user_id=$1",[operator]);
+   const first=(await client.query('select public.admin_notification_create_bot_v1($1,$2,$3) bot',[operator,randomUUID(),'Reports'])).rows[0].bot;
+   const second=(await client.query('select public.admin_notification_create_bot_v1($1,$2,$3) bot',[operator,randomUUID(),'Admissions'])).rows[0].bot;
+   expect(first.id).not.toBe(second.id);expect(first.credentialState).toBe('missing');
+   const config=(await client.query('select public.admin_notification_configuration_v1($1,$2) config',[operator,randomUUID()])).rows[0].config;
+   expect(config.bots.map((bot:{id:string})=>bot.id)).toEqual(expect.arrayContaining([first.id,second.id]));
+   expect(JSON.stringify(config)).not.toMatch(/secret_version|token|secretVersion/);
+   expect((await client.query("select action from public.admin_audit_events where operator_user_id=$1 and action like 'notifications.%'",[operator])).rows).toHaveLength(3);
+   expect((await client.query("select has_table_privilege('authenticated','private.operator_notification_bots','select') allowed")).rows[0].allowed).toBe(false);
+  });
+ });
+
 });

@@ -1,4 +1,5 @@
 export const ADMIN_AUDIT_ACTIONS = [
+  "notifications.configuration.read", "notifications.configuration.updated",
   "auth.sign_in",
   "auth.sign_in_denied",
   "auth.sign_out",
