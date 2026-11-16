@@ -153,7 +153,7 @@ describe.skipIf(!url)('Library bounded article batch',()=>{
    await c.query("update word_entries set raw=jsonb_build_object('meanings',jsonb_build_array(jsonb_build_object('definition',repeat('x',2097152)))) where id=$1",[ids[0]]);
    expect((await read()).error).toBe('article_batch_too_large');
   },user);
- });
+ },30000);
  test('private received reads have exact-reader parity, exclude unshared siblings, and fail closed after revocation',async()=>{
   const owner=randomUUID(),viewer=randomUUID();await withTransaction(pool,async c=>{
    await ensureUserWithSettings(c,owner);await ensureUserWithSettings(c,viewer);

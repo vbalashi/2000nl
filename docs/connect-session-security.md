@@ -53,6 +53,12 @@ indirect changes/deletes through definer functions. Trusted service writes and
 account-deletion cascades remain supported. This does not retroactively establish
 that existing paid/admin tier values are legitimate.
 
+Admin retains its independent operator admission and permission checks. After
+verifying a provider identity, its server checks the live Auth session through
+`check_admin_session_authority_v1`, a service-role-only RPC. Login completion and
+each Admin request reject pre-cutover, expired, deleted, wrong-user and connected
+sessions. This check does not grant the operator access to learner data APIs.
+
 ## Managed installation requirements
 
 These are public fresh-install migrations, not instructions to apply them to an
