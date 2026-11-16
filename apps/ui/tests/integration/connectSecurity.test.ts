@@ -116,6 +116,28 @@ suite('real GoTrue and PostgREST Connect boundary',()=>{
   expect((await refresh(prior)).status).toBe(401);
   expect((await sessionRoute(request('/api/platform/session',prior.access_token))).status).toBe(401);
  });
+ test('consent cannot issue a code under a revoke/regrant lifetime created after its upsert',async()=>{
+  const before=Number((await pool.query('select count(*) n from connect_authorization_codes where client_id=$1',[clientId])).rows[0].n);
+  const original=globalThis.fetch;let consentRevision:string|undefined;let replacementRevision:string|undefined;
+  const spy=vi.spyOn(globalThis,'fetch').mockImplementation(async(input,init)=>{
+   const response=await original(input,init);
+   if(!consentRevision && String(input).includes('/rest/v1/connected_client_grants') && init?.method==='POST') {
+    expect(response.ok).toBe(true);
+    const returned=await response.clone().json();consentRevision=(Array.isArray(returned)?returned[0]:returned).authority_revision;
+    await pool.query('update connected_client_grants set revoked_at=clock_timestamp() where client_id=$1',[clientId]);
+    replacementRevision=(await pool.query('update connected_client_grants set revoked_at=null where client_id=$1 returning authority_revision',[clientId])).rows[0].authority_revision;
+   }
+   return response;
+  });
+  try {
+   const response=await approve(request('/api/connect/authorize/approve',first.access_token,{clientId,redirectUri:'https://example.invalid/callback',scope:'platform:read',codeChallenge:crypto.randomBytes(32).toString('base64url'),codeChallengeMethod:'S256'}));
+   expect(consentRevision).toBeTruthy();expect(replacementRevision).not.toBe(consentRevision);
+   expect(response.status).toBe(500);expect(await response.json()).toMatchObject({error:'authorization_code_save_failed'});
+   expect(Number((await pool.query('select count(*) n from connect_authorization_codes where client_id=$1',[clientId])).rows[0].n)).toBe(before);
+  } finally {spy.mockRestore();}
+  // A fresh explicit consent still returns a usable code.
+  expect((await token(request('/api/connect/token','',await authorization()))).status).toBe(200);
+ });
  test('old code and old session cannot regain authority after revoke and new consent',async()=>{
   const connected=await credentials(),oldCode=await authorization();
   await pool.query('update connected_client_grants set revoked_at=clock_timestamp() where client_id=$1',[clientId]);

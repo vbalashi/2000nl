@@ -22,7 +22,10 @@ credentials. Every application first-party request, including cache hits and
 coalesced authentication, rechecks live DB session authority. Authorization code
 and connected session revisions must match the current grant lifetime; revoking
 or changing scopes invalidates earlier revisions even after another consent.
-The final session insert/update serializes against grant/client changes.
+The consent upsert returns its exact revision in the same database statement.
+Code insertion supplies that revision, and its trigger validates it under a grant
+lock instead of adopting whatever revision is current at insertion time. The
+final session insert/update serializes against grant/client changes.
 
 Authorization codes and refresh credentials are claimed once before provider
 side effects. Concurrent refresh has one winner. An uncertain provider/storage
@@ -93,7 +96,7 @@ node scripts/test-connect-security.mjs
 The script creates and removes its own local-only Docker network, PostgreSQL 17,
 GoTrue v2.197.0 and PostgREST v14.10 containers, uses dynamic loopback ports and
 synthetic credentials, and runs the actual Next route handlers against those
-services. It does not read deployment environment files. It runs 12 provider/API
+services. It does not read deployment environment files. It runs 13 provider/API
 scenarios plus four SQL role-boundary tests, including read-only denial, direct
 Data API denial, concurrent refresh, revoke/regrant, revoke during issuance and
 refresh, ambiguous persistence, pending admission and live cache invalidation.

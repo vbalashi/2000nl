@@ -250,8 +250,8 @@ export async function upsertGrant(params: {
   clientId: string;
   userId: string;
   scopes: string[];
-}): Promise<NextResponse | null> {
-  const { error } = await params.supabase
+}): Promise<NextResponse | { authority_revision: string }> {
+  const { data, error } = await params.supabase
     .from("connected_client_grants")
     .upsert(
       {
@@ -262,13 +262,13 @@ export async function upsertGrant(params: {
         updated_at: new Date().toISOString(),
       },
       { onConflict: "client_id,user_id" },
-    );
+    ).select("authority_revision").maybeSingle();
 
-  if (error) {
-    return jsonNoStore({ error: "grant_save_failed", detail: error.message }, 500);
+  if (error || typeof data?.authority_revision !== "string" || !data.authority_revision) {
+    return jsonNoStore({ error: "grant_save_failed", detail: error?.message ?? "Missing grant revision." }, 500);
   }
 
-  return null;
+  return { authority_revision: data.authority_revision };
 }
 
 export async function loadActiveGrant(params: {

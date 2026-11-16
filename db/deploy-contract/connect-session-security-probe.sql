@@ -23,4 +23,7 @@ BEGIN
  IF NOT EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='public.connect_authorization_codes'::regclass AND tgname='connect_code_grant' AND tgenabled='O')
   OR NOT EXISTS(SELECT 1 FROM pg_trigger WHERE tgrelid='public.connected_client_sessions'::regclass AND tgname='connected_session_v2_guard' AND tgenabled='O') THEN
   RAISE EXCEPTION 'connect_grant_lifetime_guard_missing'; END IF;
+ IF position('authority_revision=NEW.grant_revision' IN pg_get_functiondef('private.bind_connect_code_grant_v2()'::regprocedure))=0
+  OR position('INTO NEW.grant_revision' IN pg_get_functiondef('private.bind_connect_code_grant_v2()'::regprocedure))>0 THEN
+  RAISE EXCEPTION 'connect_code_consent_revision_guard_missing'; END IF;
 END $$;

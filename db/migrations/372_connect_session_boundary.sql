@@ -28,9 +28,11 @@ ALTER TABLE public.connect_authorization_codes ADD COLUMN grant_revision uuid;
 CREATE FUNCTION private.bind_connect_code_grant_v2() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 BEGIN
- SELECT authority_revision INTO NEW.grant_revision FROM public.connected_client_grants
+ -- The caller supplies the revision returned by its own consent upsert.
+ -- Never rebind an earlier consent to a later revoke/regrant lifetime.
+ PERFORM 1 FROM public.connected_client_grants
  WHERE client_id=NEW.client_id AND user_id=NEW.user_id AND revoked_at IS NULL
- AND NEW.scopes <@ scopes FOR SHARE;
+ AND authority_revision=NEW.grant_revision AND NEW.scopes <@ scopes FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'invalid_connected_grant' USING ERRCODE='42501'; END IF;
  RETURN NEW;
 END;

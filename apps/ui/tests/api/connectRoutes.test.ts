@@ -97,7 +97,7 @@ describe("2000NL Connect API", () => {
       return {
         upsert: vi.fn((row: any) => {
           upserts.push({ table, row });
-          return Promise.resolve({ error: null });
+          return queryChain({ data: { authority_revision: "consent-revision" }, error: null });
         }),
         insert: vi.fn((row: any) => {
           inserts.push({ table, row });
@@ -153,6 +153,7 @@ describe("2000NL Connect API", () => {
     expect(inserts[0]).toMatchObject({
       table: "connect_authorization_codes",
       row: {
+        grant_revision: "consent-revision",
         client_id: "audiofilms_chrome",
         user_id: "user-1",
         user_email: "user@example.com",
