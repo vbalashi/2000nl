@@ -21,6 +21,9 @@ const JOURNAL_ACTIONS = [
   "audit.journal.read",
   "user.registry.read",
   "user.profile.read",
+  "feedback.registry.read",
+  "feedback.detail.read",
+  "operator.permissions.updated",
   "admission.approve", "admission.reject", "admission.revoke", "admission.invite", "admission.mode", "admission.auto_approve",
 ] as const satisfies readonly AdminAuditAction[];
 const PAGE_SIZES = [25, 50, 100] as const;
