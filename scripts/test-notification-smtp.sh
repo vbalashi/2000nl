@@ -3,16 +3,20 @@
 set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
 task_dir=$(mktemp -d "${TMPDIR:-/tmp}/2000nl-notification-smtp.XXXXXX")
-task_container="2000nl-smtp-test-$$"
+task_container="2000nl-smtp-test-$$-$(basename "$task_dir")"
+task_created=0
 cleanup() {
-  docker stop "$task_container" >/dev/null 2>&1 || true
-  docker rm "$task_container" >/dev/null 2>&1 || true
+  if [[ "$task_created" == 1 ]]; then
+    docker stop "$task_container" >/dev/null 2>&1 || true
+    docker rm "$task_container" >/dev/null 2>&1 || true
+  fi
   rm -r "$task_dir"
 }
 trap cleanup EXIT
 openssl req -x509 -newkey rsa:2048 -nodes -keyout "$task_dir/key.pem" -out "$task_dir/cert.pem" -days 1 -subj '/CN=127.0.0.1' -addext 'subjectAltName=IP:127.0.0.1' >/dev/null 2>&1
 # Copy, rather than bind mount, so the test also works with a remote Docker VM.
 docker create --name "$task_container" -p 127.0.0.1::1025 -p 127.0.0.1::8025 public.ecr.aws/supabase/mailpit:v1.22.3 --smtp-tls-cert /tmp/cert.pem --smtp-tls-key /tmp/key.pem --smtp-require-starttls --smtp-auth-accept-any >/dev/null
+task_created=1
 docker cp "$task_dir/cert.pem" "$task_container:/tmp/cert.pem"
 docker cp "$task_dir/key.pem" "$task_container:/tmp/key.pem"
 docker start "$task_container" >/dev/null
