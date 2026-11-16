@@ -150,7 +150,10 @@ describe.skipIf(!url)('Library bounded article batch',()=>{
    expect((await read()).error).toBe('group-too-large');
    await c.query("update private.source_entry_bindings set binding_state='retired' where word_entry_id=$1",[ids[50]]);
    expect((await read()).items).toHaveLength(50);
-   await c.query("update word_entries set raw=jsonb_build_object('meanings',jsonb_build_array(jsonb_build_object('definition',repeat('x',2097152)))) where id=$1",[ids[0]]);
+   // Exercise the actual raw-byte limit without tokenizing a two-megabyte word
+   // in the unrelated search-index trigger while constructing the fixture.
+   await c.query("update word_entries set raw=raw || jsonb_build_object('fixturePadding',repeat('x',2097152)) where id=$1",[ids[0]]);
+   expect(Number((await c.query('select octet_length(raw::text) bytes from word_entries where id=$1',[ids[0]])).rows[0].bytes)).toBeGreaterThan(2097152);
    expect((await read()).error).toBe('article_batch_too_large');
   },user);
  },30000);
