@@ -2,7 +2,7 @@ import 'server-only';
 import { request } from 'node:http';
 
 /** Private host socket only; the browser never receives a token or Vault response. */
-async function brokerRequest(path:string,payload:unknown):Promise<unknown> {
+async function brokerRequest(path:string,payload:unknown,timeoutMs=15000):Promise<unknown> {
  const socketPath=process.env.OPERATOR_SECRET_BROKER_SOCKET;
  if(!socketPath || !socketPath.startsWith('/') || socketPath.includes('\0') || socketPath.length>100)throw new Error('secret storage unavailable');
  const body=JSON.stringify(payload);
@@ -22,7 +22,7 @@ async function brokerRequest(path:string,payload:unknown):Promise<unknown> {
     }catch{fail();}
    });
   });
-  timeout=setTimeout(()=>{req.destroy();fail();},15000);
+  timeout=setTimeout(()=>{req.destroy();fail();},timeoutMs);
   req.on('error',fail);req.end(body);
  });
 }
@@ -30,7 +30,7 @@ async function brokerRequest(path:string,payload:unknown):Promise<unknown> {
 export async function storeBotToken(botId:string,operation:string,token:string):Promise<string> {
  const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
  if(!uuid.test(botId) || !uuid.test(operation) || !/^[0-9]{1,20}:[A-Za-z0-9_-]{1,200}$/.test(token))throw new Error('invalid secret operation');
- const value=await brokerRequest('/v1/bot-token',{botId,operation,token}) as {operation?:unknown;version?:unknown}|null;
+ const value=await brokerRequest('/v1/bot-token',{botId,operation,token},60000) as {operation?:unknown;version?:unknown}|null;
  if(!value || value.operation!==operation || typeof value.version!=='string' || !/^[0-9a-f]{32}$/.test(value.version))throw new Error('secret storage unavailable');
  return value.version;
 }
