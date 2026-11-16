@@ -396,7 +396,7 @@
     {
       "migrationId": 374,
       "file": "db/migrations/374_connect_session_boundary.sql",
-      "sha256": "89c0d35d0ffcc2e87af2d1ab27840b6ec21879f7f5683eff344475cf58f13bfc"
+      "sha256": "2d26b98f35899db2e472b389fa16a9d5b6fef526a63e16ca85ea2b2effa75a5e"
     },
     {
       "migrationId": 375,

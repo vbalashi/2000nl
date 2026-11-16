@@ -73,7 +73,7 @@ REVOKE ALL ON FUNCTION private.request_auth_session_id_v1() FROM PUBLIC,anon,aut
 
 CREATE FUNCTION private.api_session_allowed_v1(p_first_party_only boolean DEFAULT false) RETURNS boolean
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,public,private AS $$
-DECLARE sid uuid:=private.request_auth_session_id_v1(); principal uuid:=auth.uid(); connection public.connected_client_sessions;
+DECLARE sid uuid:=private.request_auth_session_id_v1(); principal uuid:=(SELECT auth.uid()); connection public.connected_client_sessions;
  proof text;
 BEGIN
  -- A refreshed JWT cannot turn a pre-cutover auth session into a new session.
