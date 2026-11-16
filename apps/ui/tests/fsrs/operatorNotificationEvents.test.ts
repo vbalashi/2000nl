@@ -91,4 +91,21 @@ describeIfDb('operator notification events',()=>{
   });
  });
 
+ test('revoked operator cannot use an existing Telegram decision',async()=>{
+  await withTransaction(pool,async client=>{
+   await client.query('update private.operator_notification_settings set enabled=true where singleton');
+   const user=randomUUID(),operator=randomUUID(),email=`${randomUUID()}@example.test`;
+   await ensureUserWithSettings(client,user);await ensureUserWithSettings(client,operator);
+   await client.query('update auth.users set email=$2,email_confirmed_at=now() where id=$1',[user,email]);
+   await client.query("insert into public.admin_operators(email,user_id,is_active,permissions) values($1,$2,true,ARRAY['admission.manage'])",[`op-${email}`,operator]);
+   await client.query("insert into private.admission_requests(email,user_id,status) values($1,$2,'pending')",[email,user]);
+   const event=(await client.query('select id from private.operator_notification_events where admission_email=$1',[email])).rows[0].id;
+   await client.query('update public.admin_operators set is_active=false where user_id=$1',[operator]);
+   await client.query('savepoint denied');
+   await expect(client.query("select public.operator_notification_decide_v1($1,$2,'approve',$3)",[event,operator,randomUUID()])).rejects.toMatchObject({code:'42501'});
+   await client.query('rollback to savepoint denied');
+   expect((await client.query('select status from private.admission_requests where email=$1',[email])).rows[0].status).toBe('pending');
+  });
+ });
+
 });

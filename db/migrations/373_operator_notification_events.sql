@@ -104,7 +104,11 @@ RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE email_value text; current_status text; event_time timestamptz;
 BEGIN
  IF p_action IS NULL OR p_action NOT IN ('approve','reject') OR p_request IS NULL THEN RAISE EXCEPTION 'invalid_action' USING ERRCODE='22023'; END IF;
- PERFORM private.admission_operator(p_operator);
+ -- Hold the operator row through the decision so a concurrent revocation
+ -- serializes with this action rather than racing a stale authorization check.
+ PERFORM 1 FROM public.admin_operators WHERE user_id=p_operator AND is_active
+  AND 'admission.manage'=ANY(permissions) FOR SHARE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'admission_operator_required' USING ERRCODE='42501'; END IF;
  PERFORM 1 FROM private.admission_control WHERE singleton FOR UPDATE;
  SELECT e.admission_email,e.created_at INTO email_value,event_time FROM private.operator_notification_events e
   WHERE e.id=p_event AND e.kind='admission-request';
