@@ -5,7 +5,7 @@ vi.mock('@/lib/admin/adminServerClient',()=>({createAdminServiceClient:()=>({rpc
 vi.mock('@/lib/operatorNotifications/telegram',()=>({sendTelegramMessage:mocks.send}));
 vi.mock('nodemailer',()=>({default:{createTransport:()=>({sendMail:mocks.mail})}}));
 import { dispatchOne } from '@/lib/operatorNotifications/dispatch';
-const event={id:'2af02ce8-d02e-4b91-928f-1a74d54dd912',kind:'admission-request',leaseId:'lease',attempts:1,email:'a@example.test',feedbackId:null,admissionStatus:'pending'};
+const event={id:'2af02ce8-d02e-4b91-928f-1a74d54dd912',kind:'admission-request',leaseId:'lease',attempts:1,email:'a@example.test',feedbackId:null,admissionStatus:'pending',emailVerified:true};
 const config={OPERATOR_TELEGRAM_BOT_TOKEN:'1:fake',OPERATOR_TELEGRAM_CHAT_ID:'-100',OPERATOR_TELEGRAM_ADMISSION_TOPIC_ID:'7',OPERATOR_TELEGRAM_FEEDBACK_TOPIC_ID:'8',OPERATOR_SMTP_HOST:'smtp.test',OPERATOR_SMTP_USER:'u',OPERATOR_SMTP_PASSWORD:'p',OPERATOR_SMTP_FROM:'app@example.test',OPERATOR_NOTIFICATION_SITE_URL:'https://example.test',OPERATOR_SMTP_PORT:'587'};
 beforeEach(()=>{for(const [k,v] of Object.entries(config))vi.stubEnv(k,v);mocks.rpc.mockReset();mocks.send.mockReset();mocks.mail.mockReset();});
 afterEach(()=>{vi.unstubAllEnvs();});
@@ -18,3 +18,5 @@ test('links feedback to its administrative detail by feedback item ID',async()=>
 
 test('routes to an explicitly unthreaded chat',async()=>{vi.stubEnv('OPERATOR_TELEGRAM_ADMISSION_TOPIC_ID','none');claim([event]);mocks.send.mockResolvedValue({status:'sent',messageId:1});expect(await dispatchOne()).toBe('sent');expect(mocks.send.mock.calls[0][1]).toMatchObject({topicId:null});});
 test('missing topic configuration does not claim events',async()=>{vi.stubEnv('OPERATOR_TELEGRAM_ADMISSION_TOPIC_ID','');expect(await dispatchOne()).toBe('disabled');expect(mocks.rpc).not.toHaveBeenCalled();});
+
+test('does not mail when the approved identity is no longer verified',async()=>{claim([{...event,kind:'admission-approved',admissionStatus:'approved',emailVerified:false}]);expect(await dispatchOne()).toBe('failed');expect(mocks.mail).not.toHaveBeenCalled();});

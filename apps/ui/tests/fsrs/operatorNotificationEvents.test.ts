@@ -56,6 +56,12 @@ describeIfDb('operator notification events',()=>{
    expect((await client.query("select public.operator_notification_decide_v1($1,$2,'approve',$3) result",[event,operator,randomUUID()])).rows[0].result).toBe('decided');
    expect((await client.query("select public.operator_notification_decide_v1($1,$2,'reject',$3) result",[event,operator,randomUUID()])).rows[0].result).toBe('already_decided');
    expect((await client.query("select kind from private.operator_notification_events where admission_email=$1 order by created_at",[email])).rows.map(x=>x.kind)).toEqual(['admission-request','admission-approved']);
+   const approved=(await client.query('select public.operator_notification_claim_v1(10) event')).rows.map(row=>row.event).find(row=>row.kind==='admission-approved' && row.email===email);
+   expect(approved.emailVerified).toBe(true);
+   await client.query('update auth.users set email_confirmed_at=null where id=$1',[user]);
+   await client.query("update private.operator_notification_events set lease_until=clock_timestamp()-interval '1 second' where id=$1",[approved.id]);
+   const reclaimed=(await client.query('select public.operator_notification_claim_v1(10) event')).rows.map(row=>row.event).find(row=>row.id===approved.id);
+   expect(reclaimed.emailVerified).toBe(false);
   });
  });
  test('expired final lease fails and retention begins at completion',async()=>{

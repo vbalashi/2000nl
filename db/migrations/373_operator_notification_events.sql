@@ -77,8 +77,10 @@ BEGIN
   FROM candidates c WHERE e.id=c.id RETURNING e.*
  ) SELECT jsonb_build_object('id',c.id,'kind',c.kind,'leaseId',c.lease_id,'attempts',c.attempts,
    'createdAt',c.created_at,'email',c.admission_email,'feedbackId',c.feedback_id,
-   'admissionStatus',a.status)
- FROM claimed c LEFT JOIN private.admission_requests a ON a.email=c.admission_email;
+   'admissionStatus',a.status,
+   'emailVerified',coalesce(u.email_confirmed_at IS NOT NULL AND lower(btrim(u.email))=c.admission_email,false))
+ FROM claimed c LEFT JOIN private.admission_requests a ON a.email=c.admission_email
+ LEFT JOIN auth.users u ON u.id=a.user_id;
 END; $$;
 
 CREATE FUNCTION public.operator_notification_settle_v1(p_id uuid,p_lease uuid,p_outcome text,p_delay integer DEFAULT NULL)

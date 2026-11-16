@@ -23,7 +23,7 @@ describe.skipIf(!enabled)('isolated SMTP delivery', () => {
  });
  afterEach(() => { vi.unstubAllEnvs(); });
  test('sends the approval through STARTTLS to an isolated receiver', async () => {
-  const event={id:'11111111-1111-4111-8111-111111111111',kind:'admission-approved',leaseId:'lease',attempts:1,email:'recipient@example.test',feedbackId:null,admissionStatus:'approved'};
+  const event={id:'11111111-1111-4111-8111-111111111111',kind:'admission-approved',leaseId:'lease',attempts:1,email:'recipient@example.test',feedbackId:null,admissionStatus:'approved',emailVerified:true};
   mocks.rpc.mockImplementation(async (name: string) => name==='operator_notification_claim_v1' ? {data:[event],error:null} : {data:true,error:null});
   expect(await dispatchOne()).toBe('sent');
   const response=await fetch(`http://127.0.0.1:${httpPort}/api/v1/messages`);

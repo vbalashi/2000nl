@@ -4,7 +4,7 @@ import { createAdminServiceClient } from '@/lib/admin/adminServerClient';
 import { sendTelegramMessage } from './telegram';
 import { parseTopic } from './topic';
 
-type Event={id:string;kind:'admission-request'|'admission-approved'|'feedback';leaseId:string;attempts:number;email:string|null;feedbackId:string|null;admissionStatus:string|null};
+type Event={id:string;kind:'admission-request'|'admission-approved'|'feedback';leaseId:string;attempts:number;email:string|null;feedbackId:string|null;admissionStatus:string|null;emailVerified:boolean};
 type Outcome='sent'|'retry'|'failed';
 
 /** Processes one lease; external delivery may succeed even when its receipt is lost. */
@@ -28,7 +28,7 @@ export async function dispatchOne(): Promise<'disabled'|'idle'|Outcome> {
  try {
   if(event.kind==='admission-approved') {
    if(event.admissionStatus!=='approved') outcome='sent';
-   else if(!event.email) outcome='failed';
+   else if(!event.email || !event.emailVerified) outcome='failed';
    else {
     const smtp=nodemailer.createTransport({host,port,secure:port===465,requireTLS:port!==465,auth:{user,pass},connectionTimeout:10000,greetingTimeout:10000,socketTimeout:15000});
     await smtp.sendMail({from,to:event.email,subject:'Your 2000NL access is ready',text:`Your request has been approved. You can now sign in at ${siteUrl.origin}/`});
