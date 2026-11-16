@@ -108,4 +108,40 @@ describeIfDb('operator notification events',()=>{
   });
  });
 
+ test('a concurrent revocation wins before a waiting Telegram decision',async()=>{
+  const operator=randomUUID(), event=randomUUID(), email=`${randomUUID()}@example.test`;
+  const locker=await pool.connect(), worker=await pool.connect();
+  try {
+   await pool.query('insert into auth.users(id,email,email_confirmed_at) values($1,$2,now())',[operator,`op-${email}`]);
+   await pool.query("insert into public.admin_operators(email,user_id,is_active,permissions) values($1,$2,true,ARRAY['admission.manage'])",[`op-${email}`,operator]);
+   await pool.query("insert into private.admission_requests(email,status) values($1,'pending')",[email]);
+   await pool.query("insert into private.operator_notification_events(id,kind,admission_email) values($1,'admission-request',$2)",[event,email]);
+   const lockerPid=(await locker.query('select pg_backend_pid() pid')).rows[0].pid;
+   const workerPid=(await worker.query('select pg_backend_pid() pid')).rows[0].pid;
+   await locker.query('begin');
+   await locker.query('update public.admin_operators set is_active=false where user_id=$1',[operator]);
+   await worker.query('begin');
+   await worker.query("set local statement_timeout='5s'");
+   const decision=worker.query("select public.operator_notification_decide_v1($1,$2,'approve',$3)",[event,operator,randomUUID()]).then(()=>null,error=>error);
+   let blocked=false;
+   for(let attempt=0;attempt<100;attempt++){
+    blocked=(await pool.query('select $1=ANY(pg_blocking_pids($2)) blocked',[lockerPid,workerPid])).rows[0].blocked;
+    if(blocked)break;
+    await new Promise(resolve=>setTimeout(resolve,20));
+   }
+   expect(blocked).toBe(true);
+   await locker.query('commit');
+   expect(await decision).toMatchObject({code:'42501'});
+   await worker.query('rollback');
+   expect((await pool.query('select status from private.admission_requests where email=$1',[email])).rows[0].status).toBe('pending');
+  } finally {
+   await locker.query('rollback').catch(()=>{});await worker.query('rollback').catch(()=>{});
+   locker.release();worker.release();
+   await pool.query('delete from private.operator_notification_events where id=$1',[event]);
+   await pool.query('delete from private.admission_requests where email=$1',[email]);
+   await pool.query('delete from public.admin_operators where user_id=$1',[operator]);
+   await pool.query('delete from auth.users where id=$1',[operator]);
+  }
+ },10000);
+
 });
