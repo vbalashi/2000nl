@@ -391,7 +391,7 @@
     {
       "migrationId": 373,
       "file": "db/migrations/373_operator_notification_events.sql",
-      "sha256": "ef7d5a0c7d7b99a1e1f0938f56b0643231eca2acc2347062f0e7ca03451fdaad"
+      "sha256": "76b68fa72d2cdacb2223416328000ad5553a21999f83ec3563a3928b3a5d13cc"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-373.sql",

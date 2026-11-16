@@ -11,6 +11,7 @@ CREATE TABLE private.operator_notification_settings (
  singleton boolean PRIMARY KEY DEFAULT true CHECK (singleton),
  enabled boolean NOT NULL DEFAULT false
 );
+ALTER TABLE private.operator_notification_settings ENABLE ROW LEVEL SECURITY;
 INSERT INTO private.operator_notification_settings(singleton) VALUES(true);
 REVOKE ALL ON private.operator_notification_settings FROM PUBLIC,anon,authenticated,service_role;
 
@@ -169,19 +170,11 @@ CREATE TABLE private.operator_notification_events (
  admission_email text REFERENCES private.admission_requests(email) ON DELETE CASCADE,
  feedback_id uuid REFERENCES public.feedback_items(id) ON DELETE CASCADE,
  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
- state text NOT NULL DEFAULT 'pending' CHECK (state IN ('pending','leased','sent','failed')),
- attempts integer NOT NULL DEFAULT 0 CHECK (attempts >= 0),
- next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp(),
- lease_id uuid,
- lease_until timestamptz,
- finished_at timestamptz,
  CHECK ((kind='feedback' AND feedback_id IS NOT NULL AND admission_email IS NULL)
-     OR (kind<>'feedback' AND admission_email IS NOT NULL AND feedback_id IS NULL)),
- CHECK ((state='leased') = (lease_id IS NOT NULL AND lease_until IS NOT NULL)),
- CHECK ((state IN ('sent','failed')) = (finished_at IS NOT NULL))
+     OR (kind<>'feedback' AND admission_email IS NOT NULL AND feedback_id IS NULL))
 );
-CREATE INDEX operator_notification_ready ON private.operator_notification_events(next_attempt_at,created_at)
- WHERE state IN ('pending','leased');
+CREATE INDEX operator_notification_event_retention ON private.operator_notification_events(created_at,id);
+ALTER TABLE private.operator_notification_events ENABLE ROW LEVEL SECURITY;
 CREATE UNIQUE INDEX operator_notification_feedback_once ON private.operator_notification_events(feedback_id)
  WHERE kind='feedback';
 REVOKE ALL ON private.operator_notification_events FROM PUBLIC,anon,authenticated,service_role;
@@ -211,9 +204,11 @@ CREATE TABLE private.operator_notification_deliveries (
  CHECK ((transport='email' AND route_id IS NULL AND bot_id IS NULL AND secret_version IS NULL AND chat_id IS NULL)
   OR (transport='telegram' AND route_id IS NOT NULL AND bot_id IS NOT NULL AND route_revision IS NOT NULL AND secret_version IS NOT NULL AND chat_id IS NOT NULL))
 );
+CREATE INDEX operator_notification_delivery_event ON private.operator_notification_deliveries(event_id);
 CREATE UNIQUE INDEX operator_notification_delivery_route ON private.operator_notification_deliveries(event_id,route_id) WHERE route_id IS NOT NULL;
 CREATE UNIQUE INDEX operator_notification_delivery_email ON private.operator_notification_deliveries(event_id) WHERE transport='email';
 CREATE INDEX operator_notification_delivery_ready ON private.operator_notification_deliveries(next_attempt_at,id) WHERE state IN ('pending','leased');
+CREATE INDEX operator_notification_delivery_retention ON private.operator_notification_deliveries(finished_at,id) WHERE state IN ('sent','failed','cancelled');
 ALTER TABLE private.operator_notification_deliveries ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON private.operator_notification_deliveries FROM PUBLIC,anon,authenticated,service_role;
 CREATE FUNCTION private.fanout_operator_notification_v1() RETURNS trigger
@@ -299,51 +294,9 @@ END; $$;
 CREATE TRIGGER operator_feedback_event AFTER INSERT ON public.feedback_items
  FOR EACH ROW EXECUTE FUNCTION private.enqueue_operator_feedback_v1();
 
--- The lease token prevents a late worker from settling a subsequently reclaimed job.
-CREATE FUNCTION public.operator_notification_claim_v1(p_limit integer DEFAULT 10)
-RETURNS SETOF jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
-BEGIN
- IF p_limit IS NULL OR p_limit NOT BETWEEN 1 AND 50 THEN RAISE EXCEPTION 'invalid_limit' USING ERRCODE='22023'; END IF;
- IF NOT EXISTS(SELECT 1 FROM private.operator_notification_settings WHERE singleton AND enabled) THEN RETURN; END IF;
- -- A worker may die after claiming its final attempt. Expired final leases must
- -- become visible failures, rather than being reclaimed forever.
- UPDATE private.operator_notification_events SET state='failed',lease_id=NULL,lease_until=NULL,finished_at=clock_timestamp()
- WHERE state='leased' AND lease_until<clock_timestamp() AND attempts>=10;
- RETURN QUERY WITH candidates AS (
-  SELECT e.id FROM private.operator_notification_events e
-  WHERE (e.state='pending' AND e.next_attempt_at<=clock_timestamp()) OR (e.state='leased' AND e.lease_until<clock_timestamp())
-  ORDER BY e.next_attempt_at,e.created_at FOR UPDATE SKIP LOCKED LIMIT p_limit
- ), claimed AS (
-  UPDATE private.operator_notification_events e SET state='leased',lease_id=gen_random_uuid(),
-   lease_until=clock_timestamp()+interval '2 minutes',attempts=e.attempts+1
-  FROM candidates c WHERE e.id=c.id RETURNING e.*
- ) SELECT jsonb_build_object('id',c.id,'kind',c.kind,'leaseId',c.lease_id,'attempts',c.attempts,
-   'createdAt',c.created_at,'email',c.admission_email,'feedbackId',c.feedback_id,
-   'admissionStatus',a.status,
-   'emailVerified',coalesce(u.email_confirmed_at IS NOT NULL AND lower(btrim(u.email))=c.admission_email,false))
- FROM claimed c LEFT JOIN private.admission_requests a ON a.email=c.admission_email
- LEFT JOIN auth.users u ON u.id=a.user_id;
-END; $$;
-
-CREATE FUNCTION public.operator_notification_settle_v1(p_id uuid,p_lease uuid,p_outcome text,p_delay integer DEFAULT NULL)
-RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE affected integer;
-BEGIN
- IF p_id IS NULL OR p_lease IS NULL OR p_outcome NOT IN ('sent','retry','failed') OR p_outcome IS NULL
- OR (p_outcome='retry' AND (p_delay IS NULL OR p_delay NOT BETWEEN 1 AND 86400)) THEN
-  RAISE EXCEPTION 'invalid_settlement' USING ERRCODE='22023'; END IF;
- UPDATE private.operator_notification_events SET
-  state=CASE WHEN p_outcome='retry' AND attempts>=10 THEN 'failed' WHEN p_outcome='retry' THEN 'pending' ELSE p_outcome END,
-  next_attempt_at=CASE WHEN p_outcome='retry' AND attempts<10 THEN clock_timestamp()+make_interval(secs=>p_delay) ELSE next_attempt_at END,
-  finished_at=CASE WHEN p_outcome<>'retry' OR attempts>=10 THEN clock_timestamp() ELSE NULL END,
-  lease_id=NULL,lease_until=NULL
- WHERE id=p_id AND state='leased' AND lease_id=p_lease AND lease_until>clock_timestamp();
- GET DIAGNOSTICS affected=ROW_COUNT; RETURN affected=1;
-END; $$;
-
 -- Preserve the admission control -> request lock ordering used by the existing
 -- mutation. A request-event UUID is the opaque callback identity and expires.
-CREATE FUNCTION public.operator_notification_decide_v1(p_event uuid,p_operator uuid,p_action text,p_request uuid)
+CREATE FUNCTION private.operator_notification_decide_v1(p_event uuid,p_operator uuid,p_action text,p_request uuid)
 RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE email_value text; current_status text; event_time timestamptz;
 BEGIN
@@ -363,24 +316,26 @@ BEGIN
  RETURN 'decided';
 END; $$;
 
-CREATE FUNCTION public.operator_delivery_decide_v1(p_delivery uuid,p_bot uuid,p_chat text,p_topic bigint,p_operator uuid,p_action text,p_request uuid) RETURNS text
+CREATE FUNCTION public.operator_delivery_decide_v1(p_delivery uuid,p_bot uuid,p_version text,p_chat text,p_topic bigint,p_operator uuid,p_action text,p_request uuid) RETURNS text
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE event uuid;
 BEGIN
- -- The callback identity is one delivery, not an unrestricted domain event.
+ PERFORM 1 FROM private.operator_notification_settings WHERE singleton AND enabled FOR SHARE;
+ IF NOT FOUND THEN RETURN 'expired'; END IF;
+ -- The callback identity includes this delivery and its exact key version.
  SELECT d.event_id INTO event FROM private.operator_notification_deliveries d
  JOIN private.operator_notification_routes r ON r.id=d.route_id
  JOIN private.operator_notification_bots b ON b.id=d.bot_id
  JOIN private.operator_notification_events e ON e.id=d.event_id
- WHERE d.id=p_delivery AND d.bot_id=p_bot AND d.chat_id=p_chat AND d.topic_id IS NOT DISTINCT FROM p_topic
+ WHERE d.id=p_delivery AND d.bot_id=p_bot AND d.secret_version=p_version AND d.chat_id=p_chat AND d.topic_id IS NOT DISTINCT FROM p_topic
   AND d.transport='telegram' AND d.state IN ('sent','leased') AND r.enabled AND r.bot_id=p_bot
   AND b.credential_state='ready' AND b.secret_version=d.secret_version AND e.kind='admission-request'
  FOR SHARE OF b,r,d;
  IF event IS NULL THEN RETURN 'expired'; END IF;
- RETURN public.operator_notification_decide_v1(event,p_operator,p_action,p_request);
+ RETURN private.operator_notification_decide_v1(event,p_operator,p_action,p_request);
 END; $$;
-REVOKE ALL ON FUNCTION public.operator_delivery_decide_v1(uuid,uuid,text,bigint,uuid,text,uuid) FROM PUBLIC,anon,authenticated,service_role;
-GRANT EXECUTE ON FUNCTION public.operator_delivery_decide_v1(uuid,uuid,text,bigint,uuid,text,uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.operator_delivery_decide_v1(uuid,uuid,text,text,bigint,uuid,text,uuid) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.operator_delivery_decide_v1(uuid,uuid,text,text,bigint,uuid,text,uuid) TO service_role;
 
 CREATE FUNCTION public.operator_notification_status_v1() RETURNS jsonb
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
@@ -393,13 +348,18 @@ CREATE FUNCTION public.operator_notification_cleanup_v1() RETURNS integer
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE removed integer; parents integer;
 BEGIN
- DELETE FROM private.operator_notification_deliveries WHERE
-  (state IN ('sent','cancelled') AND finished_at<clock_timestamp()-interval '30 days')
-  OR (state='failed' AND finished_at<clock_timestamp()-interval '90 days');
+ WITH expired AS (
+  SELECT id FROM private.operator_notification_deliveries WHERE
+   (state IN ('sent','cancelled') AND finished_at<clock_timestamp()-interval '30 days')
+   OR (state='failed' AND finished_at<clock_timestamp()-interval '90 days')
+  ORDER BY finished_at,id FOR UPDATE SKIP LOCKED LIMIT 500
+ ) DELETE FROM private.operator_notification_deliveries d USING expired e WHERE d.id=e.id;
  GET DIAGNOSTICS removed=ROW_COUNT;
- DELETE FROM private.operator_notification_events e WHERE NOT EXISTS(SELECT 1 FROM private.operator_notification_deliveries d WHERE d.event_id=e.id)
- AND ((state='pending' AND created_at<clock_timestamp()-interval '30 days') OR (state='sent' AND finished_at<clock_timestamp()-interval '30 days')
-   OR (state='failed' AND finished_at<clock_timestamp()-interval '90 days'));
+ WITH expired AS (
+  SELECT e.id FROM private.operator_notification_events e WHERE e.created_at<clock_timestamp()-interval '30 days'
+   AND NOT EXISTS(SELECT 1 FROM private.operator_notification_deliveries d WHERE d.event_id=e.id)
+  ORDER BY e.created_at,e.id FOR UPDATE SKIP LOCKED LIMIT 500
+ ) DELETE FROM private.operator_notification_events e USING expired x WHERE e.id=x.id;
  GET DIAGNOSTICS parents=ROW_COUNT; RETURN removed+parents;
 END; $$;
 REVOKE ALL ON FUNCTION public.operator_notification_status_v1(),public.operator_notification_cleanup_v1() FROM PUBLIC,anon,authenticated,service_role;
@@ -407,7 +367,6 @@ GRANT EXECUTE ON FUNCTION public.operator_notification_status_v1(),public.operat
 
 REVOKE ALL ON FUNCTION private.enqueue_operator_admission_v1() FROM PUBLIC,anon,authenticated,service_role;
 REVOKE ALL ON FUNCTION private.enqueue_operator_feedback_v1() FROM PUBLIC,anon,authenticated,service_role;
-REVOKE ALL ON FUNCTION public.operator_notification_claim_v1(integer),public.operator_notification_settle_v1(uuid,uuid,text,integer),public.operator_notification_decide_v1(uuid,uuid,text,uuid) FROM PUBLIC,anon,authenticated,service_role;
-GRANT EXECUTE ON FUNCTION public.operator_notification_claim_v1(integer),public.operator_notification_settle_v1(uuid,uuid,text,integer),public.operator_notification_decide_v1(uuid,uuid,text,uuid) TO service_role;
+REVOKE ALL ON FUNCTION private.operator_notification_decide_v1(uuid,uuid,text,uuid) FROM PUBLIC,anon,authenticated,service_role;
 NOTIFY pgrst,'reload schema';
 COMMIT;
