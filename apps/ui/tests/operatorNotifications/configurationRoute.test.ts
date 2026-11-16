@@ -50,3 +50,11 @@ test('failed Vault storage marks the operation failed without leaking the token'
  expect(result.status).toBe(503);expect(JSON.stringify(await result.json())).not.toContain('fake_token');
  expect(mocks.rpc.mock.calls[1][1]).toMatchObject({p_version:null});
 });
+
+test('changes the global switch through the audited operation and rejects extra fields',async()=>{
+ mocks.rpc.mockResolvedValue({data:true,error:null});
+ const result=await POST(request({enabled:true}));
+ expect(result.status).toBe(200);expect(await result.json()).toEqual({enabled:true});
+ expect(mocks.rpc).toHaveBeenCalledWith('admin_notification_enabled_v1',{p_operator:'operator',p_request:'request',p_enabled:true});
+ mocks.rpc.mockClear();expect((await POST(request({enabled:true,token:'secret'}))).status).toBe(400);expect(mocks.rpc).not.toHaveBeenCalled();
+});

@@ -57,6 +57,7 @@ BEGIN
  PERFORM private.require_notification_manager_v1(p_operator);
  IF p_request IS NULL THEN RAISE EXCEPTION 'request_id_required' USING ERRCODE='22023'; END IF;
  SELECT jsonb_build_object(
+  'enabled',(SELECT enabled FROM private.operator_notification_settings WHERE singleton),
   'bots',coalesce((SELECT jsonb_agg(jsonb_build_object('id',b.id,'name',b.name,'credentialState',b.credential_state,'revision',b.revision) ORDER BY b.created_at,b.id) FROM private.operator_notification_bots b),'[]'::jsonb),
   'routes',coalesce((SELECT jsonb_agg(jsonb_build_object('id',r.id,'botId',r.bot_id,'kind',r.kind,'chatId',r.chat_id,'topicId',r.topic_id,'enabled',r.enabled,'revision',r.revision) ORDER BY r.created_at,r.id) FROM private.operator_notification_routes r),'[]'::jsonb),
   'deliveryStatus',coalesce((SELECT jsonb_agg(to_jsonb(summary)) FROM (SELECT route_id AS "routeId",state,count(*) AS count,min(created_at) AS "oldestAt" FROM private.operator_notification_deliveries GROUP BY route_id,state) summary),'[]'::jsonb)) INTO result;
@@ -64,6 +65,19 @@ BEGIN
  VALUES(p_operator,'notifications.configuration.read','success','notification_configuration','all',p_request);
  RETURN result;
 END; $$;
+
+CREATE FUNCTION public.admin_notification_enabled_v1(p_operator uuid,p_request uuid,p_enabled boolean) RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+BEGIN
+ PERFORM private.require_notification_manager_v1(p_operator);
+ IF p_request IS NULL OR p_enabled IS NULL THEN RAISE EXCEPTION 'invalid_setting' USING ERRCODE='22023'; END IF;
+ UPDATE private.operator_notification_settings SET enabled=p_enabled WHERE singleton;
+ INSERT INTO public.admin_audit_events(operator_user_id,action,outcome,target_type,target_id,request_id)
+ VALUES(p_operator,'notifications.configuration.updated','success','notification_setting',CASE WHEN p_enabled THEN 'enabled' ELSE 'disabled' END,p_request);
+ RETURN p_enabled;
+END; $$;
+REVOKE ALL ON FUNCTION public.admin_notification_enabled_v1(uuid,uuid,boolean) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.admin_notification_enabled_v1(uuid,uuid,boolean) TO service_role;
 
 CREATE FUNCTION public.admin_notification_create_bot_v1(p_operator uuid,p_request uuid,p_name text) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$

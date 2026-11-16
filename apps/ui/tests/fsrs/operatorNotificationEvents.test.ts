@@ -191,7 +191,9 @@ describeIfDb('operator notification events',()=>{
    await expect(save(route.id,1,8)).rejects.toMatchObject({code:'40001'});
    await client.query('rollback to savepoint stale_route');
 
+   expect((await client.query('select public.admin_notification_enabled_v1($1,$2,true) enabled',[operator,randomUUID()])).rows[0].enabled).toBe(true);
    const config=(await client.query('select public.admin_notification_configuration_v1($1,$2) config',[operator,randomUUID()])).rows[0].config;
+   expect(config.enabled).toBe(true);
    expect(config.bots.map((bot:{id:string})=>bot.id)).toEqual(expect.arrayContaining([first.id,second.id]));
    expect(JSON.stringify(config)).not.toMatch(/secret_version|token|secretVersion/);
    const operation=randomUUID();
@@ -200,7 +202,7 @@ describeIfDb('operator notification events',()=>{
    expect((await client.query('select public.admin_notification_finish_secret_v1($1,$2,$3,$4,$5) ok',[operator,randomUUID(),first.id,operation,'a'.repeat(32)])).rows[0].ok).toBe(true);
    expect((await client.query('select public.admin_notification_finish_secret_v1($1,$2,$3,$4,$5) ok',[operator,randomUUID(),first.id,operation,'b'.repeat(32)])).rows[0].ok).toBe(false);
 
-   expect((await client.query("select action from public.admin_audit_events where operator_user_id=$1 and action like 'notifications.%'",[operator])).rows).toHaveLength(7);
+   expect((await client.query("select action from public.admin_audit_events where operator_user_id=$1 and action like 'notifications.%'",[operator])).rows).toHaveLength(8);
    expect((await client.query("select has_table_privilege('authenticated','private.operator_notification_bots','select') allowed")).rows[0].allowed).toBe(false);
   });
  });

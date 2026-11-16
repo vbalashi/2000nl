@@ -25,6 +25,11 @@ async function mutate(request:Request,kind:"bot"|"route"|"secret") {
   for(;;){const part=await reader.read();if(part.done)break;size+=part.value.length;if(size>1024){await reader.cancel();return response({error:'request_too_large'},413);}chunks.push(part.value);}
   let input:unknown;
   try{input=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));}catch{return response({error:'invalid_request'},400);}
+  if(kind==='bot' && input && typeof input==='object' && !Array.isArray(input) && Object.keys(input).length===1 && 'enabled' in input && typeof input.enabled==='boolean'){
+   const {data,error}=await createAdminServiceClient().rpc('admin_notification_enabled_v1',{p_operator:principal.userId,p_request:principal.requestId,p_enabled:input.enabled});
+   if(error)throw new Error('configuration unavailable');
+   return response({enabled:data});
+  }
   if(kind==='secret') {
    if(!input || typeof input!=='object' || Array.isArray(input))return response({error:'invalid_request'},400);
    const value=input as Record<string,unknown>;
