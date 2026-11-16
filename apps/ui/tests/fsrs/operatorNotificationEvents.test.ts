@@ -58,4 +58,37 @@ describeIfDb('operator notification events',()=>{
    expect((await client.query("select kind from private.operator_notification_events where admission_email=$1 order by created_at",[email])).rows.map(x=>x.kind)).toEqual(['admission-request','admission-approved']);
   });
  });
+ test('expired final lease fails and retention begins at completion',async()=>{
+  await withTransaction(pool,async client=>{
+   await client.query('update private.operator_notification_settings set enabled=true where singleton');
+   const user=randomUUID(),report=randomUUID(),feedback=randomUUID();
+   await ensureUserWithSettings(client,user);
+   await client.query(`insert into public.feedback_items(id,reporter_user_id,reporter_pseudonym,report_id,source_client,app_build_version,kind,problem_type,target_kind,target,comment_present,sanitized_summary)
+    values($1,$2,'usr_0123456789abcdef01234567',$3,'web','1','content-quality','other','entry','{}',false,'')`,[feedback,user,report]);
+   const event=(await client.query('select id from private.operator_notification_events where feedback_id=$1',[feedback])).rows[0].id;
+   await client.query("update private.operator_notification_events set state='leased',attempts=10,lease_id=$2,lease_until=clock_timestamp()-interval '1 second',created_at=clock_timestamp()-interval '100 days' where id=$1",[event,randomUUID()]);
+   const claimed=(await client.query('select public.operator_notification_claim_v1(10) event')).rows;
+   expect(claimed.some(row=>row.event.id===event)).toBe(false);
+   expect((await client.query('select state,finished_at from private.operator_notification_events where id=$1',[event])).rows[0]).toMatchObject({state:'failed',finished_at:expect.any(Date)});
+   await client.query('select public.operator_notification_cleanup_v1()');
+   expect((await client.query('select id from private.operator_notification_events where id=$1',[event])).rows).toHaveLength(1);
+   await client.query("update private.operator_notification_events set finished_at=clock_timestamp()-interval '91 days' where id=$1",[event]);
+   await client.query('select public.operator_notification_cleanup_v1()');
+   expect((await client.query('select id from private.operator_notification_events where id=$1',[event])).rows).toHaveLength(0);
+  });
+ });
+ test('settlement cannot requeue a final attempt',async()=>{
+  await withTransaction(pool,async client=>{
+   await client.query('update private.operator_notification_settings set enabled=true where singleton');
+   const user=randomUUID(),report=randomUUID(),feedback=randomUUID(),lease=randomUUID();
+   await ensureUserWithSettings(client,user);
+   await client.query(`insert into public.feedback_items(id,reporter_user_id,reporter_pseudonym,report_id,source_client,app_build_version,kind,problem_type,target_kind,target,comment_present,sanitized_summary)
+    values($1,$2,'usr_0123456789abcdef01234567',$3,'web','1','content-quality','other','entry','{}',false,'')`,[feedback,user,report]);
+   const event=(await client.query('select id from private.operator_notification_events where feedback_id=$1',[feedback])).rows[0].id;
+   await client.query("update private.operator_notification_events set state='leased',attempts=10,lease_id=$2,lease_until=clock_timestamp()+interval '1 minute' where id=$1",[event,lease]);
+   expect((await client.query("select public.operator_notification_settle_v1($1,$2,'retry',30) ok",[event,lease])).rows[0].ok).toBe(true);
+   expect((await client.query('select state from private.operator_notification_events where id=$1',[event])).rows[0].state).toBe('failed');
+  });
+ });
+
 });

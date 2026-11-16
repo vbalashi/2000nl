@@ -20,9 +20,11 @@ CREATE TABLE private.operator_notification_events (
  next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp(),
  lease_id uuid,
  lease_until timestamptz,
+ finished_at timestamptz,
  CHECK ((kind='feedback' AND feedback_id IS NOT NULL AND admission_email IS NULL)
      OR (kind<>'feedback' AND admission_email IS NOT NULL AND feedback_id IS NULL)),
- CHECK ((state='leased') = (lease_id IS NOT NULL AND lease_until IS NOT NULL))
+ CHECK ((state='leased') = (lease_id IS NOT NULL AND lease_until IS NOT NULL)),
+ CHECK ((state IN ('sent','failed')) = (finished_at IS NOT NULL))
 );
 CREATE INDEX operator_notification_ready ON private.operator_notification_events(next_attempt_at,created_at)
  WHERE state IN ('pending','leased');
@@ -61,6 +63,10 @@ RETURNS SETOF jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog
 BEGIN
  IF p_limit IS NULL OR p_limit NOT BETWEEN 1 AND 50 THEN RAISE EXCEPTION 'invalid_limit' USING ERRCODE='22023'; END IF;
  IF NOT EXISTS(SELECT 1 FROM private.operator_notification_settings WHERE singleton AND enabled) THEN RETURN; END IF;
+ -- A worker may die after claiming its final attempt. Expired final leases must
+ -- become visible failures, rather than being reclaimed forever.
+ UPDATE private.operator_notification_events SET state='failed',lease_id=NULL,lease_until=NULL,finished_at=clock_timestamp()
+ WHERE state='leased' AND lease_until<clock_timestamp() AND attempts>=10;
  RETURN QUERY WITH candidates AS (
   SELECT e.id FROM private.operator_notification_events e
   WHERE (e.state='pending' AND e.next_attempt_at<=clock_timestamp()) OR (e.state='leased' AND e.lease_until<clock_timestamp())
@@ -82,8 +88,10 @@ BEGIN
  IF p_id IS NULL OR p_lease IS NULL OR p_outcome NOT IN ('sent','retry','failed') OR p_outcome IS NULL
  OR (p_outcome='retry' AND (p_delay IS NULL OR p_delay NOT BETWEEN 1 AND 86400)) THEN
   RAISE EXCEPTION 'invalid_settlement' USING ERRCODE='22023'; END IF;
- UPDATE private.operator_notification_events SET state=CASE WHEN p_outcome='retry' THEN 'pending' ELSE p_outcome END,
-  next_attempt_at=CASE WHEN p_outcome='retry' THEN clock_timestamp()+make_interval(secs=>p_delay) ELSE next_attempt_at END,
+ UPDATE private.operator_notification_events SET
+  state=CASE WHEN p_outcome='retry' AND attempts>=10 THEN 'failed' WHEN p_outcome='retry' THEN 'pending' ELSE p_outcome END,
+  next_attempt_at=CASE WHEN p_outcome='retry' AND attempts<10 THEN clock_timestamp()+make_interval(secs=>p_delay) ELSE next_attempt_at END,
+  finished_at=CASE WHEN p_outcome<>'retry' OR attempts>=10 THEN clock_timestamp() ELSE NULL END,
   lease_id=NULL,lease_until=NULL
  WHERE id=p_id AND state='leased' AND lease_id=p_lease AND lease_until>clock_timestamp();
  GET DIAGNOSTICS affected=ROW_COUNT; RETURN affected=1;
@@ -118,8 +126,8 @@ CREATE FUNCTION public.operator_notification_cleanup_v1() RETURNS integer
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE removed integer;
 BEGIN
- DELETE FROM private.operator_notification_events WHERE (state='sent' AND created_at<clock_timestamp()-interval '30 days')
-   OR (state='failed' AND created_at<clock_timestamp()-interval '90 days');
+ DELETE FROM private.operator_notification_events WHERE (state='sent' AND finished_at<clock_timestamp()-interval '30 days')
+   OR (state='failed' AND finished_at<clock_timestamp()-interval '90 days');
  GET DIAGNOSTICS removed=ROW_COUNT; RETURN removed;
 END; $$;
 REVOKE ALL ON FUNCTION public.operator_notification_status_v1(),public.operator_notification_cleanup_v1() FROM PUBLIC,anon,authenticated,service_role;
