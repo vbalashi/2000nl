@@ -348,6 +348,24 @@ BEGIN
  RETURN 'decided';
 END; $$;
 
+CREATE FUNCTION public.operator_delivery_decide_v1(p_delivery uuid,p_bot uuid,p_chat text,p_topic bigint,p_operator uuid,p_action text,p_request uuid) RETURNS text
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE event uuid;
+BEGIN
+ -- The callback identity is one delivery, not an unrestricted domain event.
+ SELECT d.event_id INTO event FROM private.operator_notification_deliveries d
+ JOIN private.operator_notification_routes r ON r.id=d.route_id
+ JOIN private.operator_notification_bots b ON b.id=d.bot_id
+ JOIN private.operator_notification_events e ON e.id=d.event_id
+ WHERE d.id=p_delivery AND d.bot_id=p_bot AND d.chat_id=p_chat AND d.topic_id IS NOT DISTINCT FROM p_topic
+  AND d.transport='telegram' AND d.state IN ('sent','leased') AND r.enabled AND r.bot_id=p_bot
+  AND b.credential_state='ready' AND b.secret_version=d.secret_version AND e.kind='admission-request';
+ IF event IS NULL THEN RETURN 'expired'; END IF;
+ RETURN public.operator_notification_decide_v1(event,p_operator,p_action,p_request);
+END; $$;
+REVOKE ALL ON FUNCTION public.operator_delivery_decide_v1(uuid,uuid,text,bigint,uuid,text,uuid) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.operator_delivery_decide_v1(uuid,uuid,text,bigint,uuid,text,uuid) TO service_role;
+
 CREATE FUNCTION public.operator_notification_status_v1() RETURNS jsonb
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
  SELECT jsonb_build_object('pending',count(*) FILTER(WHERE state='pending'),

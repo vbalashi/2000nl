@@ -33,7 +33,7 @@ export async function dispatchOne(): Promise<'disabled'|'idle'|Outcome> {
   } else if(event.kind==='admission-request' && event.admissionStatus!=='pending') outcome='sent';
   else {
    const message=event.kind==='admission-request' && event.email
-    ? {botId:event.botId,version:event.secretVersion,chatId:event.chatId,topicId:event.topicId,text:`New access request: ${event.email}`,buttons:[[{text:'Approve',callback_data:`a_${event.eventId}`},{text:'Reject',callback_data:`r_${event.eventId}`}]]}
+    ? {botId:event.botId,version:event.secretVersion,chatId:event.chatId,topicId:event.topicId,text:`New access request: ${event.email}`,buttons:[[{text:'Approve',callback_data:`a_${event.id}`},{text:'Reject',callback_data:`r_${event.id}`}]]}
     : event.kind==='feedback' && event.feedbackId
       ? {botId:event.botId,version:event.secretVersion,chatId:event.chatId,topicId:event.topicId,text:`New card report: ${event.feedbackId}\n${siteUrl.origin}/admin/reports/?feedback=${encodeURIComponent(event.feedbackId)}`,buttons:null}
       : null;

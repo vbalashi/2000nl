@@ -4,7 +4,7 @@ vi.mock('@/lib/admin/adminServerClient',()=>({createAdminServiceClient:()=>({rpc
 import { POST } from '@/app/api/operator-notifications/telegram/route';
 const secret='x'.repeat(40), event='2af02ce8-d02e-4b91-928f-1a74d54dd912', operator='11111111-1111-4111-8111-111111111111';
 const body={callback_query:{id:'123',from:{id:123},data:`a_${event}`,message:{chat:{id:-100},message_thread_id:7}}};
-const req=(value:unknown,token=secret)=>new Request('https://example.test',{method:'POST',headers:{'x-telegram-bot-api-secret-token':token},body:JSON.stringify(value)});
+const req=(value:unknown,token=secret)=>new Request('https://example.test/api/operator-notifications/telegram?bot='+operator,{method:'POST',headers:{'x-telegram-bot-api-secret-token':token},body:JSON.stringify(value)});
 beforeEach(()=>{vi.stubEnv('OPERATOR_TELEGRAM_WEBHOOK_SECRET',secret);vi.stubEnv('OPERATOR_TELEGRAM_CHAT_ID','-100');vi.stubEnv('OPERATOR_TELEGRAM_ADMISSION_TOPIC_ID','7');vi.stubEnv('OPERATOR_TELEGRAM_ADMIN_MAP',JSON.stringify({'123':operator}));rpc.mockReset().mockResolvedValue({data:'decided',error:null});});
 afterEach(()=>{vi.unstubAllEnvs();});
 test('checks webhook secret and ignores operators outside the allowlist',async()=>{
@@ -12,21 +12,17 @@ test('checks webhook secret and ignores operators outside the allowlist',async()
  expect((await POST(req({...body,callback_query:{...body.callback_query,from:{id:999}}}))).status).toBe(200);
  expect(rpc).not.toHaveBeenCalled();
 });
-test('accepts only callbacks from the configured group and topic',async()=>{
- expect((await POST(req({...body,callback_query:{...body.callback_query,message:{chat:{id:-100},message_thread_id:8}}}))).status).toBe(200);
- expect(rpc).not.toHaveBeenCalled();
+test('passes the exact delivery scope to the database authorization',async()=>{
  expect((await POST(req(body))).status).toBe(200);
  expect(rpc).toHaveBeenCalledOnce();
- expect(rpc.mock.calls[0][1]).toMatchObject({p_event:event,p_operator:operator,p_action:'approve'});
+ expect(rpc).toHaveBeenCalledWith('operator_delivery_decide_v1',expect.objectContaining({p_delivery:event,p_bot:operator,p_chat:'-100',p_topic:7,p_operator:operator,p_action:'approve'}));
 });
-
-test('accepts only explicitly unthreaded callbacks for an unthreaded destination',async()=>{
- vi.stubEnv('OPERATOR_TELEGRAM_ADMISSION_TOPIC_ID','none');
- expect((await POST(req(body))).status).toBe(200);expect(rpc).not.toHaveBeenCalled();
+test('supports an unthreaded delivery without widening its scope',async()=>{
  const unthreaded={...body,callback_query:{...body.callback_query,message:{chat:{id:-100}}}};
- expect((await POST(req(unthreaded))).status).toBe(200);expect(rpc).toHaveBeenCalledOnce();
+ expect((await POST(req(unthreaded))).status).toBe(200);
+ expect(rpc.mock.calls[0][1]).toMatchObject({p_topic:null,p_chat:'-100'});
 });
-test('missing topic configuration fails closed',async()=>{
- vi.stubEnv('OPERATOR_TELEGRAM_ADMISSION_TOPIC_ID','');
- await POST(req(body));expect(rpc).not.toHaveBeenCalled();
+test('rejects a missing bot identity before database access',async()=>{
+ await POST(new Request('https://example.test',{method:'POST',headers:{'x-telegram-bot-api-secret-token':secret},body:JSON.stringify(body)}));
+ expect(rpc).not.toHaveBeenCalled();
 });

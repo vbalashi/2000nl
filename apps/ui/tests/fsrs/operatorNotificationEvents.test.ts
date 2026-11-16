@@ -60,6 +60,14 @@ describeIfDb('operator notification events',()=>{
    const events=await client.query("select id from private.operator_notification_events where admission_email=$1",[email]);
    expect(events.rows).toHaveLength(1);
    const event=events.rows[0].id;
+   const bot=randomUUID(),route=randomUUID(),delivery=randomUUID();
+   await client.query("insert into private.operator_notification_bots(id,name,credential_state,secret_version) values($1,'synthetic','ready',$2)",[bot,'a'.repeat(32)]);
+   await client.query("insert into private.operator_notification_routes(id,bot_id,kind,chat_id,topic_id,enabled) values($1,$2,'admission-request','-100123',7,true)",[route,bot]);
+   await client.query("insert into private.operator_notification_deliveries(id,event_id,route_id,bot_id,route_revision,secret_version,chat_id,topic_id,transport,state,finished_at) values($1,$2,$3,$4,1,$5,'-100123',7,'telegram','sent',now())",[delivery,event,route,bot,'a'.repeat(32)]);
+   for(const [candidateBot,chat,topic] of [[randomUUID(),'-100123',7],[bot,'-100999',7],[bot,'-100123',8]] as const){
+    expect((await client.query("select public.operator_delivery_decide_v1($1,$2,$3,$4,$5,'approve',$6) result",[delivery,candidateBot,chat,topic,operator,randomUUID()])).rows[0].result).toBe('expired');
+   }
+
    await client.query('savepoint before_denied');
    await expect(client.query("select public.operator_notification_decide_v1($1,$2,'approve',$3)",[event,user,randomUUID()])).rejects.toThrow();
    await client.query('rollback to savepoint before_denied');
