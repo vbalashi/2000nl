@@ -21,6 +21,9 @@ jobs:
       - name: Test browser profile selection
         working-directory: .
         run: node --test scripts/ci/browser-profile.test.mjs
+      - name: Verify inherited database postflight checks
+        working-directory: .
+        run: node --test db/scripts/generate_known_postflight.test.mjs
       - run: npm ci
       - run: npm run i18n:check
       - run: npm run i18n:check-registration
