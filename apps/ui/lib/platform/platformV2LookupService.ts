@@ -67,7 +67,7 @@ type PlatformV2LookupContext = (
   | {
       kind: "catalog";
       service: ServiceSupabase;
-    }) & { signal?: AbortSignal; libraryCountOnly?: boolean };
+    }) & { signal?: AbortSignal; libraryCountOnly?: boolean; libraryArticleEntryIds?: readonly string[] };
 
 type RpcResult = {
   data: unknown;
@@ -80,6 +80,11 @@ export async function performPlatformV2Lookup(
   libraryScope?: LibrarySearchScope,
   currentCard?: CurrentTrainingCardRead,
 ): Promise<PlatformV2LookupOperationResult> {
+  const batch = context.libraryArticleEntryIds;
+  if (batch && (context.kind !== "authenticated" || context.auth.principal.authKind !== "first_party" ||
+      request.entryId || request.query || libraryScope || currentCard || request.intent !== "dictionary-lookup" ||
+      request.translationTargetLanguageCode || batch.length < 1 || batch.length > 25))
+    return {payload:{error:"invalid_article_batch"},status:400};
   if (currentCard && (context.kind!=="authenticated" || context.auth.principal.authKind!=="first_party" || !request.entryId || request.intent!=="training-review" || libraryScope))
     return { payload: { error: "current_training_card_forbidden" }, status: 403 };
   if (libraryScope && (
@@ -102,7 +107,7 @@ export async function performPlatformV2Lookup(
   const query = request.query?.trim() ?? "";
   const intent = validIntent(request.intent);
 
-  if (!request.entryId && !query && !libraryScope) {
+  if (!request.entryId && !query && !libraryScope && !batch) {
     return { payload: { error: "missing_query" }, status: 400 };
   }
   if (!request.cardTypeId.trim()) {
@@ -113,7 +118,15 @@ export async function performPlatformV2Lookup(
     : libraryScope?.filters
     ? "lookup_platform_v2_library_filtered_entries"
     : libraryScope ? "lookup_platform_v2_library_entries" : "lookup_platform_v2_entries";
-  const lookupResolution = request.entryId
+  const lookupResolution = batch && context.kind === "authenticated"
+    ? {ok:true as const,meaningCounts:new Map<string,number>(),query:"",
+       result:await measure<RpcResult>(timings,"lookup.article-batch",async()=>{
+         const operation=context.service.supabase.rpc("read_platform_v2_library_groups",{
+           p_user_id:context.auth.principal.userId,p_entry_ids:[...batch],
+         });
+         return await (context.signal?operation.abortSignal(context.signal):operation);
+       })}
+    : request.entryId
     ? await resolveExactReadableGroup(context, request, timings, currentCard)
       : {
         ok: true as const,
@@ -172,6 +185,10 @@ export async function performPlatformV2Lookup(
       serverTiming: serverTiming(),
     };
   }
+  if (batch && lookupPayload.error === "entry_not_accessible")
+    return {payload:{error:"entry_not_accessible"},status:404,serverTiming:serverTiming()};
+  if (batch && lookupPayload.error === "article_batch_too_large")
+    return {payload:{error:"article_batch_too_large"},status:413,serverTiming:serverTiming()};
   if (lookupPayload.error === "material_not_accessible")
     return { payload: { error: "material_not_accessible" }, status: 404, serverTiming: serverTiming() };
   if (lookupPayload.error === "group-too-large") {
@@ -309,13 +326,14 @@ export async function performPlatformV2Lookup(
           ),
         )
       : Promise.resolve<RpcResult>({ data: [], error: null });
-  // Cross-reference targets depend only on the looked-up entries.
+  // List rows open the exact source entry in the detail reader, which resolves
+  // reference targets there. Avoid speculative per-target RPCs for a list batch.
   const crossReferencePromise = measure(
     timings,
     "lookup.cross-references",
     () =>
       resolvePlatformV2CrossReferenceTargets(context.service, {
-        sources: entries.flatMap((entry) => {
+        sources: (batch ? [] : entries).flatMap((entry) => {
           const query = platformV2CrossReferenceQuery(entry);
           return query && entry.dictionary_id
             ? [{

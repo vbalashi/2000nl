@@ -169,6 +169,10 @@ export async function ensureAuthSchema(pool: Pool) {
 }
 
 const supabaseCompatSql = `
+  create table if not exists auth.sessions (
+    id uuid primary key, user_id uuid not null references auth.users(id) on delete cascade,
+    created_at timestamptz not null default now(), not_after timestamptz
+  );
   create schema if not exists private;
   create schema if not exists extensions;
 
@@ -244,7 +248,7 @@ export async function runMigrations(pool: Pool) {
     // Supabase grants authenticated access to public tables by default. Keep
     // the plain-Postgres CI shim equivalent for app-local RLS storage tests.
     await pool.query(
-      `grant select, insert, update on public.user_settings to authenticated`,
+      `grant select on public.user_settings to authenticated`,
     );
   } finally {
     await pool.query(`select pg_advisory_unlock(hashtext('2000nl_fsrs_test_migrations'))`);
@@ -346,4 +350,15 @@ export async function callGetNextCard(
     [userId, mode, exclude]
   );
   return rows[0]?.item as any | undefined;
+}
+
+// Explicit signed-in fixture. Opt in only where a test exercises authenticated
+// table/RLS access; claims must still name this real session separately.
+export async function ensureUserWithSession(client: PoolClient, userId: string) {
+  await ensureUserWithSettings(client,userId);
+  await client.query('insert into auth.sessions(id,user_id,created_at) values($1,$1,clock_timestamp()) on conflict(id) do nothing',[userId]);
+}
+export async function seedAuthSession(client: PoolClient, userId: string) {
+  await client.query('insert into auth.sessions(id,user_id,created_at) values($1,$1,clock_timestamp()) on conflict(id) do nothing',[userId]);
+  await client.query("select set_config('request.jwt.claim.session_id',$1,true)",[userId]);
 }

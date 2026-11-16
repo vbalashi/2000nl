@@ -3,12 +3,12 @@ import { projectPlatformV2WordDetails,platformV2HeaderEvidence,platformV2Content
 import { normalizeDictionaryContent,contentFingerprint } from "@/lib/platform/projections/dictionaryContent";
 import { Pool, type PoolClient } from "pg";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { ensureUserWithSettings, getDbUrl, runMigrations, withTransaction } from "./dbTestUtils";
+import { ensureUserWithSession, getDbUrl, runMigrations, withTransaction } from "./dbTestUtils";
 const url=getDbUrl();
-async function user(c:PoolClient,id:string) { await c.query("select set_config('request.jwt.claim.sub',$1,true)",[id]); }
+async function user(c:PoolClient,id:string) { await c.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.session_id',$1,true)",[id]); }
 async function fixture(c:PoolClient) {
   const owner=randomUUID(),viewer=randomUUID(),outsider=randomUUID();
-  for(const id of [owner,viewer,outsider]) await ensureUserWithSettings(c,id);
+  for(const id of [owner,viewer,outsider]) await ensureUserWithSession(c,id);
   await user(c,owner);
   const selected=(await c.query("select create_user_dictionary_entry($1,null,$2) id",[owner,{headword:"bank",languageCode:"nl",definition:"visible meaning",example:{source:"visible example",translation:"visible translation"},notes:"visible note",generation:{kind:"llm",provider:"fixture",source:{contextText:"PRIVATE_CONTEXT_MARKER",connectedClientId:"PRIVATE_CLIENT_MARKER",sourceContext:{artifact:{text:"PRIVATE_ARTIFACT_MARKER"}}}}}])).rows[0].id;
   const dictionary=(await c.query("select dictionary_id from word_entries where id=$1",[selected])).rows[0].dictionary_id;

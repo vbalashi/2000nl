@@ -78,3 +78,7 @@
 \i db/migrations/371_release_notes_english_fallback.sql
 \i db/migrations/372_admin_feedback_review.sql
 \i db/migrations/373_operator_notification_events.sql
+\i db/migrations/374_connect_session_boundary.sql
+\i db/migrations/375_server_owned_subscription_tier.sql
+\i db/migrations/376_provider_work_safety.sql
+\i db/migrations/377_library_article_batch.sql

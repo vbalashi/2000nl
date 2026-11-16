@@ -1,3 +1,4 @@
+import { seedAuthSession } from "./dbTestUtils";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { randomUUID } from "crypto";
 import { Pool, type PoolClient } from "pg";
@@ -10,11 +11,12 @@ async function assumeAuthenticated(client: PoolClient, userId: string) {
   const { rows } = await client.query(
     `select
        has_table_privilege('authenticated', 'public.user_settings', 'SELECT') as can_select,
-       has_table_privilege('authenticated', 'public.user_settings', 'INSERT') as can_insert,
-       has_table_privilege('authenticated', 'public.user_settings', 'UPDATE') as can_update`,
+       has_column_privilege('authenticated', 'public.user_settings', 'user_id', 'INSERT') as can_insert,
+       has_column_privilege('authenticated', 'public.user_settings', 'preferences', 'UPDATE') as can_update`,
   );
   expect(rows[0]).toEqual({ can_select: true, can_insert: true, can_update: true });
 
+  await seedAuthSession(client,userId);
   await client.query(`set local role authenticated`);
   await client.query(`select set_config('request.jwt.claim.sub', $1, true)`, [userId]);
 }

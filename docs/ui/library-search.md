@@ -39,6 +39,32 @@ or projecting articles, learning state or translations. Count requests have no
 cursor and do not change the normal 50-group result page. Examples and definitions
 retain their loaded-match counter policy below.
 
+Words reads 25 matching meanings at a time, preserving the exact server article
+and selected-meaning totals. “More 25” appends one cursor page; the visible list
+is not the full match set. Sibling meanings may span pages: matching identities
+accumulate, while canonical articles are hydrated once per search scope. The
+current-page bulk action refers to the displayed accumulated articles; all-filter
+selection still resolves the complete server-owned scope independently.
+
+Word hits carry authoritative article IDs. A first-party `/api/library/articles`
+request loads at most 25 distinct articles using one set-based content RPC, then
+the common V2 projector batches learning state and progress. It keeps exact-reader
+access checks for representatives and every sibling, and never uses a headword
+spelling as identity. Bounds remain 50 readable meanings per article, 2 MiB raw
+content, 4 MiB with identity, and 8 MiB projected response. Cross-reference target
+enrichment is deferred to the ordinary detail read. Existing per-meaning access,
+note-material and identity work still scales with the number of returned meanings;
+the batch removes request fan-out, not that authorization cost. A partially unavailable
+material keeps the category endpoint's unavailable-source count; a revoked
+requested article fails the batch closed rather than returning private content.
+Transient continuation errors retain the last admitted rows and retry that page;
+authority failure clears them. Scope/account changes cancel late responses.
+Returning after hiding the Library still revalidates the search before displaying
+it; this change does not introduce a cross-activation content cache.
+
+The public fresh-install chain adds migration 375. Managed deployments need the
+separate authorized forward-migration/release procedure before this UI revision.
+
 Examples and definitions load 50 matches at a time. More pages require an explicit
 “More 50” action; opening a category or filter draft never enumerates unseen
 matches for a total. The counter shows the loaded matches with “+” while more

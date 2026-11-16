@@ -1,15 +1,16 @@
 import type { LibraryEntryFilters, LibraryMaterialScope } from "./librarySearchScope";
 import { authenticatedJsonHeaders } from "./platformV2Http";
 import { platformFetchWithTimeout } from "./platformFetchWithTimeout";
-import { fetchPlatformV2LibraryGroup } from "./platformV2LibraryClient";
+import { fetchPlatformV2LibraryGroups } from "./platformV2LibraryClient";
 import { buildLibraryHeadwordGroupResults } from "@/components/training/wordlist/libraryHeadwordGroupResults";
-import type { PlatformHeadwordGroupV2 } from "../../../../packages/shared/types/platformV2";
 
 export type DictionarySearchCategory = "headwords" | "examples" | "definitions" | "alphabetical";
 export const DICTIONARY_SEARCH_CATEGORIES: DictionarySearchCategory[] = ["headwords", "examples", "definitions", "alphabetical"];
 export const CONTEXT_SEARCH_PAGE_SIZE = 50;
+export const WORD_SEARCH_PAGE_SIZE = 25;
 export type DictionaryCategoryHit = {
   resultKey?: string;
+  headwordGroupId?: string;
   entry: { id: string; headword: string; languageCode?: string; summaryDefinition?: string };
   dictionary?: { id?: string; name?: string };
   displayText?: string;
@@ -43,10 +44,11 @@ export async function fetchDictionaryCategoryPage(scope: DictionaryCategoryScope
     body: JSON.stringify({ query: scope.query, languageCode: scope.languageCode,
       dictionaryIds: scope.material ? null : scope.dictionaryId ? [scope.dictionaryId] : null,
       filters: scope.filters, material: scope.material,
-      group: category, cursor, limit: category === "alphabetical" ? 31 : category === "headwords" ? 100 : CONTEXT_SEARCH_PAGE_SIZE }),
+      group: category, cursor, limit: category === "alphabetical" ? 31 : category === "headwords" ? WORD_SEARCH_PAGE_SIZE : CONTEXT_SEARCH_PAGE_SIZE }),
   });
-  const payload = await response.json();
   if (scope.userId) await authenticatedJsonHeaders(scope.userId);
+  if ([401,403,404].includes(response.status)) throw new Error("dictionary_search_access_changed");
+  const payload = await response.json();
   if (payload?.error) throw new Error(payload.error);
   const page = payload?.groups?.[0];
   if (!response.ok || page?.id !== category || !Array.isArray(page.items) || !page.page ||
@@ -58,31 +60,14 @@ export async function fetchDictionaryCategoryPage(scope: DictionaryCategoryScope
   return { ...page, unavailableEntryCount: payload.unavailableEntryCount ?? 0 };
 }
 
-/** Context reads stop at one page. Only word article projection drains its pages. */
+/** Every category publishes one bounded page; continuation is a user action. */
 export async function readDictionaryCategory(scope: DictionaryCategoryScope, category: DictionarySearchCategory,
   onPage: (page: DictionaryCategoryPage, complete: boolean) => void,
 ): Promise<DictionaryCategoryPage> {
-  let cursor: string | null = null;
-  const seenCursors = new Set<string>();
-  const items: DictionaryCategoryHit[] = [];
-  const seenHits = new Set<string>();
-  while (true) {
-    scope.signal.throwIfAborted();
-    const page = await fetchDictionaryCategoryPage(scope, category, cursor);
-    scope.signal.throwIfAborted();
-    for (const item of page.items) {
-      const key = item.resultKey ?? JSON.stringify([item.entry.id, item.field?.sourcePath ?? item.match?.sourcePath ?? ""]);
-      if (!seenHits.has(key)) { seenHits.add(key); items.push(item); }
-    }
-    // Alphabetical is a centered neighborhood, not every later dictionary word.
-    const complete = category !== "headwords" || !page.page.hasMore;
-    const result = { ...page, items: [...items] };
-    onPage(result, complete);
-    if (complete) return result;
-    cursor = page.page.nextCursor;
-    if (!cursor || seenCursors.has(cursor)) throw new Error("dictionary_search_cursor_did_not_advance");
-    seenCursors.add(cursor);
-  }
+  const page = await fetchDictionaryCategoryPage(scope, category);
+  scope.signal.throwIfAborted();
+  onPage(page, true);
+  return page;
 }
 
 /** One explicit continuation; never enumerate unseen context matches for a count. */
@@ -102,31 +87,37 @@ export async function readMoreDictionaryContext(scope: DictionaryCategoryScope, 
   return {...next, items};
 }
 
-/** Reuse authoritative V2 article metadata and the normal Library projection.
- * A per-read cache absorbs sibling senses without merging distinct homographs.
+/** Reuse this scope's articles by canonical identity, retaining matching senses
+ * across cursor boundaries that split siblings. No spelling-based merging.
  */
-export async function hydrateDictionaryWordResults(scope: DictionaryCategoryScope, hits: DictionaryCategoryHit[]) {
-  const groups: PlatformHeadwordGroupV2[] = [];
-  const groupIds = new Set<string>();
-  const entryIds = new Set<string>();
-  let remaining = hits;
-  while (remaining.length) {
-    scope.signal.throwIfAborted();
-    const batch = remaining.slice(0, 4);
-    const loaded = await Promise.all(batch.map(item => fetchPlatformV2LibraryGroup({
-      entryId: item.entry.id, cardTypeId: "word-to-definition",
-      contentLanguageCode: scope.languageCode, translationTargetLanguageCode: null,
-      expectedUserId: scope.userId, signal: scope.signal,
-    })));
-    scope.signal.throwIfAborted();
-    for (const group of loaded) {
-      if (!group) throw new Error("dictionary_search_article_unavailable");
-      for (const entry of group.entries) entryIds.add(entry.kind === "sense-card" ? entry.entryId : entry.crossReferenceId);
-      if (!groupIds.has(group.headwordGroupId)) { groupIds.add(group.headwordGroupId); groups.push(group); }
-    }
-    remaining = remaining.slice(batch.length).filter(item => !entryIds.has(item.entry.id));
+export async function hydrateDictionaryWordResults(scope: DictionaryCategoryScope, hits: DictionaryCategoryHit[],
+  previous: readonly ReturnType<typeof buildLibraryHeadwordGroupResults>[number][] = []) {
+  const groups = new Map(previous.map(row => [row.headwordGroupId, row.group]));
+  const representatives = new Map<string, string>();
+  for (const hit of hits) {
+    if (!hit.headwordGroupId) throw new Error("dictionary_search_identity_missing");
+    const cached = groups.get(hit.headwordGroupId);
+    if (cached && !cached.entries.some(entry =>
+      (entry.kind === "sense-card" ? entry.entryId : entry.crossReferenceId) === hit.entry.id))
+      throw new Error("invalid_cursor");
+    if (!groups.has(hit.headwordGroupId) && !representatives.has(hit.headwordGroupId))
+      representatives.set(hit.headwordGroupId, hit.entry.id);
   }
-  return buildLibraryHeadwordGroupResults(groups, hits.map(item => item.entry.id));
+  const pending = [...representatives];
+  for (let offset = 0; offset < pending.length; offset += WORD_SEARCH_PAGE_SIZE) {
+    scope.signal.throwIfAborted();
+    const batch = pending.slice(offset, offset + WORD_SEARCH_PAGE_SIZE);
+    const loaded = await fetchPlatformV2LibraryGroups({entryIds: batch.map(([, id]) => id),
+      contentLanguageCode: scope.languageCode, expectedUserId: scope.userId, signal: scope.signal});
+    scope.signal.throwIfAborted();
+    if (loaded.length !== batch.length || batch.some(([id, entryId]) => !loaded.some(group =>
+      group.headwordGroupId === id && group.entries.some(entry =>
+        (entry.kind === "sense-card" ? entry.entryId : entry.crossReferenceId) === entryId))))
+      throw new Error("invalid_cursor");
+    for (const group of loaded) groups.set(group.headwordGroupId, group);
+  }
+  const ids = [...new Set(hits.map(hit => hit.headwordGroupId!))];
+  return buildLibraryHeadwordGroupResults(ids.map(id => groups.get(id)!), hits.map(hit => hit.entry.id));
 }
 
 /** Exact article totals are computed with existing server identities, without article hydration. */

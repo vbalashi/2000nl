@@ -1,3 +1,4 @@
+import { connectedSessionFixture, fixtureConnectToken } from "../fixtures/sessionAuthority";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
 
@@ -10,9 +11,10 @@ const createClient = vi.fn(() => ({
   from,
 }));
 
-vi.mock("@supabase/supabase-js", () => ({
-  createClient,
-}));
+vi.mock("@supabase/supabase-js", async () => {
+ const { withSessionAuthorityFactory } = await import("../fixtures/sessionAuthority");
+ return { createClient: withSessionAuthorityFactory(createClient) };
+});
 
 type QueryCall = {
   method: string;
@@ -245,6 +247,7 @@ describe("platform learning read routes", () => {
       if (table === "connected_client_sessions") {
         return {
           data: {
+            ...connectedSessionFixture(),
             id: "session-1",
             client_id: "client-1",
             user_id: "user-1",
@@ -256,17 +259,17 @@ describe("platform learning read routes", () => {
         };
       }
       if (table === "connected_clients") {
-        return { data: { client_id: "client-1", status: "active" }, error: null };
+        return { data: { allowed_scopes: ["platform:read", "platform:write"], client_id: "client-1", status: "active" }, error: null };
       }
       if (table === "connected_client_grants") {
-        return { data: { scopes: ["platform:write"], revoked_at: null }, error: null };
+        return { data: { authority_revision:"fixture-grant", scopes: ["platform:write"], revoked_at: null }, error: null };
       }
       return { data: [], error: null };
     };
     mockAuthenticatedUser();
 
     const { GET } = await import("@/app/api/platform/learning/activity/route");
-    const response = await GET(getRequest("/api/platform/learning/activity"));
+    const response = await GET(getRequest("/api/platform/learning/activity", fixtureConnectToken));
 
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toMatchObject({

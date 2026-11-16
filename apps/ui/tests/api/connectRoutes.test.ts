@@ -1,12 +1,15 @@
+import { connectedSessionFixture, fixtureAuthSessionId, fixtureProviderToken } from "../fixtures/sessionAuthority";
+const fixtureRefreshToken="nlc_r2_"+"r".repeat(43);
 import crypto from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
 
 const createClient = vi.fn();
 
-vi.mock("@supabase/supabase-js", () => ({
-  createClient,
-}));
+vi.mock("@supabase/supabase-js", async () => {
+ const { withSessionAuthorityFactory } = await import("../fixtures/sessionAuthority");
+ return { createClient: withSessionAuthorityFactory(createClient) };
+});
 
 function sha256Base64Url(value: string) {
   return crypto.createHash("sha256").update(value).digest("base64url");
@@ -20,6 +23,8 @@ function queryChain(result: { data?: unknown; error?: unknown }) {
   const query: any = {
     select: vi.fn(() => query),
     eq: vi.fn(() => query),
+    is: vi.fn(() => query),
+    gt: vi.fn(() => query),
     maybeSingle: vi.fn(async () => result),
   };
   return query;
@@ -28,6 +33,8 @@ function queryChain(result: { data?: unknown; error?: unknown }) {
 function mutationChain(result: { data?: unknown; error?: unknown } = { error: null }) {
   const query: any = {
     eq: vi.fn(() => query),
+    is: vi.fn(() => query),
+    gt: vi.fn(() => query),
     select: vi.fn(() => query),
     maybeSingle: vi.fn(async () => result),
     then: (resolve: any, reject: any) => Promise.resolve(result).then(resolve, reject),
@@ -42,6 +49,7 @@ describe("2000NL Connect API", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
+    process.env.CONNECT_SESSION_ENCRYPTION_KEY=Buffer.alloc(32,68).toString("base64");
     process.env.CONNECT_API_ALLOWED_ORIGINS = "chrome-extension://abc";
   });
 
@@ -89,7 +97,7 @@ describe("2000NL Connect API", () => {
       return {
         upsert: vi.fn((row: any) => {
           upserts.push({ table, row });
-          return Promise.resolve({ error: null });
+          return queryChain({ data: { authority_revision: "consent-revision" }, error: null });
         }),
         insert: vi.fn((row: any) => {
           inserts.push({ table, row });
@@ -145,6 +153,7 @@ describe("2000NL Connect API", () => {
     expect(inserts[0]).toMatchObject({
       table: "connect_authorization_codes",
       row: {
+        grant_revision: "consent-revision",
         client_id: "audiofilms_chrome",
         user_id: "user-1",
         user_email: "user@example.com",
@@ -160,9 +169,9 @@ describe("2000NL Connect API", () => {
     const verifier = "verifier-1";
     const code = "code-1";
     const session = {
-      access_token: "access-1",
+      access_token: fixtureProviderToken,
       refresh_token: "refresh-1",
-      expires_at: 1781619999,
+      expires_at: Math.floor(Date.now()/1000)+3600,
       expires_in: 3600,
       token_type: "bearer",
       user: { id: "user-1", email: "user@example.com" },
@@ -191,7 +200,7 @@ describe("2000NL Connect API", () => {
           select: vi.fn(() =>
             queryChain({
               data: {
-                code_hash: sha256Hex(code),
+                code_hash: sha256Hex(code), grant_revision:"fixture-grant",
                 client_id: "audiofilms_chrome",
                 user_id: "user-1",
                 user_email: "user@example.com",
@@ -207,7 +216,7 @@ describe("2000NL Connect API", () => {
           ),
           update: vi.fn((row: any) => {
             updates.push({ table, row });
-            return mutationChain();
+            return mutationChain({data:{id:"session-1",code_hash: "claimed"},error:null});
           }),
         };
       }
@@ -218,6 +227,7 @@ describe("2000NL Connect API", () => {
               data: {
                 client_id: "audiofilms_chrome",
                 user_id: "user-1",
+                authority_revision:"fixture-grant",
                 scopes: ["platform:read", "platform:write", "offline_access"],
                 revoked_at: null,
               },
@@ -226,7 +236,7 @@ describe("2000NL Connect API", () => {
           ),
           update: vi.fn((row: any) => {
             updates.push({ table, row });
-            return mutationChain();
+            return mutationChain({data:{id:"session-1",code_hash: "claimed"},error:null});
           }),
         };
       }
@@ -275,25 +285,10 @@ describe("2000NL Connect API", () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
-      access_token: "access-1",
-      refresh_token: "refresh-1",
-      expires_at: 1781619999,
-      expires_in: 3600,
-      token_type: "bearer",
-      scope: "platform:read platform:write offline_access",
-      user: { id: "user-1", email: "user@example.com" },
-    });
-    expect(inserts[0]).toMatchObject({
-      table: "connected_client_sessions",
-      row: {
-        access_token_hash: sha256Hex("access-1"),
-        access_token_expires_at: new Date(1781619999 * 1000).toISOString(),
-        refresh_token_hash: sha256Hex("refresh-1"),
-        client_id: "audiofilms_chrome",
-        user_id: "user-1",
-      },
-    });
+    const payload=await response.json();
+    expect(payload).toMatchObject({access_token:expect.stringMatching(/^nlc_a2_/),refresh_token:expect.stringMatching(/^nlc_r2_/),scope:"platform:read platform:write offline_access"});
+    expect(JSON.stringify(payload)).not.toContain(fixtureProviderToken);
+    expect(inserts[0]).toMatchObject({table:"connected_client_sessions",row:{credential_version:2,auth_session_id:fixtureAuthSessionId,access_token_hash:sha256Hex(payload.access_token),refresh_token_hash:sha256Hex(payload.refresh_token)}});
     expect(updates.some((item) => item.table === "connect_authorization_codes")).toBe(
       true,
     );
@@ -301,9 +296,9 @@ describe("2000NL Connect API", () => {
 
   test("refresh requires a tracked active Connected Client Session", async () => {
     const refreshedSession = {
-      access_token: "access-2",
+      access_token: fixtureProviderToken,
       refresh_token: "refresh-2",
-      expires_at: 1781620000,
+      expires_at: Math.floor(Date.now()/1000)+3600,
       expires_in: 3600,
       token_type: "bearer",
       user: { id: "user-1", email: "user@example.com" },
@@ -331,9 +326,12 @@ describe("2000NL Connect API", () => {
           select: vi.fn(() =>
             queryChain({
               data: {
-                refresh_token_hash: sha256Hex("refresh-1"),
+                ...connectedSessionFixture(),
+                id:"session-1",
+                refresh_token_hash: sha256Hex(fixtureRefreshToken),
                 client_id: "audiofilms_chrome",
                 user_id: "user-1",
+                authority_revision:"fixture-grant",
                 scopes: ["platform:read", "platform:write", "offline_access"],
                 revoked_at: null,
               },
@@ -342,7 +340,7 @@ describe("2000NL Connect API", () => {
           ),
           update: vi.fn((row: any) => {
             updates.push({ table, row });
-            return mutationChain();
+            return mutationChain({data:{id:"session-1",code_hash: "claimed"},error:null});
           }),
         };
       }
@@ -353,6 +351,7 @@ describe("2000NL Connect API", () => {
               data: {
                 client_id: "audiofilms_chrome",
                 user_id: "user-1",
+                authority_revision:"fixture-grant",
                 scopes: ["platform:read", "platform:write", "offline_access"],
                 revoked_at: null,
               },
@@ -361,7 +360,7 @@ describe("2000NL Connect API", () => {
           ),
           update: vi.fn((row: any) => {
             updates.push({ table, row });
-            return mutationChain();
+            return mutationChain({data:{id:"session-1",code_hash: "claimed"},error:null});
           }),
         };
       }
@@ -387,28 +386,14 @@ describe("2000NL Connect API", () => {
         body: JSON.stringify({
           grant_type: "refresh_token",
           client_id: "audiofilms_chrome",
-          refresh_token: "refresh-1",
+          refresh_token: fixtureRefreshToken,
         }),
       }),
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toMatchObject({
-      access_token: "access-2",
-      refresh_token: "refresh-2",
-      scope: "platform:read platform:write offline_access",
-    });
-    expect(updates).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          table: "connected_client_sessions",
-          row: expect.objectContaining({
-            access_token_hash: sha256Hex("access-2"),
-            access_token_expires_at: new Date(1781620000 * 1000).toISOString(),
-            refresh_token_hash: sha256Hex("refresh-2"),
-          }),
-        }),
-      ]),
-    );
+    const payload=await response.json();
+    expect(payload.access_token).toMatch(/^nlc_a2_/);expect(payload.refresh_token).toMatch(/^nlc_r2_/);
+    expect(updates).toEqual(expect.arrayContaining([expect.objectContaining({table:"connected_client_sessions",row:expect.objectContaining({access_token_hash:sha256Hex(payload.access_token),refresh_token_hash:sha256Hex(payload.refresh_token)})})]));
   });
 });

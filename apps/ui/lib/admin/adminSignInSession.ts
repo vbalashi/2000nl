@@ -35,7 +35,13 @@ export async function registerAdminSession(request: Request, auth: Awaited<Retur
     const providers = Array.isArray(user.app_metadata?.providers) ? user.app_metadata.providers : [];
     if (method === "google" && provider !== "google" && !providers.includes("google")) throw new Error("Google identity required");
 
+    const sessionId = sessionIdFromToken(session.access_token);
+    if (!sessionId) throw new Error("Provider session id missing");
     const service = createAdminServiceClient();
+    const { data: sessionAllowed, error: authorityError } = await service.rpc("check_admin_session_authority_v1", {
+      p_user_id: user.id, p_auth_session_id: sessionId,
+    });
+    if (authorityError || sessionAllowed !== true) throw new Error("Admin session authority rejected");
     const email = user.email.toLowerCase();
     const { data: operator, error: operatorError } = await service
       .from("admin_operators").select("email,user_id,is_active").eq("email", email).maybeSingle();
@@ -64,8 +70,6 @@ export async function registerAdminSession(request: Request, auth: Awaited<Retur
       if (claimError || !claimed) throw new Error("Operator identity could not be bound");
     }
 
-    const sessionId = sessionIdFromToken(session.access_token);
-    if (!sessionId) throw new Error("Provider session id missing");
     activeSessionId = sessionId;
     const expiresAt = new Date(Date.now() + ADMIN_SESSION_MAX_AGE_SECONDS * 1000).toISOString();
     const { error: sessionError } = await service.from("admin_operator_sessions").insert({

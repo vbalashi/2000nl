@@ -1,3 +1,5 @@
+import { safeTextTranslation } from "@/lib/translation/safeTextTranslation";
+import { readProviderJson, assertProviderInput, providerErrorResponse } from "@/lib/providers/providerSafety";
 import { dictionaryEntrySourceStillReadable } from "@/lib/platform/dictionaryEntryReadAuthority";
 import {parseCurrentTrainingCardRead} from "@/lib/platform/currentTrainingCardRequest";
 import {requestCurrentTrainingCardTranslation} from "@/lib/translation/currentTrainingCardTranslation";
@@ -12,11 +14,6 @@ import {
 import { asString } from "@/lib/platform/platformApi";
 import type { DictionaryLookupPayload } from "@/lib/platform/lookupService";
 import { requestDictionaryMeaningTranslation } from "@/lib/translation/dictionaryMeaningTranslationRequestService";
-import {
-  createTranslator,
-  loadTranslationConfigFromEnv,
-} from "@/lib/translation/translationProvider";
-import { normalizeTranslationProviderError } from "@/lib/translation/translationProviderFailure";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,7 +32,7 @@ type TranslationRequestBody = {
 
 async function readJson(request: NextRequest): Promise<TranslationRequestBody | null> {
   try {
-    return (await request.json()) as TranslationRequestBody;
+    return (await readProviderJson(request, "translation")) as TranslationRequestBody;
   } catch {
     return null;
   }
@@ -126,7 +123,7 @@ export async function POST(request: NextRequest) {
   const { targetLang, dbLang } = language;
 
   if (item) {
-    const draftTranslation = await translateDraftItem(item, targetLang);
+    const draftTranslation = await translateDraftItem(item, targetLang, auth.user.id);
     return reply(draftTranslation.payload, draftTranslation.status);
   }
   if (!entryId) {
@@ -183,6 +180,7 @@ export async function POST(request: NextRequest) {
 async function translateDraftItem(
   item: Record<string, unknown>,
   targetLang: string,
+  accountId: string,
 ): Promise<{ payload: unknown; status: number }> {
   const entry = asRecord(item.entry) ?? {};
   const content = asRecord(entry.content) ?? {};
@@ -206,24 +204,15 @@ async function translateDraftItem(
 
   let translations: string[];
   try {
-    const provider = createTranslator(loadTranslationConfigFromEnv());
-    translations = await provider.translator.translate(
-      texts.map((item) => item.text),
-      targetLang,
-    );
+    assertProviderInput("translation", texts.map(item => item.text));
+    const work = await safeTextTranslation(accountId, "draft", {
+      texts: texts.map(item => item.text), targetLanguageCode: targetLang, purpose: "manual-dictionary-card",
+    });
+    if (work.status === "pending") return { payload: { status: "pending", targetLang, retryAfterMs: work.retryAfterMs }, status: 200 };
+    translations = work.result.translations;
   } catch (error) {
-    const failure = normalizeTranslationProviderError(error).message;
-    return {
-      payload: {
-        targetLang,
-        status: "failed",
-        error: {
-          code: "translation_failed",
-          message: failure,
-        },
-      },
-      status: 502,
-    };
+    const failure = providerErrorResponse(error);
+    return { payload: { targetLang, status: "failed", error: { code: failure.status === 502 ? "translation_failed" : failure.payload.error, message: failure.payload.error }, ...(failure.payload.retryAfterMs ? { retryAfterMs: failure.payload.retryAfterMs } : {}) }, status: failure.status };
   }
 
   const translated = texts.map((item, index) => ({

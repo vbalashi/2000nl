@@ -1,3 +1,4 @@
+import { assertProviderInput, ProviderWorkError, providerWorkIdentity, readProviderArtifact, runProviderWork } from "../providers/providerSafety";
 import crypto from "crypto";
 import fs from "fs/promises";
 import path from "path";
@@ -56,53 +57,59 @@ export function getCacheKey(params: {
   return crypto.createHash("sha256").update(input).digest("hex").slice(0, 16);
 }
 
-export async function getCachedAudio(cacheKey: string): Promise<string | null> {
-  const { nestedPath, legacyPath, nestedDir } = getCachePaths(cacheKey);
-  try {
-    await fs.access(nestedPath);
-    return getCacheUrl(cacheKey);
-  } catch {
-    try {
-      await fs.access(legacyPath);
-      await fs.mkdir(nestedDir, { recursive: true });
-      await fs.rename(legacyPath, nestedPath).catch(async () => {
-        await fs.unlink(legacyPath).catch(() => {});
-      });
-      return getCacheUrl(cacheKey);
-    } catch {
-      return null;
-    }
-  }
-}
-
-export async function readCachedAudio(cacheKey: string): Promise<Buffer | null> {
-  const { nestedPath, legacyPath, nestedDir } = getCachePaths(cacheKey);
-  try {
-    return await fs.readFile(nestedPath);
-  } catch {
-    try {
-      const audio = await fs.readFile(legacyPath);
-      await fs.mkdir(nestedDir, { recursive: true });
-      await fs.rename(legacyPath, nestedPath).catch(async () => {
-        await fs.unlink(legacyPath).catch(() => {});
-      });
-      return audio;
-    } catch {
-      return null;
-    }
-  }
-}
-
-async function generateTtsAudio(
-  text: string,
-  cacheKey: string,
-  provider: IAudioProvider
-): Promise<string> {
-  const { audioMp3 } = await provider.generateAudio(text);
+const sharedIdentity = (cacheKey: string) => providerWorkIdentity(["tts-cache-v1", cacheKey]);
+const sharedKind = (cacheKey: string) => cacheKey.length === 64 ? "tts-entry" as const : "tts-public" as const;
+const MAX_AUDIO_BYTES = 8 * 1024 * 1024;
+async function writeLocalAudio(cacheKey: string, audio: Buffer) {
   const { nestedDir, nestedPath } = getCachePaths(cacheKey);
   await fs.mkdir(nestedDir, { recursive: true });
-  await fs.writeFile(nestedPath, audioMp3);
-  return getCacheUrl(cacheKey);
+  const temporary = `${nestedPath}.${crypto.randomUUID()}.tmp`;
+  try { await fs.writeFile(temporary, audio); await fs.rename(temporary, nestedPath); }
+  finally { await fs.unlink(temporary).catch(() => {}); }
+}
+export async function getCachedAudio(cacheKey: string): Promise<string | null> {
+  return await readCachedAudio(cacheKey) ? getCacheUrl(cacheKey) : null;
+}
+export async function readCachedAudio(cacheKey: string): Promise<Buffer | null> {
+  const { nestedPath, legacyPath } = getCachePaths(cacheKey);
+  try { return await fs.readFile(nestedPath); } catch { /* try legacy/shared storage */ }
+  try {
+    const audio = await fs.readFile(legacyPath);
+    await writeLocalAudio(cacheKey, audio);
+    await fs.unlink(legacyPath).catch(() => {});
+    return audio;
+  } catch { /* another replica may own the artifact */ }
+  const artifact = await readProviderArtifact(sharedKind(cacheKey), sharedIdentity(cacheKey));
+  if (typeof artifact?.audioBase64 !== "string") return null;
+  const audio = Buffer.from(artifact.audioBase64, "base64");
+  if (!audio.length || audio.length > MAX_AUDIO_BYTES) throw new ProviderWorkError("audio_generation_failed", 502);
+  await writeLocalAudio(cacheKey, audio).catch(() => {});
+  return audio;
+}
+async function generateSharedAudio(text: string, cacheKey: string, provider: IAudioProvider, accountId: string) {
+  const inputCharacters = assertProviderInput("audio", [text]);
+  const input = {
+    kind: sharedKind(cacheKey), identity: sharedIdentity(cacheKey), accountId, inputCharacters,
+    execute: async () => {
+      const { audioMp3 } = await provider.generateAudio(text);
+      if (!audioMp3.length || audioMp3.length > MAX_AUDIO_BYTES) throw new Error("invalid_audio_output");
+      return { audioBase64: audioMp3.toString("base64") };
+    },
+  };
+  let work = await runProviderWork(input);
+  // Coalesce short misses across replicas; longer work gives a bounded retry response.
+  const waitUntil = Date.now() + 2000;
+  while (work.status === "pending" && Date.now() < waitUntil) {
+    await new Promise(resolve => setTimeout(resolve, 250));
+    const ready = await readProviderArtifact(input.kind, input.identity);
+    if (typeof ready?.audioBase64 === "string") { work = { status: "ready", result: { audioBase64: ready.audioBase64 }, cached: true }; break; }
+  }
+  if (work.status === "pending") throw new ProviderWorkError("audio_pending", 503, 1000);
+  const audio = Buffer.from(work.result.audioBase64, "base64");
+  if (!audio.length || audio.length > MAX_AUDIO_BYTES) throw new ProviderWorkError("audio_generation_failed", 502);
+  // Fenced publication precedes all local files.
+  await writeLocalAudio(cacheKey, audio).catch(() => {});
+  return { audio, cached: work.cached };
 }
 
 export function resolveTtsProvider(qualityRaw?: unknown) {
@@ -132,8 +139,10 @@ export function resolveTtsProvider(qualityRaw?: unknown) {
 export async function resolveTtsAudio(params: {
   text: string;
   quality?: unknown;
+  accountId: string;
 }): Promise<TtsAudioArtifact> {
   const text = params.text.trim();
+  assertProviderInput("audio", [text]);
   const { provider, quality, providerId } = resolveTtsProvider(params.quality);
   const cacheKey = getCacheKey({ text, quality, providerId });
   const cachedUrl = await getCachedAudio(cacheKey);
@@ -147,10 +156,11 @@ export async function resolveTtsAudio(params: {
     };
   }
 
-  const url = await generateTtsAudio(text, cacheKey, provider);
+  const generated = await generateSharedAudio(text, cacheKey, provider, params.accountId);
+  const url = getCacheUrl(cacheKey);
   return {
     url,
-    cached: false,
+    cached: generated.cached,
     cacheKey,
     quality,
     providerId,
@@ -160,25 +170,11 @@ export async function resolveTtsAudio(params: {
 /** Entry audio has a separate namespace that the public 16-character TTS GET
  * cannot serve. Callers must authorize before work and again before delivery.
  */
-const privateEntryAudioGenerations=new Map<string,Promise<Buffer>>();
-export async function resolvePrivateEntryTtsAudio(text: string, beforeGenerate?: () => void) {
+export async function resolvePrivateEntryTtsAudio(text: string, accountId: string) {
+  assertProviderInput("audio", [text]);
   const { provider, quality, providerId } = resolveTtsProvider();
-  const cacheKey = crypto.createHash("sha256")
-    .update(JSON.stringify(["private-entry-audio-v1",quality,providerId,text.trim()]))
-    .digest("hex");
+  const cacheKey = crypto.createHash("sha256").update(JSON.stringify(["private-entry-audio-v1",quality,providerId,text.trim()])).digest("hex");
   const cached = await readCachedAudio(cacheKey);
-  if(cached)return {audio:cached,cached:true};
-  let pending=privateEntryAudioGenerations.get(cacheKey);
-  if(!pending){
-    pending=(async()=>{
-      beforeGenerate?.();
-      await generateTtsAudio(text.trim(),cacheKey,provider);
-      const audio=await readCachedAudio(cacheKey);
-      if(!audio)throw new Error("entry_audio_unavailable");
-      return audio;
-    })();
-    privateEntryAudioGenerations.set(cacheKey,pending);
-  }
-  try{return {audio:await pending,cached:false};}
-  finally{if(privateEntryAudioGenerations.get(cacheKey)===pending)privateEntryAudioGenerations.delete(cacheKey);}
+  if (cached) return { audio: cached, cached: true };
+  return generateSharedAudio(text.trim(), cacheKey, provider, accountId);
 }

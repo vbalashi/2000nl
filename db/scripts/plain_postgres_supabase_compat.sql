@@ -19,7 +19,9 @@ END $$;
 
 DO $$
 BEGIN
-  CREATE ROLE service_role NOLOGIN;
+  -- Match Supabase and the database-test harness: the trusted server role
+  -- bypasses row policies while browser roles remain subject to them.
+  CREATE ROLE service_role NOLOGIN BYPASSRLS;
 EXCEPTION WHEN duplicate_object THEN
   NULL;
 END $$;
@@ -90,6 +92,12 @@ CREATE TABLE IF NOT EXISTS auth.users (
   email_confirmed_at timestamptz
 );
 ALTER TABLE auth.users ADD COLUMN IF NOT EXISTS email_confirmed_at timestamptz;
+
+-- Auth-owned session relation used by the application session boundary.
+CREATE TABLE IF NOT EXISTS auth.sessions (
+ id uuid PRIMARY KEY, user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+ created_at timestamptz NOT NULL DEFAULT now(), not_after timestamptz
+);
 
 CREATE OR REPLACE FUNCTION auth.uid()
 RETURNS uuid

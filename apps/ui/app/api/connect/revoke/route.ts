@@ -1,3 +1,4 @@
+import { isConnectRefreshToken } from "@/lib/connect/sessionCredentials";
 import { NextRequest } from "next/server";
 import {
   connectCorsPreflight,
@@ -40,6 +41,8 @@ export async function POST(request: NextRequest) {
   if (!clientId) return reply({ error: "missing_client_id" }, 400);
   if (!refreshToken) return reply({ error: "missing_refresh_token" }, 400);
 
+  if (!isConnectRefreshToken(refreshToken)) return reply({ revoked: true });
+
   const service = createServiceClient();
   if (service instanceof Response) return withConnectCors(request, service);
 
@@ -47,7 +50,7 @@ export async function POST(request: NextRequest) {
     .from("connected_client_sessions")
     .update({ revoked_at: new Date().toISOString() })
     .eq("client_id", clientId)
-    .eq("refresh_token_hash", sha256Hex(refreshToken));
+    .contains("refresh_token_family_hashes", [sha256Hex(refreshToken)]);
 
   if (error) {
     return reply({ error: "revoke_failed", detail: error.message }, 500);

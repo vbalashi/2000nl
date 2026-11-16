@@ -1,3 +1,4 @@
+import { seedAuthSession } from "./dbTestUtils";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
@@ -906,6 +907,7 @@ describeIfDb("Platform V2 Known Mark RPC", () => {
           ],
         );
 
+        await seedAuthSession(client,userId);
         await client.query("set local role authenticated");
 
         const ordinaryUpdate = await client.query(

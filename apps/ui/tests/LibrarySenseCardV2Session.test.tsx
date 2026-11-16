@@ -1386,6 +1386,20 @@ describe("LibrarySenseCardV2Session", () => {
     ]);
   });
 
+  test("a batch list seed refreshes its exact reference article before following the resolved target", async () => {
+    const pointer = {kind:"cross-reference" as const,crossReferenceId:"batch-pointer",meaningOrdinal:1,label:null,text:"bank",target:{query:"bank"},capabilities:[{actionId:"follow-cross-reference" as const,elementId:"cross-reference.follow",messageKey:"crossReference.follow"}]};
+    const seed:PlatformHeadwordGroupV2={...multiSenseBankGroup,headwordGroupId:"source-homograph",senseCount:0,entryCount:1,entries:[pointer]};
+    const authoritative={...seed,entries:[{...pointer,target:{query:"bank",headwordGroupId:"exact-target-homograph",entryId:"exact-target-entry"}}]};
+    fetchGroup.mockResolvedValue(authoritative);
+    fetchCrossReferenceTarget.mockResolvedValue({...multiSenseBankGroup,headwordGroupId:"exact-target-homograph",entries:[{...financeEntry,entryId:"exact-target-entry"}]});
+    render(<LibrarySenseCardV2Session entryId="batch-pointer" initialGroup={seed} headword="same spelling" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
+    await waitFor(()=>expect(fetchGroup).toHaveBeenCalledWith(expect.objectContaining({entryId:"batch-pointer"})));
+    await waitFor(()=>expect(screen.getByRole("button",{name:"Open reference"})).not.toBeDisabled());
+    fireEvent.click(screen.getByRole("button",{name:"Open reference"}));
+    await waitFor(()=>expect(fetchCrossReferenceTarget).toHaveBeenCalledWith(expect.objectContaining({sourceDictionaryId:"example",targetHeadwordGroupId:"exact-target-homograph",targetEntryId:"exact-target-entry"})));
+    await screen.findByTestId("library-sense-card-exact-target-entry");
+  });
+
   test("follows a pointer in a corpus-shaped mixed group to the real target content", async () => {
     const mixedDaarGroup: PlatformHeadwordGroupV2 = {
       ...multiSenseBankGroup,

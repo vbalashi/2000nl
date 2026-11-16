@@ -19,9 +19,10 @@ const createClient = vi.fn();
 const translateDictionaryMeaning = vi.hoisted(() => vi.fn());
 const createTranslator = vi.hoisted(() => vi.fn());
 
-vi.mock("@supabase/supabase-js", () => ({
-  createClient,
-}));
+vi.mock("@supabase/supabase-js", async () => {
+ const { withSessionAuthorityFactory } = await import("../fixtures/sessionAuthority");
+ return { createClient: withSessionAuthorityFactory(createClient) };
+});
 
 vi.mock("@/lib/translation/translationProvider", () => ({
   createTranslator,

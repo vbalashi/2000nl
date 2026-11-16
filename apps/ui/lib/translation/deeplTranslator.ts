@@ -1,3 +1,4 @@
+import { providerFetch } from "../providers/providerTransport";
 import {
   ITranslator,
   type TranslationProviderTextRequest,
@@ -104,7 +105,7 @@ export class DeepLTranslator implements ITranslator {
     params.append("text", buildContextXml(texts));
 
     try {
-      const res = await fetch(this.apiUrl, {
+      const res = await providerFetch(this.apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",

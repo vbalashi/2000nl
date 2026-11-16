@@ -83,18 +83,19 @@ export async function POST(request: NextRequest) {
     return reply({ error: "pkce_required" }, 400);
   }
 
-  const grantError = await upsertGrant({
+  const grant = await upsertGrant({
     supabase: service,
     clientId,
     userId: user.id,
     scopes: scopesResult.scopes,
   });
-  if (grantError) return withConnectCors(request, grantError);
+  if (grant instanceof Response) return withConnectCors(request, grant);
 
   const code = randomOpaqueToken(32);
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
   const { error } = await service.from("connect_authorization_codes").insert({
     code_hash: sha256Hex(code),
+    grant_revision: grant.authority_revision,
     client_id: clientId,
     user_id: user.id,
     user_email: user.email,

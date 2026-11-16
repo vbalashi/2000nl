@@ -1,4 +1,4 @@
-import {consumeAudioRateLimit} from "@/lib/audio/audioRateLimit";
+import { readProviderJson, assertProviderInput, providerErrorResponse } from "@/lib/providers/providerSafety";
 import { NextRequest } from "next/server";
 import {
   getAuthenticatedSupabase,
@@ -9,7 +9,6 @@ import {
 } from "@/lib/platform/serverSupabase";
 import { asString } from "@/lib/platform/platformApi";
 import {
-  hasConfiguredPremiumTtsProvider,
   resolveTtsAudio,
 } from "@/lib/audio/ttsCache";
 import { publicAudioAssetUrl } from "@/lib/platform/audioAssetUrl";
@@ -25,7 +24,6 @@ type AudioResolveBody = {
   quality?: unknown;
 };
 
-const MAX_AUDIO_TEXT_LENGTH = 160;
 const ALLOWED_PURPOSES = new Set([
   "dictionary-headword",
   "manual-dictionary-card",
@@ -35,7 +33,7 @@ const ALLOWED_PURPOSES = new Set([
 
 async function readJson(request: NextRequest): Promise<AudioResolveBody | null> {
   try {
-    return (await request.json()) as AudioResolveBody;
+    return (await readProviderJson(request, "audio")) as AudioResolveBody;
   } catch {
     return null;
   }
@@ -57,35 +55,13 @@ export async function POST(request: NextRequest) {
   const scopeError = requirePlatformScope(auth, "platform:write");
   if (scopeError) return withPlatformCors(request, scopeError);
 
-  const rateLimit = consumeAudioRateLimit(auth.principal.userId);
-  if (!rateLimit.allowed) {
-    return reply(
-      {
-        status: "failed",
-        error: {
-          code: "rate_limited",
-          retryAfterMs: rateLimit.retryAfterMs,
-        },
-      },
-      429,
-    );
-  }
-
   const body = await readJson(request);
   const text = asString(body?.text);
   const languageCode = asString(body?.languageCode) ?? "nl";
   const purpose = asString(body?.purpose) ?? "dictionary-headword";
 
   if (!text) return reply({ error: "missing_text" }, 400);
-  if (text.length > MAX_AUDIO_TEXT_LENGTH) {
-    return reply(
-      {
-        error: "text_too_long",
-        maxLength: MAX_AUDIO_TEXT_LENGTH,
-      },
-      400,
-    );
-  }
+  try { assertProviderInput("audio", [text]); } catch (error) { const failure = providerErrorResponse(error); return reply(failure.payload, failure.status); }
   if (!/^[a-z]{2}(?:-[A-Z]{2})?$/.test(languageCode)) {
     return reply({ error: "unsupported_language" }, 400);
   }
@@ -97,6 +73,7 @@ export async function POST(request: NextRequest) {
     const artifact = await resolveTtsAudio({
       text,
       quality: body?.quality,
+      accountId: auth.user.id,
     });
     const response = reply({
       status: "ready",
@@ -121,20 +98,10 @@ export async function POST(request: NextRequest) {
     );
     return response;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    if (message === "invalid_audio_quality") {
-      return reply({ error: "invalid_audio_quality" }, 400);
-    }
-    return reply(
-      {
-        status: "failed",
-        error: {
-          code: "audio_generation_failed",
-          message,
-          configured: hasConfiguredPremiumTtsProvider(),
-        },
-      },
-      502,
-    );
+    if (error instanceof Error && error.message === "invalid_audio_quality") return reply({ error: "invalid_audio_quality" }, 400);
+    const failure = providerErrorResponse(error);
+    const response = reply({ status: "failed", error: { code: failure.payload.error, message: failure.payload.error }, ...(failure.payload.retryAfterMs ? { retryAfterMs: failure.payload.retryAfterMs } : {}) }, failure.status);
+    if (failure.payload.retryAfterMs) response.headers.set("Retry-After", String(Math.ceil(failure.payload.retryAfterMs / 1000)));
+    return response;
   }
 }

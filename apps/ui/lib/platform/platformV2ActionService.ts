@@ -419,8 +419,10 @@ function actionError(error: unknown): PlatformV2ActionOperationResult {
 
 function idiomExerciseActionError(error: unknown): PlatformV2ActionOperationResult {
   const message = errorMessage(error);
+  if (message.includes("training_session_superseded")) {
+    return { payload: { error: "training_session_superseded" }, status: 409 };
+  }
   if (
-    message.includes("training_session_superseded") ||
     message.includes("training_exercise_session_") ||
     message.includes("training_exercise_target_unavailable") ||
     message.includes("training_pair_excluded") ||

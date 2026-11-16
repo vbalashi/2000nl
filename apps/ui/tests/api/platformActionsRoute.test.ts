@@ -1,3 +1,5 @@
+import { connectedSessionFixture, fixtureConnectToken } from "../fixtures/sessionAuthority";
+let connectedFixture = false;
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
 
@@ -10,9 +12,10 @@ const createClient = vi.fn(() => ({
   from,
 }));
 
-vi.mock("@supabase/supabase-js", () => ({
-  createClient,
-}));
+vi.mock("@supabase/supabase-js", async () => {
+ const { withSessionAuthorityFactory } = await import("../fixtures/sessionAuthority");
+ return { createClient: withSessionAuthorityFactory(createClient) };
+});
 
 const chain = (result: { data?: any; error?: any }) => {
   const query: any = {
@@ -27,7 +30,7 @@ const chain = (result: { data?: any; error?: any }) => {
   return query;
 };
 
-const request = (body: unknown, token = "token-1") =>
+const request = (body: unknown, token = connectedFixture ? fixtureConnectToken : "token-1") =>
   new NextRequest("http://localhost/api/platform/actions", {
     method: "POST",
     headers: {
@@ -56,11 +59,12 @@ function mockConnectedClientPrincipal(
   options: { sessionRevoked?: boolean; clientStatus?: string; grantRevoked?: boolean } = {},
 ) {
   process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
-  process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP = "1";
+  connectedFixture = true;
   from.mockImplementation((table: string) => {
     if (table === "connected_client_sessions") {
       return chain({
         data: {
+          ...connectedSessionFixture(),
           id: "session-1",
           client_id: "audiofilms_chrome",
           user_id: "user-1",
@@ -73,13 +77,14 @@ function mockConnectedClientPrincipal(
     }
     if (table === "connected_clients") {
       return chain({
-        data: { client_id: "audiofilms_chrome", status: options.clientStatus ?? "active" },
+        data: { allowed_scopes: ["platform:read", "platform:write", "offline_access"], client_id: "audiofilms_chrome", status: options.clientStatus ?? "active" },
         error: null,
       });
     }
     if (table === "connected_client_grants") {
       return chain({
         data: {
+          authority_revision:"fixture-grant",
           scopes,
           revoked_at: options.grantRevoked ? new Date().toISOString() : null,
         },
@@ -96,7 +101,7 @@ describe("/api/platform/actions", () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon-key";
     process.env.PLATFORM_API_ALLOWED_ORIGINS = "https://client.example";
     delete process.env.SUPABASE_SERVICE_ROLE_KEY;
-    delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
+    connectedFixture = false;
     createClient.mockClear();
     getUser.mockReset();
     rpc.mockReset();
