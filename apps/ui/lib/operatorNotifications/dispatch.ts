@@ -2,6 +2,7 @@ import 'server-only';
 import nodemailer from 'nodemailer';
 import { createAdminServiceClient } from '@/lib/admin/adminServerClient';
 import { sendTelegramMessage } from './telegram';
+import { parseTopic } from './topic';
 
 type Event={id:string;kind:'admission-request'|'admission-approved'|'feedback';leaseId:string;attempts:number;email:string|null;feedbackId:string|null;admissionStatus:string|null};
 type Outcome='sent'|'retry'|'failed';
@@ -10,14 +11,14 @@ type Outcome='sent'|'retry'|'failed';
 export async function dispatchOne(): Promise<'disabled'|'idle'|Outcome> {
  const env=process.env;
  const token=env.OPERATOR_TELEGRAM_BOT_TOKEN,chat=env.OPERATOR_TELEGRAM_CHAT_ID;
- const admissions=Number(env.OPERATOR_TELEGRAM_ADMISSION_TOPIC_ID),reports=Number(env.OPERATOR_TELEGRAM_FEEDBACK_TOPIC_ID);
+ const admissions=parseTopic(env.OPERATOR_TELEGRAM_ADMISSION_TOPIC_ID),reports=parseTopic(env.OPERATOR_TELEGRAM_FEEDBACK_TOPIC_ID);
  const host=env.OPERATOR_SMTP_HOST,user=env.OPERATOR_SMTP_USER,pass=env.OPERATOR_SMTP_PASSWORD,from=env.OPERATOR_SMTP_FROM,site=env.OPERATOR_NOTIFICATION_SITE_URL;
  const port=Number(env.OPERATOR_SMTP_PORT);
  let siteUrl:URL;
  try {siteUrl=new URL(site || '');} catch {return 'disabled';}
  if (siteUrl.protocol!=='https:' || siteUrl.username || siteUrl.password || siteUrl.search || siteUrl.hash
    || !token || !/^\d+:[A-Za-z0-9_-]+$/.test(token) || !chat || !/^-?\d+$/.test(chat)
-   || !Number.isSafeInteger(admissions) || admissions<1 || !Number.isSafeInteger(reports) || reports<1
+   || admissions===undefined || reports===undefined
    || !host || !user || !pass || !from || !Number.isInteger(port) || port<1 || port>65535) return 'disabled';
  const service=createAdminServiceClient();
  const {data,error}=await service.rpc('operator_notification_claim_v1',{p_limit:1});

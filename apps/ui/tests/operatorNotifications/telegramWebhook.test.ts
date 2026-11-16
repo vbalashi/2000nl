@@ -19,3 +19,14 @@ test('accepts only callbacks from the configured group and topic',async()=>{
  expect(rpc).toHaveBeenCalledOnce();
  expect(rpc.mock.calls[0][1]).toMatchObject({p_event:event,p_operator:operator,p_action:'approve'});
 });
+
+test('accepts only explicitly unthreaded callbacks for an unthreaded destination',async()=>{
+ vi.stubEnv('OPERATOR_TELEGRAM_ADMISSION_TOPIC_ID','none');
+ expect((await POST(req(body))).status).toBe(200);expect(rpc).not.toHaveBeenCalled();
+ const unthreaded={...body,callback_query:{...body.callback_query,message:{chat:{id:-100}}}};
+ expect((await POST(req(unthreaded))).status).toBe(200);expect(rpc).toHaveBeenCalledOnce();
+});
+test('missing topic configuration fails closed',async()=>{
+ vi.stubEnv('OPERATOR_TELEGRAM_ADMISSION_TOPIC_ID','');
+ await POST(req(body));expect(rpc).not.toHaveBeenCalled();
+});

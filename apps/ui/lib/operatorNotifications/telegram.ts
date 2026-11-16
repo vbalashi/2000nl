@@ -6,7 +6,7 @@ export type TelegramDelivery =
 
 export type TelegramMessage = {
   chatId: string;
-  topicId: number;
+  topicId: number | null;
   text: string;
   buttons?: ReadonlyArray<ReadonlyArray<{ text: string; callbackData: string }>>;
 };
@@ -20,7 +20,7 @@ export async function sendTelegramMessage(
   request: Request = fetch,
 ): Promise<TelegramDelivery> {
   if (!/^\d+:[A-Za-z0-9_-]+$/.test(token) || !/^-?\d+$/.test(message.chatId)
-    || !Number.isSafeInteger(message.topicId) || message.topicId <= 0
+    || (message.topicId !== null && (!Number.isSafeInteger(message.topicId) || message.topicId <= 0))
     || message.text.length < 1 || message.text.length > 4096
     || (message.buttons && (message.buttons.length > 8 || message.buttons.some(row =>
       row.length < 1 || row.length > 4 || row.some(button =>
@@ -35,7 +35,7 @@ export async function sendTelegramMessage(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: message.chatId,
-        message_thread_id: message.topicId,
+        ...(message.topicId === null ? {} : { message_thread_id: message.topicId }),
         text: message.text,
         ...(message.buttons ? { reply_markup: { inline_keyboard: message.buttons.map(row =>
           row.map(button => ({ text: button.text, callback_data: button.callbackData }))) } } : {}),

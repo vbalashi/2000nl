@@ -13,6 +13,11 @@ describe("Telegram transport", () => {
     expect(options.redirect).toBe("error");
     expect(JSON.parse(options.body)).toEqual({ chat_id: "-100123", message_thread_id: 7, text: "New request", reply_markup: { inline_keyboard: [[{ text: "Approve", callback_data: "opaque_123" }]] } });
   });
+  it("allows an explicitly unthreaded destination", async () => {
+    const request = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true, result: { message_id: 42 } })));
+    expect(await sendTelegramMessage(token, { ...message, topicId: null }, request)).toEqual({ status: "sent", messageId: 42 });
+    expect(JSON.parse(request.mock.calls[0][1].body)).not.toHaveProperty("message_thread_id");
+  });
   it("classifies rate limiting, server failures and ambiguous responses without exposing details", async () => {
     const send = (response: Response) => sendTelegramMessage(token, message, async () => response);
     expect(await send(new Response(JSON.stringify({ parameters: { retry_after: 30 } }), { status: 429 }))).toEqual({ status: "retry", retryAfterSeconds: 30 });

@@ -1,6 +1,7 @@
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createAdminServiceClient } from '@/lib/admin/adminServerClient';
+import { parseTopic } from '@/lib/operatorNotifications/topic';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -25,9 +26,10 @@ export async function POST(request: Request) {
   } catch { return respond(400); }
   try {
     const q=(update as {callback_query?: {id?:unknown;from?:{id?:unknown};data?:unknown;message?:{chat?:{id?:unknown};message_thread_id?:unknown}}})?.callback_query;
-    if (!q || typeof q.data!=='string' || typeof q.from?.id!=='number' || !Number.isSafeInteger(q.from.id)
+    const topic=parseTopic(process.env.OPERATOR_TELEGRAM_ADMISSION_TOPIC_ID);
+    if (!q || topic===undefined || typeof q.data!=='string' || typeof q.from?.id!=='number' || !Number.isSafeInteger(q.from.id)
       || String(q.message?.chat?.id)!==process.env.OPERATOR_TELEGRAM_CHAT_ID
-      || String(q.message?.message_thread_id)!==process.env.OPERATOR_TELEGRAM_ADMISSION_TOPIC_ID) return respond();
+      || (topic===null ? q.message?.message_thread_id!=null : q.message?.message_thread_id!==topic)) return respond();
     const match=/^([ar])_([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i.exec(q.data);
     if (!match) return respond();
     const mapping: unknown=JSON.parse(process.env.OPERATOR_TELEGRAM_ADMIN_MAP || '{}');
