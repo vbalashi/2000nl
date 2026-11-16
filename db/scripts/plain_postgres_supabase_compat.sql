@@ -19,7 +19,9 @@ END $$;
 
 DO $$
 BEGIN
-  CREATE ROLE service_role NOLOGIN;
+  -- Match Supabase and the database-test harness: the trusted server role
+  -- bypasses row policies while browser roles remain subject to them.
+  CREATE ROLE service_role NOLOGIN BYPASSRLS;
 EXCEPTION WHEN duplicate_object THEN
   NULL;
 END $$;
