@@ -431,7 +431,7 @@ vi.mock("@/lib/platform/dictionaryCategorySearch", async importOriginal => ({
     for (const group of groups) for (const entry of group.entries) {
       categoryFixtureGroups.set(entry.kind === "sense-card" ? entry.entryId : entry.crossReferenceId,group);
     }
-    const page = {id:category,items:groups.flatMap(group=>group.entries.map(entry=>({entry:{id:entry.kind === "sense-card"?entry.entryId:entry.crossReferenceId,headword:group.header.text}}))),total:groups.length,page:{hasMore:false,nextCursor:null}};
+    const page = {id:category,items:groups.flatMap(group=>group.entries.map(entry=>({headwordGroupId:group.headwordGroupId,entry:{id:entry.kind === "sense-card"?entry.entryId:entry.crossReferenceId,headword:group.header.text}}))),total:groups.length,page:{hasMore:false,nextCursor:null}};
     onPage(page,true);return page;
   },
 }));
@@ -645,6 +645,13 @@ vi.mock("@/lib/platform/platformV2LibraryClient", () => ({
   fetchPlatformV2LibraryGroup: (
     input: Parameters<typeof fetchPlatformV2LibraryGroup>[0],
   ) => fetchPlatformV2LibraryGroup(input),
+  fetchPlatformV2LibraryGroups: async ({ entryIds }: { entryIds: string[] }) =>
+    entryIds.map(entryId => {
+      const group = categoryFixtureGroups.get(entryId);
+      if (!group) throw new Error(`Missing Library fixture: ${entryId}`);
+      return { ...group, entries: group.entries.map(entry => entry.kind === "sense-card"
+        ? { ...entry, ...libraryState(entry.entryId) } : entry) };
+    }),
   requestPlatformV2LibraryTranslation: vi.fn().mockResolvedValue("failed"),
 }));
 
