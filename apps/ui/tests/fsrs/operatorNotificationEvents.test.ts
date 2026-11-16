@@ -172,6 +172,19 @@ describeIfDb('operator notification events',()=>{
   }
  },10000);
 
+ test('an audit failure rolls back notification configuration instead of saving silently',async()=>{
+  await withTransaction(pool,async client=>{
+   const operator=randomUUID();await ensureUserWithSettings(client,operator);
+   await client.query("insert into public.admin_operators(email,user_id,is_active,permissions) values($1,$2,true,ARRAY['notifications.manage'])",[`${operator}@example.test`,operator]);
+   await client.query("CREATE FUNCTION pg_temp.reject_notification_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'synthetic audit unavailable'; END $$");
+   await client.query('CREATE TRIGGER qualification_reject_notification_audit BEFORE INSERT ON public.admin_audit_events FOR EACH ROW EXECUTE FUNCTION pg_temp.reject_notification_audit()');
+   await client.query('savepoint failed_audit');
+   await expect(client.query('select public.admin_notification_create_bot_v1($1,$2,$3)',[operator,randomUUID(),'Must roll back'])).rejects.toMatchObject({code:'P0001'});
+   await client.query('rollback to savepoint failed_audit');
+   expect((await client.query("select count(*)::integer count from private.operator_notification_bots where name='Must roll back'")).rows[0].count).toBe(0);
+  });
+ });
+
  test('configuration requires its own permission and audits multiple bots without secrets',async()=>{
   await withTransaction(pool,async client=>{
    const operator=randomUUID();await ensureUserWithSettings(client,operator);
