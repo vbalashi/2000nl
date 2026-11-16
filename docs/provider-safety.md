@@ -61,7 +61,7 @@ Audio keeps its existing purpose allowlist. Language/voice selection is unchange
 
 ## Recovery and response compatibility
 
-Migration 374 adds server-only coordinator RPCs. They require `service_role`, not
+Migration 376 adds server-only coordinator RPCs. They require `service_role`, not
 browser JWT/session claims. Tables live in `private`, have RLS enabled and grant
 no direct application-role access. Text/draft keys include the account, normalized
 request, provider configuration, prompt revision and protocol revision. The v3
@@ -119,14 +119,14 @@ serialization; they are not free and do not constitute a throughput benchmark.
 
 ## Installation and managed rollout
 
-Public fresh installations apply migration 374 after the existing baseline and
+Public fresh installations apply migration 376 after the existing baseline and
 subsequent migrations. The app requires all three new RPCs; missing schema fails
 closed with 503. Keep public/private TTS cache key formats and existing filesystem
 paths during an upgrade. Historical text-cache records are left untouched for
 rollback; rolling back the app can expose its previous stale-row behavior.
 
 A managed release requires a separately reviewed forward equivalent of migration
-374, updated schema/postflight qualification, storage/backup capacity assessment,
+376, updated schema/postflight qualification, storage/backup capacity assessment,
 consistent safety configuration on all replicas, qualification of gateway/RPC
 payload limits for base64 audio (up to 12 MiB), and owner release authorization.
 The public numbered migration is not a managed upgrade command. No managed

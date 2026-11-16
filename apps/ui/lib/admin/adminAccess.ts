@@ -8,7 +8,7 @@ import {
   writeAdminAuditEvent,
 } from "./adminAuditRepository";
 
-export type AdminPermission = "dictionaries.read" | "audit.read" | "publication.manage" | "dictionary.content.read" | "users.read" | "admission.manage";
+export type AdminPermission = "dictionaries.read" | "audit.read" | "publication.manage" | "dictionary.content.read" | "users.read" | "admission.manage" | "feedback.read" | "editorial.edit" | "notifications.manage";
 
 export class AdminAccessError extends Error {
   constructor(
@@ -97,6 +97,14 @@ export async function requireAdmin(request: Request, permission?: AdminPermissio
 
   try {
     const service = createAdminServiceClient();
+    const { data: sessionAllowed, error: authorityError } = await service.rpc("check_admin_session_authority_v1", {
+      p_user_id: user.id, p_auth_session_id: sessionId,
+    });
+    if (authorityError) throw new Error("Admin session authority unavailable");
+    if (sessionAllowed !== true) {
+      await auditDenied(request, user.id);
+      throw new AdminAccessError(401, "unauthorized");
+    }
     const [{ data: operator, error: operatorError }, { data: activeSession, error: activeSessionError }] = await Promise.all([
       service.from("admin_operators").select("email,user_id,is_active,permissions").eq("user_id", user.id).maybeSingle(),
       service.from("admin_operator_sessions").select("auth_session_id").eq("auth_session_id", sessionId).eq("operator_user_id", user.id).is("revoked_at", null).gt("expires_at", new Date().toISOString()).maybeSingle(),
@@ -114,7 +122,7 @@ export async function requireAdmin(request: Request, permission?: AdminPermissio
       throw new AdminAccessError(403, "forbidden");
     }
     const permissions = Array.isArray(operator.permissions)
-      ? operator.permissions.filter((value): value is AdminPermission => value === "dictionaries.read" || value === "audit.read" || value === "publication.manage" || value === "dictionary.content.read" || value === "users.read" || value === "admission.manage")
+      ? operator.permissions.filter((value): value is AdminPermission => value === "dictionaries.read" || value === "audit.read" || value === "publication.manage" || value === "dictionary.content.read" || value === "users.read" || value === "admission.manage" || value === "feedback.read" || value === "editorial.edit" || value === "notifications.manage")
       : [];
     if (permissions.length === 0 || (permission && !permissions.includes(permission))) {
       await writeAdminAuditEvent({

@@ -13,7 +13,7 @@ test("manifest migrations and hashes are reachable through the real fresh-instal
  for(const migration of [contract.baseline,...contract.migrations]){
    expect(bootstrap).toContain(`\\i ${migration.file}`);expect(digest(read(migration.file))).toBe(migration.sha256);
  }
- expect(contract.migrations.some(m=>m.file==="db/migrations/374_provider_work_safety.sql")).toBe(true);
+ expect(contract.migrations.some(m=>m.file==="db/migrations/376_provider_work_safety.sql")).toBe(true);
 });
 test("provider safety is in normal and read-only deployment chains, with the correct manifest hash",()=>{
  expect(digest(read(contract.readOnlyPostflightProbe.file))).toBe(contract.readOnlyPostflightProbe.sha256);

@@ -38,7 +38,7 @@ lets revocation with an earlier family token close a racing/newly rotated sessio
 Expired families require reconnecting. Revocation blocks subsequent requests;
 already admitted application work can complete.
 
-Migration 372 adds the PostgREST pre-request guard, restrictive table RLS and
+Migration 374 adds the PostgREST pre-request guard, restrictive table RLS and
 Realtime-message guard. Authenticated sessions must exist in `auth.sessions`,
 match the JWT user, remain unexpired and be created after the stored cutover.
 A refreshed JWT preserves its original session ID and cannot evade that cutoff.
@@ -47,7 +47,7 @@ policies or client privileges. Service-only tables retain their absence of clien
 policies. New grants/ALTER TABLE invoke the guard. Schema review must retain
 these fences when replacing policies or granting access through other schemas.
 
-Migration 373 grants ordinary settings columns explicitly and denies client
+Migration 375 grants ordinary settings columns explicitly and denies client
 INSERT/UPDATE of `subscription_tier`, DELETE and TRUNCATE. A trigger also rejects
 indirect changes/deletes through definer functions. Trusted service writes and
 account-deletion cascades remain supported. This does not retroactively establish
@@ -78,7 +78,7 @@ The passport must coordinate the application, Auth, PostgREST and all clients:
   their invalidation before reopening access. Do not claim an unqualified
   zero-downtime path.
 - Confirm client reconnect/refresh compatibility and admission onboarding, run
-  both postflight-373 chains, and repeat real-provider security checks on staging.
+  both postflight-375 chains, and repeat real-provider security checks on staging.
 - Assess the shortest already-qualified interruption path. Prepare images,
   secrets, backup/restore proof and compatibility checks before closing access
   where existing procedures permit. Record expected and actual interruption,

@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const { auth, from, audit, clearCookies } = vi.hoisted(() => ({
+const { auth, from, rpc, audit, clearCookies } = vi.hoisted(() => ({
   auth: { signInWithOAuth: vi.fn(), exchangeCodeForSession: vi.fn(), getSession: vi.fn(), getUser: vi.fn(), signOut: vi.fn() },
-  from: vi.fn(), audit: vi.fn(), clearCookies: vi.fn(),
+  from: vi.fn(), rpc: vi.fn(), audit: vi.fn(), clearCookies: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
-vi.mock("@/lib/admin/adminServerClient", () => ({ createAdminAuthClient: async () => ({ auth }), createAdminServiceClient: () => ({ from }), clearAdminAuthCookies: clearCookies, ADMIN_SESSION_MAX_AGE_SECONDS: 28800 }));
+vi.mock("@/lib/admin/adminServerClient", () => ({ createAdminAuthClient: async () => ({ auth }), createAdminServiceClient: () => ({ from, rpc }), clearAdminAuthCookies: clearCookies, ADMIN_SESSION_MAX_AGE_SECONDS: 28800 }));
 vi.mock("@/lib/admin/adminAuditRepository", () => ({ readAdminAuditContext: () => ({}), writeAdminAuditEvent: audit }));
 import { POST as start } from "@/app/api/admin/auth/start/route";
 import { GET as callback } from "@/app/api/admin/auth/callback/route";
@@ -21,7 +21,7 @@ function query(data: unknown) {
 let operator: ReturnType<typeof query>;
 let sessions: ReturnType<typeof query>;
 beforeEach(() => {
-  vi.clearAllMocks(); vi.stubEnv("ADMIN_SITE_URL", origin);
+  vi.clearAllMocks(); rpc.mockResolvedValue({ data: true, error: null }); vi.stubEnv("ADMIN_SITE_URL", origin);
   operator = query({ email: user.email, user_id: user.id, is_active: true }); sessions = query(null);
   from.mockImplementation((table: string) => {
     if (table === "admin_operators") return operator;
@@ -55,6 +55,13 @@ describe("Google admin login for an existing learner identity", () => {
     expect(auth.signOut).toHaveBeenCalledWith({ scope: "local" });
     expect(clearCookies).toHaveBeenCalled();
     expect(audit).toHaveBeenCalledWith(expect.objectContaining({ action: "auth.sign_in_denied", outcome: "denied" }));
+  });
+  it("rejects pre-cutover or connected Google sessions before operator binding", async () => {
+    rpc.mockResolvedValue({ data: false, error: null });
+    const response = await callback(new Request(`${origin}/api/admin/auth/callback?code=verified-code`));
+    expect(response.headers.get("location")).toContain("state=signin-error");
+    expect(sessions.insert).not.toHaveBeenCalled();
+    expect(from).not.toHaveBeenCalledWith("admin_operators");
   });
   it("accepts linked Google on the existing email identity and registers an admin session", async () => {
     const response = await callback(new Request(`${origin}/api/admin/auth/callback?code=verified-code`));

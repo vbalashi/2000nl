@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-375",
+  "contractId": "2000nl-db-377",
   "baseline": {
     "migrationId": 287,
     "file": "db/migrations/287_initial_schema.sql",
@@ -385,28 +385,38 @@
     },
     {
       "migrationId": 372,
-      "file": "db/migrations/372_connect_session_boundary.sql",
-      "sha256": "431db95e05b9c5ba774535819270a3f964ec42ca42960a40139806b99f21e896"
+      "file": "db/migrations/372_admin_feedback_review.sql",
+      "sha256": "48601aab3d12306e42a1122a1b947a326a46c5903655ee501b7da39918f31472"
     },
     {
       "migrationId": 373,
-      "file": "db/migrations/373_server_owned_subscription_tier.sql",
-      "sha256": "b33fd41ed79d802a9c56335f4f02f2b26a85bb5e868e4ec95940277366564cfd"
+      "file": "db/migrations/373_operator_notification_events.sql",
+      "sha256": "76b68fa72d2cdacb2223416328000ad5553a21999f83ec3563a3928b3a5d13cc"
     },
     {
       "migrationId": 374,
-      "file": "db/migrations/374_provider_work_safety.sql",
-      "sha256": "38eded2b18fdcc808d7215ad068edb43fc028ab8b75dac1b0787d024729a3b29"
+      "file": "db/migrations/374_connect_session_boundary.sql",
+      "sha256": "89c0d35d0ffcc2e87af2d1ab27840b6ec21879f7f5683eff344475cf58f13bfc"
     },
     {
       "migrationId": 375,
-      "file": "db/migrations/375_library_article_batch.sql",
+      "file": "db/migrations/375_server_owned_subscription_tier.sql",
+      "sha256": "b33fd41ed79d802a9c56335f4f02f2b26a85bb5e868e4ec95940277366564cfd"
+    },
+    {
+      "migrationId": 376,
+      "file": "db/migrations/376_provider_work_safety.sql",
+      "sha256": "38eded2b18fdcc808d7215ad068edb43fc028ab8b75dac1b0787d024729a3b29"
+    },
+    {
+      "migrationId": 377,
+      "file": "db/migrations/377_library_article_batch.sql",
       "sha256": "5558a73892e542a7d2a3cadcffba9ca026847348a09e5c6ee77bfe6ead3803c9"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-375.sql",
+  "postflightProbe": "db/deploy-contract/postflight-377.sql",
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-375.sql",
-    "sha256": "ebfcb4fd974adafc127a7dfc007332e0709c4806f3ef1ae23d8ec5b7e4837251"
+    "file": "db/deploy-contract/read-only-postflight-377.sql",
+    "sha256": "ae06e1e288f830bdee13aa947684bd6d9ea95fbc8949daf62793ddfb9062f2dd"
   }
 }

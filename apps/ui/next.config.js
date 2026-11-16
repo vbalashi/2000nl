@@ -57,6 +57,14 @@ rolloutEnv.PLATFORM_V2_TRANSLATION_EXERCISES_ENABLED =
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  async rewrites() { return [{source:'/admin/reports',destination:'/admin/reports/index.html'}]; },
+  async headers() { return [{source:'/admin/reports/:path*',headers:[
+    {key:'Cache-Control',value:'private, no-store, max-age=0'},
+    {key:'X-Content-Type-Options',value:'nosniff'},
+    {key:'X-Frame-Options',value:'DENY'},
+    {key:'Referrer-Policy',value:'no-referrer'},
+    {key:'Content-Security-Policy',value:"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; object-src 'none'"}
+  ]}]; },
   // Local preview wrappers use a dedicated cache directory so a concurrent
   // production build cannot overwrite chunks served by `next dev`.
   distDir: envNonEmpty(process.env.NEXT_DIST_DIR) ?? ".next",

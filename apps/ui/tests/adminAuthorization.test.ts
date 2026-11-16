@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { authClient, serviceClient } = vi.hoisted(() => ({
   authClient: { auth: { getSession: vi.fn(), getUser: vi.fn() } },
-  serviceClient: { from: vi.fn() },
+  serviceClient: { from: vi.fn(), rpc: vi.fn() },
 }));
 
 vi.mock("server-only", () => ({}));
@@ -41,6 +41,7 @@ function request(path = "/api/admin/dictionaries") {
 describe("admin server authorization", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    serviceClient.rpc.mockResolvedValue({ data: true, error: null });
     authClient.auth.getSession.mockResolvedValue({ data: { session: { access_token: accessToken } }, error: null });
     authClient.auth.getUser.mockResolvedValue({ data: { user }, error: null });
     serviceClient.from.mockImplementation((table: string) => {
@@ -58,6 +59,16 @@ describe("admin server authorization", () => {
       email: user.email,
       permissions: ["dictionaries.read", "audit.read"],
     });
+  });
+
+  it.each([false, null])("denies stale or connected authority despite an active operator session: %s", async (data) => {
+    serviceClient.rpc.mockResolvedValue({ data, error: null });
+    await expect(requireAdmin(request())).rejects.toMatchObject({ status: 401 });
+    expect(serviceClient.from).not.toHaveBeenCalledWith("admin_operators");
+  });
+  it("fails closed when live authority cannot be checked", async () => {
+    serviceClient.rpc.mockResolvedValue({ data: null, error: { message: "unavailable" } });
+    await expect(requireAdmin(request())).rejects.toMatchObject({ status: 503 });
   });
 
   it("denies unauthenticated requests", async () => {

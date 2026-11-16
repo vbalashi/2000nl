@@ -13,6 +13,10 @@ BEGIN
  IF NOT has_function_privilege('authenticated','public.check_first_party_session_v1()','EXECUTE')
   OR has_function_privilege('anon','public.check_first_party_session_v1()','EXECUTE') THEN
   RAISE EXCEPTION 'first_party_session_rpc_boundary'; END IF;
+ IF has_function_privilege('authenticated','public.check_admin_session_authority_v1(uuid,uuid)','EXECUTE')
+  OR has_function_privilege('anon','public.check_admin_session_authority_v1(uuid,uuid)','EXECUTE')
+  OR NOT has_function_privilege('service_role','public.check_admin_session_authority_v1(uuid,uuid)','EXECUTE') THEN
+  RAISE EXCEPTION 'admin_session_rpc_boundary'; END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='public.connected_client_sessions'::regclass AND conname='connected_session_v2_complete') THEN
   RAISE EXCEPTION 'connected_session_v2_contract_missing'; END IF;
  IF EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace

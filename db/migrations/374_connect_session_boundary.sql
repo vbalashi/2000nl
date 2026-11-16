@@ -102,6 +102,19 @@ $$;
 REVOKE ALL ON FUNCTION public.check_first_party_session_v1() FROM PUBLIC,anon,authenticated,service_role;
 GRANT EXECUTE ON FUNCTION public.check_first_party_session_v1() TO authenticated;
 
+-- Admin has an independent operator admission policy. Its server verifies the
+-- provider identity first, then checks the same live session boundary without
+-- granting that identity learner admission or accepting a connected session.
+CREATE FUNCTION public.check_admin_session_authority_v1(p_user_id uuid,p_auth_session_id uuid) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+ SELECT EXISTS(SELECT 1 FROM auth.sessions s CROSS JOIN private.api_session_boundary b
+  WHERE s.id=p_auth_session_id AND s.user_id=p_user_id AND s.created_at>=b.sessions_not_before
+   AND (s.not_after IS NULL OR s.not_after>now()))
+  AND NOT EXISTS(SELECT 1 FROM public.connected_client_sessions c WHERE c.auth_session_id=p_auth_session_id);
+$$;
+REVOKE ALL ON FUNCTION public.check_admin_session_authority_v1(uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.check_admin_session_authority_v1(uuid,uuid) TO service_role;
+
 CREATE OR REPLACE FUNCTION public.admission_enforce() RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 BEGIN
