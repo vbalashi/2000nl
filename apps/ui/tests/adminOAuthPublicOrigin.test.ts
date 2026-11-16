@@ -8,7 +8,7 @@ vi.mock("next/headers", () => ({
 }));
 
 import { POST } from "@/app/api/admin/auth/start/route";
-import { createAdminAuthClient, createAdminServiceClient } from "@/lib/admin/adminServerClient";
+import { createAdminAuthClient, createAdminServiceClient, ADMIN_SESSION_MAX_AGE_SECONDS } from "@/lib/admin/adminServerClient";
 
 const appOrigin = "https://app.example.test";
 const publicAuthOrigin = "https://auth.example.test";
@@ -43,7 +43,7 @@ it("constructs the browser OAuth URL from the public endpoint with the real PKCE
   expect(url.searchParams.get("redirect_to")).toBe(`${appOrigin}/api/admin/auth/callback`);
   expect(url.searchParams.get("code_challenge")).toBeTruthy();
   expect(fetch).not.toHaveBeenCalled();
-  expect(setCookie).toHaveBeenCalledWith(expect.stringMatching(/^2000nl-admin-auth-code-verifier/), expect.any(String), expect.objectContaining({ httpOnly: true, secure: true, sameSite: "lax", path: "/" }));
+  expect(setCookie).toHaveBeenCalledWith(expect.stringMatching(/^2000nl-admin-auth-code-verifier/), expect.any(String), expect.objectContaining({ httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 604800 }));
 });
 
 it.each([undefined, "", "http://supabase-internal:8000", "https://user:password@auth.example.test", "https://auth.example.test?token=invalid", "https://auth.example.test#fragment", "javascript:alert(1)"])("fails closed before setting PKCE cookies for a missing or invalid portable public endpoint %s", async (url) => {
@@ -83,3 +83,5 @@ it("keeps callback authentication and service requests on the internal endpoint"
     "http://supabase-internal:8000", "http://supabase-internal:8000",
   ]);
 });
+
+it("caps administrative cookies at the requested seven days",()=>{expect(ADMIN_SESSION_MAX_AGE_SECONDS).toBe(604800);});

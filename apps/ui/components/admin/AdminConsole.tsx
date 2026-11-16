@@ -1,5 +1,7 @@
 "use client";
 
+import { AdminEmailSignIn } from "./AdminEmailSignIn";
+
 import { reportReturnPath } from "@/lib/admin/reportReturn";
 
 import React, { useCallback, useEffect, useState } from "react";
@@ -205,7 +207,7 @@ export default function AdminConsole() {
       if (!sessionResponse.ok) throw new Error("Admin session unavailable");
       const session = await sessionResponse.json() as { email: string; permissions: string[] };
       if (cancelled) return;
-      // The independent reports frontend may request a return after Google login.
+      // The independent reports frontend may request a return after administrator sign-in.
       // Only accept a same-origin reports path and require its actual permission.
       const returnTo = sessionStorage.getItem("admin.returnTo");
       sessionStorage.removeItem("admin.returnTo");
@@ -222,6 +224,8 @@ export default function AdminConsole() {
           navigate(adminUrl({ view: session.permissions.includes("dictionaries.read") ? "dictionaries" : "journal", id: "", page: 1, before: "" }), true);
         } else if (session.permissions.includes("feedback.read")) {
           router.replace("/admin/reports");
+        } else if (session.permissions.includes("notifications.manage")) {
+          router.replace("/admin/reports/?view=notifications");
         } else if (session.permissions.includes("users.read")) {
           router.replace("/admin/users");
         } else {
@@ -327,6 +331,7 @@ export default function AdminConsole() {
         {location.state === "signed-out" && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">Вы вышли из административной системы.</p>}
         <button disabled={loginBusy} className="min-h-11 w-full rounded-lg bg-primary px-4 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">{loginBusy ? "Переход к Google…" : "Продолжить с Google"}</button>
       </form>
+      <AdminEmailSignIn />
       <p className="mt-4 text-xs leading-5 text-slate-500">Доступ открыт только заранее добавленным операторам. Для восстановления обратитесь к владельцу системы.</p>
     </div>
   </main>;

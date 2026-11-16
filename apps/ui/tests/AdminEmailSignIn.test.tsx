@@ -1,0 +1,7 @@
+import React from 'react';
+import {afterEach,expect,it,vi} from 'vitest';
+import {cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
+import {AdminEmailSignIn} from '@/components/admin/AdminEmailSignIn';
+afterEach(()=>{cleanup();vi.unstubAllGlobals();});
+it('uses the email-code form and clears a rejected code without browser storage',async()=>{const fetchMock=vi.fn(async(url:string)=>url==='/api/admin/auth/email'?Response.json({enabled:true}):Response.json({error:'signin_failed'},{status:401}));vi.stubGlobal('fetch',fetchMock);render(<AdminEmailSignIn/>);fireEvent.change(await screen.findByLabelText('Электронная почта'),{target:{value:'operator@example.test'}});fireEvent.click(screen.getByRole('button',{name:'Уже есть код'}));const input=screen.getByLabelText('Код из письма');fireEvent.change(input,{target:{value:'12345678'}});fireEvent.click(screen.getByRole('button',{name:'Войти по коду'}));await screen.findByRole('alert');expect(input).toHaveValue('');expect(fetchMock).toHaveBeenCalledWith('/api/admin/auth/email/verify',expect.objectContaining({body:JSON.stringify({email:'operator@example.test',token:'12345678'})}));});
+it('does not expose an inactive email method',async()=>{vi.stubGlobal('fetch',vi.fn(async()=>Response.json({enabled:false})));render(<AdminEmailSignIn/>);await waitFor(()=>expect(fetch).toHaveBeenCalled());expect(screen.queryByLabelText('Электронная почта')).not.toBeInTheDocument();});
