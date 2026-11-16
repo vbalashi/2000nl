@@ -75,3 +75,9 @@ it("keeps four registry columns and collapses technical detail", async () => {
   fireEvent.click(screen.getByRole("button", { name: "К списку словарей" }));
   await screen.findAllByRole("link", { name: /Example Dictionary/ });
 });
+
+it("lands a notifications-only operator in the permitted settings", async () => {
+  fetchMock.mockResolvedValue(Response.json({ email: "operator@example.test", permissions: ["notifications.manage"] }));
+  render(<AdminConsole />);
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/reports/?view=notifications"));
+});

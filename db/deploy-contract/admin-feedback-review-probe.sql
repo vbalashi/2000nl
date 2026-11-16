@@ -1,0 +1,6 @@
+DO $$
+BEGIN
+ IF to_regprocedure('public.admin_feedback_review_page_v1(text,text,timestamptz,timestamptz,text,text,text,boolean,integer)') IS NULL THEN RAISE EXCEPTION 'feedback_review_function_missing'; END IF;
+ IF has_function_privilege('anon','public.admin_feedback_review_page_v1(text,text,timestamptz,timestamptz,text,text,text,boolean,integer)','execute') OR has_function_privilege('authenticated','public.admin_feedback_review_page_v1(text,text,timestamptz,timestamptz,text,text,text,boolean,integer)','execute') OR NOT has_function_privilege('service_role','public.admin_feedback_review_page_v1(text,text,timestamptz,timestamptz,text,text,text,boolean,integer)','execute') THEN RAISE EXCEPTION 'feedback_review_permissions_invalid'; END IF;
+ IF position('feedback.read' in pg_get_constraintdef((SELECT oid FROM pg_constraint WHERE conrelid='public.admin_operators'::regclass AND conname='admin_operators_permissions_allowed'))) = 0 OR position('feedback.detail.read' in pg_get_constraintdef((SELECT oid FROM pg_constraint WHERE conrelid='public.admin_audit_events'::regclass AND conname='admin_audit_events_action_allowed'))) = 0 THEN RAISE EXCEPTION 'feedback_review_constraints_missing'; END IF;
+END $$;

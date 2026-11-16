@@ -28,6 +28,9 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
+      - name: Verify isolated SMTP delivery
+        working-directory: .
+        run: scripts/test-notification-smtp.sh
   database:
     runs-on: ubuntu-24.04
     services:

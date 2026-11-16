@@ -1,4 +1,5 @@
 export const ADMIN_AUDIT_ACTIONS = [
+  "notifications.configuration.read", "notifications.configuration.updated",
   "auth.sign_in",
   "auth.sign_in_denied",
   "auth.sign_out",
@@ -11,6 +12,9 @@ export const ADMIN_AUDIT_ACTIONS = [
   "audit.journal.read",
   "user.registry.read",
   "user.profile.read",
+  "feedback.registry.read",
+  "feedback.detail.read",
+  "operator.permissions.updated",
   "admission.approve", "admission.reject", "admission.revoke", "admission.invite", "admission.mode", "admission.auto_approve",
 ] as const;
 

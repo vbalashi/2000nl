@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { runtimeEnv, validPublicConfig } from "@/lib/runtime/publicConfig";
 
 export const ADMIN_AUTH_COOKIE = "2000nl-admin-auth";
-export const ADMIN_SESSION_MAX_AGE_SECONDS = 8 * 60 * 60;
+export const ADMIN_SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 
 function supabaseConfig(browserRedirect: boolean) {
   if (browserRedirect) {
