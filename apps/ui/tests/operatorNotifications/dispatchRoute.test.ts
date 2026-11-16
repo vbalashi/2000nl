@@ -30,3 +30,36 @@ test('retention cleanup is authenticated and redacts provider failures',async()=
  mocks.rpc.mockResolvedValueOnce({data:null,error:{message:'private'}});
  expect(await (await DELETE(request('DELETE','x'.repeat(40)))).json()).toEqual({error:'unavailable'});
 });
+
+test('status key is independently rotated, read-only, and projects only aggregate data',async()=>{
+ const dispatch='d'.repeat(40),status='s'.repeat(40),next='n'.repeat(40);
+ vi.stubEnv('OPERATOR_NOTIFICATION_DISPATCH_SECRET',dispatch);vi.stubEnv('OPERATOR_NOTIFICATION_STATUS_SECRET',status);
+ mocks.rpc.mockResolvedValue({data:{pending:2,leased:1,failed:0,oldestPendingAt:null,private:'must not escape'},error:null});
+ expect(await (await GET(request('GET',status))).json()).toEqual({pending:2,leased:1,failed:0,oldestPendingAt:null});
+ mocks.rpc.mockClear();
+ expect((await POST(request('POST',status))).status).toBe(401);
+ expect((await DELETE(request('DELETE',status))).status).toBe(401);
+ expect(mocks.dispatch).not.toHaveBeenCalled();expect(mocks.rpc).not.toHaveBeenCalled();
+ vi.stubEnv('OPERATOR_NOTIFICATION_STATUS_SECRET',next);
+ expect((await GET(request('GET',status))).status).toBe(401);
+ expect((await GET(request('GET',next))).status).toBe(200);
+ expect((await GET(request('GET',dispatch))).status).toBe(200);
+});
+
+test('status key fails closed for missing, malformed or equal credentials',async()=>{
+ const key='d'.repeat(40);vi.stubEnv('OPERATOR_NOTIFICATION_DISPATCH_SECRET',key);
+ vi.stubEnv('OPERATOR_NOTIFICATION_STATUS_SECRET','short');
+ expect((await GET(request('GET','short'))).status).toBe(401);
+ vi.stubEnv('OPERATOR_NOTIFICATION_STATUS_SECRET',key);
+ for(const [method,handler] of [['GET',GET],['POST',POST],['DELETE',DELETE]] as const) expect((await handler(request(method,key))).status).toBe(401);
+ expect(mocks.rpc).not.toHaveBeenCalled();expect(mocks.dispatch).not.toHaveBeenCalled();
+ vi.stubEnv('OPERATOR_NOTIFICATION_DISPATCH_SECRET','');vi.stubEnv('OPERATOR_NOTIFICATION_STATUS_SECRET','s'.repeat(40));
+ expect((await GET(request('GET','s'.repeat(40)))).status).toBe(401);
+});
+
+test('malformed aggregate fails without exposing RPC data',async()=>{
+ vi.stubEnv('OPERATOR_NOTIFICATION_DISPATCH_SECRET','d'.repeat(40));
+ mocks.rpc.mockResolvedValue({data:{pending:2,leased:0,failed:-1,oldestPendingAt:null,private:'secret'},error:null});
+ const response=await GET(request('GET','d'.repeat(40)));
+ expect(response.status).toBe(503);expect(await response.json()).toEqual({error:'unavailable'});
+});
