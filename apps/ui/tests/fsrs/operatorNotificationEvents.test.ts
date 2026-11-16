@@ -12,11 +12,25 @@ describeIfDb('operator notification events',()=>{
   await withTransaction(pool,async client=>{
    await client.query('update private.operator_notification_settings set enabled=true where singleton');
    const user=randomUUID(), report=randomUUID(), feedback=randomUUID();
+   const bots=[randomUUID(),randomUUID()];
+   for(const bot of bots){
+    await client.query("insert into private.operator_notification_bots(id,name,credential_state,secret_version) values($1,'synthetic','ready',$2)",[bot,'a'.repeat(32)]);
+    await client.query("insert into private.operator_notification_routes(bot_id,kind,chat_id,enabled) values($1,'feedback','-100123',true)",[bot]);
+   }
+
    await ensureUserWithSettings(client,user);
    await client.query(`insert into public.feedback_items(id,reporter_user_id,reporter_pseudonym,report_id,source_client,app_build_version,kind,problem_type,target_kind,target,comment_present,sanitized_summary)
     values($1,$2,'usr_0123456789abcdef01234567',$3,'web','1','content-quality','other','entry','{}',true,'private text')`,[feedback,user,report]);
    const rows=(await client.query('select kind,feedback_id,admission_email from private.operator_notification_events where feedback_id=$1',[feedback])).rows;
    expect(rows).toEqual([{kind:'feedback',feedback_id:feedback,admission_email:null}]);
+   const deliveries=(await client.query('select * from private.operator_notification_deliveries where event_id in (select id from private.operator_notification_events where feedback_id=$1)',[feedback])).rows;
+   expect(deliveries).toHaveLength(2);
+   const claimed=(await client.query('select public.operator_delivery_claim_v1(50) item')).rows.map(row=>row.item).filter(item=>item.feedbackId===feedback);
+   expect(claimed).toHaveLength(2);
+   expect((await client.query("select public.operator_delivery_settle_v1($1,$2,'sent',null) ok",[claimed[0].id,claimed[0].leaseId])).rows[0].ok).toBe(true);
+   expect((await client.query("select public.operator_delivery_settle_v1($1,$2,'retry',30) ok",[claimed[1].id,claimed[1].leaseId])).rows[0].ok).toBe(true);
+   expect((await client.query('select state from private.operator_notification_deliveries where id=ANY($1::uuid[]) order by state',[claimed.map(item=>item.id)])).rows.map(row=>row.state)).toEqual(['pending','sent']);
+
   });
  });
  test('disabled mode does not enqueue and rejected requests do not send mail',async()=>{

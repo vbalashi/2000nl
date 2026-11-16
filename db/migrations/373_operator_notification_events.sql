@@ -171,6 +171,94 @@ CREATE UNIQUE INDEX operator_notification_feedback_once ON private.operator_noti
  WHERE kind='feedback';
 REVOKE ALL ON private.operator_notification_events FROM PUBLIC,anon,authenticated,service_role;
 
+-- Each accepted domain event fans out into independent transport deliveries.
+-- Destination and credential version are frozen at enqueue time; route edits
+-- affect only future events. A route can still be disabled to stop pending work.
+CREATE TABLE private.operator_notification_deliveries (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ event_id uuid NOT NULL REFERENCES private.operator_notification_events(id) ON DELETE CASCADE,
+ route_id uuid REFERENCES private.operator_notification_routes(id) ON DELETE RESTRICT,
+ bot_id uuid REFERENCES private.operator_notification_bots(id) ON DELETE RESTRICT,
+ route_revision integer,
+ secret_version text,
+ chat_id text,
+ topic_id bigint,
+ transport text NOT NULL CHECK (transport IN ('telegram','email')),
+ created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+ state text NOT NULL DEFAULT 'pending' CHECK (state IN ('pending','leased','sent','failed','cancelled')),
+ attempts integer NOT NULL DEFAULT 0 CHECK (attempts>=0),
+ next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+ lease_id uuid,
+ lease_until timestamptz,
+ finished_at timestamptz,
+ CHECK ((state='leased')=(lease_id IS NOT NULL AND lease_until IS NOT NULL)),
+ CHECK ((state IN ('sent','failed','cancelled'))=(finished_at IS NOT NULL)),
+ CHECK ((transport='email' AND route_id IS NULL AND bot_id IS NULL AND secret_version IS NULL AND chat_id IS NULL)
+  OR (transport='telegram' AND route_id IS NOT NULL AND bot_id IS NOT NULL AND route_revision IS NOT NULL AND secret_version IS NOT NULL AND chat_id IS NOT NULL))
+);
+CREATE UNIQUE INDEX operator_notification_delivery_route ON private.operator_notification_deliveries(event_id,route_id) WHERE route_id IS NOT NULL;
+CREATE UNIQUE INDEX operator_notification_delivery_email ON private.operator_notification_deliveries(event_id) WHERE transport='email';
+CREATE INDEX operator_notification_delivery_ready ON private.operator_notification_deliveries(next_attempt_at,id) WHERE state IN ('pending','leased');
+ALTER TABLE private.operator_notification_deliveries ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON private.operator_notification_deliveries FROM PUBLIC,anon,authenticated,service_role;
+CREATE FUNCTION private.fanout_operator_notification_v1() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+BEGIN
+ IF NEW.kind='admission-approved' THEN
+  INSERT INTO private.operator_notification_deliveries(event_id,transport) VALUES(NEW.id,'email');
+ ELSE
+  INSERT INTO private.operator_notification_deliveries(event_id,route_id,bot_id,route_revision,secret_version,chat_id,topic_id,transport)
+   SELECT NEW.id,r.id,b.id,r.revision,b.secret_version,r.chat_id,r.topic_id,'telegram'
+   FROM private.operator_notification_routes r JOIN private.operator_notification_bots b ON b.id=r.bot_id
+   WHERE r.enabled AND r.kind=NEW.kind AND b.credential_state='ready';
+ END IF;
+ RETURN NEW;
+END; $$;
+CREATE TRIGGER operator_notification_fanout AFTER INSERT ON private.operator_notification_events
+ FOR EACH ROW EXECUTE FUNCTION private.fanout_operator_notification_v1();
+REVOKE ALL ON FUNCTION private.fanout_operator_notification_v1() FROM PUBLIC,anon,authenticated,service_role;
+
+CREATE FUNCTION public.operator_delivery_claim_v1(p_limit integer DEFAULT 1) RETURNS SETOF jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+BEGIN
+ IF p_limit IS NULL OR p_limit NOT BETWEEN 1 AND 50 THEN RAISE EXCEPTION 'invalid_limit' USING ERRCODE='22023'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM private.operator_notification_settings WHERE singleton AND enabled) THEN RETURN; END IF;
+ UPDATE private.operator_notification_deliveries SET state='failed',lease_id=NULL,lease_until=NULL,finished_at=clock_timestamp()
+ WHERE state='leased' AND lease_until<clock_timestamp() AND attempts>=10;
+ UPDATE private.operator_notification_deliveries d SET state='cancelled',lease_id=NULL,lease_until=NULL,finished_at=clock_timestamp()
+ WHERE (d.state='pending' OR (d.state='leased' AND d.lease_until<clock_timestamp())) AND d.transport='telegram'
+ AND NOT EXISTS(SELECT 1 FROM private.operator_notification_routes r JOIN private.operator_notification_bots b ON b.id=d.bot_id
+  WHERE r.id=d.route_id AND r.enabled AND r.bot_id=d.bot_id AND b.credential_state='ready' AND b.secret_version=d.secret_version);
+ RETURN QUERY WITH candidates AS (
+  SELECT d.id FROM private.operator_notification_deliveries d
+  WHERE (d.state='pending' AND d.next_attempt_at<=clock_timestamp()) OR (d.state='leased' AND d.lease_until<clock_timestamp())
+  ORDER BY d.next_attempt_at,d.id FOR UPDATE SKIP LOCKED LIMIT p_limit
+ ), claimed AS (
+  UPDATE private.operator_notification_deliveries d SET state='leased',lease_id=gen_random_uuid(),lease_until=clock_timestamp()+interval '2 minutes',attempts=d.attempts+1
+  FROM candidates c WHERE c.id=d.id RETURNING d.*
+ ) SELECT jsonb_build_object('id',d.id,'eventId',e.id,'kind',e.kind,'transport',d.transport,'leaseId',d.lease_id,'attempts',d.attempts,
+  'botId',d.bot_id,'secretVersion',d.secret_version,'chatId',d.chat_id,'topicId',d.topic_id,'email',e.admission_email,'feedbackId',e.feedback_id,
+  'admissionStatus',a.status,'emailVerified',coalesce(u.email_confirmed_at IS NOT NULL AND lower(btrim(u.email))=e.admission_email,false))
+ FROM claimed d JOIN private.operator_notification_events e ON e.id=d.event_id
+ LEFT JOIN private.admission_requests a ON a.email=e.admission_email LEFT JOIN auth.users u ON u.id=a.user_id;
+END; $$;
+CREATE FUNCTION public.operator_delivery_settle_v1(p_id uuid,p_lease uuid,p_outcome text,p_delay integer DEFAULT NULL) RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE affected integer;
+BEGIN
+ IF p_id IS NULL OR p_lease IS NULL OR p_outcome IS NULL OR p_outcome NOT IN ('sent','retry','failed','cancelled')
+  OR (p_outcome='retry' AND (p_delay IS NULL OR p_delay NOT BETWEEN 1 AND 86400)) THEN
+  RAISE EXCEPTION 'invalid_settlement' USING ERRCODE='22023'; END IF;
+ UPDATE private.operator_notification_deliveries SET
+  state=CASE WHEN p_outcome='retry' AND attempts>=10 THEN 'failed' WHEN p_outcome='retry' THEN 'pending' ELSE p_outcome END,
+  next_attempt_at=CASE WHEN p_outcome='retry' AND attempts<10 THEN clock_timestamp()+make_interval(secs=>p_delay) ELSE next_attempt_at END,
+  finished_at=CASE WHEN p_outcome<>'retry' OR attempts>=10 THEN clock_timestamp() ELSE NULL END,lease_id=NULL,lease_until=NULL
+ WHERE id=p_id AND state='leased' AND lease_id=p_lease AND lease_until>clock_timestamp();
+ GET DIAGNOSTICS affected=ROW_COUNT;RETURN affected=1;
+END; $$;
+REVOKE ALL ON FUNCTION public.operator_delivery_claim_v1(integer),public.operator_delivery_settle_v1(uuid,uuid,text,integer) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.operator_delivery_claim_v1(integer),public.operator_delivery_settle_v1(uuid,uuid,text,integer) TO service_role;
+
 CREATE FUNCTION private.enqueue_operator_admission_v1() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 BEGIN
@@ -265,15 +353,20 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
  SELECT jsonb_build_object('pending',count(*) FILTER(WHERE state='pending'),
   'leased',count(*) FILTER(WHERE state='leased'), 'failed',count(*) FILTER(WHERE state='failed'),
   'oldestPendingAt',min(created_at) FILTER(WHERE state IN ('pending','leased')))
- FROM private.operator_notification_events;
+ FROM private.operator_notification_deliveries;
 $$;
 CREATE FUNCTION public.operator_notification_cleanup_v1() RETURNS integer
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE removed integer;
+DECLARE removed integer; parents integer;
 BEGIN
- DELETE FROM private.operator_notification_events WHERE (state='sent' AND finished_at<clock_timestamp()-interval '30 days')
-   OR (state='failed' AND finished_at<clock_timestamp()-interval '90 days');
- GET DIAGNOSTICS removed=ROW_COUNT; RETURN removed;
+ DELETE FROM private.operator_notification_deliveries WHERE
+  (state IN ('sent','cancelled') AND finished_at<clock_timestamp()-interval '30 days')
+  OR (state='failed' AND finished_at<clock_timestamp()-interval '90 days');
+ GET DIAGNOSTICS removed=ROW_COUNT;
+ DELETE FROM private.operator_notification_events e WHERE NOT EXISTS(SELECT 1 FROM private.operator_notification_deliveries d WHERE d.event_id=e.id)
+ AND ((state='pending' AND created_at<clock_timestamp()-interval '30 days') OR (state='sent' AND finished_at<clock_timestamp()-interval '30 days')
+   OR (state='failed' AND finished_at<clock_timestamp()-interval '90 days'));
+ GET DIAGNOSTICS parents=ROW_COUNT; RETURN removed+parents;
 END; $$;
 REVOKE ALL ON FUNCTION public.operator_notification_status_v1(),public.operator_notification_cleanup_v1() FROM PUBLIC,anon,authenticated,service_role;
 GRANT EXECUTE ON FUNCTION public.operator_notification_status_v1(),public.operator_notification_cleanup_v1() TO service_role;
