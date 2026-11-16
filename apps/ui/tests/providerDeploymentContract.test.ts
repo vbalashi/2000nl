@@ -9,6 +9,7 @@ const digest=(text:string)=>crypto.createHash("sha256").update(text).digest("hex
 function expand(file:string):string{return read(file).replace(/^\\i (.+)$/gm,(_line,child:string)=>expand(child.trim()));}
 test("manifest migrations and hashes are reachable through the real fresh-install entrypoint",()=>{
  const bootstrap=read("db/migrations/bootstrap.sql");
+ expect(contract.contractId).toBe(`2000nl-db-${contract.migrations.at(-1)?.migrationId}`);
  for(const migration of [contract.baseline,...contract.migrations]){
    expect(bootstrap).toContain(`\\i ${migration.file}`);expect(digest(read(migration.file))).toBe(migration.sha256);
  }
@@ -18,5 +19,7 @@ test("provider safety is in normal and read-only deployment chains, with the cor
  expect(digest(read(contract.readOnlyPostflightProbe.file))).toBe(contract.readOnlyPostflightProbe.sha256);
  for(const probe of [contract.postflightProbe,contract.readOnlyPostflightProbe.file]){
    const expanded=expand(probe);expect(expanded).toContain("provider_work_rpc_contract_failed");expect(expanded).toContain("provider_work_storage_contract_failed");
+   expect(expanded).toContain("session_pre_request_fence_missing");
+   expect(expanded).toContain("subscription_tier");
  }
 });

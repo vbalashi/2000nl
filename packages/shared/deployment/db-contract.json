@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-373",
+  "contractId": "2000nl-db-374",
   "baseline": {
     "migrationId": 287,
     "file": "db/migrations/287_initial_schema.sql",
