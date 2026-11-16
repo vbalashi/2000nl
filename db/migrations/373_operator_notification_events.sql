@@ -374,7 +374,8 @@ BEGIN
  JOIN private.operator_notification_events e ON e.id=d.event_id
  WHERE d.id=p_delivery AND d.bot_id=p_bot AND d.chat_id=p_chat AND d.topic_id IS NOT DISTINCT FROM p_topic
   AND d.transport='telegram' AND d.state IN ('sent','leased') AND r.enabled AND r.bot_id=p_bot
-  AND b.credential_state='ready' AND b.secret_version=d.secret_version AND e.kind='admission-request';
+  AND b.credential_state='ready' AND b.secret_version=d.secret_version AND e.kind='admission-request'
+ FOR SHARE OF b,r,d;
  IF event IS NULL THEN RETURN 'expired'; END IF;
  RETURN public.operator_notification_decide_v1(event,p_operator,p_action,p_request);
 END; $$;
