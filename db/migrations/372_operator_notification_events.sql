@@ -36,7 +36,7 @@ BEGIN
  IF NOT EXISTS(SELECT 1 FROM private.operator_notification_settings WHERE singleton AND enabled) THEN RETURN NEW; END IF;
  IF TG_OP='INSERT' AND NEW.status='pending' THEN
   INSERT INTO private.operator_notification_events(kind,admission_email) VALUES('admission-request',NEW.email);
- ELSIF TG_OP='UPDATE' AND OLD.status='pending' AND NEW.status='approved' AND NEW.decided_by IS NOT NULL
+ ELSIF TG_OP='UPDATE' AND OLD.status<>'approved' AND NEW.status='approved' AND NEW.decided_by IS NOT NULL
    AND EXISTS(SELECT 1 FROM auth.users u WHERE u.id=NEW.user_id AND u.email_confirmed_at IS NOT NULL AND lower(btrim(u.email))=NEW.email) THEN
   INSERT INTO private.operator_notification_events(kind,admission_email) VALUES('admission-approved',NEW.email);
  END IF;
@@ -60,6 +60,7 @@ CREATE FUNCTION public.operator_notification_claim_v1(p_limit integer DEFAULT 10
 RETURNS SETOF jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 BEGIN
  IF p_limit IS NULL OR p_limit NOT BETWEEN 1 AND 50 THEN RAISE EXCEPTION 'invalid_limit' USING ERRCODE='22023'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM private.operator_notification_settings WHERE singleton AND enabled) THEN RETURN; END IF;
  RETURN QUERY WITH candidates AS (
   SELECT e.id FROM private.operator_notification_events e
   WHERE (e.state='pending' AND e.next_attempt_at<=clock_timestamp()) OR (e.state='leased' AND e.lease_until<clock_timestamp())
@@ -105,6 +106,24 @@ BEGIN
  PERFORM public.admin_admission_mutate(p_operator,p_action,ARRAY[email_value],NULL,p_request);
  RETURN 'decided';
 END; $$;
+
+CREATE FUNCTION public.operator_notification_status_v1() RETURNS jsonb
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+ SELECT jsonb_build_object('pending',count(*) FILTER(WHERE state='pending'),
+  'leased',count(*) FILTER(WHERE state='leased'), 'failed',count(*) FILTER(WHERE state='failed'),
+  'oldestPendingAt',min(created_at) FILTER(WHERE state IN ('pending','leased')))
+ FROM private.operator_notification_events;
+$$;
+CREATE FUNCTION public.operator_notification_cleanup_v1() RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE removed integer;
+BEGIN
+ DELETE FROM private.operator_notification_events WHERE (state='sent' AND created_at<clock_timestamp()-interval '30 days')
+   OR (state='failed' AND created_at<clock_timestamp()-interval '90 days');
+ GET DIAGNOSTICS removed=ROW_COUNT; RETURN removed;
+END; $$;
+REVOKE ALL ON FUNCTION public.operator_notification_status_v1(),public.operator_notification_cleanup_v1() FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.operator_notification_status_v1(),public.operator_notification_cleanup_v1() TO service_role;
 
 REVOKE ALL ON FUNCTION private.enqueue_operator_admission_v1() FROM PUBLIC,anon,authenticated,service_role;
 REVOKE ALL ON FUNCTION private.enqueue_operator_feedback_v1() FROM PUBLIC,anon,authenticated,service_role;

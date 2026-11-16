@@ -8,6 +8,32 @@ describeIfDb('operator notification events',()=>{
  const pool=new Pool({connectionString:dbUrl});
  beforeAll(async()=>{await runMigrations(pool);},120000);
  afterAll(async()=>{await pool.end();});
+ test('feedback event contains only the report identifier',async()=>{
+  await withTransaction(pool,async client=>{
+   await client.query('update private.operator_notification_settings set enabled=true where singleton');
+   const user=randomUUID(), report=randomUUID(), feedback=randomUUID();
+   await ensureUserWithSettings(client,user);
+   await client.query(`insert into public.feedback_items(id,reporter_user_id,reporter_pseudonym,report_id,source_client,app_build_version,kind,problem_type,target_kind,target,comment_present,sanitized_summary)
+    values($1,$2,'usr_0123456789abcdef01234567',$3,'web','1','content-quality','other','entry','{}',true,'private text')`,[feedback,user,report]);
+   const rows=(await client.query('select kind,feedback_id,admission_email from private.operator_notification_events where feedback_id=$1',[feedback])).rows;
+   expect(rows).toEqual([{kind:'feedback',feedback_id:feedback,admission_email:null}]);
+  });
+ });
+ test('disabled mode does not enqueue and rejected requests do not send mail',async()=>{
+  await withTransaction(pool,async client=>{
+   const user=randomUUID(),operator=randomUUID(),email=`${randomUUID()}@example.test`;
+   await ensureUserWithSettings(client,user);await ensureUserWithSettings(client,operator);
+   await client.query('update auth.users set email=$2,email_confirmed_at=now() where id=$1',[user,email]);
+   await client.query("insert into public.admin_operators(email,user_id,is_active,permissions) values($1,$2,true,ARRAY['admission.manage'])",[`op-${email}`,operator]);
+   await client.query("insert into private.admission_requests(email,user_id,status) values($1,$2,'pending')",[email,user]);
+   expect((await client.query('select id from private.operator_notification_events where admission_email=$1',[email])).rows).toHaveLength(0);
+   await client.query('update private.operator_notification_settings set enabled=true where singleton');
+   await client.query("select public.admin_admission_mutate($1,'reject',ARRAY[$2],null,$3)",[operator,email,randomUUID()]);
+   expect((await client.query('select id from private.operator_notification_events where admission_email=$1',[email])).rows).toHaveLength(0);
+   await client.query("select public.admin_admission_mutate($1,'approve',ARRAY[$2],null,$3)",[operator,email,randomUUID()]);
+   expect((await client.query('select kind from private.operator_notification_events where admission_email=$1',[email])).rows.map(row=>row.kind)).toEqual(['admission-approved']);
+  });
+ });
  test('approval is atomic and replay cannot create another approval email',async()=>{
   await withTransaction(pool,async client=>{
    await client.query('update private.operator_notification_settings set enabled=true where singleton');
