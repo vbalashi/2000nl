@@ -15,3 +15,21 @@ separately reviewed private forward migration, capability provisioning and the
 normal release process; the public migrations are a fresh-install baseline.
 
 The frontend is built in the separate Admin repository and mounted at `/admin/reports/` on the backend origin. This repository owns API and navigation links only. Login stays at `/admin` during this initial extraction. Separate-source deployment does not require a separate browser origin.
+
+## Administrator sign-in and session lifetime
+
+The administrative cookie/session is separate from the learner session. Google
+uses PKCE and a server-verified identity. An installation may additionally enable
+email-code sign-in with the server-only `ADMIN_EMAIL_OTP_ENABLED=true` setting.
+Email login never creates an Auth user or grants operator access: only an
+existing active operator can request a code, and verification rechecks the
+current confirmed identity, operator binding and required audit before registering
+the administrative session. Request acceptance does not confirm mail delivery
+or reveal whether an address is registered. Codes never enter browser storage.
+
+Both methods use the same operator authorization and audit boundary. Administrative
+cookies and the server registration expire after seven days; token refresh does
+not extend that absolute registration deadline. Logout, session revocation and
+operator deactivation or permission changes continue to apply immediately.
+An installation must configure its own Google callback and mail provider; public
+application code contains no provider client secret.

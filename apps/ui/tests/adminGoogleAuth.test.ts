@@ -4,7 +4,7 @@ const { auth, from, rpc, audit, clearCookies } = vi.hoisted(() => ({
   from: vi.fn(), rpc: vi.fn(), audit: vi.fn(), clearCookies: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
-vi.mock("@/lib/admin/adminServerClient", () => ({ createAdminAuthClient: async () => ({ auth }), createAdminServiceClient: () => ({ from, rpc }), clearAdminAuthCookies: clearCookies, ADMIN_SESSION_MAX_AGE_SECONDS: 28800 }));
+vi.mock("@/lib/admin/adminServerClient", () => ({ createAdminAuthClient: async () => ({ auth }), createAdminServiceClient: () => ({ from, rpc }), clearAdminAuthCookies: clearCookies, ADMIN_SESSION_MAX_AGE_SECONDS: 604800 }));
 vi.mock("@/lib/admin/adminAuditRepository", () => ({ readAdminAuditContext: () => ({}), writeAdminAuditEvent: audit }));
 import { POST as start } from "@/app/api/admin/auth/start/route";
 import { GET as callback } from "@/app/api/admin/auth/callback/route";
