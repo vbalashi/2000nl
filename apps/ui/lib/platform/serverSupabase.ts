@@ -1,3 +1,4 @@
+import { CONNECT_BACKEND_HEADER, CONNECT_SESSION_COLUMNS, decryptProviderSession, isConnectAccessToken, tokenHash, verifiedSessionId, type ConnectedSessionRow } from "@/lib/connect/sessionCredentials";
 import { diagnosticSupabaseFetch, identifyDiagnosticActor } from "../diagnostics/server";
 import { checkAdmissionLazy } from "@/lib/admission/server";
 import { serverSupabaseConfig } from "@/lib/runtime/publicConfig";
@@ -261,7 +262,7 @@ async function measureAuthTiming<T>(
   }
 }
 
-function createAuthenticatedBearerClient(token: string): SupabaseClient | NextResponse {
+function createAuthenticatedBearerClient(token: string, backendProof?: string): SupabaseClient | NextResponse {
   const supabaseUrl = serverSupabaseConfig().url;
   const supabaseAnonKey = serverSupabaseConfig().anonKey;
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -278,6 +279,7 @@ function createAuthenticatedBearerClient(token: string): SupabaseClient | NextRe
       fetch: diagnosticSupabaseFetch,
       headers: {
         Authorization: `Bearer ${token}`,
+        ...(backendProof ? { [CONNECT_BACKEND_HEADER]: backendProof } : {}),
       },
     },
   });
@@ -292,6 +294,7 @@ async function getAuthenticatedUserSupabase(
     return jsonNoStore({ error: "missing_bearer_token" }, 401);
   }
 
+  if (isConnectAccessToken(token)) return jsonNoStore({ error: "first_party_required" }, 403);
   const supabase = createAuthenticatedBearerClient(token);
   if (supabase instanceof NextResponse) return supabase;
 
@@ -305,6 +308,8 @@ async function getAuthenticatedUserSupabase(
   }
 
   const denied = await checkAdmissionLazy(platformServiceClient, data.user.id); if (denied) return denied;
+  const sessionDenied = await requireFirstPartySession(supabase);
+  if (sessionDenied) return sessionDenied;
   return { supabase, user: data.user };
 }
 
@@ -319,12 +324,16 @@ export async function getAuthenticatedSupabase(
     return jsonNoStore({ error: "missing_bearer_token" }, 401);
   }
 
+  if (isConnectAccessToken(token)) return resolveConnectedSupabase(token, instrumentation);
+
   const cached = readPlatformAuthCache(token);
   if (cached) {
     const denied = await checkAdmissionLazy(platformServiceClient, cached.user.id); if (denied) return denied;
     const cacheStartedAt = performance.now();
     const supabase = createAuthenticatedBearerClient(token);
     if (supabase instanceof NextResponse) return supabase;
+    const sessionDenied = await requireFirstPartySession(supabase);
+    if (sessionDenied) return sessionDenied;
     recordAuthTiming(instrumentation, "auth.cache-hit", performance.now() - cacheStartedAt);
     identifyDiagnosticActor(cached.user.id);
     return {
@@ -346,6 +355,8 @@ export async function getAuthenticatedSupabase(
       const denied = await checkAdmissionLazy(platformServiceClient, shared.user.id); if (denied) return denied;
       const supabase = createAuthenticatedBearerClient(token);
       if (supabase instanceof NextResponse) return supabase;
+      const sessionDenied = await requireFirstPartySession(supabase);
+      if (sessionDenied) return sessionDenied;
       identifyDiagnosticActor(shared.user.id);
       return { supabase, ...shared };
     }
@@ -378,14 +389,10 @@ async function resolveAuthenticatedSupabase(
   const auth = await getAuthenticatedUserSupabase(request, instrumentation);
   if (auth instanceof NextResponse) return auth;
 
-  const principal = await resolvePlatformPrincipal(
-    {
-      token,
-      userId: auth.user.id,
-    },
-    instrumentation,
-  );
-  if (principal instanceof NextResponse) return principal;
+  const principal: PlatformPrincipal = {
+    userId: auth.user.id, authKind: "first_party", connectedClientId: null,
+    connectedSessionId: null, scopes: new Set(["platform:read", "platform:write"]),
+  };
 
   writePlatformAuthCache(token, auth.user, principal);
 
@@ -403,141 +410,52 @@ function platformServiceClient(): SupabaseClient | null {
   return getServiceSupabaseClient(supabaseUrl, serviceKey);
 }
 
-async function resolvePlatformPrincipal(
-  params: {
-    token: string;
-    userId: string;
-  },
-  instrumentation?: TimingEntrySink,
-): Promise<PlatformPrincipal | NextResponse> {
-  const firstParty: PlatformPrincipal = {
-    userId: params.userId,
-    authKind: "first_party",
-    connectedClientId: null,
-    connectedSessionId: null,
-    scopes: new Set(["platform:read", "platform:write"]),
-  };
-
-  if (
-    process.env.NODE_ENV === "test" &&
-    process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP !== "1"
-  ) {
-    return firstParty;
-  }
-
-  const service = platformServiceClient();
-  if (!service) return firstParty;
-  if (typeof service.from !== "function") return firstParty;
-
-  let sessionQuery: any;
+async function requireFirstPartySession(supabase: SupabaseClient): Promise<NextResponse | null> {
   try {
-    sessionQuery = service.from("connected_client_sessions");
-  } catch (error) {
-    if (process.env.NODE_ENV === "test") return firstParty;
-    throw error;
-  }
-  if (!sessionQuery || typeof sessionQuery.select !== "function") {
-    return firstParty;
-  }
+    const { data, error } = await supabase.rpc("check_first_party_session_v1");
+    if (error || data !== true) return jsonNoStore({ error: "session_reauthentication_required" }, 401);
+    return null;
+  } catch { return jsonNoStore({ error: "session_authorization_unavailable" }, 503); }
+}
 
-  const { data: session, error: sessionError } = await measureAuthTiming<{
-    data: unknown;
-    error: { message?: string } | null;
-  }>(
-    instrumentation,
-    "auth.principal-session",
-    () =>
-      sessionQuery
-        .select("id, client_id, user_id, scopes, revoked_at, access_token_expires_at")
-        .eq("access_token_hash", sha256Hex(params.token))
-        .maybeSingle(),
-  );
-
-  if (sessionError) {
-    return jsonNoStore(
-      { error: "platform_principal_lookup_failed", detail: sessionError.message },
-      500,
-    );
-  }
-  if (!session) return firstParty;
-
-  const row = session as {
-    id: string;
-    client_id: string;
-    user_id: string;
-    scopes: ConnectedClientScope[];
-    revoked_at: string | null;
-    access_token_expires_at: string | null;
-  };
-
-  if (row.user_id !== params.userId) {
-    return jsonNoStore({ error: "connected_client_token_user_mismatch" }, 401);
-  }
-  if (row.revoked_at) {
-    return jsonNoStore({ error: "connected_client_session_revoked" }, 401);
-  }
-  if (
-    row.access_token_expires_at &&
-    Date.parse(row.access_token_expires_at) <= Date.now()
-  ) {
+async function resolveConnectedSupabase(token: string, instrumentation?: TimingEntrySink): Promise<AuthenticatedSupabase | NextResponse> {
+  const service = platformServiceClient();
+  if (!service) return jsonNoStore({ error: "connect_service_not_configured" }, 503);
+  const { data, error } = await service.from("connected_client_sessions")
+    .select(CONNECT_SESSION_COLUMNS).eq("access_token_hash", tokenHash(token)).maybeSingle();
+  if (error) return jsonNoStore({ error: "platform_principal_lookup_failed" }, 503);
+  const row = data as ConnectedSessionRow | null;
+  if (!row || row.credential_version !== 2 || !row.auth_session_id || !row.provider_session_ciphertext)
+    return jsonNoStore({ error: "invalid_bearer_token" }, 401);
+  if (row.revoked_at) return jsonNoStore({ error: "connected_client_session_revoked" }, 401);
+  if (!row.access_token_expires_at || Date.parse(row.access_token_expires_at) <= Date.now()
+    || !row.refresh_token_expires_at || Date.parse(row.refresh_token_expires_at) <= Date.now())
     return jsonNoStore({ error: "connected_client_token_expired" }, 401);
-  }
-
-  const [clientResult, grantResult] = await Promise.all([
-    measureAuthTiming(instrumentation, "auth.principal-client", () =>
-      service
-        .from("connected_clients")
-        .select("client_id, status")
-        .eq("client_id", row.client_id)
-        .maybeSingle(),
-    ),
-    measureAuthTiming(instrumentation, "auth.principal-grant", () =>
-      service
-        .from("connected_client_grants")
-        .select("scopes, revoked_at")
-        .eq("client_id", row.client_id)
-        .eq("user_id", row.user_id)
-        .maybeSingle(),
-    ),
+  const [client, grant] = await Promise.all([
+    service.from("connected_clients").select("status,allowed_scopes").eq("client_id", row.client_id).maybeSingle(),
+    service.from("connected_client_grants").select("scopes,revoked_at,authority_revision").eq("client_id", row.client_id).eq("user_id", row.user_id).maybeSingle(),
   ]);
-
-  const { data: client, error: clientError } = clientResult;
-  if (clientError) {
-    return jsonNoStore(
-      { error: "connected_client_lookup_failed", detail: clientError.message },
-      500,
-    );
-  }
-  if (!client || (client as { status?: string }).status !== "active") {
-    return jsonNoStore({ error: "connected_client_disabled" }, 401);
-  }
-
-  const { data: grant, error: grantError } = grantResult;
-  if (grantError) {
-    return jsonNoStore(
-      { error: "connected_client_grant_lookup_failed", detail: grantError.message },
-      500,
-    );
-  }
-  if (!grant || (grant as { revoked_at?: string | null }).revoked_at) {
+  if (client.error || grant.error) return jsonNoStore({ error: "platform_principal_lookup_failed" }, 503);
+  if (client.data?.status !== "active") return jsonNoStore({ error: "connected_client_disabled" }, 401);
+  const grantedScopes: string[] = grant.data?.scopes ?? [], allowedScopes: string[] = client.data?.allowed_scopes ?? [];
+  if (!grant.data || grant.data.revoked_at || grant.data.authority_revision !== row.grant_revision || !row.scopes.every(scope => grantedScopes.includes(scope) && allowedScopes.includes(scope)))
     return jsonNoStore({ error: "connected_client_grant_revoked" }, 401);
-  }
-
-  const grantedScopes = ((grant as { scopes?: ConnectedClientScope[] }).scopes ?? [])
-    .filter((scope): scope is ConnectedClientScope =>
-      scope === "platform:read" ||
-      scope === "platform:write" ||
-      scope === "offline_access",
-    );
-  const sessionScopes = row.scopes.filter((scope) => grantedScopes.includes(scope));
-
-  return {
-    userId: row.user_id,
-    authKind: "connected_client",
-    connectedClientId: row.client_id,
-    connectedSessionId: row.id,
-    scopes: new Set(sessionScopes),
-  };
+  let envelope;
+  try { envelope = decryptProviderSession(row.provider_session_ciphertext, row.id); }
+  catch { return jsonNoStore({ error: "connect_credentials_unavailable" }, 503); }
+  if (envelope.session.user.id !== row.user_id || verifiedSessionId(envelope.session.access_token) !== row.auth_session_id)
+    return jsonNoStore({ error: "connected_client_token_user_mismatch" }, 401);
+  const supabase = createAuthenticatedBearerClient(envelope.session.access_token, envelope.proof);
+  if (supabase instanceof NextResponse) return supabase;
+  const verified = await measureAuthTiming(instrumentation, "auth.get-user", () => supabase.auth.getUser(envelope.session.access_token));
+  if (verified.error || verified.data.user?.id !== row.user_id) return jsonNoStore({ error: "invalid_bearer_token" }, 401);
+  const denied = await checkAdmissionLazy(platformServiceClient, row.user_id); if (denied) return denied;
+  identifyDiagnosticActor(row.user_id);
+  return { supabase, user: verified.data.user, principal: {
+    userId: row.user_id, authKind: "connected_client", connectedClientId: row.client_id,
+    connectedSessionId: row.id, scopes: new Set(row.scopes.filter((scope): scope is ConnectedClientScope =>
+      scope === "platform:read" || scope === "platform:write" || scope === "offline_access")),
+  } };
 }
 
 export function requirePlatformScope(

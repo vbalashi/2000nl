@@ -70,9 +70,10 @@ const translateText = vi.fn(async (request: {
 let useTranslateWithContext = false;
 let useRichTranslateWithContext = false;
 
-vi.mock("@supabase/supabase-js", () => ({
-  createClient,
-}));
+vi.mock("@supabase/supabase-js", async () => {
+ const { withSessionAuthorityFactory } = await import("../fixtures/sessionAuthority");
+ return { createClient: withSessionAuthorityFactory(createClient) };
+});
 
 vi.mock("@/lib/translation/translationProvider", () => ({
   createTranslator: vi.fn(() => ({

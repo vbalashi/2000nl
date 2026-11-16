@@ -1,3 +1,4 @@
+import { seedAuthSession } from "./dbTestUtils";
 import {afterAll,beforeAll,describe,expect,test} from 'vitest';
 import {randomUUID} from 'crypto';
 import {Pool} from 'pg';
@@ -12,7 +13,8 @@ describeDb('Indigo account palette storage',()=>{
   await withTransaction(pool,async client=>{
    const owner=randomUUID(),other=randomUUID();
    await client.query('insert into auth.users(id,email) values($1,$2),($3,$4)',[owner,`${owner}@test.local`,other,`${other}@test.local`]);
-   await client.query('set local role authenticated');
+   await seedAuthSession(client,owner);
+  await client.query('set local role authenticated');
    await client.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
    const before=await client.query('select practice_palette,theme_preference,reading_size_phone from user_settings where user_id=$1',[owner]);
    expect(before.rows[0].practice_palette).toBe('lavender');

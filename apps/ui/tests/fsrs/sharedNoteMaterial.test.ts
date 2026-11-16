@@ -1,9 +1,13 @@
 import {randomUUID} from "node:crypto";
 import {Pool,type PoolClient} from "pg";
 import {afterAll,beforeAll,describe,expect,test} from "vitest";
-import {ensureUserWithSettings,getDbUrl,runMigrations,withTransaction} from "./dbTestUtils";
+import {ensureUserWithSettings as ensureBaseUser,getDbUrl,runMigrations,withTransaction} from "./dbTestUtils";
 const url=getDbUrl();
-async function principal(c:PoolClient,id:string){await c.query("select set_config('request.jwt.claim.sub',$1,true)",[id]);}
+async function ensureUserWithSettings(c:PoolClient,id:string) {
+ await ensureBaseUser(c,id);
+ await c.query('insert into auth.sessions(id,user_id,created_at) values($1,$1,clock_timestamp()) on conflict do nothing',[id]);
+}
+async function principal(c:PoolClient,id:string){await c.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.session_id',$1,true)",[id]);}
 async function fixture(c:PoolClient){
   const [owner,teacher,viewer,outsider]=Array.from({length:4},()=>randomUUID());
   for(const id of [owner,teacher,viewer,outsider])await ensureUserWithSettings(c,id);

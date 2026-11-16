@@ -11,9 +11,10 @@ const createClient = vi.fn((_url: string, key: string) =>
     : { auth: { getUser }, rpc: authenticatedRpc },
 );
 
-vi.mock("@supabase/supabase-js", () => ({
-  createClient,
-}));
+vi.mock("@supabase/supabase-js", async () => {
+ const { withSessionAuthorityFactory } = await import("../fixtures/sessionAuthority");
+ return { createClient: withSessionAuthorityFactory(createClient) };
+});
 
 const request = (body: unknown, extraHeaders: Record<string, string> = {}) =>
   new NextRequest("http://localhost/api/platform/v2/actions", {

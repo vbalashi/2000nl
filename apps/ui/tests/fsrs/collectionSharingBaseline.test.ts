@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Pool, type PoolClient } from "pg";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
-  ensureUserWithSettings,
+  ensureUserWithSession,
   getDbUrl,
   insertWord,
   runMigrations,
@@ -13,7 +13,7 @@ const dbUrl = getDbUrl();
 const describeIfDb = dbUrl ? describe : describe.skip;
 
 async function asUser(client: PoolClient, userId: string) {
-  await client.query("select set_config('request.jwt.claim.sub', $1, true)", [
+  await client.query("select set_config('request.jwt.claim.sub', $1, true),set_config('request.jwt.claim.session_id',$1,true)", [
     userId,
   ]);
   await client.query("set local role authenticated");
@@ -89,8 +89,8 @@ describeIfDb("#684 existing collection and copy baseline", () => {
     await withTransaction(
       pool,
       async (client) => {
-        await ensureUserWithSettings(client, owner);
-        await ensureUserWithSettings(client, outsider);
+        await ensureUserWithSession(client, owner);
+        await ensureUserWithSession(client, outsider);
         const entry = await insertWord(client, `baseline-rls-${randomUUID()}`);
         // Disposable-transaction fixture only: plain Postgres lacks Supabase's
         // default Data API table grants. This tests RLS, not production privileges.
@@ -271,7 +271,7 @@ describeIfDb("#684 existing collection and copy baseline", () => {
     await withTransaction(
       pool,
       async (client) => {
-        await ensureUserWithSettings(client, owner);
+        await ensureUserWithSession(client, owner);
         const common = await insertWord(
           client,
           `baseline-common-${randomUUID()}`,
@@ -398,8 +398,8 @@ describeIfDb("#684 existing collection and copy baseline", () => {
     await withTransaction(
       pool,
       async (client) => {
-        await ensureUserWithSettings(client, copier);
-        await ensureUserWithSettings(client, learner);
+        await ensureUserWithSession(client, copier);
+        await ensureUserWithSession(client, learner);
         const source = await insertWord(
           client,
           `baseline-copy-${randomUUID()}`,
@@ -415,7 +415,7 @@ describeIfDb("#684 existing collection and copy baseline", () => {
         );
         for (const user of [copier, learner]) {
           await client.query(
-            "select set_config('request.jwt.claim.sub',$1,true)",
+            "select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.session_id',$1,true)",
             [user],
           );
           await client.query(
@@ -505,8 +505,8 @@ describeIfDb("#684 existing collection and copy baseline", () => {
     await withTransaction(
       pool,
       async (client) => {
-        await ensureUserWithSettings(client, copier);
-        await ensureUserWithSettings(client, owner);
+        await ensureUserWithSession(client, copier);
+        await ensureUserWithSession(client, owner);
         const empty = await insertWord(
           client,
           `baseline-empty-${randomUUID()}`,

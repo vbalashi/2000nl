@@ -1,3 +1,5 @@
+import { connectedSessionFixture, fixtureConnectToken } from "../fixtures/sessionAuthority";
+let connectedFixture = false;
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { contentFingerprint, normalizeDictionaryContent } from "@/lib/platform/projections/dictionaryContent";
@@ -20,9 +22,10 @@ const createClient = vi.fn(() => ({
   from,
 }));
 
-vi.mock("@supabase/supabase-js", () => ({
-  createClient,
-}));
+vi.mock("@supabase/supabase-js", async () => {
+ const { withSessionAuthorityFactory } = await import("../fixtures/sessionAuthority");
+ return { createClient: withSessionAuthorityFactory(createClient) };
+});
 
 const chain = (result: { data?: any; error?: any }) => {
   const query: any = {
@@ -36,7 +39,7 @@ const chain = (result: { data?: any; error?: any }) => {
   return query;
 };
 
-const request = (body: unknown, token = "token-1") =>
+const request = (body: unknown, token = connectedFixture ? fixtureConnectToken : "token-1") =>
   new NextRequest("http://localhost/api/platform/lookup", {
     method: "POST",
     headers: {
@@ -59,11 +62,12 @@ const mutationRpcNames = [
 ];
 
 function mockConnectedClientPrincipal(scopes: string[]) {
-  process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP = "1";
+  connectedFixture = true;
   from.mockImplementation((table: string) => {
     if (table === "connected_client_sessions") {
       return chain({
         data: {
+          ...connectedSessionFixture(),
           id: "session-1",
           client_id: "audiofilms_chrome",
           user_id: "user-1",
@@ -76,13 +80,13 @@ function mockConnectedClientPrincipal(scopes: string[]) {
     }
     if (table === "connected_clients") {
       return chain({
-        data: { client_id: "audiofilms_chrome", status: "active" },
+        data: { allowed_scopes: ["platform:read", "platform:write", "offline_access"], client_id: "audiofilms_chrome", status: "active" },
         error: null,
       });
     }
     if (table === "connected_client_grants") {
       return chain({
-        data: { scopes, revoked_at: null },
+        data: { authority_revision:"fixture-grant", scopes, revoked_at: null },
         error: null,
       });
     }
@@ -98,7 +102,7 @@ describe("/api/platform/lookup", () => {
     process.env.PLATFORM_API_ALLOWED_ORIGINS = "chrome-extension://abc";
     process.env.PLATFORM_CATALOG_ACCESS_TOKEN = "catalog-token";
     process.env.TRANSLATION_PROVIDER = "openai";
-    delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
+    connectedFixture = false;
     delete process.env.PLATFORM_LOOKUP_LATENCY_LOGS;
     createClient.mockClear();
     getUser.mockReset();

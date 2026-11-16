@@ -91,6 +91,12 @@ CREATE TABLE IF NOT EXISTS auth.users (
 );
 ALTER TABLE auth.users ADD COLUMN IF NOT EXISTS email_confirmed_at timestamptz;
 
+-- Auth-owned session relation used by the application session boundary.
+CREATE TABLE IF NOT EXISTS auth.sessions (
+ id uuid PRIMARY KEY, user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+ created_at timestamptz NOT NULL DEFAULT now(), not_after timestamptz
+);
+
 CREATE OR REPLACE FUNCTION auth.uid()
 RETURNS uuid
 LANGUAGE sql

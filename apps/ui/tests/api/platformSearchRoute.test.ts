@@ -10,9 +10,10 @@ const createClient = vi.fn(() => ({
   from,
 }));
 
-vi.mock("@supabase/supabase-js", () => ({
-  createClient,
-}));
+vi.mock("@supabase/supabase-js", async () => {
+ const { withSessionAuthorityFactory } = await import("../fixtures/sessionAuthority");
+ return { createClient: withSessionAuthorityFactory(createClient) };
+});
 
 const searchPayload = {
   contractVersion: "dictionary-search-v1",

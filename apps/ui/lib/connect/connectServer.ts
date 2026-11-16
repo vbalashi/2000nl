@@ -1,10 +1,10 @@
 import { getInterfaceCatalog } from "@/lib/i18n/catalog";
-import { checkAdmission } from "@/lib/admission/server";
+
 import crypto from "node:crypto";
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import {
-  getBearerToken,
+  getAuthenticatedUserSupabase,
   jsonNoStore,
 } from "@/lib/platform/serverSupabase";
 
@@ -32,6 +32,7 @@ export type ConnectedClientRow = {
 };
 
 export type ConnectedClientGrantRow = {
+  authority_revision: string;
   client_id: string;
   user_id: string;
   scopes: string[];
@@ -39,6 +40,7 @@ export type ConnectedClientGrantRow = {
 };
 
 export type ConnectAuthorizationCodeRow = {
+  grant_revision: string | null;
   code_hash: string;
   client_id: string;
   user_id: string;
@@ -142,24 +144,8 @@ export function createPublicAuthClient(): SupabaseClient | NextResponse {
 }
 
 export async function getWebUser(request: Request): Promise<User | NextResponse> {
-  const token = getBearerToken(request);
-  if (!token) {
-    return jsonNoStore({ error: "missing_bearer_token" }, 401);
-  }
-
-  const publicClient = createPublicAuthClient();
-  if (publicClient instanceof NextResponse) return publicClient;
-
-  const { data, error } = await publicClient.auth.getUser(token);
-  if (error || !data.user) {
-    return jsonNoStore({ error: "invalid_bearer_token" }, 401);
-  }
-
-  if (process.env.ADMISSION_REQUIRED === "true") {
-    const service = createServiceClient(); if (service instanceof Response) return service;
-    const denied = await checkAdmission(service, data.user.id); if (denied) return denied;
-  }
-  return data.user;
+  const auth = await getAuthenticatedUserSupabase(request);
+  return auth instanceof Response ? auth : auth.user;
 }
 
 export function normalizeRedirectUri(value: unknown): string | null {
@@ -292,7 +278,7 @@ export async function loadActiveGrant(params: {
 }): Promise<ConnectedClientGrantRow | null | NextResponse> {
   const { data, error } = await params.supabase
     .from("connected_client_grants")
-    .select("client_id, user_id, scopes, revoked_at")
+    .select("client_id, user_id, scopes, revoked_at, authority_revision")
     .eq("client_id", params.clientId)
     .eq("user_id", params.userId)
     .maybeSingle();
@@ -361,46 +347,4 @@ export async function refreshSupabaseSession(params: {
   }
 
   return refreshRes.data.session as SupabaseSession;
-}
-
-export async function recordConnectedClientSession(params: {
-  supabase: SupabaseClient;
-  accessToken: string;
-  accessTokenExpiresAt?: number | null;
-  refreshToken: string;
-  clientId: string;
-  userId: string;
-  scopes: string[];
-}): Promise<NextResponse | null> {
-  const { error } = await params.supabase.from("connected_client_sessions").insert({
-    access_token_hash: sha256Hex(params.accessToken),
-    access_token_expires_at: params.accessTokenExpiresAt
-      ? new Date(params.accessTokenExpiresAt * 1000).toISOString()
-      : null,
-    refresh_token_hash: sha256Hex(params.refreshToken),
-    client_id: params.clientId,
-    user_id: params.userId,
-    scopes: params.scopes,
-  });
-
-  if (error) {
-    return jsonNoStore({ error: "session_record_failed", detail: error.message }, 500);
-  }
-
-  return null;
-}
-
-export function publicSessionPayload(session: SupabaseSession, scopes: string[]) {
-  return {
-    access_token: session.access_token,
-    refresh_token: session.refresh_token,
-    expires_at: session.expires_at ?? null,
-    expires_in: session.expires_in ?? null,
-    token_type: session.token_type ?? "bearer",
-    scope: scopes.join(" "),
-    user: {
-      id: session.user.id,
-      email: session.user.email ?? null,
-    },
-  };
 }

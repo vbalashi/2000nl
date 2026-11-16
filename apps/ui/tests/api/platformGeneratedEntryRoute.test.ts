@@ -1,3 +1,5 @@
+import { connectedSessionFixture, fixtureConnectToken } from "../fixtures/sessionAuthority";
+let connectedFixture = false;
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
 
@@ -12,9 +14,10 @@ const createClient = vi.fn(() => ({
   from,
 }));
 
-vi.mock("@supabase/supabase-js", () => ({
-  createClient,
-}));
+vi.mock("@supabase/supabase-js", async () => {
+ const { withSessionAuthorityFactory } = await import("../fixtures/sessionAuthority");
+ return { createClient: withSessionAuthorityFactory(createClient) };
+});
 
 vi.stubGlobal("fetch", fetchMock);
 
@@ -29,7 +32,7 @@ const chain = (result: { data?: any; error?: any }) => {
   return query;
 };
 
-const request = (body: unknown, token = "token-1") =>
+const request = (body: unknown, token = connectedFixture ? fixtureConnectToken : "token-1") =>
   new NextRequest(
     "http://localhost/api/platform/v1/user-dictionary/generated-entry",
     {
@@ -51,11 +54,12 @@ function mockAuthenticatedUser() {
 }
 
 function mockConnectedClientPrincipal(scopes: string[]) {
-  process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP = "1";
+  connectedFixture = true;
   from.mockImplementation((table: string) => {
     if (table === "connected_client_sessions") {
       return chain({
         data: {
+          ...connectedSessionFixture(),
           id: "session-1",
           client_id: "audiofilms_chrome",
           user_id: "user-1",
@@ -68,12 +72,12 @@ function mockConnectedClientPrincipal(scopes: string[]) {
     }
     if (table === "connected_clients") {
       return chain({
-        data: { client_id: "audiofilms_chrome", status: "active" },
+        data: { allowed_scopes: ["platform:read", "platform:write", "offline_access"], client_id: "audiofilms_chrome", status: "active" },
         error: null,
       });
     }
     if (table === "connected_client_grants") {
-      return chain({ data: { scopes, revoked_at: null }, error: null });
+      return chain({ data: { authority_revision:"fixture-grant", scopes, revoked_at: null }, error: null });
     }
     return chain({ data: null, error: null });
   });
@@ -91,7 +95,7 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
     delete process.env.AZURE_OPENAI_ENDPOINT;
     delete process.env.AZURE_OPENAI_DEPLOYMENT;
     delete process.env.AZURE_OPENAI_MODEL;
-    delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
+    connectedFixture = false;
     createClient.mockClear();
     getUser.mockReset();
     rpc.mockReset();
@@ -286,7 +290,8 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
       if (table === "connected_client_sessions") {
         return chain({
           data: {
-            id: "session-1",
+            ...connectedSessionFixture(),
+          id: "session-1",
             client_id: "audiofilms_chrome",
             user_id: "user-1",
             scopes: ["platform:read", "platform:write"],
@@ -298,13 +303,13 @@ describe("/api/platform/v1/user-dictionary/generated-entry", () => {
       }
       if (table === "connected_clients") {
         return chain({
-          data: { client_id: "audiofilms_chrome", status: "active" },
+          data: { allowed_scopes: ["platform:read", "platform:write", "offline_access"], client_id: "audiofilms_chrome", status: "active" },
           error: null,
         });
       }
       if (table === "connected_client_grants") {
         return chain({
-          data: { scopes: ["platform:read", "platform:write"], revoked_at: null },
+          data: { authority_revision:"fixture-grant", scopes: ["platform:read", "platform:write"], revoked_at: null },
           error: null,
         });
       }

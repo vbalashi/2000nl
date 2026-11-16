@@ -8,9 +8,10 @@ const createClient = vi.fn(() => ({
   rpc,
 }));
 
-vi.mock("@supabase/supabase-js", () => ({
-  createClient,
-}));
+vi.mock("@supabase/supabase-js", async () => {
+ const { withSessionAuthorityFactory } = await import("../fixtures/sessionAuthority");
+ return { createClient: withSessionAuthorityFactory(createClient) };
+});
 
 const request = (body: unknown) =>
   new NextRequest("http://localhost/api/platform/v2/training/idioms", {

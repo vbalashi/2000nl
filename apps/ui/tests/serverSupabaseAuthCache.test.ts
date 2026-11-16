@@ -4,7 +4,10 @@ import { NextResponse } from "next/server";
 const getUser = vi.fn();
 const createClient = vi.fn(() => ({ auth: { getUser } }));
 
-vi.mock("@supabase/supabase-js", () => ({ createClient }));
+vi.mock("@supabase/supabase-js", async () => {
+ const { withSessionAuthorityFactory } = await import("./fixtures/sessionAuthority");
+ return { createClient: withSessionAuthorityFactory(createClient) };
+});
 
 function bearer(expiresInSeconds: number, subject = "user-1") {
   const encode = (value: unknown) =>

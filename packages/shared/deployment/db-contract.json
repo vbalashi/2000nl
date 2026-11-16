@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-371",
+  "contractId": "2000nl-db-373",
   "baseline": {
     "migrationId": 287,
     "file": "db/migrations/287_initial_schema.sql",
@@ -382,11 +382,21 @@
       "migrationId": 371,
       "file": "db/migrations/371_release_notes_english_fallback.sql",
       "sha256": "63f53958e6643b2e08d5bd1f49780b3d73ca509b302190055dcd317fe21b294f"
+    },
+    {
+      "migrationId": 372,
+      "file": "db/migrations/372_connect_session_boundary.sql",
+      "sha256": "6de5c491a1956b6f96350f9d60cbe318ab8d8bc08a55031c82d149b8d7b422a3"
+    },
+    {
+      "migrationId": 373,
+      "file": "db/migrations/373_server_owned_subscription_tier.sql",
+      "sha256": "b33fd41ed79d802a9c56335f4f02f2b26a85bb5e868e4ec95940277366564cfd"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-371.sql",
+  "postflightProbe": "db/deploy-contract/postflight-373.sql",
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-371.sql",
-    "sha256": "01400a6af63c88d84d301061fcfd81298f91e3461e10fe0ab6b870f5220015a2"
+    "file": "db/deploy-contract/read-only-postflight-373.sql",
+    "sha256": "ed924f2c2b85556345e7e7fe02e195b0d0a115598768ad3194665d5f892ef9b9"
   }
 }

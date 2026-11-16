@@ -76,3 +76,5 @@
 \i db/migrations/369_exercise_known_choice.sql
 \i db/migrations/370_curated_collection_access.sql
 \i db/migrations/371_release_notes_english_fallback.sql
+\i db/migrations/372_connect_session_boundary.sql
+\i db/migrations/373_server_owned_subscription_tier.sql

@@ -1,3 +1,5 @@
+import { connectedSessionFixture, fixtureConnectToken } from "../fixtures/sessionAuthority";
+let connectedFixture=false;
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { buildDiagnosticReport } from "../../../../packages/shared/diagnostic-report/v1";
@@ -7,7 +9,7 @@ const from = vi.fn();
 const getUser = vi.fn();
 const performPlatformV2Lookup = vi.fn();
 const createClient = vi.fn(() => ({ auth: { getUser }, rpc, from }));
-vi.mock("@supabase/supabase-js", () => ({ createClient }));
+vi.mock("@supabase/supabase-js", async () => { const {withSessionAuthorityFactory}=await import("../fixtures/sessionAuthority"); return {createClient:withSessionAuthorityFactory(createClient)}; });
 vi.mock("@/lib/platform/platformV2LookupService", () => ({
   performPlatformV2Lookup,
 }));
@@ -20,7 +22,7 @@ const chain = (result: { data?: unknown; error?: unknown }) => {
 const request = (url: string, options: { method?: string; body?: string; headers?: Record<string, string> } = {}) => new NextRequest(url, {
   method: options.method,
   body: options.body,
-  headers: { authorization: "Bearer token", "content-type": "application/json", ...options.headers },
+  headers: { authorization: "Bearer "+(connectedFixture?fixtureConnectToken:"token"), "content-type": "application/json", ...options.headers },
 });
 
 async function payload() {
@@ -129,7 +131,7 @@ describe("feedback routes", () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon";
     process.env.SUPABASE_SERVICE_ROLE_KEY = "service";
     delete process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP;
-    getUser.mockReset(); rpc.mockReset(); from.mockReset();
+    connectedFixture=false; getUser.mockReset(); rpc.mockReset(); from.mockReset();
     performPlatformV2Lookup.mockReset(); createClient.mockClear();
   });
 
@@ -281,13 +283,13 @@ describe("feedback routes", () => {
 
   test("denies connected clients without platform:write before body validation", async () => {
     const { POST } = await import("@/app/api/feedback/reports/route");
-    process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP = "1";
+    connectedFixture=true;
     getUser.mockResolvedValueOnce({ data: { user: { id: "user-1", app_metadata: {} } }, error: null });
     rpc.mockResolvedValueOnce({ data: null, error: null });
     from.mockImplementation((table: string) => {
-      if (table === "connected_client_sessions") return chain({ data: { id: "session-1", client_id: "audiofilms", user_id: "user-1", scopes: ["platform:read"], revoked_at: null, access_token_expires_at: new Date(Date.now() + 60_000).toISOString() }, error: null });
-      if (table === "connected_clients") return chain({ data: { client_id: "audiofilms", status: "active" }, error: null });
-      if (table === "connected_client_grants") return chain({ data: { scopes: ["platform:read"], revoked_at: null }, error: null });
+      if (table === "connected_client_sessions") return chain({ data: { ...connectedSessionFixture(), id: "session-1", client_id: "audiofilms", user_id: "user-1", scopes: ["platform:read"], revoked_at: null, access_token_expires_at: new Date(Date.now() + 60_000).toISOString() }, error: null });
+      if (table === "connected_clients") return chain({ data: { client_id: "audiofilms", status: "active", allowed_scopes:["platform:read","platform:write"] }, error: null });
+      if (table === "connected_client_grants") return chain({ data: { authority_revision:"fixture-grant", scopes: ["platform:read"], revoked_at: null }, error: null });
       return chain({ data: null, error: null });
     });
     const response = await POST(request("http://localhost/api/feedback/reports", { method: "POST", body: "{}" }));
@@ -298,12 +300,12 @@ describe("feedback routes", () => {
 
   test("accepts a bounded source context from a connected client with platform:write", async () => {
     const { POST } = await import("@/app/api/feedback/reports/route");
-    process.env.PLATFORM_PRINCIPAL_TEST_LOOKUP = "1";
+    connectedFixture=true;
     getUser.mockResolvedValueOnce({ data: { user: { id: "user-1", app_metadata: {} } }, error: null });
     from.mockImplementation((table: string) => {
-      if (table === "connected_client_sessions") return chain({ data: { id: "session-1", client_id: "audiofilms", user_id: "user-1", scopes: ["platform:write"], revoked_at: null, access_token_expires_at: new Date(Date.now() + 60_000).toISOString() }, error: null });
-      if (table === "connected_clients") return chain({ data: { client_id: "audiofilms", status: "active" }, error: null });
-      if (table === "connected_client_grants") return chain({ data: { scopes: ["platform:write"], revoked_at: null }, error: null });
+      if (table === "connected_client_sessions") return chain({ data: { ...connectedSessionFixture(), id: "session-1", client_id: "audiofilms", user_id: "user-1", scopes: ["platform:write"], revoked_at: null, access_token_expires_at: new Date(Date.now() + 60_000).toISOString() }, error: null });
+      if (table === "connected_clients") return chain({ data: { client_id: "audiofilms", status: "active", allowed_scopes:["platform:read","platform:write"] }, error: null });
+      if (table === "connected_client_grants") return chain({ data: { authority_revision:"fixture-grant", scopes: ["platform:write"], revoked_at: null }, error: null });
       return chain({ data: null, error: null });
     });
     rpc.mockResolvedValueOnce({ data: null, error: null });

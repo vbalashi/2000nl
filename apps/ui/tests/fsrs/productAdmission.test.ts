@@ -1,9 +1,13 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { Pool } from "pg";
+import { Pool, type PoolClient } from "pg";
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { getDbUrl, runMigrations, ensureUserWithSettings, withTransaction } from "./dbTestUtils";
+import { getDbUrl, runMigrations, ensureUserWithSettings as ensureBaseUser, withTransaction } from "./dbTestUtils";
+async function ensureUserWithSettings(c:PoolClient,id:string) {
+ await ensureBaseUser(c,id);
+ await c.query('insert into auth.sessions(id,user_id,created_at) values($1,$1,clock_timestamp()) on conflict do nothing',[id]);
+}
 const url = getDbUrl();
 (url ? describe : describe.skip)("product admission gates", () => {
  const pool = new Pool({ connectionString: url });
@@ -11,8 +15,8 @@ const url = getDbUrl();
  test("both complete postflight chains retain existing checks and verify new fences", async () => {
   function expand(file: string): string { return fs.readFileSync(path.resolve(process.cwd(), "../..", file), "utf8").replace(/^\\i (.+)$/gm, (_, child: string) => expand(child.trim())); }
   // Retain the historical286 gates through the installed370 compatibility graph.
-  await pool.query(expand("db/deploy-contract/postflight-370.sql"));
-  await pool.query(expand("db/deploy-contract/read-only-postflight-370.sql"));
+  await pool.query(expand("db/deploy-contract/postflight-373.sql"));
+  await pool.query(expand("db/deploy-contract/read-only-postflight-373.sql"));
  });
  test("confirmed request, explicit approval, revoke, mode preservation, audit and unauthorized operator", async () => {
   await withTransaction(pool, async c => {
@@ -22,7 +26,7 @@ const url = getDbUrl();
    await c.query("insert into admin_operators(email,user_id,is_active,permissions) values($1,$2,true,ARRAY['users.read','admission.manage'])", [`operator-${operator}@example.test`,operator]);
    await c.query("update private.admission_control set enabled=true,mode='approval-required'");
    await c.query("select set_config('request.jwt.claims',$1,true)", [JSON.stringify({sub:user,role:'authenticated'})]);
-   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[user]);
+   await c.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.session_id',$1,true)",[user]);
    expect((await c.query("select admission_request() s")).rows[0].s.status).toBe('pending');
    expect((await c.query("select private.admission_allowed($1) ok",[user])).rows[0].ok).toBe(false);
    const mutate = async (action: string, emails: string[] = [email], mode: string | null = null) => (await c.query("select admin_admission_mutate($1,$2,$3,$4,$5) r",[operator,action,emails,mode,randomUUID()])).rows[0].r;
@@ -41,7 +45,7 @@ const url = getDbUrl();
   await withTransaction(pool, async c => {
    const user=randomUUID(), email=`pending-${randomUUID()}@example.test`; await ensureUserWithSettings(c,user);
    await c.query("update auth.users set email=$2,email_confirmed_at=now() where id=$1",[user,email]);
-   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[user]);
+   await c.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.session_id',$1,true)",[user]);
    await c.query("update private.admission_control set enabled=true,mode='approval-required'");
    expect((await c.query("select admission_request() s")).rows[0].s.status).toBe('pending');
    await c.query("update private.admission_control set mode='open'");
@@ -63,7 +67,7 @@ const url = getDbUrl();
    await c.query("update private.admission_control set enabled=true");
    await c.query("insert into private.admission_requests(email,status) values('invited@example.test','approved')");
    await c.query("select set_config('request.jwt.claims',$1,true)",[JSON.stringify({sub:user,role:'authenticated'})]);
-   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[user]);
+   await c.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.session_id',$1,true)",[user]);
    expect((await c.query("select admission_request() s")).rows[0].s.status).toBe('unconfirmed');
    await c.query("update auth.users set email_confirmed_at=now() where id=$1",[user]);
    expect((await c.query("select admission_request() s")).rows[0].s.status).toBe('pending');
@@ -88,14 +92,14 @@ const url = getDbUrl();
     await c.query("insert into private.admission_requests(email,status) values($1,'approved')",[email]);
    }
    await c.query("update private.admission_control set enabled=true,mode='invite-only'; update private.collection_sharing_rollout set new_writes_enabled=true");
-   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[owner]);
+   await c.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.session_id',$1,true)",[owner]);
    const entry=(await c.query("select create_user_dictionary_entry($1,null,$2) id",[owner,{headword:randomUUID(),languageCode:'nl',definition:'shared admission lesson'}])).rows[0].id;
    const collection=(await c.query("insert into user_word_lists(user_id,name,language_code) values($1,'Combined lesson','nl') returning id",[owner])).rows[0].id;
    await c.query("insert into user_word_list_items(list_id,word_id) values($1,$2)",[collection,entry]);
    await c.query("set local role authenticated");
    await c.query("select set_config('request.path','/rpc/command_collection_share_v1',true); select admission_enforce()");
    const opened=(await c.query("select command_collection_share_v1($1,'open',$2,0) r",[randomUUID(),collection])).rows[0].r;
-   await c.query("select set_config('request.jwt.claim.sub',$1,true)",[viewer]);
+   await c.query("select set_config('request.jwt.claim.sub',$1,true),set_config('request.jwt.claim.session_id',$1,true)",[viewer]);
    await c.query("select admission_enforce()");
    await c.query("select command_collection_share_v1($1,'accept',null,null,$2)",[randomUUID(),opened.invitationCode]);
    expect((await c.query("select get_word_list_summary($1,$2,'user') r",[viewer,collection])).rows[0].r).toMatchObject({ownership:'received'});
