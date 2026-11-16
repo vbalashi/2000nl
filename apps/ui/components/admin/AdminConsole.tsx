@@ -1,5 +1,7 @@
 "use client";
 
+import { reportReturnPath } from "@/lib/admin/reportReturn";
+
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -203,6 +205,15 @@ export default function AdminConsole() {
       if (!sessionResponse.ok) throw new Error("Admin session unavailable");
       const session = await sessionResponse.json() as { email: string; permissions: string[] };
       if (cancelled) return;
+      // The independent reports frontend may request a return after Google login.
+      // Only accept a same-origin reports path and require its actual permission.
+      const returnTo = sessionStorage.getItem("admin.returnTo");
+      sessionStorage.removeItem("admin.returnTo");
+      const destination = reportReturnPath(returnTo, window.location.origin, session.permissions);
+      if (destination) {
+        window.location.assign(destination);
+        return;
+      }
       setOperatorEmail(session.email);
       setPermissions(session.permissions);
       const needed = location.view === "journal" ? "audit.read" : "dictionaries.read";
