@@ -58,7 +58,8 @@ BEGIN
  IF p_request IS NULL THEN RAISE EXCEPTION 'request_id_required' USING ERRCODE='22023'; END IF;
  SELECT jsonb_build_object(
   'bots',coalesce((SELECT jsonb_agg(jsonb_build_object('id',b.id,'name',b.name,'credentialState',b.credential_state,'revision',b.revision) ORDER BY b.created_at,b.id) FROM private.operator_notification_bots b),'[]'::jsonb),
-  'routes',coalesce((SELECT jsonb_agg(jsonb_build_object('id',r.id,'botId',r.bot_id,'kind',r.kind,'chatId',r.chat_id,'topicId',r.topic_id,'enabled',r.enabled,'revision',r.revision) ORDER BY r.created_at,r.id) FROM private.operator_notification_routes r),'[]'::jsonb)) INTO result;
+  'routes',coalesce((SELECT jsonb_agg(jsonb_build_object('id',r.id,'botId',r.bot_id,'kind',r.kind,'chatId',r.chat_id,'topicId',r.topic_id,'enabled',r.enabled,'revision',r.revision) ORDER BY r.created_at,r.id) FROM private.operator_notification_routes r),'[]'::jsonb),
+  'deliveryStatus',coalesce((SELECT jsonb_agg(to_jsonb(summary)) FROM (SELECT route_id AS "routeId",state,count(*) AS count,min(created_at) AS "oldestAt" FROM private.operator_notification_deliveries GROUP BY route_id,state) summary),'[]'::jsonb)) INTO result;
  INSERT INTO public.admin_audit_events(operator_user_id,action,outcome,target_type,target_id,request_id)
  VALUES(p_operator,'notifications.configuration.read','success','notification_configuration','all',p_request);
  RETURN result;
