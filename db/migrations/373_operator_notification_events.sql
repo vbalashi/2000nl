@@ -75,6 +75,35 @@ BEGIN
  VALUES(p_operator,'notifications.configuration.updated','success','notification_bot',bot.id::text,p_request);
  RETURN jsonb_build_object('id',bot.id,'name',bot.name,'credentialState',bot.credential_state,'revision',bot.revision);
 END; $$;
+CREATE FUNCTION public.admin_notification_save_route_v1(p_operator uuid,p_request uuid,p_id uuid,p_revision integer,p_bot uuid,p_kind text,p_chat text,p_topic bigint,p_enabled boolean) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE route private.operator_notification_routes;
+BEGIN
+ PERFORM private.require_notification_manager_v1(p_operator);
+ IF p_request IS NULL OR p_bot IS NULL OR p_kind IS NULL OR p_kind NOT IN ('admission-request','feedback')
+  OR p_chat IS NULL OR p_chat !~ '^-?[1-9][0-9]{0,19}$'
+  OR (p_topic IS NOT NULL AND p_topic NOT BETWEEN 1 AND 9007199254740991) OR p_enabled IS NULL THEN
+  RAISE EXCEPTION 'invalid_route' USING ERRCODE='22023'; END IF;
+ PERFORM 1 FROM private.operator_notification_bots WHERE id=p_bot FOR SHARE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'bot_not_found' USING ERRCODE='22023'; END IF;
+ IF p_enabled AND NOT EXISTS(SELECT 1 FROM private.operator_notification_bots WHERE id=p_bot AND credential_state='ready') THEN
+  RAISE EXCEPTION 'bot_credential_required' USING ERRCODE='22023'; END IF;
+ IF p_id IS NULL THEN
+  IF p_revision IS DISTINCT FROM 0 THEN RAISE EXCEPTION 'revision_conflict' USING ERRCODE='40001'; END IF;
+  INSERT INTO private.operator_notification_routes(bot_id,kind,chat_id,topic_id,enabled)
+   VALUES(p_bot,p_kind,p_chat,p_topic,p_enabled) RETURNING * INTO route;
+ ELSE
+  UPDATE private.operator_notification_routes SET bot_id=p_bot,kind=p_kind,chat_id=p_chat,topic_id=p_topic,
+   enabled=p_enabled,revision=revision+1,updated_at=clock_timestamp() WHERE id=p_id AND revision=p_revision RETURNING * INTO route;
+  IF NOT FOUND THEN RAISE EXCEPTION 'revision_conflict' USING ERRCODE='40001'; END IF;
+ END IF;
+ INSERT INTO public.admin_audit_events(operator_user_id,action,outcome,target_type,target_id,request_id)
+ VALUES(p_operator,'notifications.configuration.updated','success','notification_route',route.id::text,p_request);
+ RETURN jsonb_build_object('id',route.id,'botId',route.bot_id,'kind',route.kind,'chatId',route.chat_id,'topicId',route.topic_id,'enabled',route.enabled,'revision',route.revision);
+END; $$;
+REVOKE ALL ON FUNCTION public.admin_notification_save_route_v1(uuid,uuid,uuid,integer,uuid,text,text,bigint,boolean) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.admin_notification_save_route_v1(uuid,uuid,uuid,integer,uuid,text,text,bigint,boolean) TO service_role;
+
 REVOKE ALL ON FUNCTION private.require_notification_manager_v1(uuid) FROM PUBLIC,anon,authenticated,service_role;
 REVOKE ALL ON FUNCTION public.admin_notification_configuration_v1(uuid,uuid),public.admin_notification_create_bot_v1(uuid,uuid,text) FROM PUBLIC,anon,authenticated,service_role;
 GRANT EXECUTE ON FUNCTION public.admin_notification_configuration_v1(uuid,uuid),public.admin_notification_create_bot_v1(uuid,uuid,text) TO service_role;

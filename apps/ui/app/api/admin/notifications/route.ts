@@ -12,7 +12,7 @@ export async function GET(request:Request) {
   return response(data);
  } catch(error){return adminErrorResponse(error);}
 }
-export async function POST(request:Request) {
+async function mutate(request:Request,kind:"bot"|"route") {
  try {
   const principal=await requireAdmin(request,'notifications.manage');
   const configured=process.env.ADMIN_SITE_URL;
@@ -24,9 +24,27 @@ export async function POST(request:Request) {
   for(;;){const part=await reader.read();if(part.done)break;size+=part.value.length;if(size>1024){await reader.cancel();return response({error:'request_too_large'},413);}chunks.push(part.value);}
   let input:unknown;
   try{input=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));}catch{return response({error:'invalid_request'},400);}
+  if(kind==='route') {
+   if(!input || typeof input!=='object' || Array.isArray(input))return response({error:'invalid_request'},400);
+   const route=input as Record<string,unknown>;
+   const keys=['id','revision','botId','kind','chatId','topicId','enabled'];
+   const uuid=(value:unknown)=>typeof value==='string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+   if(Object.keys(route).length!==keys.length || keys.some(key=>!(key in route)) || (route.id!==null && !uuid(route.id)) || !uuid(route.botId)
+    || !Number.isInteger(route.revision) || (route.revision as number)<0 || (route.revision as number)>2147483647
+    || !['admission-request','feedback'].includes(route.kind as string) || typeof route.chatId!=='string' || !/^-?[1-9][0-9]{0,19}$/.test(route.chatId)
+    || (route.topicId!==null && (!Number.isSafeInteger(route.topicId) || (route.topicId as number)<1)) || typeof route.enabled!=='boolean')return response({error:'invalid_request'},400);
+   const {data,error}=await createAdminServiceClient().rpc('admin_notification_save_route_v1',{p_operator:principal.userId,p_request:principal.requestId,p_id:route.id,p_revision:route.revision,p_bot:route.botId,p_kind:route.kind,p_chat:route.chatId,p_topic:route.topicId,p_enabled:route.enabled});
+   if(error?.code==='40001')return response({error:'revision_conflict'},409);
+   if(error?.code==='22023')return response({error:'invalid_route'},400);
+   if(error)throw new Error('configuration unavailable');
+   return response({route:data});
+  }
   if(!input || typeof input!=='object' || Array.isArray(input) || Object.keys(input).length!==1 || !('name' in input) || typeof input.name!=='string' || input.name.trim().length<1 || input.name.trim().length>80)return response({error:'invalid_request'},400);
   const {data,error}=await createAdminServiceClient().rpc('admin_notification_create_bot_v1',{p_operator:principal.userId,p_request:principal.requestId,p_name:input.name.trim()});
   if(error)throw new Error('configuration unavailable');
   return response({bot:data},201);
  }catch(error){return adminErrorResponse(error);}
 }
+
+export async function POST(request:Request){return mutate(request,"bot");}
+export async function PUT(request:Request){return mutate(request,"route");}
