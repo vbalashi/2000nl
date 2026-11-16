@@ -38,7 +38,7 @@ export async function dispatchOne(): Promise<'disabled'|'idle'|Outcome> {
    const message=event.kind==='admission-request' && event.email
     ? {chatId:chat,topicId:admissions,text:`New access request: ${event.email}`,buttons:[[{text:'Approve',callbackData:`a_${event.id}`},{text:'Reject',callbackData:`r_${event.id}`}]]}
     : event.kind==='feedback' && event.feedbackId
-      ? {chatId:chat,topicId:reports,text:`New card report: ${event.feedbackId}\n${siteUrl.origin}/api/admin/feedback`}
+      ? {chatId:chat,topicId:reports,text:`New card report: ${event.feedbackId}\n${siteUrl.origin}/admin/reports/?feedback=${encodeURIComponent(event.feedbackId)}`}
       : null;
    if(!message) outcome='failed';
    else {const result=await sendTelegramMessage(token,message);outcome=result.status==='sent'?'sent':result.status==='failed'?'failed':'retry';if(result.status==='retry')retryAfter=result.retryAfterSeconds??0;}
