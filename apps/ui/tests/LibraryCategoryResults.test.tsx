@@ -48,6 +48,72 @@ test('returning to an earlier query starts a fresh read rather than leaving an e
   await screen.findByTestId('library-headword-group-group-bank');
 });
 
+test('returning to the same visible scope starts a fresh authorized read without another typing debounce',async()=>{
+ const view=render(<LibraryCategoryResults {...props}/>);
+ await screen.findByTestId('library-headword-group-group-bank');
+ vi.useFakeTimers();
+ try {
+  view.rerender(<LibraryCategoryResults {...props} enabled={false}/>);
+  view.rerender(<LibraryCategoryResults {...props} enabled/>);
+  await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
+  expect(readDictionaryCategory).toHaveBeenCalledTimes(2);
+  expect(hydrateDictionaryWordResults).toHaveBeenCalledTimes(2);
+ } finally {vi.useRealTimers();}
+});
+
+test('a changed account on return keeps the typing debounce and does not reveal previous rows',async()=>{
+ const view=render(<LibraryCategoryResults {...props}/>);
+ await screen.findByTestId('library-headword-group-group-bank');
+ vi.useFakeTimers();
+ try {
+  view.rerender(<LibraryCategoryResults {...props} enabled={false}/>);
+  view.rerender(<LibraryCategoryResults {...props} userId='other' enabled/>);
+  await act(async()=>{await vi.advanceTimersByTimeAsync(249);});
+  expect(readDictionaryCategory).toHaveBeenCalledTimes(1);
+  expect(screen.queryByTestId('library-headword-group-group-bank')).toBeNull();
+  await act(async()=>{await vi.advanceTimersByTimeAsync(1);});
+  expect(readDictionaryCategory).toHaveBeenCalledTimes(2);
+ } finally {vi.useRealTimers();}
+});
+
+test('revoked access on return does not restore cached rows or parent selection',async()=>{
+ const onRows=vi.fn();
+ const view=render(<LibraryCategoryResults {...props} onWordResults={onRows}/>);
+ await screen.findByTestId('library-headword-group-group-bank');
+ vi.mocked(readDictionaryCategory).mockRejectedValueOnce(new Error('dictionary_search_access_changed'));
+ view.rerender(<LibraryCategoryResults {...props} onWordResults={onRows} enabled={false}/>);
+ view.rerender(<LibraryCategoryResults {...props} onWordResults={onRows} enabled/>);
+ await screen.findByRole('alert');
+ expect(screen.queryByTestId('library-headword-group-group-bank')).toBeNull();
+ expect(onRows).toHaveBeenLastCalledWith([]);
+ expect(hydrateDictionaryWordResults).toHaveBeenCalledTimes(1);
+});
+
+test('same-scope return waits for both fresh reads with controlled 80ms latency each',async()=>{
+ const view=render(<LibraryCategoryResults {...props}/>);
+ await screen.findByTestId('library-headword-group-group-bank');
+ const category=vi.mocked(readDictionaryCategory).getMockImplementation()!;
+ const hydrated=buildLibraryHeadwordGroupResults([multiSenseBankGroup]);
+ vi.mocked(readDictionaryCategory).mockImplementation(async(...args)=>{
+  await new Promise(resolve=>setTimeout(resolve,80));
+  return category(...args);
+ });
+ vi.mocked(hydrateDictionaryWordResults).mockImplementation(async()=>{
+  await new Promise(resolve=>setTimeout(resolve,80));
+  return hydrated;
+ });
+ vi.useFakeTimers();
+ try {
+  view.rerender(<LibraryCategoryResults {...props} enabled={false}/>);
+  view.rerender(<LibraryCategoryResults {...props} enabled/>);
+  await act(async()=>{await vi.advanceTimersByTimeAsync(80);});
+  await act(async()=>{await vi.advanceTimersByTimeAsync(79);});
+  expect(screen.queryByTestId('library-headword-group-group-bank')).toBeNull();
+  await act(async()=>{await vi.advanceTimersByTimeAsync(1);});
+  expect(screen.getByTestId('library-headword-group-group-bank')).toBeVisible();
+ } finally {vi.useRealTimers();}
+});
+
 test('context count is a lower bound and only More fetches another page; errors retain the first page',async()=>{
  const initial={id:'examples' as const,total:null,items:[{resultKey:'first',entry:{id:'one',headword:'bank'},field:{text:'First bank'}}],page:{hasMore:true,nextCursor:'next'}};
  vi.mocked(readDictionaryCategory).mockImplementation(async(_scope,_category,onPage)=>{onPage(initial,true);return initial;});

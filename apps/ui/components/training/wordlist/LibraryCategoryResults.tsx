@@ -46,27 +46,38 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
   const [words, setWords] = useState<Partial<Record<DictionarySearchCategory, WordState>>>({});
   const [revision, setRevision] = useState(0);
   const [hydrationRevision, setHydrationRevision] = useState(0);
-  const scopeKey = JSON.stringify([query.trim(), languageCode, dictionaryId, userId, filters, material, materialRevision, refreshRevision, enabled, revision]);
+  const readScope = JSON.stringify([query.trim(), languageCode, dictionaryId, userId, filters, material, materialRevision, refreshRevision, revision]);
+  const scopeKey = JSON.stringify([readScope, enabled]);
   const [appliedScope, setAppliedScope] = useState("");
   const generation = useRef(0);
   const hydrated = useRef(new Map<string, LibraryHeadwordGroupResult[]>());
   const articles = useRef(new Map<string, LibraryHeadwordGroupResult[]>());
   const currentScope = appliedScope === scopeKey;
   const completed = useRef(new Set<DictionarySearchCategory>());
+  const previousVisibility = useRef({ enabled, readScope });
+  const lastEnabledScope = useRef<string | null>(null);
+  const immediateScope = useRef<string | null>(null);
   const publishWordResults = useRef(onWordResults);
   publishWordResults.current = onWordResults;
   useEffect(() => {
+    const previous = previousVisibility.current;
+    immediateScope.current = enabled && !previous.enabled && previous.readScope === readScope && lastEnabledScope.current === readScope ? scopeKey : null;
+    previousVisibility.current = { enabled, readScope };
+    if (enabled) lastEnabledScope.current = readScope;
     ++generation.current;
     hydrated.current.clear();
     articles.current.clear();
     completed.current.clear();
     publishWordResults.current?.([]);
     setCategories({}); setWords({}); setAppliedScope(scopeKey);
-  }, [scopeKey]);
+  }, [scopeKey, enabled, readScope]);
   useEffect(() => {
     if (!currentScope || !query.trim() || !enabled || completed.current.has(active)) return;
     const abort = new AbortController();
     const version = generation.current;
+    // Returning to the same scope is not typing, but still requires fresh reads.
+    const delay = immediateScope.current === scopeKey ? 0 : 250;
+    immediateScope.current = null;
     const timer = setTimeout(() => {
       void readDictionaryCategory({ query: query.trim(), languageCode, dictionaryId, userId, filters, material, signal: abort.signal }, active,
         (page, complete) => {
@@ -85,7 +96,7 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
           setCategories({[active]:{complete:false,error:code}});
         } else setCategories(current => ({ ...current, [active]: { ...current[active], complete: false, error: code } }));
       });
-    }, 250);
+    }, delay);
     return () => { clearTimeout(timer); abort.abort(); };
   }, [scopeKey, currentScope, active, query, languageCode, dictionaryId, userId, filters, material, enabled]);
   const [moreRequest, setMoreRequest] = useState<{scopeKey:string; category:DictionarySearchCategory; page:DictionaryCategoryPage} | null>(null);
