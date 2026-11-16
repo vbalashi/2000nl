@@ -575,6 +575,14 @@ function buildLookupGroup(entry: typeof entries[number]): PlatformHeadwordGroupV
 }
 
 async function setupAuthenticatedTrainingPage(page: Page) {
+  // Product admission is independent of the synthetic Auth session below.
+  await page.route("**/api/admission", async route => {
+    const authorized = route.request().method() === "POST" &&
+      /^Bearer \S+$/.test(route.request().headers().authorization ?? "");
+    await route.fulfill({ status: authorized ? 200 : 401, json: authorized
+      ? { enabled: true, status: "approved", mode: "approval-required" }
+      : { error: "unauthorized" } });
+  });
   nextWordIndex = 0;
 
   let trainingSetups = {
