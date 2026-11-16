@@ -79,3 +79,4 @@
 \i db/migrations/372_connect_session_boundary.sql
 \i db/migrations/373_server_owned_subscription_tier.sql
 \i db/migrations/374_provider_work_safety.sql
+\i db/migrations/375_library_article_batch.sql

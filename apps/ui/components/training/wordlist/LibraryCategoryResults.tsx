@@ -10,7 +10,7 @@ import { LibraryResultList, LibraryContextResultRow } from "@/components/practic
 import type { LibraryEntryFilters, LibraryMaterialScope } from "@/lib/platform/librarySearchScope";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import {
-  DICTIONARY_SEARCH_CATEGORIES, CONTEXT_SEARCH_PAGE_SIZE, readDictionaryCategory, readMoreDictionaryContext, hydrateDictionaryWordResults,
+  DICTIONARY_SEARCH_CATEGORIES, CONTEXT_SEARCH_PAGE_SIZE, WORD_SEARCH_PAGE_SIZE, readDictionaryCategory, readMoreDictionaryContext, hydrateDictionaryWordResults,
   type DictionaryCategoryHit, type DictionaryCategoryPage, type DictionarySearchCategory,
 } from "@/lib/platform/dictionaryCategorySearch";
 import { LibraryHeadwordGroupResultsList } from "./LibraryHeadwordGroupResultsList";
@@ -50,12 +50,17 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
   const [appliedScope, setAppliedScope] = useState("");
   const generation = useRef(0);
   const hydrated = useRef(new Map<string, LibraryHeadwordGroupResult[]>());
+  const articles = useRef(new Map<string, LibraryHeadwordGroupResult[]>());
   const currentScope = appliedScope === scopeKey;
   const completed = useRef(new Set<DictionarySearchCategory>());
+  const publishWordResults = useRef(onWordResults);
+  publishWordResults.current = onWordResults;
   useEffect(() => {
     ++generation.current;
     hydrated.current.clear();
+    articles.current.clear();
     completed.current.clear();
+    publishWordResults.current?.([]);
     setCategories({}); setWords({}); setAppliedScope(scopeKey);
   }, [scopeKey]);
   useEffect(() => {
@@ -71,7 +76,14 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
           }
         },
       ).catch(cause => {
-        if (!abort.signal.aborted && version === generation.current) setCategories(current => ({ ...current, [active]: { ...current[active], complete: false, error: cause instanceof Error ? cause.message : "search_failed" } }));
+        if (abort.signal.aborted || version !== generation.current) return;
+        const code = cause instanceof Error ? cause.message : "search_failed";
+        if (code === "material_not_accessible" || code === "dictionary_search_access_changed") {
+          ++generation.current;
+          hydrated.current.clear(); articles.current.clear(); completed.current.clear(); setWords({});
+          publishWordResults.current?.([]);
+          setCategories({[active]:{complete:false,error:code}});
+        } else setCategories(current => ({ ...current, [active]: { ...current[active], complete: false, error: code } }));
       });
     }, 250);
     return () => { clearTimeout(timer); abort.abort(); };
@@ -93,7 +105,12 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
       if (!abort.signal.aborted && version === generation.current) {
         const code = cause instanceof Error ? cause.message : "search_failed";
         if (code === "invalid_cursor") setRevision(value => value + 1);
-        else if (code === "material_not_accessible") setCategories(current => ({...current,[category]:{complete:false,error:code}}));
+        else if (code === "material_not_accessible" || code === "dictionary_search_access_changed") {
+          ++generation.current;
+          hydrated.current.clear(); articles.current.clear(); completed.current.clear(); setWords({});
+          publishWordResults.current?.([]);
+          setCategories({[category]:{complete:false,error:code}});
+        }
         else setCategories(current => ({...current,[category]:{...current[category]!,moreError:true}}));
         setMoreRequest(null);
       }
@@ -106,7 +123,7 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
   const wordCategory = active === "alphabetical" ? "alphabetical" : "headwords";
   const wordPage = currentScope ? categories[wordCategory] : undefined;
   const wordHits = wordPage?.page?.items;
-  const wordReadKey = enabled && currentScope && wordPage?.complete ? `${scopeKey}:${wordCategory}:${hydrationRevision}` : null;
+  const wordReadKey = enabled && currentScope && wordPage?.complete ? `${scopeKey}:${wordCategory}:${hydrationRevision}:${JSON.stringify(wordHits?.map(hit => hit.resultKey ?? hit.entry.id))}` : null;
   useEffect(() => {
     if (!wordReadKey || !wordHits) return;
     const cached = hydrated.current.get(wordReadKey);
@@ -116,21 +133,33 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
       return;
     }
     const abort = new AbortController();
-    setWords(current => ({ ...current, [wordCategory]: { results: [], loading: true } }));
-    void hydrateDictionaryWordResults({ query, languageCode, dictionaryId, userId, filters, material, signal: abort.signal }, wordHits).then(results => {
-      if (!abort.signal.aborted) {
+    const version = generation.current;
+    setWords(current => ({ ...current, [wordCategory]: { results: current[wordCategory]?.results ?? [], loading: true } }));
+    void hydrateDictionaryWordResults({ query, languageCode, dictionaryId, userId, filters, material, signal: abort.signal }, wordHits, articles.current.get(wordCategory)).then(results => {
+      if (!abort.signal.aborted && version === generation.current) {
         hydrated.current.set(wordReadKey, results);
+        articles.current.set(wordCategory, results);
         onWordResults?.(results);
         setWords(current => ({ ...current, [wordCategory]: { results, loading: false } }));
       }
-    }).catch(() => {
-      if (!abort.signal.aborted) setWords(current => ({ ...current, [wordCategory]: { results: [], loading: false, error: true } }));
+    }).catch(cause => {
+      if (abort.signal.aborted || version !== generation.current) return;
+      const code = cause instanceof Error ? cause.message : "search_failed";
+      if (code === "invalid_cursor") { setRevision(value => value + 1); return; }
+      if (code === "dictionary_search_access_changed" || code === "material_not_accessible") {
+        ++generation.current;
+        hydrated.current.clear(); articles.current.clear(); completed.current.clear(); setWords({});
+          publishWordResults.current?.([]);
+        setCategories({[wordCategory]:{complete:false,error:code}});
+      } else setWords(current => ({ ...current, [wordCategory]: {
+        results: current[wordCategory]?.results ?? [], loading: false, error: true,
+      }}));
     });
     return () => abort.abort();
   }, [wordReadKey, wordHits, wordCategory, query, languageCode, dictionaryId, userId, filters, material, onWordResults]);
   const wordState = currentScope ? words[active] : undefined;
   const failed = current?.error || wordState?.error;
-  const loading = enabled && Boolean(query.trim()) && (!currentScope || !current?.complete || (isWords && (!wordState || wordState.loading)));
+  const loading = enabled && Boolean(query.trim()) && (!currentScope || !current?.complete || (isWords && (!wordState || (wordState.loading && !wordState.results.length))));
   const selectedGroupId = wordState?.results.find(result => result.group.entries.some(entry => (entry.kind === "sense-card" ? entry.entryId : entry.crossReferenceId) === selectedId))?.headwordGroupId ?? null;
   const wordGroupCount=current?.page?.wordGroupCount;
   React.useEffect(()=>{onWordCount?.(active==='headwords' && enabled && currentScope && current?.complete && !loading && !failed && typeof wordGroupCount==='number' && Number.isSafeInteger(wordGroupCount) ? wordGroupCount : null);},[active,enabled,currentScope,current?.complete,wordGroupCount,loading,failed,onWordCount]);
@@ -139,8 +168,8 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
     {DICTIONARY_SEARCH_CATEGORIES.map(value => <button key={value} type="button" aria-pressed={active === value} aria-controls="library-search-results" onClick={() => setActive(value)}>{copy.labels[value]}</button>)}
   </SegmentedControl></div>;
   const showSource = new Set(hits?.map(item => item.dictionary?.id)).size > 1;
-  const moreLoading = moreRequest?.scopeKey === scopeKey && moreRequest.category === active;
-  const moreAvailable = !isWords && current?.complete && current.page?.page.hasMore;
+  const moreLoading = (moreRequest?.scopeKey === scopeKey && moreRequest.category === active) || Boolean(isWords && wordState?.loading);
+  const moreAvailable = active !== "alphabetical" && current?.complete && current.page?.page.hasMore && !failed;
   const countLabel = isWords
     ? formatLibraryCounts(locale,current?.page?.wordGroupCount ?? wordState?.results.length ?? 0,current?.page?.wordGroupCount === undefined ? undefined : current.page.total)
     : formatUiMessage(copy.foundCount, {count:new Intl.NumberFormat(locale).format(hits?.length ?? 0) + (moreAvailable ? "+" : "")});
@@ -151,7 +180,7 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
     {countHost && createPortal(<span className={styles.count} role="status" data-count-detail={!enabled || loading || failed ? "" : countLabel}>{!enabled ? "" : loading ? copy.busy : !failed ? compactCount : ""}</span>, countHost)}
     <div id="library-search-results" aria-busy={loading && !failed} aria-label={copy.labels[active]}>
       {!enabled ? null : !query.trim() ? <p className={styles.empty}>{copy.prompt}</p> : <>
-        {failed && <p role="alert" className={styles.empty}>{current?.error === "material_not_accessible" ? getUiMessages(locale).library.materialUnavailable : copy.error} <button type="button" onClick={() => current?.error ? setRevision(value => value + 1) : setHydrationRevision(value => value + 1)}>{copy.retry}</button></p>}
+        {failed && <p role="alert" className={styles.empty}>{(current?.error === "material_not_accessible" || current?.error === "dictionary_search_access_changed") ? getUiMessages(locale).library.materialUnavailable : copy.error} <button type="button" onClick={() => current?.error ? setRevision(value => value + 1) : setHydrationRevision(value => value + 1)}>{copy.retry}</button></p>}
         {loading && !failed && <p role="status" className={styles.empty}>{copy.busy}</p>}
         {isWords ? wordState?.results.length ? <LibraryHeadwordGroupResultsList results={wordState.results} appearance={appearance} interfaceLanguage={locale} selectedHeadwordGroupId={selectedGroupId} bulkSelected={active==='headwords'?bulkSelected:undefined} bulkAll={bulkAll} bulkExcludedCount={bulkExcludedCount} onBulkSelect={active==='headwords'?onBulkSelect:undefined} onSelect={result => {
           if (onSelectGroup) onSelectGroup(result);
@@ -165,7 +194,7 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
         {moreAvailable && <div className={styles.more}>
           {current?.moreError && <p role="alert">{copy.moreError}</p>}
           <button type="button" className={workspace.button} disabled={moreLoading} onClick={() => setMoreRequest({scopeKey,category:active,page:current!.page!})}>
-            {moreLoading ? copy.loadingMore : current?.moreError ? copy.retry : formatUiMessage(copy.more,{count:CONTEXT_SEARCH_PAGE_SIZE})}
+            {moreLoading ? copy.loadingMore : current?.moreError ? copy.retry : formatUiMessage(copy.more,{count:isWords ? WORD_SEARCH_PAGE_SIZE : CONTEXT_SEARCH_PAGE_SIZE})}
           </button>
         </div>}
         {(current?.page?.unavailableEntryCount ?? 0)>0 && <p className={styles.empty} role="status">{getUiMessages(locale).library.unavailableCollectionSource}</p>}

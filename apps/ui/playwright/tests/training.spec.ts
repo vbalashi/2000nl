@@ -636,17 +636,18 @@ async function setupAuthenticatedTrainingPage(page: Page) {
   await page.route("**/api/library/category-search", async route => {
     const body = route.request().postDataJSON();
     const query = String(body.query).toLowerCase();
-    const items = entries.filter(entry=>entry.headword.toLowerCase().includes(query)).map(entry=>({entry:{id:entry.id,headword:entry.headword},dictionary:{id:"dictionary-example",name:"ExampleDictionary Dutch"}}));
+    const items = entries.filter(entry=>entry.headword.toLowerCase().includes(query)).map(entry=>({headwordGroupId:buildLookupGroup(entry).headwordGroupId,entry:{id:entry.id,headword:entry.headword},dictionary:{id:"dictionary-example",name:"ExampleDictionary Dutch"}}));
     await route.fulfill({json:{groups:[{id:body.group,items,total:items.length,...(["headwords","alphabetical"].includes(body.group)?{wordGroupCount:items.length}:{}),page:{hasMore:false,nextCursor:null}}]}});
   });
 
   await page.route(
-    /\/api\/(?:platform\/v2\/lookup|library\/search)$/,
+    /\/api\/(?:platform\/v2\/lookup|library\/(?:search|articles))$/,
     async (route: Route) => {
     const body = route.request().postDataJSON?.() ?? {};
     const isLibrarySearch = new URL(route.request().url()).pathname === "/api/library/search";
     const query = typeof body.query === "string" ? body.query : "";
     const matchingEntries = entries.filter((entry) =>
+      Array.isArray(body.entryIds) ? body.entryIds.includes(entry.id) : body.entryId ? body.entryId === entry.id :
       entry.headword.toLocaleLowerCase().includes(query.toLocaleLowerCase()),
     );
 

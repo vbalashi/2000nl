@@ -7,7 +7,7 @@ import { buildLibraryHeadwordGroupResults } from "@/components/training/wordlist
 import { multiSenseBankGroup } from "./platformV2LibraryFixture";
 vi.mock("@/lib/platform/dictionaryCategorySearch",()=>({
   DICTIONARY_SEARCH_CATEGORIES:["headwords","examples","definitions","alphabetical"],
-  CONTEXT_SEARCH_PAGE_SIZE:50,readDictionaryCategory:vi.fn(),readMoreDictionaryContext:vi.fn(),hydrateDictionaryWordResults:vi.fn(),
+  CONTEXT_SEARCH_PAGE_SIZE:50,WORD_SEARCH_PAGE_SIZE:25,readDictionaryCategory:vi.fn(),readMoreDictionaryContext:vi.fn(),hydrateDictionaryWordResults:vi.fn(),
 }));
 beforeEach(()=>{
   vi.clearAllMocks();
@@ -126,4 +126,70 @@ test.each(['headwords','alphabetical'] as const)('legacy %s does not pair loaded
   expect(host).not.toHaveTextContent('115');
   expect(readDictionaryCategory).toHaveBeenCalledTimes(1);
  }finally{host.remove();}
+});
+
+test('Words renders a bounded page with exact totals, appends explicitly and retries without blanking admitted articles',async()=>{
+ const first={id:'headwords' as const,total:1000,wordGroupCount:500,items:[{entry:{id:'entry-bank-furniture',headword:'bank'},headwordGroupId:'group-bank'}],page:{hasMore:true,nextCursor:'next'}};
+ vi.mocked(readDictionaryCategory).mockImplementation(async(_s,_c,publish)=>{publish(first,true);return first;});
+ vi.mocked(readMoreDictionaryContext).mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({...first,items:[...first.items,{entry:{id:'entry-bank-finance',headword:'bank'},headwordGroupId:'group-bank'}],page:{hasMore:false,nextCursor:null}});
+ const onCount=vi.fn(),onRows=vi.fn();
+ render(<LibraryCategoryResults {...props} onWordCount={onCount} onWordResults={onRows}/>);
+ await screen.findByTestId('library-headword-group-group-bank');
+ expect(onCount).toHaveBeenLastCalledWith(500);expect(onRows.mock.lastCall![0]).toHaveLength(1);
+ expect(readMoreDictionaryContext).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByRole('button',{name:'More 25'}));await screen.findByRole('alert');
+ expect(screen.getByTestId('library-headword-group-group-bank')).toBeVisible();
+ fireEvent.click(screen.getByRole('button',{name:'Retry'}));
+ await waitFor(()=>expect(hydrateDictionaryWordResults).toHaveBeenCalledTimes(2));
+ expect(vi.mocked(hydrateDictionaryWordResults).mock.calls[1][1]).toHaveLength(2);
+ expect(vi.mocked(hydrateDictionaryWordResults).mock.calls[1][2]).toHaveLength(1);
+ await waitFor(()=>expect(screen.queryByRole('button',{name:'More 25'})).toBeNull());
+ expect(onCount).toHaveBeenLastCalledWith(500);
+});
+test('access denial during continuation clears prior articles and does not offer stale More',async()=>{
+ const first={id:'headwords' as const,total:100,wordGroupCount:50,items:[{entry:{id:'one',headword:'bank'}}],page:{hasMore:true,nextCursor:'next'}};
+ vi.mocked(readDictionaryCategory).mockImplementation(async(_s,_c,publish)=>{publish(first,true);return first;});
+ vi.mocked(readMoreDictionaryContext).mockRejectedValue(new Error('dictionary_search_access_changed'));
+ render(<LibraryCategoryResults {...props}/>);await screen.findByTestId('library-headword-group-group-bank');
+ fireEvent.click(screen.getByRole('button',{name:'More 25'}));await screen.findByRole('alert');
+ expect(screen.queryByTestId('library-headword-group-group-bank')).toBeNull();
+ expect(screen.queryByRole('button',{name:'More 25'})).toBeNull();
+});
+test.each([{userId:'other'},{material:{kind:'collection' as const,id:'other',collectionType:'user' as const}},{filters:{parts:['noun'] as const,article:null}}])('a changed account/material/filter rejects late article hydration (%j)',async changed=>{
+ let resolve!:(value:ReturnType<typeof buildLibraryHeadwordGroupResults>)=>void;
+ vi.mocked(hydrateDictionaryWordResults).mockImplementationOnce(()=>new Promise(done=>{resolve=done;}));
+ const view=render(<LibraryCategoryResults {...props}/>);
+ await waitFor(()=>expect(hydrateDictionaryWordResults).toHaveBeenCalledOnce());
+ const signal=vi.mocked(hydrateDictionaryWordResults).mock.calls[0][0].signal;
+ view.rerender(<LibraryCategoryResults {...props} {...changed as any}/>);
+ expect(signal.aborted).toBe(true);
+ await act(async()=>resolve(buildLibraryHeadwordGroupResults([{...multiSenseBankGroup,headwordGroupId:'stale-group'}])));
+ expect(screen.queryByTestId('library-headword-group-stale-group')).toBeNull();
+ await screen.findByTestId('library-headword-group-group-bank');
+});
+
+test('revocation clears parent bulk rows and completed tabs can load again',async()=>{
+ const onRows=vi.fn();
+ function Tabs(){const [category,onCategoryChange]=React.useState<import("@/lib/platform/dictionaryCategorySearch").DictionarySearchCategory>('headwords');return <LibraryCategoryResults {...props} category={category} onCategoryChange={onCategoryChange} onWordResults={onRows}/>;}
+ const original=vi.mocked(readDictionaryCategory).getMockImplementation()!;
+ vi.mocked(readDictionaryCategory).mockImplementation(async(s,c,publish)=>{const page=await original(s,c,()=>{});const next={...page,page:{hasMore:true,nextCursor:'next'}};publish(next,true);return next;});
+ render(<Tabs/>);await screen.findByTestId('library-headword-group-group-bank');
+ fireEvent.click(screen.getByRole('button',{name:'Examples'}));await screen.findByRole('button',{name:'Sentence 6 about bank bank'});
+ fireEvent.click(screen.getByRole('button',{name:'Words'}));await screen.findByTestId('library-headword-group-group-bank');
+ vi.mocked(readMoreDictionaryContext).mockRejectedValueOnce(new Error('dictionary_search_access_changed'));
+ fireEvent.click(screen.getByRole('button',{name:'More 25'}));await screen.findByRole('alert');
+ expect(onRows).toHaveBeenLastCalledWith([]);
+ fireEvent.click(screen.getByRole('button',{name:'Examples'}));await screen.findByRole('button',{name:'Sentence 6 about bank bank'});
+ expect(vi.mocked(readDictionaryCategory).mock.calls.filter(call=>call[1]==='examples')).toHaveLength(2);
+});
+
+test('a reference row opens its exact source article, preserving dictionary and homograph identity',async()=>{
+ const groups=[0,1,2].map(i=>({...multiSenseBankGroup,headwordGroupId:`pointer-group-${i}`,dictionary:{...multiSenseBankGroup.dictionary,dictionaryId:i===2?'other':'same'},header:{text:'same spelling',homographNumber:i+1},senseCount:0,entryCount:1,entries:[{kind:'cross-reference' as const,crossReferenceId:`pointer-${i}`,meaningOrdinal:1,label:null,text:'target',target:{query:'target'},capabilities:[]}]}));
+ const rows=buildLibraryHeadwordGroupResults(groups);
+ vi.mocked(hydrateDictionaryWordResults).mockResolvedValueOnce(rows);
+ const select=vi.fn();render(<LibraryCategoryResults {...props} onSelectGroup={select}/>);
+ for(const [i,row] of rows.entries()){
+  fireEvent.click(await screen.findByTestId(`library-headword-group-pointer-group-${i}`));
+  expect(select).toHaveBeenLastCalledWith(row);expect(row.selectedEntryId).toBe(`pointer-${i}`);
+ }
 });

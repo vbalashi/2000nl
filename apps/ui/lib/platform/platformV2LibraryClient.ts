@@ -1,3 +1,6 @@
+import {authenticatedJsonHeaders} from "./platformV2Http";
+import {platformFetchWithTimeout} from "./platformFetchWithTimeout";
+import {isPlatformLookupV2Response} from "../../../../packages/shared/types/platformV2Runtime";
 import type { CurrentTrainingCardContext } from "./trainingCurrentCardClient";
 import { LIBRARY_PAGE_SIZE } from "./libraryPagination";
 import type { LibrarySearchScope, LibrarySearchSummary } from "./librarySearchScope";
@@ -285,4 +288,23 @@ export function selectPlatformV2CrossReferenceTarget(
         group.entries.some((entry) => entry.kind === "sense-card"),
   );
   return exactGroups.length === 1 ? exactGroups[0] : null;
+}
+
+/** Bounded first-party hydration; authority is rechecked by the server. */
+export async function fetchPlatformV2LibraryGroups(input: {
+  entryIds: string[]; contentLanguageCode: string; expectedUserId?: string; signal: AbortSignal;
+}): Promise<PlatformHeadwordGroupV2[]> {
+  input.signal.throwIfAborted();
+  const response = await platformFetchWithTimeout("/api/library/articles", {
+    method: "POST", cache: "no-store", signal: input.signal,
+    headers: await authenticatedJsonHeaders(input.expectedUserId),
+    body: JSON.stringify({entryIds: input.entryIds, languageCode: input.contentLanguageCode}),
+  });
+  if (input.expectedUserId) await authenticatedJsonHeaders(input.expectedUserId);
+  input.signal.throwIfAborted();
+  if ([401,403,404].includes(response.status)) throw new Error("dictionary_search_access_changed");
+  const payload = await response.json();
+  if (!response.ok || !isPlatformLookupV2Response(payload) || payload.groups.length > 25)
+    throw new Error("dictionary_search_article_unavailable");
+  return payload.groups;
 }
