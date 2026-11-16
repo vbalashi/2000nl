@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-const mocks=vi.hoisted(()=>({rpc:vi.fn(),auth:vi.fn()}));
+const mocks=vi.hoisted(()=>({rpc:vi.fn(),auth:vi.fn(),store:vi.fn()}));
 vi.mock('@/lib/admin/adminAccess',()=>({requireAdmin:mocks.auth,adminErrorResponse:()=>new Response(JSON.stringify({error:'unavailable'}),{status:503})}));
 vi.mock('@/lib/admin/adminServerClient',()=>({createAdminServiceClient:()=>({rpc:mocks.rpc})}));
-import {GET,POST,PUT} from '@/app/api/admin/notifications/route';
+vi.mock('@/lib/operatorNotifications/secretBroker',()=>({storeBotToken:mocks.store}));
+import {GET,POST,PUT,PATCH} from '@/app/api/admin/notifications/route';
 const request=(body:unknown,origin='https://example.test')=>new Request('https://example.test/api/admin/notifications',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify(body)});
 beforeEach(()=>{vi.stubEnv('ADMIN_SITE_URL','https://example.test');mocks.rpc.mockReset();mocks.auth.mockReset().mockResolvedValue({userId:'operator',requestId:'request'});});
 afterEach(()=>{vi.unstubAllEnvs();});
@@ -33,4 +34,19 @@ test('validates route settings and reports a stale revision',async()=>{
  mocks.rpc.mockResolvedValueOnce({data:null,error:{code:'40001'}});
  expect((await PUT(request(value))).status).toBe(409);
  mocks.rpc.mockClear();expect((await PUT(request({...value,token:'secret'}))).status).toBe(400);expect(mocks.rpc).not.toHaveBeenCalled();
+});
+
+test('saves a token through an audited pending operation without returning it',async()=>{
+ const value={botId:'11111111-1111-4111-8111-111111111111',revision:1,token:'123:fake_token'};
+ mocks.rpc.mockResolvedValueOnce({data:{operation:'request'},error:null}).mockResolvedValueOnce({data:true,error:null});
+ mocks.store.mockResolvedValueOnce('a'.repeat(32));
+ const result=await PATCH(request(value));expect(result.status).toBe(200);expect(await result.json()).toEqual({saved:true});
+ expect(mocks.rpc.mock.calls[1][1]).toMatchObject({p_version:'a'.repeat(32),p_operation:'request'});
+});
+test('failed Vault storage marks the operation failed without leaking the token',async()=>{
+ mocks.rpc.mockResolvedValueOnce({data:{operation:'request'},error:null}).mockResolvedValueOnce({data:true,error:null});
+ mocks.store.mockRejectedValueOnce(new Error('secret 123:fake_token'));
+ const result=await PATCH(request({botId:'11111111-1111-4111-8111-111111111111',revision:1,token:'123:fake_token'}));
+ expect(result.status).toBe(503);expect(JSON.stringify(await result.json())).not.toContain('fake_token');
+ expect(mocks.rpc.mock.calls[1][1]).toMatchObject({p_version:null});
 });

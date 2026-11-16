@@ -19,7 +19,8 @@ CREATE TABLE private.operator_notification_bots (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
  name text NOT NULL CHECK (length(btrim(name)) BETWEEN 1 AND 80),
  credential_state text NOT NULL DEFAULT 'missing' CHECK (credential_state IN ('missing','pending','ready','failed')),
- secret_version text,
+ secret_version text CHECK (secret_version ~ '^[0-9a-f]{32}$'),
+ credential_operation uuid,
  revision integer NOT NULL DEFAULT 1 CHECK (revision>0),
  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
  updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
@@ -103,6 +104,43 @@ BEGIN
 END; $$;
 REVOKE ALL ON FUNCTION public.admin_notification_save_route_v1(uuid,uuid,uuid,integer,uuid,text,text,bigint,boolean) FROM PUBLIC,anon,authenticated,service_role;
 GRANT EXECUTE ON FUNCTION public.admin_notification_save_route_v1(uuid,uuid,uuid,integer,uuid,text,text,bigint,boolean) TO service_role;
+
+CREATE FUNCTION public.admin_notification_begin_secret_v1(p_operator uuid,p_request uuid,p_bot uuid,p_revision integer) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE bot private.operator_notification_bots;
+BEGIN
+ PERFORM private.require_notification_manager_v1(p_operator);
+ IF p_request IS NULL THEN RAISE EXCEPTION 'request_id_required' USING ERRCODE='22023'; END IF;
+ UPDATE private.operator_notification_bots SET credential_state='pending',secret_version=NULL,
+  credential_operation=p_request,revision=revision+1,updated_at=clock_timestamp()
+ WHERE id=p_bot AND revision=p_revision RETURNING * INTO bot;
+ IF NOT FOUND THEN RAISE EXCEPTION 'revision_conflict' USING ERRCODE='40001'; END IF;
+ -- Rotation stops delivery until the new version is confirmed and routes are
+ -- deliberately re-enabled. Never silently redirect already enabled routes.
+ UPDATE private.operator_notification_routes SET enabled=false,revision=revision+1,updated_at=clock_timestamp()
+ WHERE bot_id=p_bot AND enabled;
+ INSERT INTO public.admin_audit_events(operator_user_id,action,outcome,target_type,target_id,request_id)
+ VALUES(p_operator,'notifications.configuration.updated','success','notification_secret_pending',p_bot::text,p_request);
+ RETURN jsonb_build_object('operation',p_request,'revision',bot.revision);
+END; $$;
+CREATE FUNCTION public.admin_notification_finish_secret_v1(p_operator uuid,p_request uuid,p_bot uuid,p_operation uuid,p_version text) RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE affected integer;
+BEGIN
+ PERFORM private.require_notification_manager_v1(p_operator);
+ IF p_request IS NULL OR p_operation IS NULL OR (p_version IS NOT NULL AND p_version !~ '^[0-9a-f]{32}$') THEN
+  RAISE EXCEPTION 'invalid_secret_receipt' USING ERRCODE='22023'; END IF;
+ UPDATE private.operator_notification_bots SET credential_state=CASE WHEN p_version IS NULL THEN 'failed' ELSE 'ready' END,
+  secret_version=p_version,credential_operation=NULL,revision=revision+1,updated_at=clock_timestamp()
+ WHERE id=p_bot AND credential_state='pending' AND credential_operation=p_operation;
+ GET DIAGNOSTICS affected=ROW_COUNT;
+ IF affected=0 THEN RETURN false; END IF;
+ INSERT INTO public.admin_audit_events(operator_user_id,action,outcome,target_type,target_id,request_id)
+ VALUES(p_operator,'notifications.configuration.updated',CASE WHEN p_version IS NULL THEN 'failure' ELSE 'success' END,'notification_secret_result',p_bot::text,p_request);
+ RETURN true;
+END; $$;
+REVOKE ALL ON FUNCTION public.admin_notification_begin_secret_v1(uuid,uuid,uuid,integer),public.admin_notification_finish_secret_v1(uuid,uuid,uuid,uuid,text) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.admin_notification_begin_secret_v1(uuid,uuid,uuid,integer),public.admin_notification_finish_secret_v1(uuid,uuid,uuid,uuid,text) TO service_role;
 
 REVOKE ALL ON FUNCTION private.require_notification_manager_v1(uuid) FROM PUBLIC,anon,authenticated,service_role;
 REVOKE ALL ON FUNCTION public.admin_notification_configuration_v1(uuid,uuid),public.admin_notification_create_bot_v1(uuid,uuid,text) FROM PUBLIC,anon,authenticated,service_role;

@@ -14,3 +14,8 @@ describe('report return after admin login', () => {
     }
   });
 });
+
+it('returns notification managers only to their settings view',()=>{
+ expect(reportReturnPath('/admin/reports/?view=notifications','https://example.test',['notifications.manage'])).toBe('/admin/reports/?view=notifications');
+ expect(reportReturnPath('/admin/reports/?feedback=123','https://example.test',['notifications.manage'])).toBeNull();
+});

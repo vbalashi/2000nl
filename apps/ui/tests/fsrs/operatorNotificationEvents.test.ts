@@ -172,7 +172,13 @@ describeIfDb('operator notification events',()=>{
    const config=(await client.query('select public.admin_notification_configuration_v1($1,$2) config',[operator,randomUUID()])).rows[0].config;
    expect(config.bots.map((bot:{id:string})=>bot.id)).toEqual(expect.arrayContaining([first.id,second.id]));
    expect(JSON.stringify(config)).not.toMatch(/secret_version|token|secretVersion/);
-   expect((await client.query("select action from public.admin_audit_events where operator_user_id=$1 and action like 'notifications.%'",[operator])).rows).toHaveLength(5);
+   const operation=randomUUID();
+   await client.query('select public.admin_notification_begin_secret_v1($1,$2,$3,1)',[operator,operation,first.id]);
+   expect((await client.query('select public.admin_notification_finish_secret_v1($1,$2,$3,$4,$5) ok',[operator,randomUUID(),first.id,randomUUID(),'a'.repeat(32)])).rows[0].ok).toBe(false);
+   expect((await client.query('select public.admin_notification_finish_secret_v1($1,$2,$3,$4,$5) ok',[operator,randomUUID(),first.id,operation,'a'.repeat(32)])).rows[0].ok).toBe(true);
+   expect((await client.query('select public.admin_notification_finish_secret_v1($1,$2,$3,$4,$5) ok',[operator,randomUUID(),first.id,operation,'b'.repeat(32)])).rows[0].ok).toBe(false);
+
+   expect((await client.query("select action from public.admin_audit_events where operator_user_id=$1 and action like 'notifications.%'",[operator])).rows).toHaveLength(7);
    expect((await client.query("select has_table_privilege('authenticated','private.operator_notification_bots','select') allowed")).rows[0].allowed).toBe(false);
   });
  });
