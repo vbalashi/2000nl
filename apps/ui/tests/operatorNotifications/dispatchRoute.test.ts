@@ -63,3 +63,12 @@ test('malformed aggregate fails without exposing RPC data',async()=>{
  const response=await GET(request('GET','d'.repeat(40)));
  expect(response.status).toBe(503);expect(await response.json()).toEqual({error:'unavailable'});
 });
+
+test('unknown and revoked status credentials are denied before database access',async()=>{
+ const dispatch='d'.repeat(40),status='s'.repeat(40);
+ vi.stubEnv('OPERATOR_NOTIFICATION_DISPATCH_SECRET',dispatch);vi.stubEnv('OPERATOR_NOTIFICATION_STATUS_SECRET',status);
+ expect((await GET(request('GET','u'.repeat(40)))).status).toBe(401);
+ vi.stubEnv('OPERATOR_NOTIFICATION_STATUS_SECRET','');
+ expect((await GET(request('GET',status))).status).toBe(401);
+ expect(mocks.rpc).not.toHaveBeenCalled();
+});
