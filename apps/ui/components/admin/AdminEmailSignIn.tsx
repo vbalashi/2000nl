@@ -10,9 +10,10 @@ export function AdminEmailSignIn() {
   event.preventDefault();setBusy(true);setError(false);
   const verification=enterCode;const code=token;if(verification)setToken('');
   try {
-   const response=await fetch(verification?'/api/admin/auth/email/verify':'/api/admin/auth/email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(verification?{email,token:code}:{email})});
+   let returnTo:string|null=null;try{returnTo=sessionStorage.getItem('admin.returnTo');}catch{}
+   const response=await fetch(verification?'/api/admin/auth/email/verify':'/api/admin/auth/email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(verification?{email,token:code}:{email,...(returnTo?{returnTo}:{})})});
    if(!response.ok)throw new Error();
-   if(verification){const result=await response.json();if(result.url!=='/admin')throw new Error();window.location.assign('/admin');}
+   if(verification){const result=await response.json();if(typeof result.url!=='string' || !(result.url==='/admin' || result.url.startsWith('/admin?returnTo=')))throw new Error();window.location.assign(result.url);}
    else {setEnterCode(true);setAccepted(true);}
   } catch {setError(true);} finally {setBusy(false);}
  }

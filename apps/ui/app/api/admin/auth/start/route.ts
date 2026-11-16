@@ -1,6 +1,8 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
+import { adminAuthInput } from "@/lib/admin/adminEmailAuth";
+import { storeAdminReturn } from "@/lib/admin/adminAuthReturn";
 import { createAdminAuthClient } from "@/lib/admin/adminServerClient";
 
 export const dynamic = "force-dynamic";
@@ -20,9 +22,11 @@ export async function POST(request: Request) {
   }
 
   let email = "";
+  let returnTo:unknown;
   try {
-    const payload = await request.json() as { email?: unknown };
+    const payload = await adminAuthInput(request) as { email?: unknown;returnTo?:unknown };
     if (!payload || typeof payload !== "object" || (payload.email !== undefined && typeof payload.email !== "string")) throw new Error("Invalid payload");
+    returnTo=payload.returnTo;
     if (typeof payload.email === "string") email = payload.email.trim().toLowerCase();
   } catch {
     return NextResponse.json({ error: "invalid_request" }, { status: 400, headers: { "Cache-Control": "no-store" } });
@@ -43,6 +47,7 @@ export async function POST(request: Request) {
       },
     });
     if (oauthError || !data.url) throw oauthError ?? new Error("Google sign-in could not start");
+    await storeAdminReturn(returnTo,expectedOrigin);
     return NextResponse.json({ url: data.url }, {
       headers: { "Cache-Control": "private, no-store, max-age=0", Vary: "Cookie" },
     });
