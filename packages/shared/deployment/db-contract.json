@@ -392,11 +392,16 @@
       "migrationId": 373,
       "file": "db/migrations/373_server_owned_subscription_tier.sql",
       "sha256": "b33fd41ed79d802a9c56335f4f02f2b26a85bb5e868e4ec95940277366564cfd"
+    },
+    {
+      "migrationId": 374,
+      "file": "db/migrations/374_provider_work_safety.sql",
+      "sha256": "38eded2b18fdcc808d7215ad068edb43fc028ab8b75dac1b0787d024729a3b29"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-373.sql",
+  "postflightProbe": "db/deploy-contract/postflight-374.sql",
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-373.sql",
-    "sha256": "ed924f2c2b85556345e7e7fe02e195b0d0a115598768ad3194665d5f892ef9b9"
+    "file": "db/deploy-contract/read-only-postflight-374.sql",
+    "sha256": "0c533a76a0b097f651cb08c7fadcb728faf87ec89123350bcead9dae28a19e53"
   }
 }

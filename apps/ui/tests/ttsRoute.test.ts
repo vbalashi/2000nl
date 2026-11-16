@@ -1,3 +1,6 @@
+vi.mock("@/lib/platform/serverSupabase", () => ({
+ getAuthenticatedSupabase: async () => ({user:{id:"test-user"},principal:{authKind:"first_party"}}), requirePlatformScope:()=>null,
+}));
 import { vi } from "vitest";
 import crypto from "crypto";
 import fs from "fs/promises";

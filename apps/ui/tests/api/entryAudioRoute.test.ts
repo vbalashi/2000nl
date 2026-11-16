@@ -28,7 +28,7 @@ test.each([false,true])("streams private audio after two live entry checks (cach
   expect(response.headers.get("cache-control")).toBe("private, no-store");
   expect(response.headers.get("content-type")).toBe("audio/mpeg");
   expect(response.headers.get("location")).toBeNull();
-  expect(resolve).toHaveBeenCalledWith("huis",expect.any(Function));
+  expect(resolve).toHaveBeenCalledWith("huis","viewer");
   expect(serviceRpc.mock.calls).toEqual(Array(2).fill(["read_platform_v2_library_group",{p_user_id:"viewer",p_entry_id:id,p_group_entry_bound:100}]));
   expect(rpc).not.toHaveBeenCalled();
 });
@@ -87,7 +87,7 @@ test.each([false,true])("node audio is re-resolved after generation (binding rem
   rpc.mockResolvedValueOnce({data:{items:[source]},error:null});
   rpc.mockResolvedValue({data:{items:[valid?source:{...source,platform_v2_identity:{entryId:id,contentNodeBindings:[]}}]},error:null});
   const response=await POST(request({entryId:id,currentCard,node}));
-  expect(resolve).toHaveBeenCalledWith("Een huis.",expect.any(Function));
+  expect(resolve).toHaveBeenCalledWith("Een huis.","viewer");
   expect(response.status).toBe(valid?200:404);
 });
 

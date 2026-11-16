@@ -14,6 +14,9 @@ the maintainers' full dictionaries or private translation prompts.
 **Optional services** provide AI translation and spoken audio. Their credentials
 and private resources stay on the server.
 
+The [provider safety contract](provider-safety.md) describes shared generation
+admission, recoverable text leases, TTS deduplication and storage limits.
+
 **Connected applications** can offer other ways to encounter and save words.
 AudioFilms focuses on listening and shadowing; Pontix focuses on browser
 translation. 2000NL is intended to keep vocabulary and learning progress together

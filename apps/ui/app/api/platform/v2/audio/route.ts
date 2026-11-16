@@ -1,3 +1,4 @@
+import { ProviderWorkError } from "@/lib/providers/providerSafety";
 import {consumeAudioRateLimit} from "@/lib/audio/audioRateLimit";
 import {NextRequest} from "next/server";
 import {getAuthenticatedSupabase,jsonNoStore,requirePlatformScope} from "@/lib/platform/serverSupabase";
@@ -41,9 +42,7 @@ export async function POST(request:NextRequest) {
   const entry=source.entry;
   try {
     const prepared=body.node?null:await resolvePreparedDictionaryAudio(entry,source.text);
-    const result=prepared??await resolvePrivateEntryTtsAudio(source.text,()=>{
-      if(!consumeAudioRateLimit(auth.user.id).allowed)throw new Error("audio_rate_limited");
-    });
+    const result=prepared??await resolvePrivateEntryTtsAudio(source.text,auth.user.id);
     const latest=await read();
     const stillReadable=Boolean(latest&&latest.text===source.text
       &&String(latest.entry.content_version)===String(entry.content_version)
@@ -57,7 +56,7 @@ export async function POST(request:NextRequest) {
     }
     return new Response(new Uint8Array(result.audio),{headers:{"Content-Type":"audio/mpeg","Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff","X-Platform-Cache":result.cached?"hit":"miss"}});
   } catch(error) {
-    if(error instanceof Error&&error.message==="audio_rate_limited")return jsonNoStore({error:"rate_limited"},429);
+    if(error instanceof ProviderWorkError)return jsonNoStore({error:error.code,retryAfterMs:error.retryAfterMs},error.httpStatus);
     return jsonNoStore({error:"entry_audio_unavailable"},502);
   }
 }

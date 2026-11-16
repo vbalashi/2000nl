@@ -1,3 +1,4 @@
+import { providerFetch, providerCancellableCall } from "../../providers/providerTransport";
 import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import type { IAudioProvider } from "../audioProvider";
 import type { AudioQuality } from "../types";
@@ -57,7 +58,7 @@ export class GoogleCloudTtsProvider implements IAudioProvider {
       };
 
       if (apiKey) {
-        const response = await fetch(
+        const response = await providerFetch(
           `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
           {
             method: "POST",
@@ -79,7 +80,16 @@ export class GoogleCloudTtsProvider implements IAudioProvider {
       }
 
       const client = new TextToSpeechClient();
-      const [response] = await client.synthesizeSpeech(request);
+      // Preserve GAX cancellation; synthesizeSpeech's generated .then wrapper
+      // returns a plain Promise without cancel(). Initialization itself cannot
+      // start synthesis, and a deadline reached during init forbids the call.
+      await client.initialize();
+      let response;
+      try {
+        [response] = await providerCancellableCall(remainingMs =>
+          client.innerApiCalls.synthesizeSpeech(request, { timeout: remainingMs, retry: null }) as Promise<[import("@google-cloud/text-to-speech").protos.google.cloud.texttospeech.v1.ISynthesizeSpeechResponse]> & { cancel(): void },
+        );
+      } finally { void client.close().catch(() => {}); }
       if (!response.audioContent) {
         throw new Error("No audio content returned from Google TTS");
       }

@@ -1,3 +1,4 @@
+import { providerFetch, providerOutputTokenLimit } from "../providers/providerTransport";
 import { planDictionaryExplanationRepair, mergeDictionaryExplanationRepair } from "./dictionaryExplanationRepair";
 import { dictionaryTranslationProfile } from "./dictionaryTranslationProfile";
 import { DICTIONARY_TRANSLATION_OPERATION_MS } from "./dictionaryTranslationBudgets";
@@ -325,6 +326,7 @@ export class OpenAITranslator implements ITranslator {
         messages,
       };
       if (includeModel) body.model = this.model;
+      if (!dictionary) body.max_completion_tokens = providerOutputTokenLimit();
       if (dictionary && dictionaryTranslationProfile().id !== "legacy") {
         const profile = dictionaryTranslationProfile();
         if (this.model !== profile.model) throw safeTranslationProviderError("provider_response_error", null);
@@ -332,7 +334,7 @@ export class OpenAITranslator implements ITranslator {
         Object.assign(body, profile.requestSettings);
       } else if (this.model.startsWith("gpt-5")) body.reasoning_effort = "none";
 
-      const response = await fetch(this.apiUrl, {
+      const response = await providerFetch(this.apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

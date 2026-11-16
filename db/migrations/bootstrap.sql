@@ -78,3 +78,4 @@
 \i db/migrations/371_release_notes_english_fallback.sql
 \i db/migrations/372_connect_session_boundary.sql
 \i db/migrations/373_server_owned_subscription_tier.sql
+\i db/migrations/374_provider_work_safety.sql

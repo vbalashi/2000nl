@@ -1,3 +1,4 @@
+import { providerFetch, providerOutputTokenLimit } from "../providers/providerTransport";
 import {
   ITranslator,
   type TranslationProviderTextRequest,
@@ -163,7 +164,7 @@ export class GeminiTranslator implements ITranslator {
           url.searchParams.set("key", this.apiKey);
         }
 
-        const res = await fetch(url.toString(), {
+        const res = await providerFetch(url.toString(), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -180,6 +181,7 @@ export class GeminiTranslator implements ITranslator {
               },
             ],
             generationConfig: {
+              maxOutputTokens: providerOutputTokenLimit(),
               temperature: 0,
             },
           }),

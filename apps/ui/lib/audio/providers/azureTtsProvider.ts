@@ -1,3 +1,4 @@
+import { providerFetch } from "../../providers/providerTransport";
 import type { IAudioProvider } from "../audioProvider";
 import type { AudioQuality } from "../types";
 
@@ -71,7 +72,7 @@ export class AzureTtsProvider implements IAudioProvider {
     const trySynthesize = async (voiceName: string) => {
       const ssml = `<speak version="1.0" xml:lang="nl-NL" xmlns="http://www.w3.org/2001/10/synthesis"><voice name="${voiceName}">${escapedText}</voice></speak>`;
 
-      const res = await fetch(endpoint, {
+      const res = await providerFetch(endpoint, {
         method: "POST",
         headers: {
           "Ocp-Apim-Subscription-Key": key,

@@ -1,7 +1,7 @@
-import { getAuthenticatedUserSupabase } from "@/lib/platform/serverSupabase";
+import { readProviderJson, providerErrorResponse } from "@/lib/providers/providerSafety";
+import { getAuthenticatedSupabase, requirePlatformScope } from "@/lib/platform/serverSupabase";
 import { NextRequest, NextResponse } from "next/server";
 import {
-  hasConfiguredPremiumTtsProvider,
   readCachedAudio,
   resolveTtsAudio,
 } from "@/lib/audio/ttsCache";
@@ -21,7 +21,8 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const audio = await readCachedAudio(key);
+  let audio: Buffer | null;
+  try { audio = await readCachedAudio(key); } catch { return NextResponse.json({ error: "audio_unavailable" }, { status: 503, headers: { "Cache-Control": "no-store" } }); }
   if (audio) {
     return new NextResponse(new Uint8Array(audio), {
       status: 200,
@@ -38,13 +39,14 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (process.env.ADMISSION_REQUIRED === "true") {
-    const auth = await getAuthenticatedUserSupabase(req); if (auth instanceof Response) return auth;
-  }
+  const auth = await getAuthenticatedSupabase(req);
+  if (auth instanceof Response) return auth;
+  const scopeError = requirePlatformScope(auth, "platform:write");
+  if (scopeError) return scopeError;
   try {
-    const body = await req.json();
-    const text = body.text as string | undefined;
-    const qualityRaw = body.quality as unknown;
+    const body = await readProviderJson(req, "audio");
+    const text = body?.text as string | undefined;
+    const qualityRaw = body?.quality as unknown;
 
     if (!text || typeof text !== "string" || !text.trim()) {
       return NextResponse.json(
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     const trimmedText = text.trim();
-    const artifact = await resolveTtsAudio({ text: trimmedText, quality: qualityRaw });
+    const artifact = await resolveTtsAudio({ text: trimmedText, quality: qualityRaw, accountId: auth.user.id });
 
     return NextResponse.json(
       {
@@ -66,23 +68,9 @@ export async function POST(req: NextRequest) {
       },
       { status: 200, headers: { "Cache-Control": "no-store" } }
     );
-  } catch (err: any) {
-    const message = String(err?.message ?? err ?? "Unknown error");
-    console.error("[TTS API] Error:", message);
-
-    if (message === "invalid_audio_quality") {
-      return NextResponse.json(
-        { error: "Invalid 'quality' parameter (expected 'free' or 'premium')" },
-        { status: 400, headers: { "Cache-Control": "no-store" } }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        error: message,
-        configured: hasConfiguredPremiumTtsProvider(),
-      },
-      { status: 500, headers: { "Cache-Control": "no-store" } }
-    );
+  } catch (error) {
+    if (error instanceof Error && error.message === "invalid_audio_quality") return NextResponse.json({ error: "invalid_audio_quality" }, { status: 400 });
+    const failure = providerErrorResponse(error);
+    return NextResponse.json(failure.payload, { status: failure.status, headers: { "Cache-Control": "no-store", ...(failure.payload.retryAfterMs ? { "Retry-After": String(Math.ceil(failure.payload.retryAfterMs / 1000)) } : {}) } });
   }
 }
