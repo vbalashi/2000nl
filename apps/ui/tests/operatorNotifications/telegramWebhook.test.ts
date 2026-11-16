@@ -26,3 +26,12 @@ test('rejects a missing bot identity before database access',async()=>{
  await POST(new Request('https://example.test',{method:'POST',headers:{'x-telegram-bot-api-secret-token':secret},body:JSON.stringify(body)}));
  expect(rpc).not.toHaveBeenCalled();
 });
+
+test('answers the button through the webhook without fetching a bot token',async()=>{
+ const response=await POST(req(body));
+ expect(await response.json()).toEqual({method:'answerCallbackQuery',callback_query_id:'123',text:'Решение сохранено.'});
+ rpc.mockResolvedValueOnce({data:'already_decided',error:null});
+ expect(await (await POST(req(body))).json()).toMatchObject({text:'Заявка уже обработана.'});
+ rpc.mockResolvedValueOnce({data:null,error:{code:'42501'}});
+ expect(await (await POST(req(body))).json()).toMatchObject({text:'Нет права обрабатывать эту заявку.'});
+});

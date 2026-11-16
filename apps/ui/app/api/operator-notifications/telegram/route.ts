@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const q=(update as {callback_query?: {id?:unknown;from?:{id?:unknown};data?:unknown;message?:{chat?:{id?:unknown};message_thread_id?:unknown}}})?.callback_query;
     const botId=new URL(request.url).searchParams.get('bot');
     if(!botId || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(botId))return respond();
-    if (!q || typeof q.data!=='string' || typeof q.from?.id!=='number' || !Number.isSafeInteger(q.from.id)
+    if (!q || typeof q.id!=='string' || q.id.length<1 || q.id.length>256 || typeof q.data!=='string' || typeof q.from?.id!=='number' || !Number.isSafeInteger(q.from.id)
       || typeof q.message?.chat?.id!=='number' || !Number.isSafeInteger(q.message.chat.id)
       || (q.message.message_thread_id!==undefined && (typeof q.message.message_thread_id!=='number' || !Number.isSafeInteger(q.message.message_thread_id) || q.message.message_thread_id<1))) return respond();
     const match=/^([ar])_([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i.exec(q.data);
@@ -35,11 +35,13 @@ export async function POST(request: Request) {
     const mapping: unknown=JSON.parse(process.env.OPERATOR_TELEGRAM_ADMIN_MAP || '{}');
     if (!mapping || typeof mapping!=='object' || Array.isArray(mapping)) return respond();
     const operator=(mapping as Record<string,unknown>)[String(q.from.id)];
-    if (typeof operator!=='string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(operator)) return respond();
+    const answer=(text:string)=>NextResponse.json({method:'answerCallbackQuery',callback_query_id:q.id,text},{headers:{'Cache-Control':'no-store'}});
+    if (typeof operator!=='string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(operator)) return answer('Нет права обрабатывать эту заявку.');
     const {data,error}=await createAdminServiceClient().rpc('operator_delivery_decide_v1',{
       p_delivery:match[2],p_bot:botId,p_chat:String(q.message.chat.id),p_topic:q.message.message_thread_id??null,p_operator:operator,p_action:match[1]==='a'?'approve':'reject',p_request:randomUUID(),
     });
     if (error && error.code!=='42501') return respond(503);
-    return respond();
+    // Telegram executes this method as the webhook response; no bot token is read by the app.
+    return answer(error?'Нет права обрабатывать эту заявку.':data==='decided'?'Решение сохранено.':data==='already_decided'?'Заявка уже обработана.':'Кнопка больше не действует.');
   } catch {return respond(503);}
 }
