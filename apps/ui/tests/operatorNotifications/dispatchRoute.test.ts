@@ -2,7 +2,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 const mocks=vi.hoisted(()=>({rpc:vi.fn(),dispatch:vi.fn()}));
 vi.mock('@/lib/admin/adminServerClient',()=>({createAdminServiceClient:()=>({rpc:mocks.rpc})}));
 vi.mock('@/lib/operatorNotifications/dispatch',()=>({dispatchOne:mocks.dispatch}));
-import { GET, POST } from '@/app/api/operator-notifications/dispatch/route';
+import { DELETE, GET, POST } from '@/app/api/operator-notifications/dispatch/route';
 const request=(method:string,secret:string)=>new Request('http://localhost/api/operator-notifications/dispatch',{method,headers:{authorization:`Bearer ${secret}`}});
 afterEach(()=>{vi.unstubAllEnvs();vi.clearAllMocks();});
 test('queue status requires the dispatcher secret and does not expose error details',async()=>{
@@ -20,4 +20,13 @@ test('delivery retains secret protection',async()=>{
  vi.stubEnv('OPERATOR_NOTIFICATION_DISPATCH_SECRET','x'.repeat(40));
  expect((await POST(request('POST','wrong'))).status).toBe(401);
  mocks.dispatch.mockResolvedValueOnce('idle');expect(await (await POST(request('POST','x'.repeat(40)))).json()).toEqual({status:'idle'});
+});
+
+test('retention cleanup is authenticated and redacts provider failures',async()=>{
+ vi.stubEnv('OPERATOR_NOTIFICATION_DISPATCH_SECRET','x'.repeat(40));
+ expect((await DELETE(request('DELETE','wrong'))).status).toBe(401);expect(mocks.rpc).not.toHaveBeenCalled();
+ mocks.rpc.mockResolvedValueOnce({data:2,error:null});
+ expect(await (await DELETE(request('DELETE','x'.repeat(40)))).json()).toEqual({removed:2});
+ mocks.rpc.mockResolvedValueOnce({data:null,error:{message:'private'}});
+ expect(await (await DELETE(request('DELETE','x'.repeat(40)))).json()).toEqual({error:'unavailable'});
 });

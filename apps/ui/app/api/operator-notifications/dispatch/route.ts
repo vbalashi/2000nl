@@ -26,3 +26,12 @@ export async function POST(request:Request) {
  try {const status=await dispatchOne();return respond({status},status==='disabled'?503:200);}
  catch {return respond({error:'unavailable'},503);}
 }
+
+export async function DELETE(request:Request) {
+ if (!authorized(request)) return respond({error:'unauthorized'},401);
+ try {
+  const {data,error}=await createAdminServiceClient().rpc('operator_notification_cleanup_v1');
+  if(error || !Number.isInteger(data) || data<0) throw new Error('cleanup unavailable');
+  return respond({removed:data});
+ } catch {return respond({error:'unavailable'},503);}
+}
