@@ -1,8 +1,9 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
 import { createAdminAuthClient,clearAdminAuthCookies } from '@/lib/admin/adminServerClient';
+import { consumeAdminReturnUrl } from '@/lib/admin/adminAuthReturn';
 import { registerAdminSession } from '@/lib/admin/adminSignInSession';
-import { adminEmailEnabled,adminAuthSameOrigin,adminEmail,adminAuthInput } from '@/lib/admin/adminEmailAuth';
+import { adminEmailEnabled,adminAuthOrigin,adminAuthSameOrigin,adminEmail,adminAuthInput } from '@/lib/admin/adminEmailAuth';
 import { readAdminAuditContext,writeAdminAuditEvent } from '@/lib/admin/adminAuditRepository';
 export const dynamic='force-dynamic';
 const respond=(body:unknown,status=200)=>NextResponse.json(body,{status,headers:{'Cache-Control':'private, no-store, max-age=0'}});
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
   }
   registering=true;
   await registerAdminSession(request,auth,'email',email);
-  return respond({url:'/admin'});
+  return respond({url:await consumeAdminReturnUrl(adminAuthOrigin(request)!)});
  } catch {
   if(!registering) {
    try {await auth?.auth.signOut({scope:'local'});} catch { /* Local cookie must still be cleared. */ }

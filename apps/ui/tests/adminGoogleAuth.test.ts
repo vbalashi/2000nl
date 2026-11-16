@@ -4,6 +4,7 @@ const { auth, from, audit, clearCookies } = vi.hoisted(() => ({
   from: vi.fn(), audit: vi.fn(), clearCookies: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/admin/adminAuthReturn",()=>({storeAdminReturn:async()=>{},consumeAdminReturnUrl:async()=>"/admin"}));
 vi.mock("@/lib/admin/adminServerClient", () => ({ createAdminAuthClient: async () => ({ auth }), createAdminServiceClient: () => ({ from }), clearAdminAuthCookies: clearCookies, ADMIN_SESSION_MAX_AGE_SECONDS: 604800 }));
 vi.mock("@/lib/admin/adminAuditRepository", () => ({ readAdminAuditContext: () => ({}), writeAdminAuditEvent: audit }));
 import { POST as start } from "@/app/api/admin/auth/start/route";

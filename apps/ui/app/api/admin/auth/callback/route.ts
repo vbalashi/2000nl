@@ -3,6 +3,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { createAdminAuthClient, clearAdminAuthCookies } from "@/lib/admin/adminServerClient";
 import { readAdminAuditContext,writeAdminAuditEvent } from "@/lib/admin/adminAuditRepository";
+import { consumeAdminReturnUrl } from "@/lib/admin/adminAuthReturn";
 import { registerAdminSession } from "@/lib/admin/adminSignInSession";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
     if (error) throw new Error("Code exchange failed");
     registering=true;
     await registerAdminSession(request, auth, "google");
-    const response = NextResponse.redirect(new URL("/admin", origin));
+    const response = NextResponse.redirect(new URL(await consumeAdminReturnUrl(origin), origin));
     response.headers.set("Cache-Control", "private, no-store, max-age=0");
     return response;
   } catch {

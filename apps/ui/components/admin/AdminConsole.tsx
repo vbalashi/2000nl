@@ -209,7 +209,7 @@ export default function AdminConsole() {
       if (cancelled) return;
       // The independent reports frontend may request a return after administrator sign-in.
       // Only accept a same-origin reports path and require its actual permission.
-      const returnTo = sessionStorage.getItem("admin.returnTo");
+      const returnTo = new URL(window.location.href).searchParams.get("returnTo") || sessionStorage.getItem("admin.returnTo");
       sessionStorage.removeItem("admin.returnTo");
       const destination = reportReturnPath(returnTo, window.location.origin, session.permissions);
       if (destination) {
@@ -290,10 +290,11 @@ export default function AdminConsole() {
     setLoginBusy(true);
     setLoginError(false);
     try {
+      let returnTo:string|null=null;try{returnTo=sessionStorage.getItem("admin.returnTo");}catch{}
       const response = await fetch("/api/admin/auth/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify(returnTo?{returnTo}:{}),
       });
       if (!response.ok) throw new Error("Sign in unavailable");
       const result = await response.json() as { url: string };

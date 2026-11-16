@@ -29,7 +29,7 @@ export async function registerAdminSession(request: Request, auth: Awaited<Retur
     if (!session?.access_token) throw new Error("Session exchange failed");
     const { data: verified, error: userError } = await auth.auth.getUser(session.access_token);
     const user = verified.user;
-    if (userError || !user?.id || !user.email || !user.email_confirmed_at) throw new Error("Verified Google identity required");
+    if (userError || !user?.id || !user.email || !user.email_confirmed_at) throw new Error("Verified identity required");
     if (method === "email" && (!expectedEmail || user.email.toLowerCase() !== expectedEmail)) throw new Error("Verified email differs");
     const provider = user.app_metadata?.provider;
     const providers = Array.isArray(user.app_metadata?.providers) ? user.app_metadata.providers : [];
@@ -103,7 +103,7 @@ export async function registerAdminSession(request: Request, auth: Awaited<Retur
         await writeAdminAuditEvent({
           action: "auth.sign_in_denied",
           outcome: "denied",
-          targetType: "google",
+          targetType: method,
           context,
         });
       } catch {
