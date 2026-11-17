@@ -42,8 +42,8 @@ def validate_cleanup(expected, current):
         raise ValueError('Resource inventory changed since startup')
 
 
-def reconcile_partial(current, startup_quiesced):
-    if not startup_quiesced:
+def reconcile_partial(current, startup_confirmed):
+    if not startup_confirmed:
         raise ValueError('Startup may still be changing the inventory')
     return current
 
@@ -59,12 +59,8 @@ def validate_database(container, container_id, project, network_id, port):
         raise ValueError('Database binding or ownership mismatch')
 
 
-def recover_network(candidates, project):
-    if len(candidates) != 1:
-        raise ValueError('Network creation outcome is ambiguous')
-    candidate = candidates[0]
-    network_id = candidate.get('Id', '')
-    if len(network_id) != 64 or any(c not in '0123456789abcdef' for c in network_id):
-        raise ValueError('Invalid recovered network ID')
-    validate_network(candidate, network_id, project)
-    return network_id
+def require_confirmed_start(network_id, project_started, startup_confirmed):
+    if not network_id:
+        raise ValueError('Network creation response was not confirmed')
+    if project_started and not startup_confirmed:
+        raise ValueError('Supabase startup was not confirmed; resources may still appear')

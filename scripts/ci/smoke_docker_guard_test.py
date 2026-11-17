@@ -1,6 +1,6 @@
 import copy
 import unittest
-from smoke_docker_guard import snapshot, validate_cleanup, reconcile_partial, validate_database, recover_network
+from smoke_docker_guard import snapshot, validate_cleanup, reconcile_partial, validate_database, require_confirmed_start
 
 
 class GuardTest(unittest.TestCase):
@@ -31,7 +31,7 @@ class GuardTest(unittest.TestCase):
         self.volume['CreatedAt'] = '2026-01-02T00:00:00Z'
         with self.assertRaises(ValueError): validate_cleanup(original, self.snap())
 
-    def test_partial_start_requires_quiescence_and_valid_inventory(self):
+    def test_partial_start_requires_confirmation_and_valid_inventory(self):
         current = self.snap()
         with self.assertRaises(ValueError): reconcile_partial(current, False)
         self.assertEqual(reconcile_partial(current, True), current)
@@ -42,12 +42,16 @@ class GuardTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_database(self.container, self.container['Id'], self.project, self.network_id, 12345)
 
-    def test_network_lost_response_recovers_only_matching_nonce(self):
-        self.assertEqual(recover_network([self.network], self.project), self.network_id)
-        with self.assertRaises(ValueError): recover_network([], self.project)
-        with self.assertRaises(ValueError): recover_network([self.network, self.network], self.project)
-        self.network['Labels'] = {'2000nl.smoke.owner': 'foreign'}
-        with self.assertRaises(ValueError): recover_network([self.network], self.project)
+    def test_late_create_after_failed_start_never_authorizes_cleanup(self):
+        initially_empty = (frozenset(), {})
+        late_resource = self.snap()
+        for inventory in (initially_empty, late_resource):
+            with self.assertRaises(ValueError):
+                require_confirmed_start(self.network_id, True, False)
+            with self.assertRaises(ValueError):
+                reconcile_partial(inventory, False)
+        with self.assertRaises(ValueError):
+            require_confirmed_start(None, False, False)
 
     def test_replaced_network_is_rejected(self):
         self.network['Id'] = 'different'

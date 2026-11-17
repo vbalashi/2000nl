@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run one smoke against a disposable, loopback-only Supabase project."""
 import hashlib, json, os, pathlib, pwd, re, secrets, shutil, signal, socket, stat, subprocess, sys, tempfile, time, urllib.request
-from smoke_docker_guard import snapshot, validate_cleanup, validate_network, validate_database, reconcile_partial, recover_network
+from smoke_docker_guard import snapshot, validate_cleanup, validate_network, validate_database, reconcile_partial, require_confirmed_start
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 os.chdir(ROOT)
@@ -79,7 +79,7 @@ server = None
 network_id = None
 network_attempted = False
 project_started = False
-startup_quiesced = False
+startup_confirmed = False
 owned = None
 preserve_recovery = False
 result = 1
@@ -90,11 +90,9 @@ try:
         raise RuntimeError('Unexpected network ID')
     validate_network(json.loads(output('docker', 'network', 'inspect', network_id))[0], network_id, project)
     project_started = True
-    try:
-        with (tmp / 'start.log').open('w') as log:
-            run('supabase', '--workdir', str(tmp), '--network-id', network, 'start', stdout=log, stderr=log)
-    finally:
-        startup_quiesced = True
+    with (tmp / 'start.log').open('w') as log:
+        run('supabase', '--workdir', str(tmp), '--network-id', network, 'start', stdout=log, stderr=log)
+    startup_confirmed = True
     owned, details = inventory(project, network_id)
     if not owned[0] or not owned[1]:
         raise RuntimeError('Incomplete owned project inventory')
@@ -171,14 +169,13 @@ finally:
             os.killpg(server.pid, signal.SIGKILL); server.wait()
     if network_attempted:
         try:
-            if not network_id:
-                matches = output('docker', 'network', 'ls', '-q', '--filter', 'name=^' + network + '$').splitlines()
-                candidates = json.loads(output('docker', 'network', 'inspect', *matches)) if matches else []
-                network_id = recover_network(candidates, project)
+            # An unsuccessful create/start may still complete on the daemon after
+            # the client returns. Never infer quiescence from a single inventory.
+            require_confirmed_start(network_id, project_started, startup_confirmed)
             current, _ = inventory(project, network_id)
             if project_started:
                 if owned is None:
-                    owned = reconcile_partial(current, startup_quiesced)
+                    owned = reconcile_partial(current, startup_confirmed)
                 validate_cleanup(owned, current)
             elif current != (frozenset(), {}):
                 raise ValueError('Unexpected resources before startup')
