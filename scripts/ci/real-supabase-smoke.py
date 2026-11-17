@@ -2,6 +2,7 @@
 """Run one smoke against a disposable, loopback-only Supabase project."""
 import hashlib, json, os, pathlib, pwd, re, secrets, shutil, signal, socket, stat, subprocess, sys, tempfile, time, urllib.request
 from smoke_docker_guard import snapshot, validate_cleanup, validate_network, validate_database, reconcile_partial, require_confirmed_start
+from smoke_diagnostics import run_logged
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 os.chdir(ROOT)
@@ -123,16 +124,16 @@ try:
     psql = ['docker', 'exec', '-i', '-e', 'PGPASSWORD=postgres', '-w', '/tmp/2000nl-smoke', db_id, 'psql', '-X', '-v', 'ON_ERROR_STOP=1', '-h', '127.0.0.1', '-p', '5432', '-U', 'postgres', '-d', 'postgres']
     if output(*psql, '-At', '-c', "select to_regclass('public.word_entries') is not null") != 'f':
         raise RuntimeError('Refusing to bootstrap a populated database')
-    with (tmp / 'bootstrap.log').open('w') as log:
-        for f in ['db/migrations/bootstrap.sql', 'db/test-fixtures/search_multisource.sql', 'db/test-fixtures/training_smoke.sql']:
-            run(*psql, '-f', f, stdout=log, stderr=log)
-        run(*psql, '-c', 'SELECT public.refresh_dictionary_search_document(id, 2) FROM public.word_entries', stdout=log, stderr=log)
-        run(*psql, '-f', contract['postflightProbe'], stdout=log, stderr=log)
-        commit = output('git', 'rev-parse', 'HEAD')
-        cid = contract['contractId']; migration = contract['migrations'][-1]['migrationId']
-        if not re.fullmatch('[a-z0-9-]+', cid) or not re.fullmatch('[0-9a-f]{40}', commit) or not isinstance(migration, int):
-            raise RuntimeError('Invalid contract metadata')
-        run(*psql, '-c', f"INSERT INTO public.app_db_contract_state(singleton,contract_id,migration_id,app_commit) VALUES(true,'{cid}',{migration},'{commit}')", stdout=log, stderr=log)
+    bootstrap_log = tmp / 'bootstrap.log'
+    for f in ['db/migrations/bootstrap.sql', 'db/test-fixtures/search_multisource.sql', 'db/test-fixtures/training_smoke.sql']:
+        run_logged([*psql, '-f', f], bootstrap_log)
+    run_logged([*psql, '-c', 'SELECT public.refresh_dictionary_search_document(id, 2) FROM public.word_entries'], bootstrap_log)
+    run_logged([*psql, '-f', contract['postflightProbe']], bootstrap_log)
+    commit = output('git', 'rev-parse', 'HEAD')
+    cid = contract['contractId']; migration = contract['migrations'][-1]['migrationId']
+    if not re.fullmatch('[a-z0-9-]+', cid) or not re.fullmatch('[0-9a-f]{40}', commit) or not isinstance(migration, int):
+        raise RuntimeError('Invalid contract metadata')
+    run_logged([*psql, '-c', f"INSERT INTO public.app_db_contract_state(singleton,contract_id,migration_id,app_commit) VALUES(true,'{cid}',{migration},'{commit}')"], bootstrap_log)
     # Fault injection is confined to this freshly created project and used only to
     # verify that a missing application permission makes the smoke fail.
     if fault_injection:

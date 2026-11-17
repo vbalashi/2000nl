@@ -1,6 +1,11 @@
 import copy
+import io
+import pathlib
+import sys
+import tempfile
 import unittest
 from smoke_docker_guard import snapshot, validate_cleanup, reconcile_partial, validate_database, require_confirmed_start
+from smoke_diagnostics import read_tail, run_logged
 
 
 class GuardTest(unittest.TestCase):
@@ -56,6 +61,55 @@ class GuardTest(unittest.TestCase):
     def test_replaced_network_is_rejected(self):
         self.network['Id'] = 'different'
         with self.assertRaises(ValueError): self.snap()
+
+    def test_failed_command_preserves_stderr_from_disposable_log(self):
+        with tempfile.TemporaryDirectory() as directory:
+            log = pathlib.Path(directory) / 'bootstrap.log'
+            log.write_text('unrelated earlier command output\n')
+            with self.assertRaisesRegex(RuntimeError, 'specific postflight failure'):
+                try:
+                    run_logged(
+                        [sys.executable, '-c', "import sys; print('specific postflight failure', file=sys.stderr); raise SystemExit(3)"],
+                        log,
+                    )
+                except RuntimeError as error:
+                    self.assertNotIn('unrelated earlier command output', str(error))
+                    raise
+
+    def test_failed_command_reads_only_bounded_tail(self):
+        with tempfile.TemporaryDirectory() as directory:
+            log = pathlib.Path(directory) / 'large.log'
+            command = [
+                sys.executable,
+                '-c',
+                "import os,sys; os.write(2, b'early-marker' + b'x' * 1048576 + b'late-marker'); raise SystemExit(3)",
+            ]
+            with self.assertRaises(RuntimeError) as caught:
+                run_logged(command, log, tail_bytes=128)
+            message = str(caught.exception)
+            tail = message.split('--- command log tail ---\n', 1)[1]
+            self.assertIn('late-marker', tail)
+            self.assertNotIn('early-marker', tail)
+            self.assertLessEqual(len(tail.encode()), 128)
+            self.assertLess(len(message.encode()), 1024)
+            self.assertGreater(log.stat().st_size, 1_000_000)
+
+    def test_tail_reader_never_uses_unbounded_read(self):
+        class RecordingStream(io.BytesIO):
+            def __init__(self, value):
+                super().__init__(value)
+                self.read_sizes = []
+
+            def read(self, size=-1):
+                self.read_sizes.append(size)
+                return super().read(size)
+
+        stream = RecordingStream(b'x' * 1_048_576 + b'late-marker')
+        stream.seek(0, 2)
+        tail = read_tail(stream, 0, 128)
+        self.assertEqual(stream.read_sizes, [128])
+        self.assertEqual(len(tail), 128)
+        self.assertTrue(tail.endswith(b'late-marker'))
 
 
 if __name__ == '__main__': unittest.main()
