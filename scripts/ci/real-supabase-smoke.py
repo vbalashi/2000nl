@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run one smoke against a disposable, loopback-only Supabase project."""
-import hashlib, json, os, pathlib, re, secrets, shutil, signal, socket, subprocess, sys, tempfile, time, urllib.request
+import hashlib, json, os, pathlib, pwd, re, secrets, shutil, signal, socket, stat, subprocess, sys, tempfile, time, urllib.request
+from smoke_docker_guard import snapshot, validate_cleanup, validate_network
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 os.chdir(ROOT)
@@ -22,6 +23,15 @@ def available(port):
     finally:
         s.close()
 
+def inventory(project, network_id):
+    network = json.loads(output('docker', 'network', 'inspect', network_id))[0]
+    ids = output('docker', 'ps', '-aq', '--filter', 'name=' + project).splitlines()
+    names = output('docker', 'volume', 'ls', '-q', '--filter', 'name=' + project).splitlines()
+    containers = json.loads(output('docker', 'inspect', *ids)) if ids else []
+    volumes = json.loads(output('docker', 'volume', 'inspect', *names)) if names else []
+    return snapshot(project, network_id, network, containers, volumes), containers
+
+
 for name in ('.env', '.env.local', '.env.development', '.env.development.local'):
     if (ROOT / 'apps/ui' / name).exists():
         sys.exit('Refusing to load a local environment file; use a clean worktree')
@@ -40,31 +50,47 @@ for n in range(100):
         break
 else:
     sys.exit('No free local web port')
+# Never honor a caller's Docker context, host, credentials, or API overrides.
+# These fixed local sockets are the only supported daemon entry points.
+fault_injection = os.environ.get('REAL_SMOKE_REVOKE_ADD') == '1'
+inherited = {k: os.environ[k] for k in ('PATH', 'HOME', 'TMPDIR', 'CI', 'LANG') if k in os.environ}
+home = pathlib.Path(pwd.getpwuid(os.getuid()).pw_dir)
+candidates = ([home / '.colima/default/docker.sock', home / '.docker/run/docker.sock']
+              if sys.platform == 'darwin' else [pathlib.Path('/var/run/docker.sock')])
+socket_path = next((p for p in candidates if p.exists() and stat.S_ISSOCK(p.stat().st_mode)), None)
+if socket_path is None:
+    sys.exit('No approved local Docker socket found')
+tmp = pathlib.Path(tempfile.mkdtemp(prefix='2000nl-real-smoke-'))
+(tmp / 'docker').mkdir()
+os.environ.clear()
+os.environ.update(inherited)
+os.environ.update({'DOCKER_HOST': 'unix://' + str(socket_path), 'DOCKER_CONFIG': str(tmp / 'docker')})
 project = 'qa164-' + secrets.token_hex(8)
 network = project + '-net'
 if output('docker', 'ps', '-aq', '--filter', 'name=' + project) or output('docker', 'volume', 'ls', '-q', '--filter', 'name=' + project) or output('docker', 'network', 'ls', '-q', '--filter', 'name=^' + network + '$'):
+    shutil.rmtree(tmp)
     sys.exit('Unexpected existing project resource')
-tmp = pathlib.Path(tempfile.mkdtemp(prefix='2000nl-real-smoke-'))
 (tmp / 'supabase').mkdir()
 config = (ROOT / 'supabase/config.toml').read_text().replace('2000nl-public', project)
 for i in range(10):
     config = config.replace(str(55320 + i), str(base + i))
 (tmp / 'supabase/config.toml').write_text(config)
 server = None
-network_created = False
+network_id = None
 project_started = False
+owned = None
 result = 1
 try:
-    run('docker', 'network', 'create', '--driver', 'bridge', '--opt', 'com.docker.network.bridge.host_binding_ipv4=127.0.0.1', network, stdout=subprocess.DEVNULL)
-    network_created = True
-    # Claim the unique project before starting, so a partial startup is cleaned up.
+    network_id = output('docker', 'network', 'create', '--driver', 'bridge', '--label', '2000nl.smoke.owner=' + project, '--opt', 'com.docker.network.bridge.host_binding_ipv4=127.0.0.1', network)
+    if not re.fullmatch('[0-9a-f]{64}', network_id):
+        raise RuntimeError('Unexpected network ID')
+    validate_network(json.loads(output('docker', 'network', 'inspect', network_id))[0], network_id, project)
     project_started = True
     with (tmp / 'start.log').open('w') as log:
         run('supabase', '--workdir', str(tmp), '--network-id', network, 'start', stdout=log, stderr=log)
-    containers = output('docker', 'ps', '-aq', '--filter', 'name=' + project).splitlines()
-    if not containers:
-        raise RuntimeError('No owned containers found')
-    details = json.loads(output('docker', 'inspect', *containers))
+    owned, details = inventory(project, network_id)
+    if not owned[0] or not owned[1]:
+        raise RuntimeError('Incomplete owned project inventory')
     for c in details:
         if project not in c['Name']:
             raise RuntimeError('Container ownership mismatch')
@@ -94,7 +120,7 @@ try:
         run(*psql, '-c', f"INSERT INTO public.app_db_contract_state(singleton,contract_id,migration_id,app_commit) VALUES(true,'{cid}',{migration},'{commit}')", env=env, stdout=log, stderr=log)
     # Fault injection is confined to this freshly created project and used only to
     # verify that a missing application permission makes the smoke fail.
-    if os.environ.get('REAL_SMOKE_REVOKE_ADD') == '1':
+    if fault_injection:
         run(*psql, '-c', 'REVOKE EXECUTE ON FUNCTION public.add_entry_to_user_list(uuid,uuid,uuid) FROM PUBLIC, authenticated', env=env, stdout=subprocess.DEVNULL)
     status_file = tmp / 'status.json'; status_file.write_text(json.dumps(status))
     qa_file = tmp / 'qa.json'
@@ -126,14 +152,34 @@ finally:
         try: server.wait(timeout=15)
         except subprocess.TimeoutExpired:
             os.killpg(server.pid, signal.SIGKILL); server.wait()
-    if project_started:
-        with (tmp / 'stop.log').open('w') as log:
-            stopped = subprocess.run(['supabase', '--workdir', str(tmp), 'stop', '--project-id', project, '--no-backup'], stdout=log, stderr=log)
-        if stopped.returncode or output('docker', 'ps', '-aq', '--filter', 'name=' + project):
-            print('Failed to clean up the owned Supabase project', file=sys.stderr); result = 1
-    if network_created:
-        removed = subprocess.run(['docker', 'network', 'rm', network], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        if removed.returncode:
-            print('Failed to clean up the owned network', file=sys.stderr); result = 1
+    if network_id:
+        try:
+            current, _ = inventory(project, network_id)
+            if project_started:
+                validate_cleanup(owned, current)
+            elif current != (frozenset(), {}):
+                raise ValueError('Unexpected resources before startup')
+            # Stop by immutable container ID, then remove only the previously
+            # fingerprinted volumes. Refuse cleanup on any inventory mismatch.
+            if current[0]:
+                run('docker', 'rm', '-f', *sorted(current[0]), stdout=subprocess.DEVNULL)
+            check_network = json.loads(output('docker', 'network', 'inspect', network_id))[0]
+            validate_network(check_network, network_id, project)
+            if check_network.get('Containers'):
+                raise ValueError('Network still has attachments')
+            for name, fingerprint in current[1].items():
+                volume = json.loads(output('docker', 'volume', 'inspect', name))[0]
+                labels = volume.get('Labels') or {}
+                if (volume.get('CreatedAt'), volume.get('Driver'), tuple(sorted(labels.items()))) != fingerprint:
+                    raise ValueError('Volume identity changed before removal')
+                run('docker', 'volume', 'rm', name, stdout=subprocess.DEVNULL)
+            run('docker', 'network', 'rm', network_id, stdout=subprocess.DEVNULL)
+            if (output('docker', 'ps', '-aq', '--filter', 'name=' + project)
+                    or output('docker', 'volume', 'ls', '-q', '--filter', 'name=' + project)
+                    or output('docker', 'network', 'ls', '-q', '--filter', 'id=' + network_id)):
+                raise ValueError('Owned resources remain after cleanup')
+        except Exception as cleanup_error:
+            print(f'Cleanup refused or incomplete for disposable project {project}: {cleanup_error}', file=sys.stderr)
+            result = 1
     shutil.rmtree(tmp)
 sys.exit(result)

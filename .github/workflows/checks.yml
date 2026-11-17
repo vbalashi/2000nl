@@ -141,4 +141,5 @@ jobs:
         working-directory: apps/ui
       - run: npx playwright install --with-deps chromium
         working-directory: apps/ui
+      - run: python3 -m unittest discover -s scripts/ci -p smoke_docker_guard_test.py
       - run: scripts/ci/real-supabase-smoke.py
