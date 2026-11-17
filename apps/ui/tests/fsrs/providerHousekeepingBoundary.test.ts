@@ -41,6 +41,10 @@ async function violations(client: Pool | PoolClient) {
       union all select 'admission_table' where
         has_table_privilege('provider_housekeeping','private.provider_admission_windows','select,insert,update,delete,truncate,references,trigger')
         or has_any_column_privilege('provider_housekeeping','private.provider_admission_windows','select,insert,update,references')
+      union all select 'provider_work_maintain' where
+        has_table_privilege('provider_housekeeping','private.provider_work','maintain')
+      union all select 'admission_maintain' where
+        has_table_privilege('provider_housekeeping','private.provider_admission_windows','maintain')
       union all select 'security_definer' where exists (
         select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
         where p.prosecdef and has_schema_privilege('provider_housekeeping',n.oid,'usage')
@@ -168,6 +172,8 @@ describe.skipIf(!url)("provider housekeeping effective privilege boundary", () =
     ["private schema usage", "grant usage on schema private to provider_housekeeping", "private_schema"],
     ["provider table read", "grant select on private.provider_work to provider_housekeeping", "provider_work_table"],
     ["admission column write", "grant update(requests) on private.provider_admission_windows to provider_housekeeping", "admission_table"],
+    ["provider table direct maintain", "grant maintain on private.provider_work to provider_housekeeping", "provider_work_maintain"],
+    ["admission table PUBLIC maintain", "grant maintain on private.provider_admission_windows to public", "admission_maintain"],
     ["unexpected membership", "create role housekeeping_fixture; grant provider_housekeeping to housekeeping_fixture", "membership"],
     ["extra security definer", "grant execute on function public.check_first_party_session_v1() to provider_housekeeping", "security_definer"],
     ["login capability", "alter role provider_housekeeping login", "role_attributes"],
