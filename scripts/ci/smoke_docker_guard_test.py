@@ -1,6 +1,10 @@
 import copy
+import pathlib
+import sys
+import tempfile
 import unittest
 from smoke_docker_guard import snapshot, validate_cleanup, reconcile_partial, validate_database, require_confirmed_start
+from smoke_diagnostics import run_logged
 
 
 class GuardTest(unittest.TestCase):
@@ -56,6 +60,20 @@ class GuardTest(unittest.TestCase):
     def test_replaced_network_is_rejected(self):
         self.network['Id'] = 'different'
         with self.assertRaises(ValueError): self.snap()
+
+    def test_failed_command_preserves_stderr_from_disposable_log(self):
+        with tempfile.TemporaryDirectory() as directory:
+            log = pathlib.Path(directory) / 'bootstrap.log'
+            log.write_text('unrelated earlier command output\n')
+            with self.assertRaisesRegex(RuntimeError, 'specific postflight failure'):
+                try:
+                    run_logged(
+                        [sys.executable, '-c', "import sys; print('specific postflight failure', file=sys.stderr); raise SystemExit(3)"],
+                        log,
+                    )
+                except RuntimeError as error:
+                    self.assertNotIn('unrelated earlier command output', str(error))
+                    raise
 
 
 if __name__ == '__main__': unittest.main()

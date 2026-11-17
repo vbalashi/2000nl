@@ -14,7 +14,13 @@ async function violations(client: Pool | PoolClient) {
           and (rolcanlogin or rolsuper or rolcreatedb or rolcreaterole or rolinherit or rolreplication or rolbypassrls)
       )
       union all select 'membership' where exists (
-        select 1 from pg_auth_members m, role_identity r where m.roleid=r.oid or m.member=r.oid
+        select 1
+        from pg_auth_members m
+        join pg_roles granted on granted.oid=m.roleid
+        join pg_roles member on member.oid=m.member
+        cross join role_identity r
+        where (m.roleid=r.oid or m.member=r.oid)
+          and not (granted.rolname='provider_housekeeping' and member.rolname='postgres' and member.rolcreaterole)
       )
       union all select 'private_schema' where has_schema_privilege('provider_housekeeping','private','usage')
       union all select 'provider_work_table' where
@@ -47,6 +53,18 @@ describe.skipIf(!url)("provider housekeeping effective privilege boundary", () =
 
   test("qualified role has no direct storage, membership, or extra definer path", async () => {
     expect(await violations(pool)).toEqual([]);
+  });
+
+  test("allows only the PostgreSQL creator membership held by CREATEROLE postgres", async () => {
+    const client = await pool.connect();
+    try {
+      await client.query("begin");
+      await client.query("grant provider_housekeeping to postgres");
+      expect(await violations(client)).toEqual([]);
+      await client.query("rollback");
+    } finally {
+      client.release();
+    }
   });
 
   for (const drift of [

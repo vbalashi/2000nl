@@ -59,7 +59,8 @@ BEGIN
     SELECT 1 FROM pg_auth_members m
     JOIN pg_roles granted ON granted.oid=m.roleid
     JOIN pg_roles member ON member.oid=m.member
-    WHERE granted.rolname='provider_housekeeping' OR member.rolname='provider_housekeeping'
+    WHERE (granted.rolname='provider_housekeeping' OR member.rolname='provider_housekeeping')
+      AND NOT (granted.rolname='provider_housekeeping' AND member.rolname='postgres' AND member.rolcreaterole)
   ) THEN
     RAISE EXCEPTION 'db-contract-gate: provider housekeeping membership or SET ROLE path changed';
   END IF;
