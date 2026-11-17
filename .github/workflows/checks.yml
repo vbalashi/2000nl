@@ -124,3 +124,21 @@ jobs:
           python-version: '3.12'
       - run: pip install -r packages/ingestion/requirements.txt
       - run: python -m pytest packages/ingestion/tests
+  real-supabase-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/ui/package-lock.json
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
+        with:
+          version: 2.101.0
+      - run: npm ci
+        working-directory: apps/ui
+      - run: npx playwright install --with-deps chromium
+        working-directory: apps/ui
+      - run: scripts/ci/real-supabase-smoke.py
