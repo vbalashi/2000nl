@@ -174,7 +174,7 @@ test('empty browse shows the admitted first portion while keeping pagination fen
 
 test('a transient continuation failure clears the first portion and retry starts at the same initial cursor',async()=>{
  const partial={groups:[multiSenseBankGroup],nextGroupCursor:'middle',selectedTierComplete:false,
-  librarySearch:{totalGroups:51,matchingEntryIds:[financeEntry.entryId]}};
+  librarySearch:{totalGroups:51,unavailableEntryCount:3,matchingEntryIds:[financeEntry.entryId]}};
  fetchPage.mockImplementationOnce(async input=>{input.onPartial(partial);throw new TypeError('offline');})
   .mockResolvedValueOnce({...partial,nextGroupCursor:'next-page'});
  const {result}=setup({query:''});
@@ -182,6 +182,7 @@ test('a transient continuation failure clears the first portion and retry starts
  expect(result.current.state.groupResults).toEqual([]);
  expect(result.current.state.detailSelection).toBeNull();
  expect(result.current.search.hasCurrentResults).toBe(false);
+ expect(result.current.state.unavailableEntryCount).toBe(0);
  expect(result.current.state.groupHasMore).toBe(false);
  await act(async()=>{await result.current.search.runSearch(true);});
  expect(fetchPage.mock.calls[1][0].cursor).toBeNull();
@@ -251,14 +252,16 @@ test('late first portion from the previous material cannot reappear after scope 
 test('changing a received material clears an already visible partial page before the new read completes',async()=>{
  let finishOld!:(page:unknown)=>void;
  fetchPage.mockImplementationOnce(input=>{
-  input.onPartial({groups:[multiSenseBankGroup],nextGroupCursor:'middle',selectedTierComplete:false});
+  input.onPartial({groups:[multiSenseBankGroup],nextGroupCursor:'middle',selectedTierComplete:false,librarySearch:{totalGroups:1,unavailableEntryCount:3,matchingEntryIds:[financeEntry.entryId]}});
   return new Promise(resolve=>{finishOld=resolve;});
  }).mockImplementationOnce(()=>new Promise(()=>{}));
  const {result}=setup({query:'',applyListFilter:true,collectionId:'received-old'});
  await waitFor(()=>expect(result.current.state.groupResults).toHaveLength(1));
+ expect(result.current.state.unavailableEntryCount).toBe(3);
  act(()=>result.current.setState(current=>({...current,collectionId:'received-new'})));
  await waitFor(()=>expect(fetchPage).toHaveBeenCalledTimes(2));
  expect(result.current.state.groupResults).toEqual([]);
+ expect(result.current.state.unavailableEntryCount).toBe(0);
  expect(result.current.state.detailSelection).toBeNull();
  await act(async()=>finishOld({groups:[multiSenseBankGroup],nextGroupCursor:null,selectedTierComplete:true}));
  expect(result.current.state.groupResults).toEqual([]);
@@ -299,15 +302,17 @@ test('switching accounts clears an already visible partial page and rejects the 
 test('membership invalidation clears and fences an in-flight partial page',async()=>{
  let finish!:(page:unknown)=>void;
  fetchPage.mockImplementationOnce(input=>{
-  input.onPartial({groups:[multiSenseBankGroup],nextGroupCursor:'middle',selectedTierComplete:false});
+  input.onPartial({groups:[multiSenseBankGroup],nextGroupCursor:'middle',selectedTierComplete:false,librarySearch:{totalGroups:1,unavailableEntryCount:3,matchingEntryIds:[financeEntry.entryId]}});
   return new Promise(resolve=>{finish=resolve;});
  }).mockResolvedValue({groups:[],nextGroupCursor:null,selectedTierComplete:true,librarySearch:{totalGroups:0,matchingEntryIds:[]}});
  const {result,unmount}=setup({query:'',applyListFilter:true,collectionId:'received'});
  await waitFor(()=>expect(result.current.state.groupResults).toHaveLength(1));
+ expect(result.current.state.unavailableEntryCount).toBe(3);
  const signal=fetchPage.mock.calls[0][0].signal as AbortSignal;
  act(()=>result.current.search.invalidateFreshness());
  expect(signal.aborted).toBe(true);
  expect(result.current.state.groupResults).toEqual([]);
+ expect(result.current.state.unavailableEntryCount).toBe(0);
  expect(result.current.state.detailSelection).toBeNull();
  await act(async()=>finish({groups:[multiSenseBankGroup],nextGroupCursor:null,selectedTierComplete:true}));
  expect(result.current.state.groupResults).toEqual([]);

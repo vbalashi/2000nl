@@ -158,7 +158,7 @@ export function useLibrarySearchLifecycle({
       // Fence the old read before the query debounce; visibility changes alone must retain pending work.
       if (partialRef.current?.key === previous.readKey) {
         freshRef.current = null;
-        setState(current => ({...current, groupResults: [], groupTotal: null, meaningTotal: null,
+        setState(current => ({...current, groupResults: [], groupTotal: null, meaningTotal: null, unavailableEntryCount: 0,
           wordTotal: 0, page: 1, groupHasMore: false, groupPageCursors: [null], selectedHeadwordGroupId: null,
           detailSelection: null, mobileDetailOpen: false}));
       }
@@ -357,7 +357,7 @@ export function useLibrarySearchLifecycle({
         if (isCurrentSearch(requestId) && partialRef.current?.key === readKey) {
           partialRef.current = null;
           freshRef.current = null;
-          setState(current => ({...current, groupResults: [], groupTotal: null, meaningTotal: null,
+          setState(current => ({...current, groupResults: [], groupTotal: null, meaningTotal: null, unavailableEntryCount: 0,
             wordTotal: 0, groupHasMore: false, groupPageCursors: current.groupPageCursors.slice(0, current.page), selectedHeadwordGroupId: null,
             detailSelection: null, mobileDetailOpen: false}));
         }
@@ -443,7 +443,7 @@ export function useLibrarySearchLifecycle({
       requestControllerRef.current = null;
       pendingRef.current = null;
       setLoading(false);
-      setState(current => ({...current, groupResults: [], groupTotal: null, meaningTotal: null,
+      setState(current => ({...current, groupResults: [], groupTotal: null, meaningTotal: null, unavailableEntryCount: 0,
         wordTotal: 0, page: 1, groupHasMore: false, groupPageCursors: [null], selectedHeadwordGroupId: null,
         detailSelection: null, mobileDetailOpen: false}));
     }
