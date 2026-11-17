@@ -3,7 +3,7 @@ import { AdmissionPanel } from "./AdmissionPanel";
 
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
-import { Database, FileClock, LogOut, Menu, Search, Users, X } from "lucide-react";
+import { Bell, Database, FileClock, FileText, LogOut, Menu, Search, Users, X } from "lucide-react";
 import type { AdminUserRegistryPage, AdminUserRegistryRow } from "@/lib/admin/userContract";
 
 type OperatorSession = { email: string; permissions: string[] };
@@ -129,6 +129,8 @@ function AdminUserNav({ permissions, active }: { permissions: string[]; active: 
   const common = "flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm";
   return <nav className="space-y-1" aria-label="Основная навигация">
     {permissions.includes("dictionaries.read") && <Link href="/admin" className={`${common} text-slate-600 hover:bg-slate-50`}><Database size={17} />Словари</Link>}
+    {permissions.includes("feedback.read") && <Link href="/admin/reports" className={`${common} text-slate-600 hover:bg-slate-50`}><FileText size={17} />Репорты</Link>}
+    {permissions.includes("notifications.manage") && <Link href="/admin/reports/?view=notifications" className={`${common} text-slate-600 hover:bg-slate-50`}><Bell size={17} />Уведомления</Link>}
     {permissions.includes("users.read") && <Link href="/admin/users" aria-current={active === "users" ? "page" : undefined} className={`${common} ${active === "users" ? "bg-indigo-50 font-medium text-primary" : "text-slate-600 hover:bg-slate-50"}`}><Users size={17} />Пользователи</Link>}
     {permissions.includes("audit.read") && <Link href="/admin?view=journal" className={`${common} text-slate-600 hover:bg-slate-50`}><FileClock size={17} />Журнал</Link>}
   </nav>;
