@@ -91,7 +91,7 @@ export function useLibrarySearchLifecycle({
   const [error, setError] = useState<string | null>(null);
   const [refreshRevision, setRefreshRevision] = useState(0);
   const freshRef = useRef<{ key: string; at: number } | null>(null);
-  const partialRef = useRef<{ key: string; page: GroupPage } | null>(null);
+  const partialRef = useRef<{ key: string } | null>(null);
   const pendingRef = useRef<string | null>(null);
   const lastSearchedQueryRef = useRef<string | null>(null);
   const requestSequenceRef = useRef(0);
@@ -292,10 +292,9 @@ export function useLibrarySearchLifecycle({
               cursor: groupCursor,
               signal: requestControllerRef.current?.signal,
               ...(!trimmedQuery && scoped ? {
-                ...(partialRef.current?.key === readKey ? {resume: partialRef.current.page} : {}),
                 onPartial: (page: GroupPage) => {
                   if (!isCurrentSearch(requestId)) return;
-                  partialRef.current = {key: readKey, page};
+                  partialRef.current = {key: readKey};
                   publishPage(page, true);
                 },
               } : {}),
@@ -355,10 +354,7 @@ export function useLibrarySearchLifecycle({
               : null),
         }));
       } catch (cause) {
-        if (isCurrentSearch(requestId) && partialRef.current?.key === readKey && cause instanceof Error &&
-            (['library_cursor_did_not_advance', 'auth_account_changed'].includes(cause.message) ||
-             ('kind' in cause && ['material-unavailable', 'invalid-cursor', 'contract-mismatch'].includes(String(cause.kind))) ||
-             ('status' in cause && [400, 401, 403, 404].includes(Number(cause.status))))) {
+        if (isCurrentSearch(requestId) && partialRef.current?.key === readKey) {
           partialRef.current = null;
           freshRef.current = null;
           setState(current => ({...current, groupResults: [], groupTotal: null, meaningTotal: null,

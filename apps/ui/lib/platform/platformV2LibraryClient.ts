@@ -167,19 +167,17 @@ export async function fetchPlatformV2LibraryGroupPage(input: {
   cursor?: string | null;
   signal?: AbortSignal;
   libraryScope?: LibrarySearchScope;
-  /** A validated first portion retained after a transient continuation failure. */
-  resume?: PlatformV2LibraryGroupPage;
   onPartial?: (page: PlatformV2LibraryGroupPage) => void;
 }): Promise<PlatformV2LibraryGroupPage> {
-  const {resume, onPartial, ...request} = input;
-  const payload = resume ? null : await fetchPlatformV2LibraryLookup({
+  const {onPartial, ...request} = input;
+  const payload = await fetchPlatformV2LibraryLookup({
     ...request,
     cursor: input.cursor ?? null,
   });
-  const groups = resume ? [...resume.groups] : input.libraryScope ? [...payload!.groups] : payload!.groups;
-  const summary = resume?.librarySearch ?? payload?.librarySearch;
-  let nextGroupCursor = resume?.nextGroupCursor ?? payload?.page.nextGroupCursor ?? null;
-  let selectedTierComplete = resume?.selectedTierComplete ?? payload!.page.selectedTierComplete;
+  const groups = input.libraryScope ? [...payload.groups] : payload.groups;
+  const summary = payload.librarySearch;
+  let nextGroupCursor = payload.page.nextGroupCursor;
+  let selectedTierComplete = payload.page.selectedTierComplete;
   const matchingEntryIds = [...(summary?.matchingEntryIds ?? [])];
   const result = (): PlatformV2LibraryGroupPage => ({
     groups: input.libraryScope ? [...groups] : groups,
@@ -189,7 +187,7 @@ export async function fetchPlatformV2LibraryGroupPage(input: {
   });
   // The RPC bounds each atomic read to 25 groups. Combine cursor pages only
   // for the first-party Library; generic connected-client lookup is unchanged.
-  if (!resume && input.libraryScope && nextGroupCursor && groups.length > 0 && groups.length < LIBRARY_PAGE_SIZE) onPartial?.(result());
+  if (input.libraryScope && nextGroupCursor && groups.length > 0 && groups.length < LIBRARY_PAGE_SIZE) onPartial?.(result());
   while (input.libraryScope && nextGroupCursor && groups.length < LIBRARY_PAGE_SIZE) {
     const cursor = nextGroupCursor;
     const next = await fetchPlatformV2LibraryLookup({...request,cursor});

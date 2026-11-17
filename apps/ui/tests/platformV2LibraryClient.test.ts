@@ -502,15 +502,6 @@ test("filtered summary accepts matched cross-reference identities without turnin
   await expect(request).resolves.toMatchObject({groups:[multiSenseBankGroup],nextGroupCursor:null});
  });
 
- test('resumes a retained portion at its cursor instead of rereading it',async()=>{
-  const fetchMock=vi.fn().mockResolvedValue(new Response(JSON.stringify({...payload,groups:[],page:{selectedTierComplete:true,nextGroupCursor:null}}),{status:200}));
-  vi.stubGlobal('fetch',fetchMock);
-  const resume={groups:[multiSenseBankGroup],selectedTierComplete:false,nextGroupCursor:'next'};
-  await expect(fetchPlatformV2LibraryGroupPage({query:'',cardTypeId:'word-to-definition',contentLanguageCode:'nl',translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null},resume})).resolves.toMatchObject({groups:[multiSenseBankGroup],nextGroupCursor:null});
-  expect(fetchMock).toHaveBeenCalledOnce();
-  expect(JSON.parse(fetchMock.mock.calls[0][1].body).cursor).toBe('next');
- });
-
  test('account switch on a failed continuation is detected before the partial page can be retained',async()=>{
   const session=vi.mocked(supabase.auth.getSession);
   const account=(id:string)=>({data:{session:{access_token:'test-token',user:{id}}},error:null}) as never;

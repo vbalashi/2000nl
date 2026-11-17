@@ -172,21 +172,24 @@ test('empty browse shows the admitted first portion while keeping pagination fen
  expect(result.current.state.groupHasMore).toBe(true);
 });
 
-test('a transient continuation failure retains the first portion and retry resumes it',async()=>{
+test('a transient continuation failure clears the first portion and retry starts at the same initial cursor',async()=>{
  const partial={groups:[multiSenseBankGroup],nextGroupCursor:'middle',selectedTierComplete:false,
   librarySearch:{totalGroups:51,matchingEntryIds:[financeEntry.entryId]}};
  fetchPage.mockImplementationOnce(async input=>{input.onPartial(partial);throw new TypeError('offline');})
   .mockResolvedValueOnce({...partial,nextGroupCursor:'next-page'});
  const {result}=setup({query:''});
  await waitFor(()=>expect(result.current.search.error).toBe('search failed'));
- expect(result.current.state.groupResults).toHaveLength(1);
+ expect(result.current.state.groupResults).toEqual([]);
+ expect(result.current.state.detailSelection).toBeNull();
+ expect(result.current.search.hasCurrentResults).toBe(false);
  expect(result.current.state.groupHasMore).toBe(false);
  await act(async()=>{await result.current.search.runSearch(true);});
- expect(fetchPage.mock.calls[1][0].resume).toEqual(partial);
+ expect(fetchPage.mock.calls[1][0].cursor).toBeNull();
+ expect(fetchPage.mock.calls[1][0].resume).toBeUndefined();
  expect(result.current.state.groupPageCursors[1]).toBe('next-page');
 });
 
-test.each([401,403,404])('denial %s during continuation removes partial rows and selection',async status=>{
+test.each([401,403,404,429,503])('final HTTP %s during continuation removes partial rows and selection',async status=>{
  const partial={groups:[multiSenseBankGroup],nextGroupCursor:'middle',selectedTierComplete:false,
   librarySearch:{totalGroups:51,matchingEntryIds:[financeEntry.entryId]}};
  fetchPage.mockImplementationOnce(async input=>{
