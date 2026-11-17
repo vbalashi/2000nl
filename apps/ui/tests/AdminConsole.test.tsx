@@ -22,6 +22,7 @@ it("opens the journal for an audit-only operator without a forbidden dictionary 
   render(<AdminConsole />);
   expect(await screen.findByRole("heading", { name: "Журнал" })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Словари" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "Уведомления" })).not.toBeInTheDocument();
   expect(fetchMock.mock.calls.some(([url]) => url.startsWith("/api/admin/dictionaries"))).toBe(false);
   await waitFor(() => expect(new URLSearchParams(window.location.search).get("before")).toBe("2026-09-24T10:00:00.000Z"));
 });
@@ -80,4 +81,18 @@ it("lands a notifications-only operator in the permitted settings", async () => 
   fetchMock.mockResolvedValue(Response.json({ email: "operator@example.test", permissions: ["notifications.manage"] }));
   render(<AdminConsole />);
   await waitFor(() => expect(replace).toHaveBeenCalledWith("/admin/reports/?view=notifications"));
+});
+
+
+it("shows notification navigation only for managers on desktop and mobile", async () => {
+  fetchMock.mockImplementation(async (url: string) => {
+    if (url === "/api/admin/session") return Response.json({ email: "operator@example.test", permissions: ["audit.read", "notifications.manage"] });
+    if (url.startsWith("/api/admin/audit?")) return Response.json({ items: [], hasNext: false, page: 1, pageSize: 25 });
+    throw new Error(`Unexpected request ${url}`);
+  });
+  render(<AdminConsole />);
+  await screen.findByRole("heading", { name: "Журнал" });
+  expect(screen.getByRole("link", { name: "Уведомления" })).toHaveAttribute("href", "/admin/reports?view=notifications");
+  fireEvent.click(screen.getByRole("button", { name: "Открыть меню" }));
+  expect(screen.getAllByRole("link", { name: "Уведомления" })).toHaveLength(2);
 });

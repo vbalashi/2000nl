@@ -1,0 +1,7 @@
+# Notification queue status access
+
+`GET /api/operator-notifications/dispatch` accepts the existing dispatcher bearer or a distinct `OPERATOR_NOTIFICATION_STATUS_SECRET`. The status secret grants only GET; POST and DELETE reject it before delivery or cleanup. The response has `Cache-Control: no-store` and only `pending`, `leased`, `failed`, and `oldestPendingAt`. No destination, payload, token or provider errors are returned. A null oldest timestamp with queued work remains a successful aggregate response; the monitoring consumer must treat that inconsistent state as unhealthy.
+
+Provision both a valid dispatcher secret and a distinct status secret before enabling a status observer. Each must be 32–256 characters. Missing or invalid status configuration denies the status key while preserving dispatcher access; missing or invalid dispatcher configuration denies status-key access. If both valid secrets are equal, all three methods deny access. Check distinctness before restarting the service. Rotate the status secret independently and update the observer securely; removal or rotation immediately invalidates the old status key. Never give the dispatcher key to a read-only observer or log either value.
+
+The endpoint does not itself deliver alerts or prove external monitoring is available. Its exposure, secret provisioning, collector and production activation require separately qualified operations.

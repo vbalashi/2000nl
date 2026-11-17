@@ -386,6 +386,25 @@ const materialRepository=(paused=false)=>({
 });
 const source=(id:string,name:string)=>({id,name,languageCode:"nl",slug:name,kind:"curated",isEditable:false,entryCount:10});
 
+test('empty Library renders 25 admitted rows before the remaining 25 and fences the next page',async()=>{
+ const {AccountMaterialProvider}=await import('@/components/practice/material/AccountMaterialProvider');
+ readableSources.mockReset().mockResolvedValue([source(scopeB,'Enabled B')]);
+ const groups=Array.from({length:50},(_,i)=>goedGroup(`partial-${i}`,scopeB,'Enabled B',[sense(`partial-entry-${i}`,'zn')]));
+ const ids=groups.map(group=>group.entries[0].kind==='sense-card'?group.entries[0].entryId:'');
+ const finish=deferred<unknown>();
+ fetchGroupPage.mockReset().mockImplementationOnce(input=>{
+  input.onPartial({groups:groups.slice(0,25),selectedTierComplete:false,nextGroupCursor:'middle',librarySearch:{totalGroups:75,totalMeanings:75,matchingEntryIds:ids.slice(0,25)}});
+  return finish.promise;
+ });
+ render(<AccountMaterialProvider userId='user-1' repository={materialRepository()}><Harness initial={{query:''}}/></AccountMaterialProvider>);
+ await waitFor(()=>expect(screen.getAllByTestId('library-headword-group-row')).toHaveLength(25));
+ const pagination=await screen.findByTestId('library-group-pagination');
+ expect(within(pagination).getByRole('button',{name:'Volgende'})).toBeDisabled();
+ await act(async()=>finish.resolve({groups,selectedTierComplete:true,nextGroupCursor:'next-page',librarySearch:{totalGroups:75,totalMeanings:75,matchingEntryIds:ids}}));
+ await waitFor(()=>expect(screen.getAllByTestId('library-headword-group-row')).toHaveLength(50));
+ expect(within(pagination).getByRole('button',{name:'Volgende'})).toBeEnabled();
+});
+
 test("search filters exclude disabled material and changing source starts at the first scoped page",async()=>{
  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
  readableSources.mockReset().mockResolvedValue([source(scopeA,"Disabled A"),source(scopeB,"Enabled B")]);
