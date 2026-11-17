@@ -11,6 +11,8 @@ def run_logged(command, log_path, *, tail_bytes=16_384):
             return subprocess.run(command, check=True, stdout=log, stderr=log)
         except subprocess.CalledProcessError as error:
             log.flush()
-            log.seek(start)
-            data = log.read()[-tail_bytes:].decode('utf-8', errors='replace')
+            end = log.tell()
+            length = min(max(end - start, 0), tail_bytes)
+            log.seek(end - length)
+            data = log.read(length).decode('utf-8', errors='replace')
             raise RuntimeError(f'{error}\n--- command log tail ---\n{data}') from error

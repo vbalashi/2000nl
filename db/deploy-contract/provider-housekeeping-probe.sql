@@ -59,8 +59,17 @@ BEGIN
     SELECT 1 FROM pg_auth_members m
     JOIN pg_roles granted ON granted.oid=m.roleid
     JOIN pg_roles member ON member.oid=m.member
+    JOIN pg_roles grantor ON grantor.oid=m.grantor
     WHERE (granted.rolname='provider_housekeeping' OR member.rolname='provider_housekeeping')
-      AND NOT (granted.rolname='provider_housekeeping' AND member.rolname='postgres' AND member.rolcreaterole)
+      AND NOT (
+        granted.rolname='provider_housekeeping'
+        AND member.rolname='postgres'
+        AND member.rolcreaterole
+        AND grantor.rolname='supabase_admin'
+        AND m.admin_option
+        AND NOT m.inherit_option
+        AND NOT m.set_option
+      )
   ) THEN
     RAISE EXCEPTION 'db-contract-gate: provider housekeeping membership or SET ROLE path changed';
   END IF;

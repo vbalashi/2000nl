@@ -75,5 +75,23 @@ class GuardTest(unittest.TestCase):
                     self.assertNotIn('unrelated earlier command output', str(error))
                     raise
 
+    def test_failed_command_reads_only_bounded_tail(self):
+        with tempfile.TemporaryDirectory() as directory:
+            log = pathlib.Path(directory) / 'large.log'
+            command = [
+                sys.executable,
+                '-c',
+                "import os,sys; os.write(2, b'early-marker' + b'x' * 1048576 + b'late-marker'); raise SystemExit(3)",
+            ]
+            with self.assertRaises(RuntimeError) as caught:
+                run_logged(command, log, tail_bytes=128)
+            message = str(caught.exception)
+            tail = message.split('--- command log tail ---\n', 1)[1]
+            self.assertIn('late-marker', tail)
+            self.assertNotIn('early-marker', tail)
+            self.assertLessEqual(len(tail.encode()), 128)
+            self.assertLess(len(message.encode()), 1024)
+            self.assertGreater(log.stat().st_size, 1_000_000)
+
 
 if __name__ == '__main__': unittest.main()
