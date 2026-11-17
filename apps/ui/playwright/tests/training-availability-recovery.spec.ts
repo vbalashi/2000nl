@@ -1,5 +1,6 @@
 import {expect,test} from '@playwright/test';
 import {setupAuthenticatedTrainingAttributionPage} from '../support/trainingAttributionHarness';
+import {currentAvailabilityStudyDay} from '../../lib/training/availability/model';
 for(const profile of [{name:'desktop-light',width:1280,height:900,dark:false},{name:'mobile-dark',width:390,height:844,dark:true}])test(`availability pending failure retry ${profile.name}`,async({page},info)=>{
  await page.setViewportSize({width:profile.width,height:profile.height});
  await page.emulateMedia({colorScheme:profile.dark?'dark':'light'});
@@ -12,7 +13,7 @@ for(const profile of [{name:'desktop-light',width:1280,height:900,dark:false},{n
    limitedCalls++;
    if(limitedCalls===1){await pending;await route.fulfill({status:503,json:{error:'training_availability_unavailable'}});return;}
   }
-  await route.fulfill({json:{dueToday:1,totalReviews:4,newCards:6,studyDay:new Date().toISOString().slice(0,10),timezone:'Europe/Amsterdam',asOf:new Date().toISOString()}});
+  await route.fulfill({json:{dueToday:1,totalReviews:4,newCards:6,studyDay:currentAvailabilityStudyDay('Europe/Amsterdam'),timezone:'Europe/Amsterdam',asOf:new Date().toISOString()}});
  });
  await page.reload();
  await page.getByRole('button',{name:'Edit Frequency test',exact:true}).first().click();
@@ -28,13 +29,17 @@ for(const profile of [{name:'desktop-light',width:1280,height:900,dark:false},{n
  await expect(strip.getByRole('alert')).toHaveCount(0);await expect(strip.getByRole('status')).toHaveCount(0);
  await expect.poll(()=>limitedCalls).toBe(2);
 });
-test('renaming a saved training reuses counts for its unchanged normalized recipe',async({page})=>{
+for(const sample of [
+ {name:'before the 04:00 study-day boundary',now:'2026-11-16T02:00:00.000Z',studyDay:'2026-11-15'},
+ {name:'after the 04:00 study-day boundary',now:'2026-11-16T04:00:00.000Z',studyDay:'2026-11-16'},
+])test(`renaming a saved training reuses counts for its unchanged normalized recipe ${sample.name}`,async({page})=>{
+ await page.clock.setFixedTime(new Date(sample.now));
  await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:'en'}}});
  const draft={family:'meaning',scenarioId:'understanding',modes:['word-to-definition'],cardFilter:'both',listValue:'curated:list-attribution',materialMode:'collection',newReviewRatio:2,dateWindow:'all',sourceValue:'all',sessionSize:5};
  let snapshot={revision:1,document:{schemaVersion:1,mainTrainingId:'saved-70',trainings:[{id:'saved-70',name:'Frequency test',languageCode:'nl',draft}]}};
  await page.route('**/api/training/setups',async route=>{if(route.request().method()==='PUT'){snapshot={revision:snapshot.revision+1,document:route.request().postDataJSON().document};}await route.fulfill({json:snapshot});});
  let calls=0;
- await page.route('**/api/training/availability',async route=>{calls++;await route.fulfill({json:{dueToday:1,totalReviews:4,newCards:6,studyDay:new Date().toISOString().slice(0,10),timezone:'Europe/Amsterdam',asOf:new Date().toISOString()}});});
+ await page.route('**/api/training/availability',async route=>{calls++;await route.fulfill({json:{dueToday:1,totalReviews:4,newCards:6,studyDay:sample.studyDay,timezone:'Europe/Amsterdam',asOf:sample.now}});});
  await page.reload();await page.getByRole('button',{name:'Edit Frequency test',exact:true}).first().click();
  await expect(page.getByRole('region',{name:'Available for training'}).getByRole('status')).toHaveCount(0);
  expect(calls).toBe(1);
