@@ -135,7 +135,10 @@ resources or credentials are needed for the regression tests.
 Migration 378 adds an optional bounded housekeeping function behind a dedicated
 NOLOGIN role and removes implicit PUBLIC execution from the seven legacy RPC
 signatures that remained callable by unrelated login roles. Existing anon,
-authenticated and service-role callers retain explicit grants. The function's
+authenticated and service-role callers retain explicit grants. This proves the
+database role matrix used by the application; it is not an inventory of every
+external SQL client, which must be reviewed separately before managed rollout.
+The function's
 `system_identifier` argument rejects an accidental connection to a different
 PostgreSQL cluster, but it is not a physical-clone identity: a restored or cloned
 data directory retains that identifier. Managed execution must therefore also
