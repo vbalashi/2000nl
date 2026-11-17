@@ -8,7 +8,8 @@ import { platformV2Message } from '../../lib/platform/platformV2ClientI18n';
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 test('collection persists through real browser, API and database', async ({ page, request }) => {
   const dbPort = process.env.REAL_SMOKE_DB_PORT ?? '';
-  if (!/^\d{4,5}$/.test(dbPort) || !process.env.REAL_SMOKE_QA_FILE) throw new Error('Missing isolated database identity');
+  const dbId = process.env.REAL_SMOKE_DB_CONTAINER ?? '';
+  if (!/^\d{4,5}$/.test(dbPort) || !/^[0-9a-f]{64}$/.test(dbId) || !process.env.REAL_SMOKE_QA_FILE || !process.env.DOCKER_HOST || !process.env.DOCKER_CONFIG) throw new Error('Missing isolated database identity');
   const qa = JSON.parse(readFileSync(process.env.REAL_SMOKE_QA_FILE, 'utf8'));
   expect(qa.id).toMatch(uuid);
   const health = await (await request.get('/api/health?deep=1')).json();
@@ -63,6 +64,6 @@ test('collection persists through real browser, API and database', async ({ page
   await page.getByRole('button', { name: 'View words', exact: true }).click();
   await expect(card(entryId)).toHaveAttribute('data-current-collection', 'included');
   const sql = `SELECT count(*) FILTER (WHERE i.word_id='${entryId}'), count(*) FROM public.user_word_list_items i JOIN public.user_word_lists l ON l.id=i.list_id WHERE l.id='${listId}' AND l.user_id='${qa.id}'`;
-  const count = execFileSync('psql', ['-X', '-At', '-v', 'ON_ERROR_STOP=1', '-h', '127.0.0.1', '-p', dbPort, '-U', 'postgres', '-d', 'postgres', '-c', sql], { env: { PATH: process.env.PATH, NODE_ENV: 'test', PGPASSWORD: 'postgres' }, encoding: 'utf8' }).trim();
+  const count = execFileSync('docker', ['exec', '-e', 'PGPASSWORD=postgres', dbId, 'psql', '-X', '-At', '-v', 'ON_ERROR_STOP=1', '-h', '127.0.0.1', '-p', '5432', '-U', 'postgres', '-d', 'postgres', '-c', sql], { env: { PATH: process.env.PATH, NODE_ENV: 'test', DOCKER_HOST: process.env.DOCKER_HOST, DOCKER_CONFIG: process.env.DOCKER_CONFIG }, encoding: 'utf8' }).trim();
   expect(count).toBe('1|1');
 });

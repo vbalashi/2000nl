@@ -40,3 +40,31 @@ def validate_cleanup(expected, current):
         raise ValueError('Startup did not finish; resource ownership is uncertain')
     if expected != current:
         raise ValueError('Resource inventory changed since startup')
+
+
+def reconcile_partial(current, startup_quiesced):
+    if not startup_quiesced:
+        raise ValueError('Startup may still be changing the inventory')
+    return current
+
+
+def validate_database(container, container_id, project, network_id, port):
+    if container.get('Id') != container_id or container.get('Name') != '/supabase_db_' + project:
+        raise ValueError('Database container identity changed')
+    labels = container.get('Config', {}).get('Labels') or {}
+    network = container.get('NetworkSettings', {}).get('Networks', {}).get(project + '-net', {})
+    ports = container.get('NetworkSettings', {}).get('Ports', {}).get('5432/tcp')
+    if (labels.get('com.supabase.cli.project') != project or network.get('NetworkID') != network_id
+            or ports != [{'HostIp': '127.0.0.1', 'HostPort': str(port)}]):
+        raise ValueError('Database binding or ownership mismatch')
+
+
+def recover_network(candidates, project):
+    if len(candidates) != 1:
+        raise ValueError('Network creation outcome is ambiguous')
+    candidate = candidates[0]
+    network_id = candidate.get('Id', '')
+    if len(network_id) != 64 or any(c not in '0123456789abcdef' for c in network_id):
+        raise ValueError('Invalid recovered network ID')
+    validate_network(candidate, network_id, project)
+    return network_id

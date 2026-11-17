@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run one smoke against a disposable, loopback-only Supabase project."""
 import hashlib, json, os, pathlib, pwd, re, secrets, shutil, signal, socket, stat, subprocess, sys, tempfile, time, urllib.request
-from smoke_docker_guard import snapshot, validate_cleanup, validate_network
+from smoke_docker_guard import snapshot, validate_cleanup, validate_network, validate_database, reconcile_partial, recover_network
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 os.chdir(ROOT)
@@ -77,17 +77,24 @@ for i in range(10):
 (tmp / 'supabase/config.toml').write_text(config)
 server = None
 network_id = None
+network_attempted = False
 project_started = False
+startup_quiesced = False
 owned = None
+preserve_recovery = False
 result = 1
 try:
+    network_attempted = True
     network_id = output('docker', 'network', 'create', '--driver', 'bridge', '--label', '2000nl.smoke.owner=' + project, '--opt', 'com.docker.network.bridge.host_binding_ipv4=127.0.0.1', network)
     if not re.fullmatch('[0-9a-f]{64}', network_id):
         raise RuntimeError('Unexpected network ID')
     validate_network(json.loads(output('docker', 'network', 'inspect', network_id))[0], network_id, project)
     project_started = True
-    with (tmp / 'start.log').open('w') as log:
-        run('supabase', '--workdir', str(tmp), '--network-id', network, 'start', stdout=log, stderr=log)
+    try:
+        with (tmp / 'start.log').open('w') as log:
+            run('supabase', '--workdir', str(tmp), '--network-id', network, 'start', stdout=log, stderr=log)
+    finally:
+        startup_quiesced = True
     owned, details = inventory(project, network_id)
     if not owned[0] or not owned[1]:
         raise RuntimeError('Incomplete owned project inventory')
@@ -98,34 +105,44 @@ try:
             for binding in bindings or []:
                 if binding['HostIp'] != '127.0.0.1':
                     raise RuntimeError('Container exposed outside loopback')
+    db = [c for c in details if c.get('Name') == '/supabase_db_' + project]
+    if len(db) != 1:
+        raise RuntimeError('Expected exactly one owned database container')
+    db_id = db[0]['Id']
+    validate_database(db[0], db_id, project, network_id, base + 2)
     status = json.loads(output('supabase', '--workdir', str(tmp), 'status', '-o', 'json'))
     if status['API_URL'] != f'http://127.0.0.1:{base + 1}':
         raise RuntimeError('Unexpected API target')
     contract = json.loads((ROOT / 'packages/shared/deployment/db-contract.json').read_text())
     if hashlib.sha256((ROOT / contract['baseline']['file']).read_bytes()).hexdigest() != contract['baseline']['sha256']:
         raise RuntimeError('Baseline checksum mismatch')
-    env = {'PATH': os.environ['PATH'], 'PGPASSWORD': 'postgres'}
-    psql = ['psql', '-X', '-v', 'ON_ERROR_STOP=1', '-h', '127.0.0.1', '-p', str(base + 2), '-U', 'postgres', '-d', 'postgres']
-    if subprocess.check_output([*psql, '-At', '-c', "select to_regclass('public.word_entries') is not null"], env=env, text=True).strip() != 'f':
+    # Execute every bootstrap command inside the verified immutable database
+    # container. Host-port availability is never used to choose a write target.
+    validate_database(json.loads(output('docker', 'inspect', db_id))[0], db_id, project, network_id, base + 2)
+    run('docker', 'exec', db_id, 'mkdir', '-p', '/tmp/2000nl-smoke/db')
+    for directory in ('migrations', 'deploy-contract', 'test-fixtures'):
+        run('docker', 'cp', str(ROOT / 'db' / directory), db_id + ':/tmp/2000nl-smoke/db/')
+    psql = ['docker', 'exec', '-i', '-e', 'PGPASSWORD=postgres', '-w', '/tmp/2000nl-smoke', db_id, 'psql', '-X', '-v', 'ON_ERROR_STOP=1', '-h', '127.0.0.1', '-p', '5432', '-U', 'postgres', '-d', 'postgres']
+    if output(*psql, '-At', '-c', "select to_regclass('public.word_entries') is not null") != 'f':
         raise RuntimeError('Refusing to bootstrap a populated database')
     with (tmp / 'bootstrap.log').open('w') as log:
         for f in ['db/migrations/bootstrap.sql', 'db/test-fixtures/search_multisource.sql', 'db/test-fixtures/training_smoke.sql']:
-            run(*psql, '-f', f, env=env, stdout=log, stderr=log)
-        run(*psql, '-c', 'SELECT public.refresh_dictionary_search_document(id, 2) FROM public.word_entries', env=env, stdout=log, stderr=log)
-        run(*psql, '-f', contract['postflightProbe'], env=env, stdout=log, stderr=log)
+            run(*psql, '-f', f, stdout=log, stderr=log)
+        run(*psql, '-c', 'SELECT public.refresh_dictionary_search_document(id, 2) FROM public.word_entries', stdout=log, stderr=log)
+        run(*psql, '-f', contract['postflightProbe'], stdout=log, stderr=log)
         commit = output('git', 'rev-parse', 'HEAD')
         cid = contract['contractId']; migration = contract['migrations'][-1]['migrationId']
         if not re.fullmatch('[a-z0-9-]+', cid) or not re.fullmatch('[0-9a-f]{40}', commit) or not isinstance(migration, int):
             raise RuntimeError('Invalid contract metadata')
-        run(*psql, '-c', f"INSERT INTO public.app_db_contract_state(singleton,contract_id,migration_id,app_commit) VALUES(true,'{cid}',{migration},'{commit}')", env=env, stdout=log, stderr=log)
+        run(*psql, '-c', f"INSERT INTO public.app_db_contract_state(singleton,contract_id,migration_id,app_commit) VALUES(true,'{cid}',{migration},'{commit}')", stdout=log, stderr=log)
     # Fault injection is confined to this freshly created project and used only to
     # verify that a missing application permission makes the smoke fail.
     if fault_injection:
-        run(*psql, '-c', 'REVOKE EXECUTE ON FUNCTION public.add_entry_to_user_list(uuid,uuid,uuid) FROM PUBLIC, authenticated', env=env, stdout=subprocess.DEVNULL)
+        run(*psql, '-c', 'REVOKE EXECUTE ON FUNCTION public.add_entry_to_user_list(uuid,uuid,uuid) FROM PUBLIC, authenticated', stdout=subprocess.DEVNULL)
     status_file = tmp / 'status.json'; status_file.write_text(json.dumps(status))
     qa_file = tmp / 'qa.json'
-    minimal = {k: os.environ[k] for k in ('PATH', 'HOME', 'TMPDIR', 'CI') if k in os.environ}
-    minimal.update({'SMOKE_STATUS_FILE': str(status_file), 'SMOKE_QA_FILE': str(qa_file), 'SMOKE_WEB_PORT': str(web_port), 'SMOKE_DB_PORT': str(base + 2)})
+    minimal = {k: os.environ[k] for k in ('PATH', 'HOME', 'TMPDIR', 'CI', 'DOCKER_HOST', 'DOCKER_CONFIG') if k in os.environ}
+    minimal.update({'SMOKE_STATUS_FILE': str(status_file), 'SMOKE_QA_FILE': str(qa_file), 'SMOKE_WEB_PORT': str(web_port), 'SMOKE_DB_PORT': str(base + 2), 'SMOKE_DB_CONTAINER': db_id})
     run('node', str(ROOT / 'scripts/ci/real-supabase-smoke.mjs'), 'seed', env=minimal)
     with (tmp / 'server.log').open('w') as log:
         server = subprocess.Popen(['node', str(ROOT / 'scripts/ci/real-supabase-smoke.mjs'), 'server'], env=minimal, stdout=log, stderr=log, start_new_session=True)
@@ -152,10 +169,16 @@ finally:
         try: server.wait(timeout=15)
         except subprocess.TimeoutExpired:
             os.killpg(server.pid, signal.SIGKILL); server.wait()
-    if network_id:
+    if network_attempted:
         try:
+            if not network_id:
+                matches = output('docker', 'network', 'ls', '-q', '--filter', 'name=^' + network + '$').splitlines()
+                candidates = json.loads(output('docker', 'network', 'inspect', *matches)) if matches else []
+                network_id = recover_network(candidates, project)
             current, _ = inventory(project, network_id)
             if project_started:
+                if owned is None:
+                    owned = reconcile_partial(current, startup_quiesced)
                 validate_cleanup(owned, current)
             elif current != (frozenset(), {}):
                 raise ValueError('Unexpected resources before startup')
@@ -180,6 +203,10 @@ finally:
                 raise ValueError('Owned resources remain after cleanup')
         except Exception as cleanup_error:
             print(f'Cleanup refused or incomplete for disposable project {project}: {cleanup_error}', file=sys.stderr)
+            (tmp / 'RECOVERY.txt').write_text(f'Project: {project}\nNetwork ID: {network_id or "unknown"}\nReason: {cleanup_error}\n')
+            print(f'Protected recovery details retained in {tmp}', file=sys.stderr)
+            preserve_recovery = True
             result = 1
-    shutil.rmtree(tmp)
+    if not preserve_recovery:
+        shutil.rmtree(tmp)
 sys.exit(result)

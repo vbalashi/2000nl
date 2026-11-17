@@ -29,6 +29,6 @@ if (action === 'seed') {
   const result = spawnSync('npm', ['run', 'dev', '--', '--hostname', '127.0.0.1', '--port', process.env.SMOKE_WEB_PORT], { cwd: ui, env, stdio: 'inherit' });
   process.exit(result.status ?? 1);
 } else if (action === 'test') {
-  const result = spawnSync('npx', ['playwright', 'test', '-c', 'playwright/real-smoke.config.ts'], { cwd: ui, env: { ...env, REAL_SMOKE: '1', REAL_SMOKE_BASE_URL: `http://127.0.0.1:${process.env.SMOKE_WEB_PORT}`, REAL_SMOKE_DB_PORT: process.env.SMOKE_DB_PORT, REAL_SMOKE_QA_FILE: process.env.SMOKE_QA_FILE }, stdio: 'inherit' });
+  const result = spawnSync('npx', ['playwright', 'test', '-c', 'playwright/real-smoke.config.ts'], { cwd: ui, env: { ...env, REAL_SMOKE: '1', REAL_SMOKE_BASE_URL: `http://127.0.0.1:${process.env.SMOKE_WEB_PORT}`, REAL_SMOKE_DB_PORT: process.env.SMOKE_DB_PORT, REAL_SMOKE_DB_CONTAINER: process.env.SMOKE_DB_CONTAINER, REAL_SMOKE_QA_FILE: process.env.SMOKE_QA_FILE }, stdio: 'inherit' });
   process.exit(result.status ?? 1);
 } else throw new Error('Unknown action');
