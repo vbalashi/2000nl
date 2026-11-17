@@ -524,6 +524,38 @@ test("filtered summary accepts matched cross-reference identities without turnin
   expect(onPartial).toHaveBeenCalledOnce();expect(fetchMock).toHaveBeenCalledTimes(2);
  });
 
+ test.each(['other','unknown'])('fails closed when identity is %s after the final continuation retry',async identity=>{
+  const session=vi.mocked(supabase.auth.getSession);
+  const account=(id:string)=>({data:{session:{access_token:'test-token',user:{id}}},error:null}) as never;
+  for(let i=0;i<5;i++)session.mockResolvedValueOnce(account('owner'));
+  if(identity==='unknown')session.mockRejectedValueOnce(new Error('identity unavailable'));
+  else session.mockResolvedValueOnce(account('other'));
+  const fetchMock=vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({...payload,page:{selectedTierComplete:false,nextGroupCursor:'next'}}),{status:200}))
+   .mockResolvedValueOnce(new Response('{}',{status:503})).mockResolvedValueOnce(new Response('{}',{status:503}));
+  vi.stubGlobal('fetch',fetchMock);
+  const onPartial=vi.fn();
+  await expect(fetchPlatformV2LibraryGroupPage({query:'',expectedUserId:'owner',cardTypeId:'word-to-definition',contentLanguageCode:'nl',translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null},onPartial})).rejects.toThrow('auth_account_changed');
+  expect(onPartial).toHaveBeenCalledOnce();expect(fetchMock).toHaveBeenCalledTimes(3);
+ });
+
+ test('identity verification after a failed continuation is bounded and fails closed',async()=>{
+  const session=vi.mocked(supabase.auth.getSession);
+  const owner=({data:{session:{access_token:'test-token',user:{id:'owner'}}},error:null}) as never;
+  session.mockResolvedValueOnce(owner).mockResolvedValueOnce(owner).mockResolvedValueOnce(owner)
+   .mockImplementationOnce(()=>new Promise(()=>{}));
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({...payload,page:{selectedTierComplete:false,nextGroupCursor:'next'}}),{status:200}))
+   .mockResolvedValueOnce(new Response('{}',{status:503})));
+  vi.useFakeTimers();
+  try {
+   const onPartial=vi.fn();
+   const request=fetchPlatformV2LibraryGroupPage({query:'',expectedUserId:'owner',cardTypeId:'word-to-definition',contentLanguageCode:'nl',translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null},onPartial});
+   const rejected=expect(request).rejects.toThrow('auth_account_changed');
+   await vi.advanceTimersByTimeAsync(2_000);
+   await rejected;
+   expect(onPartial).toHaveBeenCalledOnce();
+  } finally {vi.useRealTimers();}
+ });
+
  test('controlled two-read fixture exposes the first portion at 80ms and completes at 160ms',async()=>{
   vi.useFakeTimers();
   try {

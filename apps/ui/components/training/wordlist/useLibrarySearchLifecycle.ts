@@ -441,8 +441,18 @@ export function useLibrarySearchLifecycle({
   }, []);
   const invalidateFreshness = useCallback(() => {
     freshRef.current = null;
+    if (partialRef.current) {
+      requestSequenceRef.current += 1;
+      requestControllerRef.current?.abort();
+      requestControllerRef.current = null;
+      pendingRef.current = null;
+      setLoading(false);
+      setState(current => ({...current, groupResults: [], groupTotal: null, meaningTotal: null,
+        wordTotal: 0, groupHasMore: false, groupPageCursors: [null], selectedHeadwordGroupId: null,
+        detailSelection: null, mobileDetailOpen: false}));
+    }
     partialRef.current = null;
-  }, []);
+  }, [setState]);
   const hasCurrentResults = freshRef.current?.key === readKey;
 
   useEffect(

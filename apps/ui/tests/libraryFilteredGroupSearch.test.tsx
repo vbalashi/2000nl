@@ -254,3 +254,21 @@ test('switching accounts clears an already visible partial page and rejects the 
  await act(async()=>finishOld({groups:[multiSenseBankGroup],nextGroupCursor:null,selectedTierComplete:true}));
  expect(result.current.state.groupResults).toEqual([]);
 });
+
+test('membership invalidation clears and fences an in-flight partial page',async()=>{
+ let finish!:(page:unknown)=>void;
+ fetchPage.mockImplementationOnce(input=>{
+  input.onPartial({groups:[multiSenseBankGroup],nextGroupCursor:'middle',selectedTierComplete:false});
+  return new Promise(resolve=>{finish=resolve;});
+ }).mockResolvedValue({groups:[],nextGroupCursor:null,selectedTierComplete:true,librarySearch:{totalGroups:0,matchingEntryIds:[]}});
+ const {result,unmount}=setup({query:'',applyListFilter:true,collectionId:'received'});
+ await waitFor(()=>expect(result.current.state.groupResults).toHaveLength(1));
+ const signal=fetchPage.mock.calls[0][0].signal as AbortSignal;
+ act(()=>result.current.search.invalidateFreshness());
+ expect(signal.aborted).toBe(true);
+ expect(result.current.state.groupResults).toEqual([]);
+ expect(result.current.state.detailSelection).toBeNull();
+ await act(async()=>finish({groups:[multiSenseBankGroup],nextGroupCursor:null,selectedTierComplete:true}));
+ expect(result.current.state.groupResults).toEqual([]);
+ unmount();
+});

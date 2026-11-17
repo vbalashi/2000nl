@@ -78,14 +78,35 @@ async function fetchPlatformV2LibraryLookup(input: PlatformV2LibraryLookupInput)
   } catch (error) {
     // Never retain an admitted partial page after an account switch, even if
     // the continuation failed before the transport's successful-response check.
-    if (input.expectedUserId && !input.signal?.aborted) await authenticatedJsonHeaders(input.expectedUserId);
+    if (input.expectedUserId && !input.signal?.aborted) await assertLibraryAccount(input.expectedUserId);
     const transient = error instanceof PlatformV2LibraryLookupError
       ? error.kind === "http-error" && [408, 502, 503, 504].includes(error.status ?? 0)
       : error instanceof TypeError ||
         (error instanceof Error && error.message === "platform_request_timeout");
     if (!input.libraryScope || !transient || input.signal?.aborted) throw error;
     await waitForLibraryRetry(input.signal);
-    return fetchPlatformV2LibraryLookupOnce(input);
+    try {
+      return await fetchPlatformV2LibraryLookupOnce(input);
+    } catch (retryError) {
+      // The retry can also fail before its successful-response account check.
+      if (input.expectedUserId && !input.signal?.aborted) await assertLibraryAccount(input.expectedUserId);
+      throw retryError;
+    }
+  }
+}
+
+async function assertLibraryAccount(expectedUserId: string): Promise<void> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      authenticatedJsonHeaders(expectedUserId),
+      new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error("identity_timeout")), 2_000); }),
+    ]);
+  } catch {
+    // If identity is unavailable, previously admitted rows cannot be retained.
+    throw new Error("auth_account_changed");
+  } finally {
+    if (timeout) clearTimeout(timeout);
   }
 }
 
