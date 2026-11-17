@@ -57,13 +57,17 @@ async function violations(client: Pool | PoolClient) {
 
 describe.skipIf(!url)("provider housekeeping effective privilege boundary", () => {
   let pool: Pool;
+  let client: PoolClient;
   beforeAll(async () => {
     pool = new Pool({ connectionString: url });
     await runMigrations(pool);
+    client = await pool.connect();
+    await client.query("begin");
     // Stock postgres:17 does not include Supabase's migration-owner role or
     // creator grant. This disposable fixture reproduces the exact catalog row
     // observed on a fresh Supabase stack; production SQL never writes catalogs.
-    await pool.query(`
+    try {
+      await client.query(`
       do $$ begin
         if not exists (select 1 from pg_roles where rolname='supabase_admin') then
           create role supabase_admin nologin createrole;
@@ -76,16 +80,38 @@ describe.skipIf(!url)("provider housekeeping effective privilege boundary", () =
         set grantor=(select oid from pg_roles where rolname='supabase_admin')
         where roleid=(select oid from pg_roles where rolname='provider_housekeeping')
           and member=(select oid from pg_roles where rolname='postgres');
-    `);
+      `);
+    } catch (error) {
+      await client.query("rollback");
+      client.release();
+      await pool.end();
+      throw error;
+    }
   }, 120000);
-  afterAll(async () => { await pool?.end(); });
+  afterAll(async () => {
+    if (client) {
+      await client.query("rollback");
+      client.release();
+    }
+    await pool?.end();
+  });
+
+  async function inSavepoint(name: string, action: () => Promise<void>) {
+    await client.query(`savepoint ${name}`);
+    try {
+      await action();
+    } finally {
+      await client.query(`rollback to savepoint ${name}`);
+      await client.query(`release savepoint ${name}`);
+    }
+  }
 
   test("qualified role has no direct storage, membership, or extra definer path", async () => {
-    expect(await violations(pool)).toEqual([]);
+    expect(await violations(client)).toEqual([]);
   });
 
   test("allows the exact Supabase PostgreSQL 17 creator grant", async () => {
-    const { rows } = await pool.query(`
+    const { rows } = await client.query(`
       select granted.rolname as granted, member.rolname as member, grantor.rolname as grantor,
         m.admin_option as admin, m.inherit_option as inherit, m.set_option as set
       from pg_auth_members m
@@ -95,21 +121,16 @@ describe.skipIf(!url)("provider housekeeping effective privilege boundary", () =
       where granted.rolname='provider_housekeeping' or member.rolname='provider_housekeeping'
     `);
     expect(rows).toEqual([{ granted: "provider_housekeeping", member: "postgres", grantor: "supabase_admin", admin: true, inherit: false, set: false }]);
-    expect(await violations(pool)).toEqual([]);
-    await expect(pool.query(probeSql)).resolves.toBeDefined();
+    expect(await violations(client)).toEqual([]);
+    await expect(client.query(probeSql)).resolves.toBeDefined();
   });
 
   test("actual probe rejects an extra membership beside the allowed creator grant", async () => {
-    const client = await pool.connect();
-    try {
-      await client.query("begin");
+    await inSavepoint("extra_membership", async () => {
       await client.query("create role housekeeping_extra_fixture");
       await client.query("grant provider_housekeeping to housekeeping_extra_fixture");
       await expect(client.query(probeSql)).rejects.toThrow("provider housekeeping membership or SET ROLE path changed");
-      await client.query("rollback");
-    } finally {
-      client.release();
-    }
+    });
   });
 
   for (const drift of [
@@ -121,16 +142,11 @@ describe.skipIf(!url)("provider housekeeping effective privilege boundary", () =
     ["login capability", "alter role provider_housekeeping login", "role_attributes"],
   ] as const) {
     test(`detects negative drift: ${drift[0]}`, async () => {
-      const client = await pool.connect();
-      try {
-        await client.query("begin");
+      await inSavepoint(`drift_${drift[2]}`, async () => {
         await client.query(drift[1]);
         expect(await violations(client)).toContain(drift[2]);
         await expect(client.query(probeSql)).rejects.toThrow("db-contract-gate:");
-      } finally {
-        await client.query("rollback");
-        client.release();
-      }
+      });
     });
   }
 
@@ -141,16 +157,11 @@ describe.skipIf(!url)("provider housekeeping effective privilege boundary", () =
     ["wrong grantor", "update pg_auth_members set grantor=(select oid from pg_roles where rolname='postgres') where roleid=(select oid from pg_roles where rolname='provider_housekeeping') and member=(select oid from pg_roles where rolname='postgres')"],
   ] as const) {
     test(`rejects creator membership drift: ${name}`, async () => {
-      const client = await pool.connect();
-      try {
-        await client.query("begin");
+      await inSavepoint(`creator_${name.toLowerCase().replace(/[^a-z]+/g, "_")}`, async () => {
         await client.query(mutation);
         expect(await violations(client)).toContain("membership");
         await expect(client.query(probeSql)).rejects.toThrow("provider housekeeping membership or SET ROLE path changed");
-        await client.query("rollback");
-      } finally {
-        client.release();
-      }
+      });
     });
   }
 });
