@@ -40,8 +40,8 @@ BEGIN
   END IF;
 
   IF has_schema_privilege('provider_housekeeping','private','usage')
-     OR has_table_privilege('provider_housekeeping','private.provider_work','select,insert,update,delete,truncate,references,trigger')
-     OR has_table_privilege('provider_housekeeping','private.provider_admission_windows','select,insert,update,delete,truncate,references,trigger')
+     OR has_table_privilege('provider_housekeeping','private.provider_work','select,insert,update,delete,truncate,references,trigger,maintain')
+     OR has_table_privilege('provider_housekeeping','private.provider_admission_windows','select,insert,update,delete,truncate,references,trigger,maintain')
      OR has_any_column_privilege('provider_housekeeping','private.provider_work','select,insert,update,references')
      OR has_any_column_privilege('provider_housekeeping','private.provider_admission_windows','select,insert,update,references') THEN
     RAISE EXCEPTION 'db-contract-gate: provider housekeeping direct storage access widened';
