@@ -131,3 +131,13 @@ consistent safety configuration on all replicas, qualification of gateway/RPC
 payload limits for base64 audio (up to 12 MiB), and owner release authorization.
 The public numbered migration is not a managed upgrade command. No managed
 resources or credentials are needed for the regression tests.
+
+Migration 378 adds an optional bounded housekeeping function behind a dedicated
+NOLOGIN role and removes implicit PUBLIC execution from the seven legacy RPC
+signatures that remained callable by unrelated login roles. Existing anon,
+authenticated and service-role callers retain explicit grants. The function's
+`system_identifier` argument rejects an accidental connection to a different
+PostgreSQL cluster, but it is not a physical-clone identity: a restored or cloned
+data directory retains that identifier. Managed execution must therefore also
+pin the expected host, endpoint and network path, keep the service credential
+outside the application, and verify those gates before invoking the function.

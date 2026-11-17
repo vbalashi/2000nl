@@ -30,7 +30,10 @@ CREATE SCHEMA provider_housekeeping;
 REVOKE ALL ON SCHEMA provider_housekeeping FROM PUBLIC, anon, authenticated, service_role;
 
 CREATE FUNCTION provider_housekeeping.run_provider_housekeeping_v1(expected_system_identifier text) RETURNS jsonb
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, private, pg_temp AS $$
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = pg_catalog, private, pg_temp
+SET statement_timeout = '15s'
+SET lock_timeout = '250ms' AS $$
 DECLARE
   cutoff timestamptz := clock_timestamp();
   windows_deleted integer; pending_deleted integer; failed_deleted integer;

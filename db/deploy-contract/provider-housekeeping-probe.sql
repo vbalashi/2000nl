@@ -30,12 +30,38 @@ BEGIN
     RAISE EXCEPTION 'db-contract-gate: provider housekeeping boundary changed';
   END IF;
 
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_proc
+    WHERE oid='provider_housekeeping.run_provider_housekeeping_v1(text)'::regprocedure
+      AND prosecdef
+      AND proconfig @> ARRAY['statement_timeout=15s','lock_timeout=250ms']
+  ) THEN
+    RAISE EXCEPTION 'db-contract-gate: provider housekeeping server timeout changed';
+  END IF;
+
+  IF has_schema_privilege('provider_housekeeping','private','usage')
+     OR has_table_privilege('provider_housekeeping','private.provider_work','select,insert,update,delete,truncate,references,trigger')
+     OR has_table_privilege('provider_housekeeping','private.provider_admission_windows','select,insert,update,delete,truncate,references,trigger')
+     OR has_any_column_privilege('provider_housekeeping','private.provider_work','select,insert,update,references')
+     OR has_any_column_privilege('provider_housekeeping','private.provider_admission_windows','select,insert,update,references') THEN
+    RAISE EXCEPTION 'db-contract-gate: provider housekeeping direct storage access widened';
+  END IF;
+
   IF EXISTS (
     SELECT 1 FROM pg_roles
     WHERE rolname='provider_housekeeping'
       AND (rolcanlogin OR rolsuper OR rolcreatedb OR rolcreaterole OR rolinherit OR rolreplication OR rolbypassrls)
   ) THEN
     RAISE EXCEPTION 'db-contract-gate: provider housekeeping role widened';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM pg_auth_members m
+    JOIN pg_roles granted ON granted.oid=m.roleid
+    JOIN pg_roles member ON member.oid=m.member
+    WHERE granted.rolname='provider_housekeeping' OR member.rolname='provider_housekeeping'
+  ) THEN
+    RAISE EXCEPTION 'db-contract-gate: provider housekeeping membership or SET ROLE path changed';
   END IF;
 
   IF EXISTS (

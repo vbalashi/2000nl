@@ -421,7 +421,7 @@
     {
       "migrationId": 378,
       "file": "db/migrations/378_provider_housekeeping.sql",
-      "sha256": "b0cdae0de1e722ddf0c67ccfa4cb9ff9c15386a03fae6509239da759d243e9b3"
+      "sha256": "1d7e96ceaf3c270f3b30fa5ce88de8260b51e299a0d05beebb6b55bcef7f2741"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-378.sql",
