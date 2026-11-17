@@ -76,6 +76,9 @@ async function fetchPlatformV2LibraryLookup(input: PlatformV2LibraryLookupInput)
   try {
     return await fetchPlatformV2LibraryLookupOnce(input);
   } catch (error) {
+    // Never retain an admitted partial page after an account switch, even if
+    // the continuation failed before the transport's successful-response check.
+    if (input.expectedUserId && !input.signal?.aborted) await authenticatedJsonHeaders(input.expectedUserId);
     const transient = error instanceof PlatformV2LibraryLookupError
       ? error.kind === "http-error" && [408, 502, 503, 504].includes(error.status ?? 0)
       : error instanceof TypeError ||
@@ -136,35 +139,46 @@ export async function countPlatformV2LibraryGroups(input: Parameters<typeof read
 
 export async function fetchPlatformV2LibraryGroupPage(input: {
   query: string;
+  expectedUserId?: string;
   cardTypeId: CardTypeId;
   contentLanguageCode: string;
   translationTargetLanguageCode: string | null;
   cursor?: string | null;
   signal?: AbortSignal;
   libraryScope?: LibrarySearchScope;
+  /** A validated first portion retained after a transient continuation failure. */
+  resume?: PlatformV2LibraryGroupPage;
+  onPartial?: (page: PlatformV2LibraryGroupPage) => void;
 }): Promise<PlatformV2LibraryGroupPage> {
-  const payload = await fetchPlatformV2LibraryLookup({
-    ...input,
+  const {resume, onPartial, ...request} = input;
+  const payload = resume ? null : await fetchPlatformV2LibraryLookup({
+    ...request,
     cursor: input.cursor ?? null,
   });
-  const groups = input.libraryScope ? [...payload.groups] : payload.groups;
-  let last = payload;
-  const matchingEntryIds = [...(payload.librarySearch?.matchingEntryIds ?? [])];
+  const groups = resume ? [...resume.groups] : input.libraryScope ? [...payload!.groups] : payload!.groups;
+  const summary = resume?.librarySearch ?? payload?.librarySearch;
+  let nextGroupCursor = resume?.nextGroupCursor ?? payload?.page.nextGroupCursor ?? null;
+  let selectedTierComplete = resume?.selectedTierComplete ?? payload!.page.selectedTierComplete;
+  const matchingEntryIds = [...(summary?.matchingEntryIds ?? [])];
+  const result = (): PlatformV2LibraryGroupPage => ({
+    groups: input.libraryScope ? [...groups] : groups,
+    ...((input.libraryScope?.filters || input.libraryScope?.material) && summary ? {librarySearch:{...summary,matchingEntryIds:[...new Set(matchingEntryIds)]}} : {}),
+    selectedTierComplete,
+    nextGroupCursor,
+  });
   // The RPC bounds each atomic read to 25 groups. Combine cursor pages only
   // for the first-party Library; generic connected-client lookup is unchanged.
-  while (input.libraryScope && last.page.nextGroupCursor && groups.length < LIBRARY_PAGE_SIZE) {
-    const next = await fetchPlatformV2LibraryLookup({...input,cursor:last.page.nextGroupCursor});
+  if (!resume && input.libraryScope && nextGroupCursor && groups.length > 0 && groups.length < LIBRARY_PAGE_SIZE) onPartial?.(result());
+  while (input.libraryScope && nextGroupCursor && groups.length < LIBRARY_PAGE_SIZE) {
+    const cursor = nextGroupCursor;
+    const next = await fetchPlatformV2LibraryLookup({...request,cursor});
     groups.push(...next.groups);
     matchingEntryIds.push(...(next.librarySearch?.matchingEntryIds ?? []));
-    if (next.page.nextGroupCursor === last.page.nextGroupCursor) throw new Error("library_cursor_did_not_advance");
-    last = next;
+    if (next.page.nextGroupCursor === cursor) throw new Error("library_cursor_did_not_advance");
+    nextGroupCursor = next.page.nextGroupCursor;
+    selectedTierComplete = next.page.selectedTierComplete;
   }
-  return {
-    groups,
-    ...((input.libraryScope?.filters || input.libraryScope?.material) && payload.librarySearch ? {librarySearch:{...payload.librarySearch,matchingEntryIds:[...new Set(matchingEntryIds)]}} : {}),
-    selectedTierComplete: last.page.selectedTierComplete,
-    nextGroupCursor: last.page.nextGroupCursor,
-  };
+  return result();
 }
 
 export async function fetchPlatformV2LibraryGroup(input: {

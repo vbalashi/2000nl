@@ -91,6 +91,7 @@ export function useLibrarySearchLifecycle({
   const [error, setError] = useState<string | null>(null);
   const [refreshRevision, setRefreshRevision] = useState(0);
   const freshRef = useRef<{ key: string; at: number } | null>(null);
+  const partialRef = useRef<{ key: string; page: GroupPage } | null>(null);
   const pendingRef = useRef<string | null>(null);
   const lastSearchedQueryRef = useRef<string | null>(null);
   const requestSequenceRef = useRef(0);
@@ -155,14 +156,21 @@ export function useLibrarySearchLifecycle({
     const previous = previousReadScopeRef.current;
     if (previous.readKey !== readKey || (!previous.blockedByMaterial && blockedByMaterial)) {
       // Fence the old read before the query debounce; visibility changes alone must retain pending work.
+      if (partialRef.current?.key === previous.readKey) {
+        freshRef.current = null;
+        setState(current => ({...current, groupResults: [], groupTotal: null, meaningTotal: null,
+          wordTotal: 0, groupHasMore: false, groupPageCursors: [null], selectedHeadwordGroupId: null,
+          detailSelection: null, mobileDetailOpen: false}));
+      }
       requestSequenceRef.current += 1;
       requestControllerRef.current?.abort();
       requestControllerRef.current = null;
       pendingRef.current = null;
+      partialRef.current = null;
       setLoading(false);
     }
     previousReadScopeRef.current = { readKey, blockedByMaterial };
-  }, [readKey, blockedByMaterial]);
+  }, [readKey, blockedByMaterial, setState]);
 
   const isCurrentSearch = useCallback(
     (requestId: number) => requestSequenceRef.current === requestId,
@@ -242,10 +250,32 @@ export function useLibrarySearchLifecycle({
       try {
         const trimmedQuery = query.trim() || undefined;
         if (!listMode) {
+          const publishPage = (result: GroupPage, partial: boolean) => {
+            if (!isCurrentSearch(requestId)) return;
+            const groups = buildLibraryHeadwordGroupResults(result.groups, result.librarySearch?.matchingEntryIds)
+              .filter(group => scoped || !dictionaryId || group.group.dictionary.dictionaryId === dictionaryId);
+            setState(current => {
+              const previousScope = !scoped || current.groupScopeKey === groupScopeKey;
+              const currentPage = previousScope ? current.page : 1;
+              const nextCursors = previousScope ? current.groupPageCursors.slice(0, currentPage) : [null];
+              // A partial page is not a logical page boundary: never skip its continuation.
+              nextCursors[currentPage] = partial ? null : result.nextGroupCursor;
+              return {...current, groupResults: groups, page: currentPage, groupScopeKey,
+                groupPageCursors: nextCursors, groupHasMore: !partial && Boolean(result.nextGroupCursor),
+                wordResults: [], wordTotal: result.librarySearch?.totalGroups ?? groups.length,
+                groupTotal: result.librarySearch?.totalGroups ?? null,
+                meaningTotal: result.librarySearch?.totalMeanings ?? null,
+                unavailableEntryCount: result.librarySearch?.unavailableEntryCount ?? 0,
+                ...projectGroupSelection(current, groups)};
+            });
+            freshRef.current = {key: readKey, at: Date.now()};
+            if (partial) setLoading(false);
+          };
           let result: GroupPage;
           try {
             result = await fetchPlatformV2LibraryGroupPage({
               query: trimmedQuery ?? "",
+              expectedUserId: userId,
               ...(scoped
                 ? {
                     libraryScope: {
@@ -261,11 +291,20 @@ export function useLibrarySearchLifecycle({
                 translationLanguageCode === "off" ? null : translationLanguageCode,
               cursor: groupCursor,
               signal: requestControllerRef.current?.signal,
+              ...(!trimmedQuery && scoped ? {
+                ...(partialRef.current?.key === readKey ? {resume: partialRef.current.page} : {}),
+                onPartial: (page: GroupPage) => {
+                  if (!isCurrentSearch(requestId)) return;
+                  partialRef.current = {key: readKey, page};
+                  publishPage(page, true);
+                },
+              } : {}),
             });
           } catch (cause) {
             if (
               scoped &&
               groupCursor &&
+              partialRef.current?.key !== readKey &&
               cause instanceof Error &&
               cause.name === "PlatformV2LibraryLookupError" &&
               "kind" in cause &&
@@ -285,38 +324,8 @@ export function useLibrarySearchLifecycle({
           }
           if (!isCurrentSearch(requestId)) return;
 
-          const groups = buildLibraryHeadwordGroupResults(
-            result.groups,
-            result.librarySearch?.matchingEntryIds,
-          ).filter(
-            (group) =>
-              scoped ||
-              !dictionaryId ||
-              group.group.dictionary.dictionaryId === dictionaryId,
-          );
-          setState((current) => {
-            const previousScope = !scoped || current.groupScopeKey === groupScopeKey;
-            const currentPage = previousScope ? current.page : 1;
-            const nextCursors = previousScope
-              ? current.groupPageCursors.slice(0, currentPage)
-              : [null];
-            nextCursors[currentPage] = result.nextGroupCursor;
-            return {
-              ...current,
-              groupResults: groups,
-              page: currentPage,
-              groupScopeKey,
-              groupPageCursors: nextCursors,
-              groupHasMore: Boolean(result.nextGroupCursor),
-              wordResults: [],
-              wordTotal: result.librarySearch?.totalGroups ?? groups.length,
-              groupTotal: result.librarySearch?.totalGroups ?? null,
-              meaningTotal: result.librarySearch?.totalMeanings ?? null,
-              unavailableEntryCount: result.librarySearch?.unavailableEntryCount ?? 0,
-              ...projectGroupSelection(current, groups),
-            };
-          });
-          freshRef.current = { key: readKey, at: Date.now() };
+          partialRef.current = null;
+          publishPage(result, false);
           return;
         }
 
@@ -346,6 +355,16 @@ export function useLibrarySearchLifecycle({
               : null),
         }));
       } catch (cause) {
+        if (isCurrentSearch(requestId) && partialRef.current?.key === readKey && cause instanceof Error &&
+            (['library_cursor_did_not_advance', 'auth_account_changed'].includes(cause.message) ||
+             ('kind' in cause && ['material-unavailable', 'invalid-cursor', 'contract-mismatch'].includes(String(cause.kind))) ||
+             ('status' in cause && [400, 401, 403, 404].includes(Number(cause.status))))) {
+          partialRef.current = null;
+          freshRef.current = null;
+          setState(current => ({...current, groupResults: [], groupTotal: null, meaningTotal: null,
+            wordTotal: 0, groupHasMore: false, groupPageCursors: [null], selectedHeadwordGroupId: null,
+            detailSelection: null, mobileDetailOpen: false}));
+        }
         if (
           isCurrentSearch(requestId) &&
           !(
@@ -374,6 +393,7 @@ export function useLibrarySearchLifecycle({
       ready,
       listMode,
       readKey,
+      userId,
       beginSearch,
       setState,
       query,
@@ -421,6 +441,7 @@ export function useLibrarySearchLifecycle({
   }, []);
   const invalidateFreshness = useCallback(() => {
     freshRef.current = null;
+    partialRef.current = null;
   }, []);
   const hasCurrentResults = freshRef.current?.key === readKey;
 

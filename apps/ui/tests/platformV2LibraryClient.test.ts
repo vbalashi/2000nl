@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { supabase } from "@/lib/supabaseClient";
 import {
   countPlatformV2LibraryGroups,
   fetchPlatformV2LibraryGroup,
@@ -485,6 +486,62 @@ test("filtered summary accepts matched cross-reference identities without turnin
   expect(result.groups).toHaveLength(2);
   expect(result.librarySearch?.matchingEntryIds).toEqual([financeEntry.entryId,furnitureEntry.entryId]);
   expect(result.nextGroupCursor).toBeNull();
+ });
+
+ test("publishes the first authorized portion while the continuation is pending",async()=>{
+  let release!:(response:Response)=>void;
+  const fetchMock=vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({...payload,page:{selectedTierComplete:false,nextGroupCursor:'next'}}),{status:200}))
+   .mockImplementationOnce(()=>new Promise<Response>(resolve=>{release=resolve;}));
+  vi.stubGlobal('fetch',fetchMock);
+  const onPartial=vi.fn();
+  const request=fetchPlatformV2LibraryGroupPage({query:'',cardTypeId:'word-to-definition',contentLanguageCode:'nl',translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null},onPartial});
+  await vi.waitFor(()=>expect(fetchMock).toHaveBeenCalledTimes(2));
+  expect(onPartial).toHaveBeenCalledOnce();
+  expect(onPartial.mock.calls[0][0]).toMatchObject({groups:[multiSenseBankGroup],nextGroupCursor:'next'});
+  release(new Response(JSON.stringify({...payload,groups:[],page:{selectedTierComplete:true,nextGroupCursor:null}}),{status:200}));
+  await expect(request).resolves.toMatchObject({groups:[multiSenseBankGroup],nextGroupCursor:null});
+ });
+
+ test('resumes a retained portion at its cursor instead of rereading it',async()=>{
+  const fetchMock=vi.fn().mockResolvedValue(new Response(JSON.stringify({...payload,groups:[],page:{selectedTierComplete:true,nextGroupCursor:null}}),{status:200}));
+  vi.stubGlobal('fetch',fetchMock);
+  const resume={groups:[multiSenseBankGroup],selectedTierComplete:false,nextGroupCursor:'next'};
+  await expect(fetchPlatformV2LibraryGroupPage({query:'',cardTypeId:'word-to-definition',contentLanguageCode:'nl',translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null},resume})).resolves.toMatchObject({groups:[multiSenseBankGroup],nextGroupCursor:null});
+  expect(fetchMock).toHaveBeenCalledOnce();
+  expect(JSON.parse(fetchMock.mock.calls[0][1].body).cursor).toBe('next');
+ });
+
+ test('account switch on a failed continuation is detected before the partial page can be retained',async()=>{
+  const session=vi.mocked(supabase.auth.getSession);
+  const account=(id:string)=>({data:{session:{access_token:'test-token',user:{id}}},error:null}) as never;
+  session.mockResolvedValueOnce(account('owner')).mockResolvedValueOnce(account('owner'))
+   .mockResolvedValueOnce(account('owner')).mockResolvedValueOnce(account('other'));
+  const fetchMock=vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({...payload,page:{selectedTierComplete:false,nextGroupCursor:'next'}}),{status:200}))
+   .mockResolvedValueOnce(new Response('{}',{status:503}));
+  vi.stubGlobal('fetch',fetchMock);
+  const onPartial=vi.fn();
+  await expect(fetchPlatformV2LibraryGroupPage({query:'',expectedUserId:'owner',cardTypeId:'word-to-definition',contentLanguageCode:'nl',translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null},onPartial})).rejects.toThrow('auth_account_changed');
+  expect(onPartial).toHaveBeenCalledOnce();expect(fetchMock).toHaveBeenCalledTimes(2);
+ });
+
+ test('controlled two-read fixture exposes the first portion at 80ms and completes at 160ms',async()=>{
+  vi.useFakeTimers();
+  try {
+   const fetchMock=vi.fn().mockImplementation(async(_url,init)=>{
+    const cursor=JSON.parse(init.body).cursor;
+    await new Promise(resolve=>setTimeout(resolve,80));
+    const groups=Array.from({length:25},(_,index)=>({...multiSenseBankGroup,headwordGroupId:`fixture-${cursor?'second':'first'}-${index}`}));
+    return new Response(JSON.stringify({...payload,groups,page:{selectedTierComplete:Boolean(cursor),nextGroupCursor:cursor?null:'second'}}),{status:200});
+   });
+   vi.stubGlobal('fetch',fetchMock);
+   const onPartial=vi.fn();let complete=false, count=0;
+   const request=fetchPlatformV2LibraryGroupPage({query:'',cardTypeId:'word-to-definition',contentLanguageCode:'nl',translationTargetLanguageCode:null,libraryScope:{dictionaryIds:null},onPartial}).then(page=>{complete=true;count=page.groups.length;});
+   await vi.advanceTimersByTimeAsync(79);expect(onPartial).not.toHaveBeenCalled();
+   await vi.advanceTimersByTimeAsync(1);expect(onPartial).toHaveBeenCalledOnce();expect(onPartial.mock.calls[0][0].groups).toHaveLength(25);expect(complete).toBe(false);
+   await vi.advanceTimersByTimeAsync(79);expect(complete).toBe(false);
+   await vi.advanceTimersByTimeAsync(1);await request;expect(complete).toBe(true);expect(count).toBe(50);
+   expect(fetchMock).toHaveBeenCalledTimes(2);
+  } finally {vi.useRealTimers();}
  });
 
 describe("Library transient initial read recovery", () => {
