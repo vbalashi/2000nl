@@ -60,6 +60,23 @@ describe.skipIf(!url)("provider housekeeping effective privilege boundary", () =
   beforeAll(async () => {
     pool = new Pool({ connectionString: url });
     await runMigrations(pool);
+    // Stock postgres:17 does not include Supabase's migration-owner role or
+    // creator grant. This disposable fixture reproduces the exact catalog row
+    // observed on a fresh Supabase stack; production SQL never writes catalogs.
+    await pool.query(`
+      do $$ begin
+        if not exists (select 1 from pg_roles where rolname='supabase_admin') then
+          create role supabase_admin nologin createrole;
+        end if;
+      end $$;
+      revoke provider_housekeeping from postgres;
+      grant provider_housekeeping to postgres
+        with admin true, inherit false, set false;
+      update pg_auth_members
+        set grantor=(select oid from pg_roles where rolname='supabase_admin')
+        where roleid=(select oid from pg_roles where rolname='provider_housekeeping')
+          and member=(select oid from pg_roles where rolname='postgres');
+    `);
   }, 120000);
   afterAll(async () => { await pool?.end(); });
 
@@ -68,12 +85,27 @@ describe.skipIf(!url)("provider housekeeping effective privilege boundary", () =
   });
 
   test("allows the exact Supabase PostgreSQL 17 creator grant", async () => {
+    const { rows } = await pool.query(`
+      select granted.rolname as granted, member.rolname as member, grantor.rolname as grantor,
+        m.admin_option as admin, m.inherit_option as inherit, m.set_option as set
+      from pg_auth_members m
+      join pg_roles granted on granted.oid=m.roleid
+      join pg_roles member on member.oid=m.member
+      join pg_roles grantor on grantor.oid=m.grantor
+      where granted.rolname='provider_housekeeping' or member.rolname='provider_housekeeping'
+    `);
+    expect(rows).toEqual([{ granted: "provider_housekeeping", member: "postgres", grantor: "supabase_admin", admin: true, inherit: false, set: false }]);
+    expect(await violations(pool)).toEqual([]);
+    await expect(pool.query(probeSql)).resolves.toBeDefined();
+  });
+
+  test("actual probe rejects an extra membership beside the allowed creator grant", async () => {
     const client = await pool.connect();
     try {
       await client.query("begin");
-      await client.query("grant provider_housekeeping to postgres with admin true, inherit false, set false granted by supabase_admin");
-      expect(await violations(client)).toEqual([]);
-      await expect(client.query(probeSql)).resolves.toBeDefined();
+      await client.query("create role housekeeping_extra_fixture");
+      await client.query("grant provider_housekeeping to housekeeping_extra_fixture");
+      await expect(client.query(probeSql)).rejects.toThrow("provider housekeeping membership or SET ROLE path changed");
       await client.query("rollback");
     } finally {
       client.release();
@@ -102,18 +134,17 @@ describe.skipIf(!url)("provider housekeeping effective privilege boundary", () =
     });
   }
 
-  for (const [name, grant] of [
-    ["SET TRUE", "grant provider_housekeeping to postgres with admin true, inherit false, set true granted by supabase_admin"],
-    ["INHERIT TRUE", "grant provider_housekeeping to postgres with admin true, inherit true, set false granted by supabase_admin"],
-    ["ADMIN FALSE", "grant provider_housekeeping to postgres with admin false, inherit false, set false granted by supabase_admin"],
-    ["wrong grantor", "grant provider_housekeeping to postgres with admin true, inherit false, set false granted by postgres"],
+  for (const [name, mutation] of [
+    ["SET TRUE", "update pg_auth_members set set_option=true where roleid=(select oid from pg_roles where rolname='provider_housekeeping') and member=(select oid from pg_roles where rolname='postgres')"],
+    ["INHERIT TRUE", "update pg_auth_members set inherit_option=true where roleid=(select oid from pg_roles where rolname='provider_housekeeping') and member=(select oid from pg_roles where rolname='postgres')"],
+    ["ADMIN FALSE", "update pg_auth_members set admin_option=false where roleid=(select oid from pg_roles where rolname='provider_housekeeping') and member=(select oid from pg_roles where rolname='postgres')"],
+    ["wrong grantor", "update pg_auth_members set grantor=(select oid from pg_roles where rolname='postgres') where roleid=(select oid from pg_roles where rolname='provider_housekeeping') and member=(select oid from pg_roles where rolname='postgres')"],
   ] as const) {
     test(`rejects creator membership drift: ${name}`, async () => {
       const client = await pool.connect();
       try {
         await client.query("begin");
-        await client.query("revoke provider_housekeeping from postgres");
-        await client.query(grant);
+        await client.query(mutation);
         expect(await violations(client)).toContain("membership");
         await expect(client.query(probeSql)).rejects.toThrow("provider housekeeping membership or SET ROLE path changed");
         await client.query("rollback");

@@ -1,10 +1,11 @@
 import copy
+import io
 import pathlib
 import sys
 import tempfile
 import unittest
 from smoke_docker_guard import snapshot, validate_cleanup, reconcile_partial, validate_database, require_confirmed_start
-from smoke_diagnostics import run_logged
+from smoke_diagnostics import read_tail, run_logged
 
 
 class GuardTest(unittest.TestCase):
@@ -92,6 +93,23 @@ class GuardTest(unittest.TestCase):
             self.assertLessEqual(len(tail.encode()), 128)
             self.assertLess(len(message.encode()), 1024)
             self.assertGreater(log.stat().st_size, 1_000_000)
+
+    def test_tail_reader_never_uses_unbounded_read(self):
+        class RecordingStream(io.BytesIO):
+            def __init__(self, value):
+                super().__init__(value)
+                self.read_sizes = []
+
+            def read(self, size=-1):
+                self.read_sizes.append(size)
+                return super().read(size)
+
+        stream = RecordingStream(b'x' * 1_048_576 + b'late-marker')
+        stream.seek(0, 2)
+        tail = read_tail(stream, 0, 128)
+        self.assertEqual(stream.read_sizes, [128])
+        self.assertEqual(len(tail), 128)
+        self.assertTrue(tail.endswith(b'late-marker'))
 
 
 if __name__ == '__main__': unittest.main()
