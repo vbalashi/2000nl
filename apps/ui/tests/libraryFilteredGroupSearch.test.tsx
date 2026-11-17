@@ -189,6 +189,28 @@ test('a transient continuation failure clears the first portion and retry starts
  expect(result.current.state.groupPageCursors[1]).toBe('next-page');
 });
 
+test('page 2 continuation failure keeps the page-start cursor and rejects a late partial',async()=>{
+ const partial={groups:[multiSenseBankGroup],nextGroupCursor:'middle',selectedTierComplete:false,
+  librarySearch:{totalGroups:101,matchingEntryIds:[financeEntry.entryId]}};
+ let oldPartial!:(page:typeof partial)=>void;
+ fetchPage.mockImplementationOnce(async input=>{oldPartial=input.onPartial;input.onPartial(partial);throw new TypeError('offline');})
+  .mockResolvedValueOnce({...partial,nextGroupCursor:'page-three'});
+ const filters={parts:['noun'],article:null};
+ const {result}=setup({query:'',page:2,groupPageCursors:[null,'page-two'],groupScopeKey:JSON.stringify(['owner',1,'nl',null,'',null,filters])});
+ await waitFor(()=>expect(result.current.search.error).toBe('search failed'));
+ expect(result.current.state.page).toBe(2);
+ expect(result.current.state.groupPageCursors).toEqual([null,'page-two']);
+ expect(result.current.state.groupResults).toEqual([]);
+ expect(result.current.state.groupTotal).toBeNull();
+ expect(result.current.state.detailSelection).toBeNull();
+ expect(result.current.state.groupHasMore).toBe(false);
+ await act(async()=>{await result.current.search.runSearch(true);});
+ expect(fetchPage.mock.calls[1][0].cursor).toBe('page-two');
+ expect(result.current.state.groupPageCursors).toEqual([null,'page-two','page-three']);
+ act(()=>oldPartial(partial));
+ expect(result.current.state.groupPageCursors).toEqual([null,'page-two','page-three']);
+});
+
 test.each([401,403,404,429,503])('final HTTP %s during continuation removes partial rows and selection',async status=>{
  const partial={groups:[multiSenseBankGroup],nextGroupCursor:'middle',selectedTierComplete:false,
   librarySearch:{totalGroups:51,matchingEntryIds:[financeEntry.entryId]}};
@@ -240,6 +262,22 @@ test('changing a received material clears an already visible partial page before
  expect(result.current.state.detailSelection).toBeNull();
  await act(async()=>finishOld({groups:[multiSenseBankGroup],nextGroupCursor:null,selectedTierComplete:true}));
  expect(result.current.state.groupResults).toEqual([]);
+});
+
+test('changing material during a partial page 2 restarts at page 1',async()=>{
+ fetchPage.mockImplementationOnce(input=>{
+  input.onPartial({groups:[multiSenseBankGroup],nextGroupCursor:'middle',selectedTierComplete:false});
+  return new Promise(()=>{});
+ }).mockImplementationOnce(()=>new Promise(()=>{}));
+ const filters={parts:['noun'],article:null};
+ const material={kind:'collection',id:'old',collectionType:'user'};
+ const {result}=setup({query:'',page:2,groupPageCursors:[null,'old-page-two'],applyListFilter:true,collectionId:'old',
+  groupScopeKey:JSON.stringify(['owner',1,'nl',null,'',material,filters])});
+ await waitFor(()=>expect(result.current.state.groupResults).toHaveLength(1));
+ act(()=>result.current.setState(current=>({...current,collectionId:'new'})));
+ await waitFor(()=>expect(result.current.state.page).toBe(1));
+ expect(result.current.state.groupResults).toEqual([]);
+ expect(result.current.state.groupPageCursors).toEqual([null]);
 });
 
 test('switching accounts clears an already visible partial page and rejects the old response',async()=>{

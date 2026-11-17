@@ -159,7 +159,7 @@ export function useLibrarySearchLifecycle({
       if (partialRef.current?.key === previous.readKey) {
         freshRef.current = null;
         setState(current => ({...current, groupResults: [], groupTotal: null, meaningTotal: null,
-          wordTotal: 0, groupHasMore: false, groupPageCursors: [null], selectedHeadwordGroupId: null,
+          wordTotal: 0, page: 1, groupHasMore: false, groupPageCursors: [null], selectedHeadwordGroupId: null,
           detailSelection: null, mobileDetailOpen: false}));
       }
       requestSequenceRef.current += 1;
@@ -358,7 +358,7 @@ export function useLibrarySearchLifecycle({
           partialRef.current = null;
           freshRef.current = null;
           setState(current => ({...current, groupResults: [], groupTotal: null, meaningTotal: null,
-            wordTotal: 0, groupHasMore: false, groupPageCursors: [null], selectedHeadwordGroupId: null,
+            wordTotal: 0, groupHasMore: false, groupPageCursors: current.groupPageCursors.slice(0, current.page), selectedHeadwordGroupId: null,
             detailSelection: null, mobileDetailOpen: false}));
         }
         if (
@@ -444,7 +444,7 @@ export function useLibrarySearchLifecycle({
       pendingRef.current = null;
       setLoading(false);
       setState(current => ({...current, groupResults: [], groupTotal: null, meaningTotal: null,
-        wordTotal: 0, groupHasMore: false, groupPageCursors: [null], selectedHeadwordGroupId: null,
+        wordTotal: 0, page: 1, groupHasMore: false, groupPageCursors: [null], selectedHeadwordGroupId: null,
         detailSelection: null, mobileDetailOpen: false}));
     }
     partialRef.current = null;
