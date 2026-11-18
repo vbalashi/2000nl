@@ -4,6 +4,16 @@ Keep changes focused. Explain the user-visible problem and how you checked the
 change. Run typecheck, lint and relevant tests from `apps/ui`; database changes
 also need the database contract suite.
 
+For shared sheet, word-panel or resize changes, select browser tests by the
+shared behavior and its consumers, not only the changed screen. For example,
+changes to the Library sheet header or resize stops should also exercise
+`training-word-panel-sequence.spec.ts`, `library-sheet-edges.spec.ts`,
+`ux-pass-integration.spec.ts` and `unified-details.spec.ts` as applicable.
+Run pilot-tagged tests with `APP_ROLLOUT_PROFILE=pilot`; inspect the test tags and
+fixtures before selecting a command. If a deliberate behavior change affects an
+existing assertion, update and run that test before pushing. Focused checks
+provide early feedback; they do not replace the required CI suite.
+
 All learner-facing interface text belongs in `apps/ui/locales`, including page
 routes, buttons, table headers, tooltips, accessibility text, validation and
 failure notices. Add a message with `npm run i18n:add -- --key ... --text ...`,
