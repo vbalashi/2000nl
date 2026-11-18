@@ -22,7 +22,11 @@ export function useCollectionComposition(userId:string,collectionId:string,onCom
   const current=context.current,base=fresh?{...initial(current.userId,current.collectionId),plan:fresh,intent:{userId:current.userId,collectionId:current.collectionId,planId:fresh.planId,action:fresh.action},status:'awaiting' as const}:latest.current;
   if(base.key!==current.key||!base.intent||!['awaiting','uncertain'].includes(base.status))return false;
   const intent=base.intent;
-  if(mode==='confirm'&&!retainCollectionCompositionJournal(labelSharingStore(),intent)){commit({...base,error:'storage'});return false;}
+  if(mode==='confirm'&&!retainCollectionCompositionJournal(labelSharingStore(),intent)){
+   // An automatic save has no confirmation step to return to.
+   commit(fresh?.action==='add'?{...initial(current.userId,current.collectionId),status:'failed',error:'storage'}:{...base,error:'storage'});
+   return false;
+  }
   request.current?.abort();const abort=new AbortController();request.current=abort;
   const valid=()=>!abort.signal.aborted&&context.current.key===current.key;
   commit({...base,status:mode==='check'?'checking':'confirming',error:null});
@@ -58,7 +62,7 @@ export function useCollectionComposition(userId:string,collectionId:string,onCom
    const plan=await prepareCollectionComposition(current.userId,current.collectionId,operation,abort.signal);
    if(abort.signal.aborted||context.current.key!==current.key)return false;
    const intent={userId:current.userId,collectionId:current.collectionId,planId:plan.planId,action:plan.action};
-   if(plan.audience.length){commit({...initial(current.userId,current.collectionId),status:'awaiting',plan,intent});return false;}
+   if(operation.action!=='add'&&plan.audience.length){commit({...initial(current.userId,current.collectionId),status:'awaiting',plan,intent});return false;}
    return await run('confirm',plan);
   }catch(error){if(!abort.signal.aborted&&context.current.key===current.key)commit({...initial(current.userId,current.collectionId),status:'failed',error:error instanceof Error?error.message:'unavailable'});return false;}
   finally{if(context.current.key===current.key)busy.current=false;}

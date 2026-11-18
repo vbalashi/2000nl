@@ -213,10 +213,11 @@ private entries requires the independent-copy workflow first.
 The sharing API lives under `/api/library/label-sharing`. Organization and
 collection composition use server-stored preview plans. Confirmation rechecks
 the exact audience and composition revision under author admission before
-writing. Reconciliation reads the existing receipt and never executes a pending
-plan. Direct collection table mutations are unavailable to browser API roles;
-application writes use the authenticated RPC boundary. Group events invalidate
-collection and note views without publishing content in event payloads.
+writing. Adding one meaning from its Library card commits the plan in the
+background regardless of audience size. Reconciliation reads the existing
+receipt and never executes a pending plan. Browser API roles use authenticated
+RPCs for collection writes. Group events invalidate collection and note views
+without publishing content in event payloads.
 
 The Platform actions `add-to-list`, `remove-from-list` and `delete-user-list`
 return HTTP 409 with `collection_audience_confirmation_required` when the

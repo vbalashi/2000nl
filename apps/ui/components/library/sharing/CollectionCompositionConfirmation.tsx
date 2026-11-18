@@ -2,6 +2,7 @@
 import React from 'react';
 import {DialogSurface} from '@/components/practice/ui/DialogSurface';
 import {localizedSection,formatMessage} from '@/lib/i18n/catalog';
+import {getUiMessages} from '@/lib/uiMessages';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import {organizationCopy} from '../organization/copy';
 import type {useCollectionComposition} from './useCollectionComposition';
@@ -14,6 +15,7 @@ import s from '../organization/organization.module.css';
 
 export function CollectionCompositionConfirmation({controller,collectionName,locale}:{controller:ReturnType<typeof useCollectionComposition>;collectionName:string;locale:OnboardingLanguage}){
  const {state}=controller,t=localizedSection('labelSharing')[locale],common=organizationCopy(locale),sharing=localizedSection('collectionSharing')[locale];
+ if(state.intent?.action==='add')return null;
  if(!['awaiting','confirming','uncertain','checking'].includes(state.status))return null;
  const busy=state.status==='confirming'||state.status==='checking',uncertain=state.status==='uncertain'||state.status==='checking'||!state.plan;
  const audience=state.plan?.audience??[],paths=audience.flatMap(row=>row.paths),action=state.intent?.action;
@@ -25,4 +27,20 @@ export function CollectionCompositionConfirmation({controller,collectionName,loc
   {busy&&<p role="status">{state.status==='checking'?common.loading:common.saving}</p>}
   <footer><button disabled={busy} onClick={controller.cancel}>{common.cancel}</button>{uncertain&&<button disabled={busy} onClick={()=>void controller.check()}>{sharing.check}</button>}<button disabled={busy} onClick={()=>void controller.confirm()}>{uncertain?t.retrySave:sharing.confirm}</button></footer>
  </div></DialogSurface>;
+}
+
+export function CollectionAdditionRecovery({controller,locale,className=""}:{controller:ReturnType<typeof useCollectionComposition>;locale:OnboardingLanguage;className?:string}){
+ const {state}=controller;
+ if(state.intent?.action!=='add'||(state.status!=='uncertain'&&state.status!=='checking'))return null;
+
+ const common=organizationCopy(locale),sharing=localizedSection('collectionSharing')[locale];
+ const checking=state.status==='checking';
+ return <div className={`space-y-2 text-sm text-[var(--practice-text-muted)] ${className}`}>
+  {checking?<p role="status">{common.loading}</p>:<p role="alert">{getUiMessages(locale).collectionComposition.pending}</p>}
+  <div className="flex flex-wrap gap-3">
+   <button type="button" className="underline" disabled={checking} onClick={()=>void controller.check()}>{sharing.check}</button>
+   <button type="button" className="underline" disabled={checking} onClick={()=>void controller.confirm()}>{common.retry}</button>
+   <button type="button" className="underline" disabled={checking} onClick={controller.cancel}>{common.cancel}</button>
+  </div>
+ </div>;
 }
