@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { reportReturnPath } from '@/lib/admin/reportReturn';
+import { adminReturnPath as reportReturnPath } from '@/lib/admin/consoleRoutes';
 
 describe('report return after admin login', () => {
   const origin = 'https://example.test';
