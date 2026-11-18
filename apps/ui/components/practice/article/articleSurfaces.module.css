@@ -55,7 +55,7 @@
 /* Reserve reading space even when browser zoom leaves a very short panel.
    Normal panels keep the entire word lockup pinned; oversized headers can scroll. */
 .header {
-  max-height: calc(100% - 48px);
+  max-height: 50%;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: none;
