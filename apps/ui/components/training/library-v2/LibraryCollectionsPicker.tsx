@@ -22,6 +22,7 @@ type Props = {
   memberships: EntryLearningListMembership[];
   busyListId: string | null;
   status: string | null;
+  saveRecovery?: React.ReactNode;
   membershipState?: "loading" | "ready" | "failed";
   onRetryMemberships?: () => void;
   onClose: () => void;
@@ -39,6 +40,7 @@ export function LibraryCollectionsPicker({
   memberships,
   busyListId,
   status,
+  saveRecovery,
   membershipState = "ready",
   onRetryMemberships,
   onClose,
@@ -269,9 +271,12 @@ export function LibraryCollectionsPicker({
         </div>
 
         <footer data-dialog-part="footer" className="flex min-h-12 items-center justify-between gap-3 border-t border-slate-200 px-5 py-3 dark:border-slate-700">
-          <p role="status" className="text-xs text-emerald-700 dark:text-emerald-300">
-            {status}
-          </p>
+          <div>
+            <p role="status" className="text-xs text-emerald-700 dark:text-emerald-300">
+              {status}
+            </p>
+            {saveRecovery}
+          </div>
           <button
             type="button"
             data-onboarding="membership-done" onClick={onClose}

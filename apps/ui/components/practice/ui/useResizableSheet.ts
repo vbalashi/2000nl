@@ -32,23 +32,16 @@ export function useResizableSheet(
     moved: boolean;
   }>();
   const suppressClick = React.useRef(false);
-  const bounds = React.useCallback(
-    () =>
-      sheetBounds(
-        window.visualViewport?.height ?? window.innerHeight,
-        ref.current
-          ? parseFloat(getComputedStyle(ref.current).bottom) || 0
-          : 72,
-        ref.current
-          ? parseFloat(
-              getComputedStyle(ref.current).getPropertyValue(
-                "--sheet-top-inset",
-              ),
-            ) || 0
-          : 0,
-      ),
-    [],
-  );
+  const bounds = React.useCallback(() => {
+    const style = ref.current ? getComputedStyle(ref.current) : null;
+    const limits = sheetBounds(
+      window.visualViewport?.height ?? window.innerHeight,
+      style ? parseFloat(style.bottom) || 0 : 72,
+      style ? parseFloat(style.getPropertyValue("--sheet-top-inset")) || 0 : 0,
+    );
+    const minimum = style ? parseFloat(style.minHeight) || 0 : 0;
+    return { ...limits, min: Math.min(limits.max, Math.max(limits.min, minimum)) };
+  }, []);
   const update = React.useCallback(
     (value: number) => {
       const limits = bounds();
@@ -59,7 +52,7 @@ export function useResizableSheet(
     [bounds],
   );
   React.useEffect(() => {
-    setHeight(ref.current ? bounds().max * 0.66 : undefined);
+    setHeight(ref.current ? Math.max(bounds().min, bounds().max * 0.66) : undefined);
     setExpanded(false);
     setDragging(false);
     gesture.current = undefined;
@@ -88,7 +81,7 @@ export function useResizableSheet(
       const limits = bounds();
       if (current.currentHeight < limits.min * 0.62 && onDismiss) onDismiss();
       else {
-        const stops = [limits.min, limits.max * 0.66, limits.max];
+        const stops = [limits.min, Math.max(limits.min, limits.max * 0.66), limits.max];
         update(
           stops.reduce((a, b) =>
             Math.abs(b - current.currentHeight) <
@@ -149,7 +142,7 @@ export function useResizableSheet(
         const limits = bounds();
         const current =
           ref.current?.getBoundingClientRect().height ?? limits.max * 0.66;
-        const stops = [limits.min, limits.max * 0.66, limits.max];
+        const stops = [limits.min, Math.max(limits.min, limits.max * 0.66), limits.max];
         const closest = stops.reduce(
           (best, v, i) =>
             Math.abs(v - current) < Math.abs(stops[best] - current) ? i : best,

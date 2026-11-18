@@ -1,7 +1,7 @@
 "use client";
 import { useCardLoadDiagnostics } from "@/lib/diagnostics/useCardLoadDiagnostics";
 import {useCollectionComposition} from '@/components/library/sharing/useCollectionComposition';
-import {CollectionCompositionConfirmation} from '@/components/library/sharing/CollectionCompositionConfirmation';
+import {CollectionAdditionRecovery, CollectionCompositionConfirmation} from '@/components/library/sharing/CollectionCompositionConfirmation';
 import {useSelectedMembership} from '@/components/library/sharing/useSelectedMembership';
 import {clearPlatformNoteMaterial} from "@/lib/platform/noteMaterialPresentation";
 
@@ -1003,6 +1003,9 @@ function SenseCardV2Session({
       {archiveEntryId && userId && context === "library" ? <AuthorEntryArchiveDialog key={detailIdentity} entryId={archiveEntryId} headword={model.headword} userId={userId} language={interfaceLanguage} onCancel={() => setArchiveEntryId(null)} onArchived={() => { setArchiveEntryId(null); onArchived?.(archiveEntryId); }} /> : null}
       {reportSnapshot ? <SenseCardReportSheet snapshot={reportSnapshot} interfaceLanguage={interfaceLanguage} onClose={() => setReportSnapshot(null)} /> : null}
       {activeCompositionTarget && <CollectionCompositionConfirmation controller={composition} collectionName={activeCompositionTarget.list.name} locale={interfaceLanguage}/>}
+      {activeCompositionTarget && !collectionsMeaning && (
+        <CollectionAdditionRecovery controller={composition} locale={interfaceLanguage} className="px-4 py-2" />
+      )}
       <LibraryCollectionsPicker
         open={Boolean(collectionsMeaning)}
         headword={model.headword}
@@ -1018,6 +1021,7 @@ function SenseCardV2Session({
         membershipState={membershipState}
         onRetryMemberships={() => { setCollectionStatus(null); void refreshMemberships(); }}
         status={collectionStatus}
+        saveRecovery={activeCompositionTarget && <CollectionAdditionRecovery controller={composition} locale={interfaceLanguage} />}
         onClose={() => setCollectionsEntryId(null)}
         onToggleList={(list, included) => void handleToggleList(list, included)}
         onCreateList={(name) => void handleCreateList(name)}

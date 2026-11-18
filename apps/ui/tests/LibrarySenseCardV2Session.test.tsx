@@ -562,7 +562,44 @@ describe("LibrarySenseCardV2Session", () => {
     expect(trainNext).not.toHaveBeenCalled();
   });
 
-  test("shared collection changes ask for confirmation before saving", async () => {
+  test.each([0, 2])("adds a meaning in the background with %i subscribers", async (subscriberCount) => {
+    vi.stubEnv("NEXT_PUBLIC_LABEL_SHARING_ENABLED", "true");
+    sessionStorage.clear();
+    try {
+      const list = { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", name: "Lesson", type: "user" as const };
+      const planId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+      const audience = Array.from({ length: subscriberCount }, (_, index) => ({
+        userId: `reader-${index}`,
+        paths: [{ kind: index === 0 ? "collection" : "label" }],
+      }));
+      compositionCalls.prepare.mockResolvedValue({ planId, collectionId: list.id, action: "add", audience });
+      const receipt = { planId, collectionId: list.id, status: "committed" };
+      let finish!: (value: typeof receipt) => void;
+      compositionCalls.confirm.mockReset().mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+
+      render(<LibrarySenseCardV2Session entryId={financeEntry.entryId} initialGroup={multiSenseBankGroup}
+        headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"
+        userId="owner" userLists={[list]} currentCollection={list} />);
+      const card = await screen.findByTestId(`library-sense-card-${financeEntry.entryId}`);
+      await waitFor(() => expect(card).toHaveAttribute("data-current-collection", "excluded"));
+      fireEvent.click(within(card).getByRole("button", { name: "Collections" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "Add to “Lesson”" }));
+
+      await waitFor(() => expect(compositionCalls.confirm).toHaveBeenCalledOnce());
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(card).toHaveAttribute("data-current-collection", "excluded");
+
+      fetchMemberships.mockResolvedValue(new Map([[financeEntry.entryId, [membership(list.id)]]]));
+      await act(async () => finish(receipt));
+      await waitFor(() => expect(card).toHaveAttribute("data-current-collection", "included"));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    } finally {
+      vi.unstubAllEnvs();
+      compositionCalls.confirm.mockReset();
+    }
+  });
+
+  test("removing a meaning from a shared collection asks for confirmation before saving", async () => {
     vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');sessionStorage.clear();
     const list={id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',name:'Lesson',type:'user' as const};
     const planId='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';

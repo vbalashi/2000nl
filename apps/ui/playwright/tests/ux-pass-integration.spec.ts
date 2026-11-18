@@ -40,7 +40,7 @@ test("@pilot Library sheet follows mouse and touch and snaps to shared stops in 
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await expect.poll(height).toBeCloseTo(820, 0);
   const touch = await height();
-  await handle.press('Home'); await expect.poll(height).toBeCloseTo(240, 0);
+  await handle.press('Home'); await expect.poll(height).toBeCloseTo(300, 0);
   await handle.click(); await expect.poll(height).toBeCloseTo(initial, 0);
   await handle.click(); await expect(sheet.locator('button[aria-expanded="true"]').first()).toBeVisible();
   await testInfo.attach('pointer-evidence.json', { body: JSON.stringify({ source: 'real Library UI, mocked transport', initial, mouse, touch }), contentType: 'application/json' });
