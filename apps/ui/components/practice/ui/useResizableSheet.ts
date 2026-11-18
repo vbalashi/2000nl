@@ -32,23 +32,16 @@ export function useResizableSheet(
     moved: boolean;
   }>();
   const suppressClick = React.useRef(false);
-  const bounds = React.useCallback(
-    () =>
-      sheetBounds(
-        window.visualViewport?.height ?? window.innerHeight,
-        ref.current
-          ? parseFloat(getComputedStyle(ref.current).bottom) || 0
-          : 72,
-        ref.current
-          ? parseFloat(
-              getComputedStyle(ref.current).getPropertyValue(
-                "--sheet-top-inset",
-              ),
-            ) || 0
-          : 0,
-      ),
-    [],
-  );
+  const bounds = React.useCallback(() => {
+    const style = ref.current ? getComputedStyle(ref.current) : null;
+    const limits = sheetBounds(
+      window.visualViewport?.height ?? window.innerHeight,
+      style ? parseFloat(style.bottom) || 0 : 72,
+      style ? parseFloat(style.getPropertyValue("--sheet-top-inset")) || 0 : 0,
+    );
+    const minimum = style ? parseFloat(style.minHeight) || 0 : 0;
+    return { ...limits, min: Math.min(limits.max, Math.max(limits.min, minimum)) };
+  }, []);
   const update = React.useCallback(
     (value: number) => {
       const limits = bounds();
