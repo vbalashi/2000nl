@@ -52,7 +52,7 @@ export function useResizableSheet(
     [bounds],
   );
   React.useEffect(() => {
-    setHeight(ref.current ? bounds().max * 0.66 : undefined);
+    setHeight(ref.current ? Math.max(bounds().min, bounds().max * 0.66) : undefined);
     setExpanded(false);
     setDragging(false);
     gesture.current = undefined;
@@ -81,7 +81,7 @@ export function useResizableSheet(
       const limits = bounds();
       if (current.currentHeight < limits.min * 0.62 && onDismiss) onDismiss();
       else {
-        const stops = [limits.min, limits.max * 0.66, limits.max];
+        const stops = [limits.min, Math.max(limits.min, limits.max * 0.66), limits.max];
         update(
           stops.reduce((a, b) =>
             Math.abs(b - current.currentHeight) <
@@ -142,7 +142,7 @@ export function useResizableSheet(
         const limits = bounds();
         const current =
           ref.current?.getBoundingClientRect().height ?? limits.max * 0.66;
-        const stops = [limits.min, limits.max * 0.66, limits.max];
+        const stops = [limits.min, Math.max(limits.min, limits.max * 0.66), limits.max];
         const closest = stops.reduce(
           (best, v, i) =>
             Math.abs(v - current) < Math.abs(stops[best] - current) ? i : best,
