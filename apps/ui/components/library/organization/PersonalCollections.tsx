@@ -208,7 +208,11 @@ export function PersonalCollections({active, userId, language, locale, collectio
     {details&&<CollectionDetailsSurface name={t.collections} onClose={()=>setDetails(null)}><CollectionDetailsController key={`${userId}:${details.id}`} userId={userId} id={details.id} itemCount={details.item_count??null} canEditLabels={details.ownership==='owned'||details.ownership==='received'||!publicationEnabled} onUnavailable={()=>{setReceivedEditor(null);setEditor(current=>current?.kind==='assign'&&current.collection.id===details.id?null:current);}} onChanged={()=>{void onReload();void catalog.refresh();}} labelNames={details.labelIds?.map(id=>labelRows.find(row=>row.label.id===id)?.path).filter((name):name is string=>Boolean(name))??(snapshot.assignments.filter(item=>item.collection_id===details.id).map(item=>labelRows.find(row=>row.label.id===item.label_id)?.path).filter((path):path is string=>Boolean(path)))} locale={locale} isShared={details.isShared===true} onClose={()=>setDetails(null)} onLabels={name=>{const collection={...details,name};if(details.ownership==='received')setReceivedEditor({ownerId:userId,collection});else begin({kind:"assign",collection});}} onOpen={name=>{setDetails(null);const collection={...details,name};if(details.ownership==='received')onOpenReceived?.(collection);else onOpen(collection);}}/></CollectionDetailsSurface>}
     {scopeOpen && <DialogSurface className={overlays.dialog} aria-label={t.chooseScope} onDismiss={()=>setScopeOpen(false)}><div className={s.scopeDialog}><button className={s.dismiss} aria-label={t.close} onClick={()=>setScopeOpen(false)}><X size={20}/></button>{scopePicker}</div></DialogSurface>}
     {menu && <ActionMenu anchor={menu.anchor} title={t.more} language={locale} onClose={()=>setMenu(null)} items={menu.label ? [
-      ...(onOpenLabel ? [{id:"open",label:t.open,onSelect:()=>{onOpenLabel(menu.label!);setMenu(null);}}] : []),
+      ...(onOpenLabel ? [{id:"open",label:t.open,onSelect:()=>{
+        setMenu(null);
+        setScopeOpen(false);
+        onOpenLabel(menu.label!);
+      }}] : []),
       ...(groupSharingEnabled?[{id:'share',label:localizedField('personalCollections','share')[locale],icon:<Share2 size={16}/>,onSelect:()=>{menu.anchor.focus({preventScroll:true});setSharingLabel({ownerId:userId,label:menu.label!});setMenu(null);}}]:[]),
       {id:"edit",label:t.editLabel,onSelect:()=>begin({kind:"label",id:menu.label!.id,existing:menu.label})},
       {id:"child",label:t.newLabel,onSelect:()=>{begin({kind:"label",id:crypto.randomUUID()});setParent(menu.label!.id);}},
