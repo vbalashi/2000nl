@@ -58,6 +58,17 @@ it("offers Google entry without a mandatory email control", async () => {
   await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/admin/auth/start", expect.objectContaining({ body: "{}" })));
 });
 
+it("passes a direct unified console return through Google sign-in", async () => {
+  const returnTo = "/admin/reports/?view=journal&period=90";
+  window.history.replaceState({}, "", `/admin?${new URLSearchParams({ view: "login", returnTo })}`);
+  fetchMock.mockResolvedValue(Response.json({ error: "unavailable" }, { status: 503 }));
+  render(<AdminConsole unifiedEntry />);
+  fireEvent.click(await screen.findByRole("button", { name: "Продолжить с Google" }));
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+    "/api/admin/auth/start", expect.objectContaining({ body: JSON.stringify({ returnTo }) }),
+  ));
+});
+
 it("keeps four registry columns and collapses technical detail", async () => {
   const dictionary = { id: "dictionary-1", name: "Example Dictionary", slug: "example", languageCode: "nl", kind: "curated", visibility: "system", ownerId: null, updatedAt: null };
   fetchMock.mockImplementation(async (url: string) => {

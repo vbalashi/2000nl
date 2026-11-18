@@ -1,5 +1,6 @@
 "use client";
 import React,{useEffect,useState} from 'react';
+import { requestedAdminReturn } from '@/lib/admin/consoleRoutes';
 
 /** Tokens stay in the form and HttpOnly server session, never browser storage. */
 export function AdminEmailSignIn() {
@@ -10,7 +11,7 @@ export function AdminEmailSignIn() {
   event.preventDefault();setBusy(true);setError(false);
   const verification=enterCode;const code=token;if(verification)setToken('');
   try {
-   let returnTo:string|null=null;try{returnTo=sessionStorage.getItem('admin.returnTo');}catch{}
+   const returnTo = requestedAdminReturn();
    const response=await fetch(verification?'/api/admin/auth/email/verify':'/api/admin/auth/email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(verification?{email,token:code}:{email,...(returnTo?{returnTo}:{})})});
    if(!response.ok)throw new Error();
    if(verification){const result=await response.json();if(typeof result.url!=='string' || !(result.url==='/admin' || result.url.startsWith('/admin?returnTo=')))throw new Error();window.location.assign(result.url);}

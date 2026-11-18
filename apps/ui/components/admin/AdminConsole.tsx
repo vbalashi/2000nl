@@ -2,7 +2,7 @@
 
 import { AdminEmailSignIn } from "./AdminEmailSignIn";
 
-import { reportReturnPath } from "@/lib/admin/reportReturn";
+import { adminConsoleHome, adminReturnPath, requestedAdminReturn } from "@/lib/admin/consoleRoutes";
 
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -123,7 +123,7 @@ function CopyField({ label, value }: { label: string; value: string | null }) {
   </div>;
 }
 
-export default function AdminConsole() {
+export default function AdminConsole({ unifiedEntry = false }: { unifiedEntry?: boolean }) {
   const router = useRouter();
   const [location, setLocation] = useState<LocationState | null>(null);
   const [searchDraft, setSearchDraft] = useState("");
@@ -198,7 +198,11 @@ export default function AdminConsole() {
       setForbidden(false);
       const sessionResponse = await fetch("/api/admin/session", { cache: "no-store" });
       if (sessionResponse.status === 401) {
-        if (!cancelled) navigate(adminUrl({ view: "login", state: "expired", id: "" }));
+        if (!cancelled) {
+          const login = adminUrl({ view: "login", state: "expired", id: "" });
+          const returnTo = unifiedEntry ? requestedAdminReturn() : null;
+          navigate(returnTo ? `${login}&${new URLSearchParams({ returnTo })}` : login);
+        }
         return;
       }
       if (sessionResponse.status === 403) {
@@ -208,11 +212,13 @@ export default function AdminConsole() {
       if (!sessionResponse.ok) throw new Error("Admin session unavailable");
       const session = await sessionResponse.json() as { email: string; permissions: string[] };
       if (cancelled) return;
-      // The independent reports frontend may request a return after administrator sign-in.
-      // Only accept a same-origin reports path and require its actual permission.
-      const returnTo = new URL(window.location.href).searchParams.get("returnTo") || sessionStorage.getItem("admin.returnTo");
-      sessionStorage.removeItem("admin.returnTo");
-      const destination = reportReturnPath(returnTo, window.location.origin, session.permissions);
+      const returnTo = requestedAdminReturn();
+      try { sessionStorage.removeItem("admin.returnTo"); } catch { /* Browser storage is optional. */ }
+      const destination = adminReturnPath(returnTo, window.location.origin, session.permissions, unifiedEntry);
+      if (unifiedEntry) {
+        window.location.replace(destination ?? adminConsoleHome);
+        return;
+      }
       if (destination) {
         window.location.assign(destination);
         return;
@@ -270,7 +276,7 @@ export default function AdminConsole() {
       .catch(() => { if (!cancelled) setLoadError(true); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [location, navigate, router]);
+  }, [location, navigate, router, unifiedEntry]);
 
   const go = (view: View) => navigate(adminUrl(view === "dictionaries"
     ? { view, id: "", state: "" }
@@ -291,7 +297,7 @@ export default function AdminConsole() {
     setLoginBusy(true);
     setLoginError(false);
     try {
-      let returnTo:string|null=null;try{returnTo=sessionStorage.getItem("admin.returnTo");}catch{}
+      const returnTo = requestedAdminReturn();
       const response = await fetch("/api/admin/auth/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
