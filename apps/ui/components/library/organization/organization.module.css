@@ -22,10 +22,10 @@
 .filters{display:flex;gap:16px}.filters .search{flex:1}.filters select{max-width:40%}
 .organizer select,.editor select,.editor input:not([type=checkbox]){background:var(--practice-surface);color:var(--practice-text);border:1px solid var(--practice-border);border-radius:10px;padding:10px 12px;font:inherit;min-width:0;min-height:44px}
 .results{overflow:auto;scrollbar-width:none;min-height:0;flex:1;display:flex;flex-direction:column;gap:12px;padding:2px}
-.collection{display:flex;align-items:flex-start;gap:12px;flex-shrink:0;border:0;border-bottom:1px solid var(--practice-border);background:transparent;border-radius:0;padding:16px 4px}
+.collection{position:relative;display:flex;align-items:flex-start;gap:12px;flex-shrink:0;border:0;border-bottom:1px solid var(--practice-border);background:transparent;border-radius:0;padding:16px 4px}
 .collection>svg{flex-shrink:0;margin-top:6px}.collectionCopy{min-width:0;flex:1}.collection .collectionName{background:transparent;border:0;min-height:28px;padding:0;justify-content:flex-start;text-align:start;font-family:var(--practice-font-ui);font-size:var(--practice-text-body);overflow-wrap:anywhere}
-.collection p{display:flex;align-items:center;gap:6px;color:var(--practice-text-muted);font-size:var(--practice-text-caption);margin:8px 0 0;overflow-wrap:anywhere}
-.collection>button:last-child{border:0;background:transparent;padding:4px}.loadMore{flex-shrink:0;width:100%}
+.collection .collectionName::after{content:"";position:absolute;inset:0}.collection p{display:flex;align-items:center;gap:6px;color:var(--practice-text-muted);font-size:var(--practice-text-caption);margin:8px 0 0;overflow-wrap:anywhere}
+.collection>button:last-child{position:relative;z-index:1;border:0;background:transparent;padding:4px}.loadMore{flex-shrink:0;width:100%}
 .muted{color:var(--practice-text-muted)}.state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px;text-align:center;color:var(--practice-text-muted);font-size:var(--practice-text-small)}
 .organizer .mobileScope{display:none}.scopeDialog{padding:20px;max-height:calc(100dvh - 80px);display:flex;flex-direction:column}.scopeDialog .dismiss{align-self:flex-end;border:0;background:none}
 .editor{display:flex;flex-direction:column;gap:20px;padding:24px;font-size:var(--practice-text-small);font-family:var(--practice-font-ui)}
