@@ -157,6 +157,15 @@ for (const viewport of viewports) {
     const roleSize = await practiceHeadwordRoleSize(headword);
     await expect(headword).toHaveCSS("font-size", roleSize);
     await expectReviewedHeaderGeometry(page);
+    if (viewport.width === 320 && size === "largest" && colorScheme === "light") {
+      await page.locator("[aria-keyshortcuts*=Home]").press("Home");
+      await page.waitForTimeout(300);
+      const geometry = await headword.evaluate(el => {
+        const word = el.getBoundingClientRect(), header = el.closest("header")!.getBoundingClientRect();
+        return { wordBottom: word.bottom, headerBottom: header.bottom };
+      });
+      expect(geometry.wordBottom).toBeLessThanOrEqual(geometry.headerBottom + 1);
+    }
     await expect(page.locator("[data-entry-id]")).toHaveCount(1);
     if (viewport.width < 1024) {
       const close = page.getByRole("button", { name: "Sluiten", exact: true });
