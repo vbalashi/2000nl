@@ -12,3 +12,9 @@ test('diff must be bounded and derived from ancestor commits without rename shor
  assert.throws(()=>gitChangedFiles('no','b'.repeat(40),run));
  assert.throws(()=>gitChangedFiles('a'.repeat(40),'b'.repeat(40),()=>Buffer.alloc(0)));
 });
+
+test('documentation-only diffs skip browser setup; mixed diffs stay full',()=>{
+ assert.equal(browserProfile(['CONTRIBUTING.md','docs/ui/interface-standard.md']),'docs');
+ assert.equal(browserProfile(['docs/development.md','apps/ui/lib/releases/appRelease.ts']),'full');
+ assert.equal(browserProfile(['apps/ui/components/README.md']),'full');
+});
