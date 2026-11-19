@@ -20,6 +20,14 @@
 .readingRegion {
   outline: none;
 }
+.readingRegion.readingRegion,
+.header.header {
+  scrollbar-width: none;
+}
+.readingRegion.readingRegion::-webkit-scrollbar,
+.header.header::-webkit-scrollbar {
+  display: none;
+}
 .readingRegion:focus-visible {
   box-shadow: inset 0 0 0 2px var(--practice-focus);
 }
@@ -58,9 +66,7 @@
   max-height: 50%;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: none;
 }
-.header::-webkit-scrollbar { display: none; }
 .header:focus-visible { box-shadow: inset 0 0 0 2px var(--practice-focus); outline: none; }
 
 .group .card {
@@ -85,8 +91,8 @@
 .header [data-testid="sense-card-header-actions"] button { width:32px;height:32px; }
 .header [data-testid="sense-card-header-actions"] button svg { width:16px;height:16px; }
 
-.scrollFade{background:linear-gradient(to bottom,var(--practice-canvas),color-mix(in srgb,var(--practice-canvas) 90%,transparent),transparent)}
-.scrollFade[data-scroll-affordance="bottom"]{background:linear-gradient(to top,var(--practice-canvas),color-mix(in srgb,var(--practice-canvas) 90%,transparent),transparent)}
+.scrollFade{background:linear-gradient(to bottom,var(--card-scroll-fade-surface,var(--practice-canvas)),color-mix(in srgb,var(--card-scroll-fade-surface,var(--practice-canvas)) 90%,transparent),transparent)}
+.scrollFade[data-scroll-affordance="bottom"]{background:linear-gradient(to top,var(--card-scroll-fade-surface,var(--practice-canvas)),color-mix(in srgb,var(--card-scroll-fade-surface,var(--practice-canvas)) 90%,transparent),transparent)}
 .scrollFadeIcon{color:var(--practice-text-muted)}
 
 .statusAction{display:inline-flex;align-items:center;padding:0;border:0;background:transparent;color:inherit;font:inherit;pointer-events:auto;cursor:pointer;min-height:18px}

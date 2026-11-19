@@ -161,8 +161,7 @@
   background: var(--practice-selected);
   color: var(--practice-selected-text);
 }
-.iconAction:focus-visible,
-.scrollCue:focus-visible {
+.iconAction:focus-visible {
   outline: 2px solid var(--practice-focus);
   outline-offset: 2px;
 }
@@ -184,24 +183,21 @@
   font-weight: 500;
 }
 .scrollCue {
-  position: absolute;
-  bottom: 8px;
-  left: 50%;
-  z-index: 10;
   display: grid;
-  place-items: center;
-  width: 40px;
+  justify-items: center;
+  align-content: end;
+  width: 44px;
   height: 28px;
-  border: 1px solid var(--practice-border);
-  border-radius: 999px;
-  background: var(--practice-surface);
-  color: var(--practice-text-secondary);
-  box-shadow: 0 4px 12px var(--practice-shadow);
-  transform: translateX(-50%);
+  padding: 0;
+  border: 0;
+  border-radius: var(--practice-radius-control);
+  background: transparent;
+  pointer-events: auto;
   cursor: pointer;
 }
-.scrollCue:hover {
-  background: var(--practice-surface-hover);
+.scrollCue:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: -2px;
 }
 
 .wordFit[data-headword-fit="single-line"] wbr { display: none; }

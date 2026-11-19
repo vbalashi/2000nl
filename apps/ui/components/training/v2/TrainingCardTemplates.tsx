@@ -4,7 +4,6 @@ import {useAdditionalCardTranslation} from "@/components/practice/article/Additi
 import { useTrainingFaceFit } from "../useTrainingFaceFit";
 import { useTrainingInteractions } from "@/components/practice/ui/TrainingInteractionPreferences";
 import {
-  ChevronDown,
   Languages,
   Lightbulb,
   MoreHorizontal,
@@ -22,6 +21,7 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   SenseCardReveal,
+  SenseCardScrollFade,
   SenseCardHeadwordLockup,
 } from "../SenseCardChrome";
 
@@ -134,15 +134,18 @@ function CompactAnswerReading({compact,label,scrollMoreLabel,onReachEnd,children
     if (node.firstElementChild) observer?.observe(node.firstElementChild);
     return () => observer?.disconnect();
   }, [children, compact, update]);
-  const maskImage = scrollMask(scroll.top, scroll.bottom);
   return <div className={compact ? "relative min-h-0 flex-1" : "contents"}>
     <div ref={viewport} data-testid={compact ? "training-answer-scroll" : undefined} data-reading-layout={compact ? "compact" : undefined} role={compact ? "region" : undefined} aria-label={compact ? label : undefined} tabIndex={compact ? 0 : undefined}
       data-scroll-top={compact ? (scroll.top ? "faded" : "clear") : undefined} data-scroll-bottom={compact ? (scroll.bottom ? "faded" : "clear") : undefined}
       onScroll={compact ? update : undefined} onKeyDown={event => { if (compact && event.key === " ") event.stopPropagation(); }}
-      style={compact ? {maskImage, WebkitMaskImage:maskImage} : undefined} className={compact ? approved.compactAnswerScroll : "contents"}><div className={compact ? undefined : "contents"}>{children}</div></div>
-    {compact && scroll.bottom ? <button type="button" aria-label={scrollMoreLabel} className={chrome.scrollCue}
-      onClick={() => { focusPending.current = true; viewport.current?.scrollBy({top:Math.max(120,(viewport.current?.clientHeight ?? 0)*0.65),behavior:preferences.animation && !window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "auto"}); }}>
-      <ChevronDown aria-hidden="true" className="h-4 w-4" /></button> : null}
+      className={compact ? `${approved.compactAnswerScroll} ${approved.cardScroll}` : "contents"}><div className={compact ? undefined : "contents"}>{children}</div></div>
+    {compact ? <TrainingScrollCues scroll={scroll} label={scrollMoreLabel} onMore={() => {
+      focusPending.current = true;
+      viewport.current?.scrollBy({
+        top: Math.max(120, viewport.current.clientHeight * 0.65),
+        behavior: preferences.animation && !window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "auto",
+      });
+    }} /> : null}
   </div>;
 }
 
@@ -297,13 +300,11 @@ export function TrainingCardFace({
 }) {
   const { preferences } = useTrainingInteractions();
   const fit = useTrainingFaceFit(JSON.stringify([prompt, recallTarget, hint, label, contextLabel, partOfSpeech]));
-  const maskImage = scrollMask(fit.scroll.top, fit.scroll.bottom);
   return (
     <div className="relative min-h-0 flex-1">
     <div
       ref={fit.viewport}
       onScroll={fit.updateScroll}
-      style={{ maskImage, WebkitMaskImage: maskImage }}
       data-scroll-top={fit.scroll.top ? "faded" : "clear"}
       data-scroll-bottom={fit.scroll.bottom ? "faded" : "clear"}
       data-testid="training-face-scroll"
@@ -314,7 +315,7 @@ export function TrainingCardFace({
         // Space scrolls a focused reading region; it must not reveal the answer.
         if (event.key === " ") event.stopPropagation();
       }}
-      className="h-full min-h-0 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--practice-focus,#818cf8)]"
+      className={`h-full min-h-0 overflow-y-auto overscroll-contain rounded-[14px] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--practice-focus,#818cf8)] ${approved.cardScroll}`}
     >
       <div ref={fit.layout} className={approved.faceLayout}>
         <div className={approved.facePrelude}>
@@ -373,12 +374,12 @@ export function TrainingCardFace({
         ) : <div />}
       </div>
     </div>
-    {fit.scroll.bottom ? (
-      <button type="button" aria-label={scrollMoreLabel ?? contentLabel} className={chrome.scrollCue}
-        onClick={() => fit.viewport.current?.scrollBy({ top: Math.max(120, fit.viewport.current.clientHeight * 0.65), behavior: preferences.animation ? "smooth" : "auto" })}>
-        <ChevronDown aria-hidden="true" className="h-4 w-4" />
-      </button>
-    ) : null}
+    <TrainingScrollCues scroll={fit.scroll} label={scrollMoreLabel ?? contentLabel} onMore={() => {
+      fit.viewport.current?.scrollBy({
+        top: Math.max(120, fit.viewport.current.clientHeight * 0.65),
+        behavior: preferences.animation ? "smooth" : "auto",
+      });
+    }} />
     </div>
   );
 }
@@ -449,7 +450,6 @@ export function TrainingCardAnswerBody({
     window.requestAnimationFrame(onReachEnd);
   }, [onReachEnd, scrollState.bottom]);
 
-  const maskImage = scrollMask(scrollState.top, scrollState.bottom);
   return (
     <div className={compact ? "relative" : "relative min-h-0 flex-1"}>
       <div
@@ -466,8 +466,7 @@ export function TrainingCardAnswerBody({
         data-scroll-top={scrollState.top ? "faded" : "clear"}
         data-scroll-bottom={scrollState.bottom ? "faded" : "clear"}
         onScroll={updateScrollState}
-        style={compact ? undefined : { maskImage, WebkitMaskImage: maskImage }}
-        className={compact ? "pb-5 pt-2" : `h-full overflow-y-auto pb-5 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${approved.answerScroll}`}
+        className={compact ? "pb-5 pt-2" : `h-full overflow-y-auto pb-5 pt-2 ${approved.answerScroll} ${approved.cardScroll}`}
       >
         <ProductionArticleReading>
           {definitions.map(node=><ArticleContentNode key={node.contentNodeId} node={node} lead interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} translationPending={translationPending} translationFailed={translationFailed} onRetryTranslation={onRetryTranslation}/>)}
@@ -476,22 +475,13 @@ export function TrainingCardAnswerBody({
         </ProductionArticleReading>
 
       </div>
-      {!compact && scrollState.bottom ? (
-        <button
-          type="button"
-          aria-label={t("senseCard.scroll.more")}
-          onClick={() => {
-            continuationFocusPendingRef.current = true;
-            scrollRef.current?.scrollBy({
-              top: Math.max(120, scrollRef.current.clientHeight * 0.65),
-              behavior: "smooth",
-            });
-          }}
-          className={chrome.scrollCue}
-        >
-          <ChevronDown aria-hidden="true" className="h-4 w-4" />
-        </button>
-      ) : null}
+      {!compact ? <TrainingScrollCues scroll={scrollState} label={t("senseCard.scroll.more")} onMore={() => {
+        continuationFocusPendingRef.current = true;
+        scrollRef.current?.scrollBy({
+          top: Math.max(120, scrollRef.current.clientHeight * 0.65),
+          behavior: "smooth",
+        });
+      }} /> : null}
     </div>
   );
 }
@@ -570,17 +560,23 @@ export function TrainingCardReviewButton({
 }
 export const trainingReviewGridClassName =
   "grid h-[90px] grid-cols-2 grid-rows-2 gap-[6px] sm:h-[42px] sm:grid-cols-4 sm:grid-rows-1";
-function scrollMask(top: boolean, bottom: boolean) {
-  if (top && bottom) {
-    return "linear-gradient(to bottom, transparent 0, black 18px, black calc(100% - 22px), transparent 100%)";
-  }
-  if (top) {
-    return "linear-gradient(to bottom, transparent 0, black 18px, black 100%)";
-  }
-  if (bottom) {
-    return "linear-gradient(to bottom, black 0, black calc(100% - 22px), transparent 100%)";
-  }
-  return "none";
+function TrainingScrollCues({
+  scroll,
+  label,
+  onMore,
+}: {
+  scroll: { top: boolean; bottom: boolean };
+  label: string;
+  onMore: () => void;
+}) {
+  return (
+    <>
+      {scroll.top ? <SenseCardScrollFade edge="top" className={approved.trainingScrollFade} /> : null}
+      {scroll.bottom ? (
+        <SenseCardScrollFade edge="bottom" className={approved.trainingScrollFade} action={{ label, onClick: onMore }} />
+      ) : null}
+    </>
+  );
 }
 
 export function TrainingCardIconButton({

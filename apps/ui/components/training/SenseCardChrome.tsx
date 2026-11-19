@@ -8,6 +8,7 @@ import { BookOpen, Repeat2 } from "lucide-react";
 import { HeadwordWithPronunciationBreaks } from "./HeadwordWithPronunciationBreaks";
 import approvedCard from "./approvedTrainingCard.module.css";
 import chrome from "@/components/practice/article/senseChrome.module.css";
+import surfaces from "@/components/practice/article/articleSurfaces.module.css";
 
 type Tone = "light" | "dark";
 
@@ -298,6 +299,41 @@ export function SmallIcon({
     >
       {children}
     </svg>
+  );
+}
+
+export const senseCardScrollFadeHeight = 44;
+
+export function SenseCardScrollFade({
+  edge,
+  className = "",
+  action,
+}: {
+  edge: "top" | "bottom";
+  className?: string;
+  action?: { label: string; onClick: () => void };
+}) {
+  const isTop = edge === "top";
+  const icon = (
+    <SmallIcon className={`h-4 w-4 ${surfaces.scrollFadeIcon} ${isTop ? "" : "rotate-180"}`}>
+      <path d="m6 14 6-6 6 6" />
+    </SmallIcon>
+  );
+  return (
+    <div
+      aria-hidden={action ? undefined : true}
+      data-scroll-affordance={edge}
+      style={{ height: `min(${senseCardScrollFadeHeight}px, 25%)` }}
+      className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center px-4 ${surfaces.scrollFade} ${className} ${
+        isTop ? "top-0 items-start pt-1" : "bottom-0 items-end pb-1"
+      }`}
+    >
+      {action ? (
+        <button type="button" aria-label={action.label} onClick={action.onClick} className={chrome.scrollCue}>
+          {icon}
+        </button>
+      ) : icon}
+    </div>
   );
 }
 

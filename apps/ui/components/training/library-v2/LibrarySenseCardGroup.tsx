@@ -31,6 +31,8 @@ import {
   SenseCardReveal,
   SenseCardHeadwordLockup,
   SenseSectionHeader,
+  SenseCardScrollFade,
+  senseCardScrollFadeHeight,
   SmallIcon,
   UsagePatternIcon,
 } from "../SenseCardChrome";
@@ -100,8 +102,6 @@ type Props = {
   /** Reserve reading space when a caller overlays a global action. */
   bottomOverlayReserve?: boolean;
 };
-
-const DETAILS_SCROLL_FADE_HEIGHT = 44;
 
 export function LibrarySenseCardGroup({
   currentCard,
@@ -233,7 +233,7 @@ export function LibrarySenseCardGroup({
     ).find((candidate) => candidate.dataset.entryId === activeMeaningId);
     if (!target) return;
     const nodeRect = node.getBoundingClientRect();
-    const fadeHeight = Math.min(DETAILS_SCROLL_FADE_HEIGHT, node.clientHeight / 4);
+    const fadeHeight = Math.min(senseCardScrollFadeHeight, node.clientHeight / 4);
     const targetRect = target.getBoundingClientRect();
     const leadRect = (
       target.querySelector<HTMLElement>("[data-meaning-lead]") ?? target
@@ -368,7 +368,7 @@ export function LibrarySenseCardGroup({
           role="region"
           aria-label={platformV2Message(interfaceLanguage, "senseCard.wordDetails.open")}
           tabIndex={0}
-          className={`${surfaces.readingRegion} h-full overflow-y-auto overscroll-contain px-3 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden ${bottomOverlayReserve ? "pb-16" : "pb-4"}`}
+          className={`${surfaces.readingRegion} h-full overflow-y-auto overscroll-contain px-3 sm:px-5 ${bottomOverlayReserve ? "pb-16" : "pb-4"}`}
         >
           {commonForms&&<ProductionArticleReading><ArticleWordForms detail={commonForms} headword={model.headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="body" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></ProductionArticleReading>}
           <div className="space-y-3">
@@ -472,8 +472,8 @@ export function LibrarySenseCardGroup({
             })}
           </div>
         </div>
-        {!scrollEdges.top ? <ScrollFade edge="top" /> : null}
-        {!scrollEdges.bottom ? <ScrollFade edge="bottom" /> : null}
+        {!scrollEdges.top ? <SenseCardScrollFade edge="top" /> : null}
+        {!scrollEdges.bottom ? <SenseCardScrollFade edge="bottom" /> : null}
       </div>
     </section>
   );
@@ -802,29 +802,6 @@ function ContentSectionHeader({
         count={count > 1 ? count : undefined}
         tone="light"
       />
-    </div>
-  );
-}
-
-function ScrollFade({ edge }: { edge: "top" | "bottom" }) {
-
-  const isTop = edge === "top";
-  return (
-    <div
-      aria-hidden="true"
-      data-scroll-affordance={edge}
-      // Leave at least half of a short reading region free from decoration.
-      // Keep the selected-meaning scroll inset above in sync with this cap.
-      style={{ height: `min(${DETAILS_SCROLL_FADE_HEIGHT}px, 25%)` }}
-      className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center px-4 ${surfaces.scrollFade} ${
-        (isTop ? "top-0 items-start pt-1" : "bottom-0 items-end pb-1")
-      }`}
-    >
-      <SmallIcon
-        className={`h-4 w-4 ${surfaces.scrollFadeIcon} ${isTop ? "" : "rotate-180"}`}
-      >
-        <path d="m6 14 6-6 6 6" />
-      </SmallIcon>
     </div>
   );
 }
