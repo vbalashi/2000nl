@@ -63,6 +63,10 @@ jobs:
           cache: npm
           cache-dependency-path: apps/ui/package-lock.json
       - run: npm ci
+      - name: Trust only the checked-out repository in the disposable container
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git rev-parse --show-toplevel
       - name: Confirm Playwright and Chromium match the image
         run: |
           test "$(node -p 'require("@playwright/test/package.json").version')" = 1.57.0
