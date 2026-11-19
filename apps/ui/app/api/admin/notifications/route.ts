@@ -1,3 +1,4 @@
+import { handleTemplateAction, readTemplates } from './templates';
 import { storeBotToken } from '@/lib/operatorNotifications/secretBroker';
 import { NextResponse } from 'next/server';
 import { adminErrorResponse, requireAdmin } from '@/lib/admin/adminAccess';
@@ -8,6 +9,7 @@ const response=(body:unknown,status=200)=>NextResponse.json(body,{status,headers
 export async function GET(request:Request) {
  try {
   const principal=await requireAdmin(request,'notifications.manage');
+  if(new URL(request.url).searchParams.get('view')==='templates')return await readTemplates(principal,response);
   const {data,error}=await createAdminServiceClient().rpc('admin_notification_configuration_v1',{p_operator:principal.userId,p_request:principal.requestId});
   if(error)throw new Error('configuration unavailable');
   return response(data);
@@ -22,9 +24,15 @@ async function mutate(request:Request,kind:"bot"|"route"|"secret") {
   if(!request.headers.get('content-type')?.toLowerCase().startsWith('application/json'))return response({error:'invalid_request'},400);
   const reader=request.body?.getReader();if(!reader)return response({error:'invalid_request'},400);
   const chunks:Uint8Array[]=[];let size=0;
-  for(;;){const part=await reader.read();if(part.done)break;size+=part.value.length;if(size>1024){await reader.cancel();return response({error:'request_too_large'},413);}chunks.push(part.value);}
+  for(;;){const part=await reader.read();if(part.done)break;size+=part.value.length;if(size>(kind==='bot'?16384:1024)){await reader.cancel();return response({error:'request_too_large'},413);}chunks.push(part.value);}
   let input:unknown;
   try{input=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));}catch{return response({error:'invalid_request'},400);}
+  const templateAction=kind==='bot' && input && typeof input==='object' && !Array.isArray(input) && 'action' in input
+   && ['preview-template','publish-template','test-template'].includes(input.action as string);
+  if(size>1024 && !templateAction)return response({error:'request_too_large'},413);
+  if(templateAction) {
+   return await handleTemplateAction(input as Record<string,unknown>,principal,response);
+  }
   if(kind==='bot' && input && typeof input==='object' && !Array.isArray(input) && Object.keys(input).length===1 && 'enabled' in input && typeof input.enabled==='boolean'){
    const {data,error}=await createAdminServiceClient().rpc('admin_notification_enabled_v1',{p_operator:principal.userId,p_request:principal.requestId,p_enabled:input.enabled});
    if(error)throw new Error('configuration unavailable');

@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-const mocks=vi.hoisted(()=>({rpc:vi.fn(),auth:vi.fn(),store:vi.fn()}));
+const mocks=vi.hoisted(()=>({rpc:vi.fn(),auth:vi.fn(),store:vi.fn(),send:vi.fn()}));
 vi.mock('@/lib/admin/adminAccess',()=>({requireAdmin:mocks.auth,adminErrorResponse:()=>new Response(JSON.stringify({error:'unavailable'}),{status:503})}));
 vi.mock('@/lib/admin/adminServerClient',()=>({createAdminServiceClient:()=>({rpc:mocks.rpc})}));
-vi.mock('@/lib/operatorNotifications/secretBroker',()=>({storeBotToken:mocks.store}));
+vi.mock('@/lib/operatorNotifications/secretBroker',()=>({storeBotToken:mocks.store,sendBotMessage:mocks.send}));
 import {GET,POST,PUT,PATCH} from '@/app/api/admin/notifications/route';
 const request=(body:unknown,origin='https://example.test')=>new Request('https://example.test/api/admin/notifications',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify(body)});
 beforeEach(()=>{vi.stubEnv('ADMIN_SITE_URL','https://example.test');mocks.rpc.mockReset();mocks.auth.mockReset().mockResolvedValue({userId:'operator',requestId:'request'});});
@@ -57,4 +57,27 @@ test('changes the global switch through the audited operation and rejects extra 
  expect(result.status).toBe(200);expect(await result.json()).toEqual({enabled:true});
  expect(mocks.rpc).toHaveBeenCalledWith('admin_notification_enabled_v1',{p_operator:'operator',p_request:'request',p_enabled:true});
  mocks.rpc.mockClear();expect((await POST(request({enabled:true,token:'secret'}))).status).toBe(400);expect(mocks.rpc).not.toHaveBeenCalled();
+});
+
+test('tests a draft with synthetic values without publishing it or providing action buttons',async()=>{
+ const input={action:'test-template',kind:'admission-request',body:'Draft: {{email}}',
+  botId:'11111111-1111-4111-8111-111111111111',chatId:'-100999',topicId:7};
+ mocks.send.mockReset().mockResolvedValue({status:'sent'});
+ mocks.rpc.mockResolvedValueOnce({data:'a'.repeat(32),error:null});
+ expect((await POST(request(input))).status).toBe(200);
+ expect(mocks.rpc.mock.calls.map(call=>call[0])).toEqual(['admin_notification_authorize_test_v1']);
+ expect(mocks.send).toHaveBeenCalledWith({botId:input.botId,version:'a'.repeat(32),chatId:'-100999',
+  topicId:7,text:'[ТЕСТ]\nDraft: learner@example.org',buttons:null});
+ mocks.send.mockClear();
+ mocks.rpc.mockResolvedValueOnce({data:null,error:{code:'22023',message:'chat_is_routed'}});
+ expect((await POST(request(input))).status).toBe(422);
+ expect(mocks.send).not.toHaveBeenCalled();
+});
+
+test('validates the rendered draft before publishing and preserves conflict handling',async()=>{
+ const input={action:'publish-template',kind:'feedback',body:'Report {{report_id}}',revision:'0'};
+ expect((await POST(request({...input,body:'Report {{email}}'}))).status).toBe(400);
+ expect(mocks.rpc).not.toHaveBeenCalled();
+ mocks.rpc.mockResolvedValueOnce({data:null,error:{code:'40001'}});
+ expect((await POST(request(input))).status).toBe(409);
 });

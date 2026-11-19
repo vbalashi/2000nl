@@ -83,3 +83,4 @@
 \i db/migrations/376_provider_work_safety.sql
 \i db/migrations/377_library_article_batch.sql
 \i db/migrations/378_provider_housekeeping.sql
+\i db/migrations/379_operator_notification_templates.sql
