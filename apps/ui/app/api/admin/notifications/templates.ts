@@ -17,8 +17,27 @@ export async function readTemplates(principal: Principal, reply: Reply) {
   })));
 }
 
+const validBotId = (id: unknown): id is string => typeof id === 'string'
+  && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+const validChatId = (id: unknown): id is string => typeof id === 'string' && /^-?[1-9][0-9]{0,19}$/.test(id);
+const validTopicId = (id: unknown): id is number | null => id === null
+  || (typeof id === 'number' && Number.isSafeInteger(id) && id > 0);
+
 export async function handleTemplateAction(input: Record<string, unknown>, principal: Principal, reply: Reply) {
-  const {action, kind, body, revision, botId, chatId, topicId} = input;
+  const {action, kind, body, revision, botId, chatId, topicId, title} = input;
+  const auth = {p_operator: principal.userId, p_request: principal.requestId};
+  if (action === 'save-test-destination') {
+    if (!validBotId(botId) || !validChatId(chatId) || !validTopicId(topicId) ||
+      typeof title !== 'string' || title.trim().length < 1 || title.trim().length > 120 || title.includes('\0')) {
+      return reply({error: 'invalid_test_destination'}, 400);
+    }
+    const {data, error} = await createAdminServiceClient().rpc('admin_notification_save_test_destination_v1', {
+      ...auth, p_bot: botId, p_title: title.trim(), p_chat: chatId, p_topic: topicId,
+    });
+    if (error?.code === '22023') return reply({error: error.message === 'chat_is_routed' ? 'chat_is_routed' : 'bot_not_ready'}, 422);
+    if (error || typeof data !== 'string') throw new Error('test destination unavailable');
+    return reply({id: data});
+  }
   if (!isTemplateKind(kind) || typeof body !== 'string') return reply({error: 'invalid_template'}, 400);
   let text: string;
   try {
@@ -30,7 +49,6 @@ export async function handleTemplateAction(input: Record<string, unknown>, princ
   }
 
   if (action === 'preview-template') return reply({text});
-  const auth = {p_operator: principal.userId, p_request: principal.requestId};
   const service = createAdminServiceClient();
   if (action === 'publish-template') {
     if (typeof revision !== 'string' || !/^\d{1,18}$/.test(revision)) return reply({error: 'invalid_revision'}, 400);
@@ -42,10 +60,7 @@ export async function handleTemplateAction(input: Record<string, unknown>, princ
     return reply({revision: data});
   }
 
-  if (action !== 'test-template' || typeof botId !== 'string'
-    || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(botId)
-    || typeof chatId !== 'string' || !/^-?[1-9][0-9]{0,19}$/.test(chatId)
-    || (topicId !== null && (typeof topicId !== 'number' || !Number.isSafeInteger(topicId) || topicId < 1))) {
+  if (action !== 'test-template' || !validBotId(botId) || !validChatId(chatId) || !validTopicId(topicId)) {
     return reply({error: 'invalid_test_destination'}, 400);
   }
 
