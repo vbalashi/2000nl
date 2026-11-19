@@ -320,3 +320,38 @@ describeIfDb('Telegram notification templates', () => {
   });
  });
 });
+
+describeIfDb('named Telegram destinations', () => {
+ const pool = new Pool({connectionString:dbUrl});
+ beforeAll(async () => {await runMigrations(pool);}, 120000);
+ afterAll(async () => {await pool.end();});
+
+ test('preserves existing routes, saves test chats once and excludes working groups', async () => {
+  await withTransaction(pool, async client => {
+   const operator = randomUUID();
+   const bot = randomUUID();
+   await ensureUserWithSettings(client,operator);
+   await client.query("insert into public.admin_operators(email,user_id,is_active,permissions) values($1,$2,true,ARRAY['notifications.manage'])",
+    [`${operator}@example.test`,operator]);
+   await client.query("insert into private.operator_notification_bots(id,name,credential_state,secret_version) values($1,'synthetic','ready',$2)",
+    [bot,'a'.repeat(32)]);
+   const settings = async () => (await client.query('select public.admin_notification_configuration_v2($1,$2) settings',
+    [operator,randomUUID()])).rows[0].settings;
+   const {rows:[route]} = await client.query(
+    "insert into private.operator_notification_routes(bot_id,kind,chat_id,topic_id) values($1,'feedback','-100123',7) returning id",[bot]);
+   expect((await settings()).routes.find((row:{id:string})=>row.id===route.id)).toMatchObject({chatId:'-100123',topicId:7,chatTitle:null,topicTitle:null});
+   await client.query("select public.admin_notification_save_route_v2($1,$2,$3,1,$4,'feedback','-100123',7,false,'Редакция','Репорты')",
+    [operator,randomUUID(),route.id,bot]);
+   const save = (title:string,chat:string) => client.query('select public.admin_notification_save_test_destination_v1($1,$2,$3,$4,$5,null) id',
+    [operator,randomUUID(),bot,title,chat]);
+   const {rows:[destination]} = await save('Личка','100999');
+   expect((await save('Тестовый чат','100999')).rows[0].id).toBe(destination.id);
+   await client.query('savepoint working_chat');
+   await expect(save('Рабочий','-100123')).rejects.toMatchObject({message:'chat_is_routed'});
+   await client.query('rollback to savepoint working_chat');
+   const config = await settings();
+   expect(config.testDestinations).toContainEqual({id:destination.id,botId:bot,title:'Тестовый чат',chatId:'100999',topicId:null});
+   expect(config.routes.find((row:{id:string})=>row.id===route.id)).toMatchObject({chatId:'-100123',topicId:7,chatTitle:'Редакция',topicTitle:'Репорты'});
+  });
+ });
+});
