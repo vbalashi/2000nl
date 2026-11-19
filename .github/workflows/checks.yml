@@ -3,6 +3,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -91,14 +92,16 @@ jobs:
           # Run the selector from the trusted base, never the proposed change.
           # If absent/invalid/non-ancestor, keep the full suite.
           profile=full
-          if [[ "$base" =~ ^[a-f0-9]{40}$ ]] && git show "$base:scripts/ci/browser-profile.mjs" > "$RUNNER_TEMP/browser-profile.mjs" 2>/dev/null; then
+          if [[ "$EVENT_NAME" != workflow_dispatch && "$base" =~ ^[a-f0-9]{40}$ ]] && git show "$base:scripts/ci/browser-profile.mjs" > "$RUNNER_TEMP/browser-profile.mjs" 2>/dev/null; then
             profile=$(node "$RUNNER_TEMP/browser-profile.mjs" "$base" "$HEAD") || profile=full
           fi
-          [[ "$profile" == 'release' || "$profile" == 'full' ]] || profile=full
+          [[ "$profile" == 'docs' || "$profile" == 'release' || "$profile" == 'full' ]] || profile=full
           echo "profile=$profile" >> "$GITHUB_OUTPUT"
           echo "Browser profile: $profile"
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - if: steps.profile.outputs.profile != 'docs'
+        run: npm ci
+      - if: steps.profile.outputs.profile != 'docs'
+        run: npx playwright install --with-deps chromium
       - if: steps.profile.outputs.profile == 'release'
         run: npx playwright test playwright/tests/release-updates.spec.ts
       - if: steps.profile.outputs.profile == 'full'

@@ -13,7 +13,9 @@ const allowed = [
  /^apps\/ui\/tests\/api\/appReleaseRoute\.test\.ts$/,
  /^apps\/ui\/playwright\/tests\/release-updates\.spec\.ts$/,
 ];
+const documentation = /^(?:README|CONTRIBUTING|CONTENT-LICENSING|docs\/[A-Za-z0-9_./-]+)\.md$/;
 export function browserProfile(files){
+ if(Array.isArray(files)&&files.length>0&&files.every(file=>typeof file==='string'&&documentation.test(file)))return 'docs';
  return Array.isArray(files)&&files.length>0&&files.every(file=>typeof file==='string'&&allowed.some(rule=>rule.test(file)))?'release':'full';
 }
 export function gitChangedFiles(base,head,run=execFileSync){
