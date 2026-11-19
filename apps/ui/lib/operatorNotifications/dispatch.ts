@@ -1,9 +1,10 @@
 import 'server-only';
 import nodemailer from 'nodemailer';
 import { createAdminServiceClient } from '@/lib/admin/adminServerClient';
+import { defaultTemplates, renderTemplate } from './templates';
 import { sendBotMessage } from './secretBroker';
 
-type Event={id:string;kind:'admission-request'|'admission-approved'|'feedback';leaseId:string;attempts:number;email:string|null;feedbackId:string|null;admissionStatus:string|null;emailVerified:boolean;eventId:string;botId:string;secretVersion:string;chatId:string;topicId:number|null;transport:"telegram"|"email"};
+type Event={id:string;kind:'admission-request'|'admission-approved'|'feedback';leaseId:string;attempts:number;email:string|null;feedbackId:string|null;admissionStatus:string|null;emailVerified:boolean;templateBody?:string|null;eventId:string;botId:string;secretVersion:string;chatId:string;topicId:number|null;transport:"telegram"|"email"};
 type Outcome='sent'|'retry'|'failed';
 
 /** Processes one lease; external delivery may succeed even when its receipt is lost. */
@@ -33,9 +34,9 @@ export async function dispatchOne(): Promise<'disabled'|'idle'|Outcome> {
   } else if(event.kind==='admission-request' && event.admissionStatus!=='pending') outcome='sent';
   else {
    const message=event.kind==='admission-request' && event.email
-    ? {botId:event.botId,version:event.secretVersion,chatId:event.chatId,topicId:event.topicId,text:`New access request: ${event.email}`,buttons:[[{text:'Approve',callback_data:`a_${event.id}`},{text:'Reject',callback_data:`r_${event.id}`}]]}
+    ? {botId:event.botId,version:event.secretVersion,chatId:event.chatId,topicId:event.topicId,text:renderTemplate(event.kind,event.templateBody??defaultTemplates[event.kind],{email:event.email}),buttons:[[{text:'Approve',callback_data:`a_${event.id}`},{text:'Reject',callback_data:`r_${event.id}`}]]}
     : event.kind==='feedback' && event.feedbackId
-      ? {botId:event.botId,version:event.secretVersion,chatId:event.chatId,topicId:event.topicId,text:`New card report: ${event.feedbackId}\n${siteUrl.origin}/admin/reports/?feedback=${encodeURIComponent(event.feedbackId)}`,buttons:null}
+      ? {botId:event.botId,version:event.secretVersion,chatId:event.chatId,topicId:event.topicId,text:renderTemplate(event.kind,event.templateBody??defaultTemplates[event.kind],{report_id:event.feedbackId,report_url:`${siteUrl.origin}/admin/reports/?feedback=${encodeURIComponent(event.feedbackId)}`}),buttons:null}
       : null;
    if(!message) outcome='failed';
    else {const result=await sendBotMessage(message);outcome=result.status==='sent'?'sent':result.status==='failed'?'failed':'retry';if(result.status==='retry')retryAfter=result.retryAfterSeconds??0;}

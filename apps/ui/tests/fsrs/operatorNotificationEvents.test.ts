@@ -274,3 +274,49 @@ describeIfDb('operator notification events',()=>{
  });
 
 });
+
+describeIfDb('Telegram notification templates', () => {
+ const pool = new Pool({connectionString:dbUrl});
+ beforeAll(async () => {await runMigrations(pool);}, 120000);
+ afterAll(async () => {await pool.end();});
+
+ test('pins published versions and keeps test sends out of the working queue', async () => {
+  await withTransaction(pool, async client => {
+   const operator = randomUUID();
+   const bot = randomUUID();
+   const version = 'a'.repeat(32);
+   await ensureUserWithSettings(client, operator);
+   await client.query("insert into public.admin_operators(email,user_id,is_active,permissions) values($1,$2,true,ARRAY['notifications.manage'])",
+    [`${operator}@example.test`,operator]);
+   await client.query("insert into private.operator_notification_bots(id,name,credential_state,secret_version) values($1,'synthetic','ready',$2)",[bot,version]);
+   await client.query("insert into private.operator_notification_routes(bot_id,kind,chat_id,topic_id,enabled) values($1,'admission-request','-100123',7,true)",[bot]);
+   await client.query('update private.operator_notification_settings set enabled=true where singleton');
+   const publish = async (body: string, revision: string) => (await client.query(
+    "select public.admin_notification_publish_template_v1($1,$2,'admission-request',$3,$4) revision",
+    [operator,randomUUID(),body,revision])).rows[0].revision as string;
+   const enqueue = async () => {
+    const user = randomUUID();
+    const email = `${user}@example.test`;
+    await ensureUserWithSettings(client,user);
+    await client.query("insert into private.admission_requests(email,user_id,status) values($1,$2,'pending')",[email,user]);
+    return (await client.query('select id from private.operator_notification_events where admission_email=$1',[email])).rows[0].id;
+   };
+   const original = await publish('Original {{email}}','0');
+   const originalEvent = await enqueue();
+   const authorizeTest = (chat: string) => client.query('select public.admin_notification_authorize_test_v1($1,$2,$3,$4) version',
+    [operator,randomUUID(),bot,chat]);
+   await client.query('savepoint reject_working_chat');
+   await expect(authorizeTest('-100123')).rejects.toMatchObject({message:'chat_is_routed'});
+   await client.query('rollback to savepoint reject_working_chat');
+   expect((await authorizeTest('-100999')).rows[0].version).toBe(version);
+   expect((await client.query('select count(*)::int as count from private.operator_notification_deliveries where bot_id=$1',[bot])).rows[0].count).toBe(1);
+   const latest = await publish('New {{email}}',original);
+   const latestEvent = await enqueue();
+   const claimed = (await client.query('select public.operator_delivery_claim_v1(50) item')).rows.map(row => row.item);
+   expect(claimed.find(item => item.eventId===originalEvent)?.templateBody).toBe('Original {{email}}');
+   expect(claimed.find(item => item.eventId===latestEvent)?.templateBody).toBe('New {{email}}');
+   const current = (await client.query('select public.admin_notification_templates_v1($1,$2) templates',[operator,randomUUID()])).rows[0].templates;
+   expect(current['admission-request']).toEqual({body:'New {{email}}',revision:latest});
+  });
+ });
+});
