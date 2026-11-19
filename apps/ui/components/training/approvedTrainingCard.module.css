@@ -18,6 +18,15 @@
   .stage[data-side="answer"] .shell.shell { padding-block: 4px; }
   .stage[data-side="answer"] .headerRow { margin-bottom: 4px; }
 }
+.shell :is(.cardScroll, .questionReminder) {
+  scrollbar-width: none;
+}
+.shell :is(.cardScroll, .questionReminder)::-webkit-scrollbar {
+  display: none;
+}
+.trainingScrollFade {
+  --card-scroll-fade-surface: var(--practice-surface);
+}
 .answerScroll:focus-visible {
   outline: 2px solid var(--practice-focus);
   outline-offset: -2px;
@@ -339,7 +348,6 @@
 .questionReminder p { border-inline-start:2px solid var(--practice-selected); padding-inline-start:10px; margin:0; font-family:var(--practice-font-reading); font-size:var(--practice-literary-size); line-height:var(--practice-literary-leading); color:var(--practice-text-secondary); overflow-wrap:anywhere; }
 
 /* On short screens the question, header and answer share one reading region. */
-.compactAnswerScroll { height:100%; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none; }
-.compactAnswerScroll::-webkit-scrollbar { display:none; }
+.compactAnswerScroll { height:100%; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
 .compactAnswerScroll:focus-visible { outline:2px solid var(--practice-focus); outline-offset:-2px; }
 .compactAnswerScroll .questionReminder { max-height:none; overflow:visible; }

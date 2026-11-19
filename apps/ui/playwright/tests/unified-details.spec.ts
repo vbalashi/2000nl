@@ -199,6 +199,7 @@ for (const viewport of viewports) {
     await expect(page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`).getByTestId("library-sense-card-lead")).toBeInViewport();
     const lead = await page.getByTestId(`library-sense-card-${gateFinanceEntry.entryId}`).getByTestId("library-sense-card-lead").boundingBox();
     const scroller = page.getByTestId("library-sense-card-scroll-region");
+    await expect(scroller).toHaveCSS("scrollbar-width", "none");
     const scrollBox = await scroller.boundingBox();
     const topInset = await scroller.evaluate(node => node.scrollTop > 2 ? Math.min(44, node.clientHeight / 4) : 0);
     expect(lead!.y).toBeGreaterThanOrEqual(scrollBox!.y + topInset);

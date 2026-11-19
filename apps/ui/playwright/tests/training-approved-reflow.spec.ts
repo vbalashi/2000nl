@@ -11,6 +11,26 @@ async function pressAndWaitForScrollEnd(scroll: Locator, key: string) {
   await expect(scroll).toHaveAttribute("data-qa-scroll-ended", "true");
 }
 
+async function expectTrainingScrollCues(reading: Locator) {
+  const edges = reading.locator("..");
+  const up = edges.locator('[data-scroll-affordance="top"]');
+  const down = edges.locator('[data-scroll-affordance="bottom"]').getByRole("button");
+  await expect(reading).toHaveCSS("scrollbar-width", "none");
+  await expect(up).toHaveCount(0);
+  await expect(down).toHaveCSS("border-top-width", "0px");
+  await down.click();
+  await expect.poll(() => reading.evaluate(node => node.scrollTop)).toBeGreaterThan(2);
+  await reading.evaluate(node => { node.scrollTop = (node.scrollHeight - node.clientHeight) / 2; });
+  await expect(up).toBeVisible();
+  await expect(down).toBeVisible();
+  await reading.press("End");
+  await expect(down).toHaveCount(0);
+  await expect(up).toBeVisible();
+  await reading.press("Home");
+  await expect(up).toHaveCount(0);
+  await expect(down).toBeVisible();
+}
+
 for (const locale of ["en", "nl", "ru"]) {
   for (const viewport of [{ width: 844, height: 390 }, { width: 640, height: 400 }]) {
     test(`${locale} Extra retains a readable answer and ratings at ${viewport.width}×${viewport.height}`, async ({ page }, testInfo) => {
@@ -120,6 +140,7 @@ test("the selected translation at the end of a long Answer remains reachable", a
   const dock = stage.getByTestId("training-sense-card-dock");
   const [headwordBefore, dockBefore] = await Promise.all([headword.boundingBox(), dock.boundingBox()]);
   await expect(scroll.getByTestId("training-question-reminder")).toBeVisible();
+  await expectTrainingScrollCues(scroll);
   const lastTranslation = scroll.locator('[data-content-translation="true"]').last();
   await expect.poll(() => scroll.evaluate(element => element.scrollHeight - element.clientHeight)).toBeGreaterThan(0);
   await scroll.press("End");
@@ -168,6 +189,8 @@ test("front prompt stays centred when the hint opens", async ({ page }) => {
   const stage = page.getByTestId("training-sense-card-stage");
   const prompt = stage.getByTestId("reverse-prompt");
   const region = stage.getByTestId("training-face-scroll");
+  await expect(region).toHaveCSS("scrollbar-width", "none");
+  await expect(region.locator("..").locator("[data-scroll-affordance]")).toHaveCount(0);
   const before = await prompt.boundingBox();
   const area = await region.boundingBox();
   expect(Math.abs(before!.y + before!.height / 2 - area!.y - area!.height / 2)).toBeLessThan(2);
@@ -225,6 +248,7 @@ test('a tall viewport keeps the answer header fixed while its content scrolls', 
   const reading=page.getByTestId('training-answer-scroll');
   const header=stage.getByTestId('sense-card-headword-lockup');
   const reminder=stage.getByTestId('training-question-reminder');
+  await expectTrainingScrollCues(reading);
   const [headerBefore,reminderBefore]=await Promise.all([header.boundingBox(),reminder.boundingBox()]);
   await reading.press('End');
   await expect.poll(()=>reading.evaluate(element=>element.scrollHeight-element.clientHeight-element.scrollTop)).toBeLessThanOrEqual(1);

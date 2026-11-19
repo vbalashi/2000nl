@@ -390,7 +390,7 @@ function ListeningFaceBody({
       data-listening-mode={mode}
       role="region"
       aria-label={contentLabel}
-      className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[14px] outline-none [scrollbar-width:thin]"
+      className={`min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-[14px] outline-none ${approvedCard.cardScroll}`}
     >
       <div className="flex min-h-full flex-col items-center justify-center gap-5 p-[18px] text-center">
         {onPlayAudio ? (
