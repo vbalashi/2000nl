@@ -1,0 +1,79 @@
+name: Playwright image benchmark
+on:
+  push:
+    branches: [codex/194-playwright-image-benchmark]
+    paths: [.github/workflows/playwright-image-benchmark.yml]
+permissions:
+  contents: read
+
+jobs:
+  install-per-job:
+    name: Install per job (${{ matrix.sample }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        sample: [1, 2, 3]
+    defaults:
+      run:
+        working-directory: apps/ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/ui/package-lock.json
+      - run: npm ci
+      - name: Install browser and system dependencies
+        run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e:received-groups
+      - run: npm run test:e2e
+      - run: npm run test:e2e:i18n
+      - run: npm run test:e2e:training-reliability
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: install-failure-${{ matrix.sample }}
+          path: apps/ui/test-results
+          retention-days: 7
+
+  prebuilt-image:
+    name: Prebuilt image (${{ matrix.sample }})
+    runs-on: ubuntu-24.04
+    container:
+      # linux/amd64 manifest for Playwright v1.57.0-noble, matching the UI lockfile.
+      image: mcr.microsoft.com/playwright@sha256:8fb7af3bb488c51364d6554876a8eddf377736608327dbdf4177b4901faf7bc9
+      options: --init --ipc=host
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        sample: [1, 2, 3]
+    defaults:
+      run:
+        working-directory: apps/ui
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/ui/package-lock.json
+      - run: npm ci
+      - name: Confirm Playwright and Chromium match the image
+        run: |
+          test "$(node -p 'require("@playwright/test/package.json").version')" = 1.57.0
+          node -e 'require("node:fs").accessSync(require("playwright").chromium.executablePath(), require("node:fs").constants.X_OK)'
+      - run: npm run test:e2e:received-groups
+      - run: npm run test:e2e
+      - run: npm run test:e2e:i18n
+      - run: npm run test:e2e:training-reliability
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: prebuilt-failure-${{ matrix.sample }}
+          path: apps/ui/test-results
+          retention-days: 7
