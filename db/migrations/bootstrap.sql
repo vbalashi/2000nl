@@ -85,3 +85,4 @@
 \i db/migrations/378_provider_housekeeping.sql
 \i db/migrations/379_operator_notification_templates.sql
 \i db/migrations/380_operator_notification_destinations.sql
+\i db/migrations/381_received_group_tree.sql

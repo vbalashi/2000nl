@@ -62,3 +62,24 @@ test('ownership change clears old rows and cursor and fences a late previous-kin
  await act(async()=>settleOld(page(1)));expect(hook.result.current.collections).toEqual([]);
  await act(async()=>settleNew(page(2)));expect(hook.result.current.collections[0].ownership).toBe('received');
 });
+
+test('merges visible group branches across pages and resets on an author catalog revision change',async()=>{
+ const root={id:id(10),name:'Group',parentId:null};
+ const groupPage=(n:number,revision:number,next=false)=>{
+  const branch={id:id(n+10),name:`Branch ${n}`,parentId:root.id};
+  return {...page(n,1,next),groupTree:{revision,labels:[root,branch],placements:{[id(n)]:[branch.id]}}};
+ };
+ mock.read.mockResolvedValueOnce(groupPage(2,1,true))
+  .mockResolvedValueOnce(groupPage(3,1,true))
+  .mockResolvedValueOnce(groupPage(4,2))
+  .mockResolvedValueOnce(groupPage(2,2));
+ const hook=renderHook(()=>usePersonalCollectionCatalog({...input,query:{...input.query,scope:'group',labelId:root.id}}));
+ await waitFor(()=>expect(hook.result.current.status).toBe('ready'));
+ await act(async()=>hook.result.current.loadMore());
+ expect(hook.result.current.groupTree?.labels.map(label=>label.id)).toEqual([id(10),id(12),id(13)]);
+ expect(hook.result.current.groupTree?.placements).toEqual({[id(2)]:[id(12)],[id(3)]:[id(13)]});
+ await act(async()=>hook.result.current.loadMore());
+ expect(mock.read.mock.calls[3][1].cursor).toBeNull();
+ expect(hook.result.current.groupTree).toEqual(groupPage(2,2).groupTree);
+ expect(hook.result.current.collections.map(collection=>collection.id)).toEqual([id(2)]);
+});

@@ -24,7 +24,7 @@ import {labelRows} from '@/lib/collections/labels/catalog';
 import overlays from '@/components/practice/library/libraryOverlays.module.css';
 import s from '../organization/organization.module.css';
 const copy=localizedSection("receivedCollections");
-export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=false,onChanged,catalogOverride,hasGroups=false,onOpenCollectionId,selection}:{userId:string;active:boolean;locale:OnboardingLanguage;onOpen:(row:ReceivedCollection)=>void;onAdd:()=>void;embedded?:boolean;onChanged?:()=>void;hasGroups?:boolean;selection?:SharedCatalogSelection;onOpenCollectionId?:(id:string)=>void;catalogOverride?:ReturnType<typeof useReceivedCatalog>}){
+export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=false,onChanged,catalogOverride,hasGroups=false,onOpenCollectionId,onOpenGroup,selection}:{userId:string;active:boolean;locale:OnboardingLanguage;onOpen:(row:ReceivedCollection)=>void;onAdd:()=>void;embedded?:boolean;onChanged?:()=>void;hasGroups?:boolean;selection?:SharedCatalogSelection;onOpenCollectionId?:(id:string)=>void;onOpenGroup?:(id:string,name:string)=>void;catalogOverride?:ReturnType<typeof useReceivedCatalog>}){
  const [localQuery,setQuery]=useState('');
  const actionFocus=useRef<HTMLButtonElement|null>(null),addButton=useRef<HTMLButtonElement|null>(null),localSearchInput=useRef<HTMLInputElement|null>(null);
  const searchInput=selection?.searchInputRef??localSearchInput;
@@ -61,7 +61,7 @@ export function ReceivedCollections({userId,active,locale,onOpen,onAdd,embedded=
     {id:'forward',label:actions.forward,onSelect:()=>{actionFocus.current=menu.anchor;setAction({kind:'forward',row:menu.row});setMenu(null);}},
     {id:'unsubscribe',label:actions.leave,onSelect:()=>{actionFocus.current=menu.anchor;setAction({kind:'unsubscribe',row:menu.row});setMenu(null);}},
    ]:[]),
-   ...menu.row.groups.map(item=>({id:`group:${item.labelId}`,label:`${localizedSection('labelSharing')[locale].openGroup}: ${item.name}`,icon:<Folder size={16}/>,onSelect:()=>{actionFocus.current=menu.anchor;menu.anchor.focus({preventScroll:true});setGroup({userId,...item});setMenu(null);}})),
+   ...menu.row.groups.map(item=>({id:`group:${item.labelId}`,label:`${localizedSection('labelSharing')[locale].openGroup}: ${item.name}`,icon:<Folder size={16}/>,onSelect:()=>{setMenu(null);if(onOpenGroup){onOpenGroup(item.labelId,item.name);return;}actionFocus.current=menu.anchor;menu.anchor.focus({preventScroll:true});setGroup({userId,...item});}})),
   ]}/>}
   {group?.userId===userId&&<SharedLabelContents userId={userId} labelId={group.labelId} name={group.name} locale={locale} onClose={()=>setGroup(null)} onOpen={id=>{setGroup(null);if(onOpenCollectionId)onOpenCollectionId(id);else{const row=catalog.collections.find(item=>item.id===id);if(row)onOpen(row);}}}/>}
   {detail?.userId===userId&&[catalog.collections.find(row=>row.id===detail.id)??detail.row].map(row=><DialogSurface key={row.id} className={overlays.dialog} aria-label={common.collections} onDismiss={()=>setDetail(null)}><CollectionDetailsController key={`${userId}:${row.id}`} userId={userId} id={row.id} itemCount={row.itemCount} canEditLabels={true} onUnavailable={()=>setLabelEditor(null)} locale={locale} labelNames={labelRows(labels.snapshot,locale).filter(item=>row.labelIds.includes(item.label.id)).map(item=>item.path)} isShared onClose={()=>setDetail(null)} onLabels={name=>setLabelEditor({userId,id:row.id,name})} onOpen={name=>{setDetail(null);onOpen({...row,name});}}/></DialogSurface>)}

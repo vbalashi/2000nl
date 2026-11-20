@@ -1,4 +1,5 @@
 "use client";
+import {ReceivedGroupTree} from './ReceivedGroupTree';
 import {ReceivedGroupScopes} from './ReceivedGroupScopes';
 import {ActionButton} from '@/components/practice/ui/ActionButton';
 import {CollectionAccessIcon} from "./CollectionAccessIcon";
@@ -201,7 +202,9 @@ export function PersonalCollections({active, userId, language, locale, collectio
       <div className={s.results} aria-busy={labels.loading||publicationEnabled&&catalog.status==='loading'}>
         {publicationEnabled&&catalog.status==='loading'?<p role="status">{t.loading}</p>:!rows.length&&(!publicationEnabled||catalog.status==='ready')&&<p className={s.state}>{query.trim()||effectiveScope!=='all'?t.noResults:t.empty}</p>}
         {sections.map(section=><section key={section.id} className={s.collectionSection}><button className={s.sectionHeading} type="button" aria-expanded={!collapsedSections.has(section.id)} onClick={()=>toggleCollapsed(setCollapsedSections,section.id)}>{collapsedSections.has(section.id)?<ChevronRight size={16}/>:<ChevronDown size={16}/>}<Folder size={18}/><span>{section.name}</span></button>{!collapsedSections.has(section.id)&&section.rows.map(renderCollection)}</section>)}
-        {ungroupedRows.map(renderCollection)}
+        {selectedReceived&&catalog.groupTree
+          ? <ReceivedGroupTree key={`${userId}:${selectedReceived.id}`} tree={catalog.groupTree} rootId={selectedReceived.id} rows={visibleRows} locale={locale} renderCollection={renderCollection}/>
+          : ungroupedRows.map(renderCollection)}
         {publicationEnabled?catalog.nextCursor&&<button className={s.loadMore} disabled={catalog.loadingMore} onClick={()=>void catalog.loadMore()}>{catalog.loadingMore?t.loading:t.moreResults}</button>:rows.length>pageSize&&<button className={s.loadMore} onClick={()=>setPageSize(value=>value+20)}>{t.moreResults} · {Math.min(pageSize,rows.length)} / {rows.length}</button>}
       </div>
     </section>
