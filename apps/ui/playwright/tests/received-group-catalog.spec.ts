@@ -70,6 +70,20 @@ for(const width of [350,390,1200])test(`received group uses main catalog at ${wi
  await expect(page.getByRole('dialog')).toHaveCount(0);
  await expect(leaf).toBeVisible();
 
+ let accepted=false;
+ const preview=()=>({labelId:groupId,name:'333',collectionCount:1,alreadyAdded:accepted,role:accepted?'viewer':null});
+ await page.route('**/api/library/label-sharing/preview',route=>route.fulfill({json:{kind:'label',preview:preview()}}));
+ await page.route('**/api/library/label-sharing/commands',route=>{
+  const command=route.request().postDataJSON();
+  expect(command.action).toBe('accept');
+  accepted=true;
+  return route.fulfill({json:{operationId:command.operationId,action:'accept',status:'committed',result:preview()}});
+ });
+ await page.goto('/share#0123456789ABCDEFGHJKMNPQRS');
+ await page.getByRole('button',{name:'Add to library',exact:true}).click();
+ await page.getByRole('button',{name:'Open group',exact:true}).click();
+ await expect(page.getByRole('dialog')).toHaveCount(0);
+ await expect(leaf).toBeVisible();
 });
 
 for(const width of [350,390,705,1200])for(const theme of ['light','dark'])test(`shared publication rows stay readable ${width} ${theme} @received-group-catalog`,async({page})=>{
