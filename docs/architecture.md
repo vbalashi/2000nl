@@ -205,6 +205,11 @@ Selecting a received shared label in Collections uses the ordinary main catalog,
 not a contents dialog. The server validates the current accepted group lifetime
 and applies the group boundary before language, search, sorting and pagination.
 Received groups are navigation scopes, never editable personal parent labels.
+The Collections catalog shows the author's subgroups with their original names
+and collection assignments. For each page the server returns only the labels
+and ancestors needed by its visible collections. A collection assigned to
+several branches appears in each of those branches. Author labels are separate
+from any labels the recipient assigns to the same collection.
 
 A received collection placed in a shared label remains a reference to its
 original publication. It never grants access transitively. Publishing borrowed

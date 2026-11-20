@@ -53,3 +53,31 @@ test('received group scope is passed to the authoritative RPC and unavailable gr
  mock.abort.mockResolvedValueOnce({data:null,error:{message:'label_not_found'}});expect((await catalogGET(new NextRequest(url))).status).toBe(404);
  mock.rpc.mockClear();expect((await catalogGET(new NextRequest(url+'&userId='+id))).status).toBe(400);expect(mock.rpc).not.toHaveBeenCalled();
 });
+
+
+test('group tree is opt-in and only includes labels attached to the authorized result page',async()=>{
+ const url=`http://localhost/api/library/collections/catalog?scope=group&labelId=${label}&groupTree=1`;
+ const child='75600000-0000-4000-8000-000000000003';
+ const page={
+  revision:0,
+  collections:[{id,name:'Lesson',createdAt:'2026-01-01T00:00:00Z',ownership:'received',isShared:true,itemCount:1,labelIds:[]}],
+  nextCursor:null,
+ };
+ const groupTree={revision:4,labels:[{id:label,parentId:null,name:'Root'},{id:child,parentId:label,name:'Child'}],placements:{[id]:[child]}};
+ mock.abort.mockResolvedValueOnce({data:{...page,groupTree},error:null});
+ const response=await catalogGET(new NextRequest(url));
+ expect(response.status).toBe(200);
+ expect((await response.json()).groupTree).toEqual(groupTree);
+ expect(mock.rpc).toHaveBeenCalledWith('read_received_group_catalog_v1',expect.objectContaining({p_label_id:label}));
+ for(const tree of [
+  {...groupTree,placements:{[child]:[child]}},
+  {...groupTree,labels:[...groupTree.labels,{id:'75600000-0000-4000-8000-000000000004',parentId:label,name:'Unrelated'}]},
+  {...groupTree,labels:[groupTree.labels[0],{...groupTree.labels[1],parentId:child}]},
+ ]){
+  mock.abort.mockResolvedValueOnce({data:{...page,groupTree:tree},error:null});
+  expect((await catalogGET(new NextRequest(url))).status).toBe(502);
+ }
+ mock.rpc.mockClear();
+ expect((await catalogGET(new NextRequest('http://localhost/api/library/collections/catalog?groupTree=1'))).status).toBe(400);
+ expect(mock.rpc).not.toHaveBeenCalled();
+});

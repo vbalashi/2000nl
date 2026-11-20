@@ -28,9 +28,14 @@ export function usePersonalCollectionCatalog(input:{userId:string;active:boolean
   }
   try{
    const page=await readPersonalCatalog(scope.userId,{...scope.query,cursor},abort.signal);if(!valid())return;
-   if(append&&page.revision!==base.revision){await run(false);return;}
+   if(append&&(page.revision!==base.revision||page.groupTree?.revision!==base.groupTree?.revision)){await run(false);return;}
    if(page.nextCursor&&cursors.current.has(JSON.stringify(page.nextCursor)))throw new Error('catalog_cursor_cycle');
-   commit({...page,key:scope.key,status:'ready',loadingMore:false,collections:[...new Map([...(append?base.collections:[]),...page.collections].map(row=>[row.id,row])).values()]});
+   const groupTree=append&&base.groupTree&&page.groupTree?{
+    ...page.groupTree,
+    labels:[...new Map([...base.groupTree.labels,...page.groupTree.labels].map(label=>[label.id,label])).values()],
+    placements:{...base.groupTree.placements,...page.groupTree.placements}
+   }:page.groupTree;
+   commit({...page,groupTree,key:scope.key,status:'ready',loadingMore:false,collections:[...new Map([...(append?base.collections:[]),...page.collections].map(row=>[row.id,row])).values()]});
   }catch{if(valid())commit(empty(scope.key,'error'));}
   finally{if(request.current===abort)request.current=null;}
  },[commit]);
