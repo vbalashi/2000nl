@@ -14,15 +14,18 @@ import {DEFAULT_VOCABULARY_SELECTION} from "@/lib/vocabulary/selection";
 import {VocabularyFilters,VocabularyFilterSummary} from "../vocabulary/VocabularyFilters";
 import {VOCABULARY_PART_LABELS} from "@/lib/vocabulary/partsOfSpeech";
 import { LibraryPresentationContext } from "./LibraryPresentationContext";
-import {SourceTypeControl,type SourceKind} from "../ui/SourceTypeControl";
+import {SourceTypeControl,sourceTypeMatches,type SourceKind} from "../ui/SourceTypeControl";
 import {localizedField} from "@/lib/i18n/catalog";
 export type LibraryFilterDraft = LibraryEntryFilters & { languageCode: string; dictionaryId: string | null; applyListFilter?: boolean; collectionId?: string | null; labelId?: string | null; labelName?: string | null };
-export type LibraryFilterOption = { id: string | null; label: string };
+export type LibraryFilterOption = { id: string | null; label: string; received?: boolean };
+export function librarySourceMatches(kind:SourceKind,option:LibraryFilterOption){
+  return sourceTypeMatches(kind,option.id?.startsWith('label:')?'label':option.id?.startsWith('collection:')?'collection':'dictionary',option.received);
+}
 export const LIBRARY_PART_LABELS = VOCABULARY_PART_LABELS;
 export function LibraryFilters({ value, languageOptions, sourceOptions, locale, countContent, sourceNotice,
-  canApply = true, collectionOptions = [], labelOptions = [], onDraftChange, onClose, onApply, renderSources }: {
+  canApply = true, showLabels = false, collectionOptions = [], labelOptions = [], onDraftChange, onClose, onApply, renderSources }: {
   renderSources?:(props:{options:LibraryFilterOption[];selected:string|null;select:(id:string|null)=>void;query:string;locale:OnboardingLanguage;kind:SourceKind})=>React.ReactNode;
-  collectionLabel?: string; collectionOptions?: LibraryFilterOption[]; labelOptions?: LibraryFilterOption[];
+  collectionLabel?: string; showLabels?: boolean; collectionOptions?: LibraryFilterOption[]; labelOptions?: LibraryFilterOption[];
   value: LibraryFilterDraft; languageOptions: LibraryFilterOption[]; sourceOptions: LibraryFilterOption[];
   locale: OnboardingLanguage; countContent: React.ReactNode; sourceNotice?: React.ReactNode; canApply?: boolean;
   onDraftChange?: (draft: LibraryFilterDraft) => void; onClose: () => void; onApply: (draft: LibraryFilterDraft) => void;
@@ -60,8 +63,8 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
     } else if (id?.startsWith("collection:")) update({ collectionId: id.slice(11), applyListFilter: true, dictionaryId: null, labelId: null, labelName: null });
     else update({ dictionaryId: id?.slice(11) ?? null, collectionId: null, applyListFilter: false, labelId: null, labelName: null });
   };
-  const sourceName = draft.labelId ? labelOptions.find(option => option.id === draft.labelId)?.label ?? copy.noSources : draft.applyListFilter && draft.collectionId ? collectionOptions.find(option=>option.id===draft.collectionId)?.label ?? copy.noSources : draft.dictionaryId ? sourceOptions.find(option => option.id === draft.dictionaryId)?.label ?? copy.noSources : copy.allSources;
-  const visibleOptions = options.filter(option => kind==='all'||(kind==='dictionary'&&(!option.id||option.id.startsWith('dictionary:')))||(kind==='collection'&&(option.id?.startsWith('collection:')||option.id?.startsWith('label:')))).filter(option => `${option.id ?? ""} ${option.label}`.toLowerCase().includes(query.trim().toLowerCase()));
+  const sourceName = draft.labelId ? labelOptions.find(option => option.id === draft.labelId)?.label ?? draft.labelName ?? copy.noSources : draft.applyListFilter && draft.collectionId ? collectionOptions.find(option=>option.id===draft.collectionId)?.label ?? copy.noSources : draft.dictionaryId ? sourceOptions.find(option => option.id === draft.dictionaryId)?.label ?? copy.noSources : copy.allSources;
+  const visibleOptions = options.filter(option => librarySourceMatches(kind,option)).filter(option => `${option.id ?? ""} ${option.label}`.toLowerCase().includes(query.trim().toLowerCase()));
   // Keep word choices as a draft for returning to Words, but never submit hidden restrictions.
   const effectiveDraft = React.useMemo<LibraryFilterDraft>(() => !showParts
     ? { ...draft, parts: [], article: null } : draft, [draft, showParts]);
@@ -85,7 +88,7 @@ export function LibraryFilters({ value, languageOptions, sourceOptions, locale, 
             <div className={f.sourceToolbar}>
               {searchOpen ? <label className={f.search}><Search size={16}/><input autoFocus={searchOpen} aria-label={copy.searchSources} placeholder={copy.sourcesPlaceholder} value={query} maxLength={200} onChange={event => setQuery([...event.target.value].slice(0,100).join(''))} onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();closeSourceSearch();}}}/></label>
                 : <button ref={searchButton} type="button" className={f.icon} aria-label={copy.searchSources} aria-expanded={searchOpen} onClick={() => setSearchOpen(true)}><Search size={16}/></button>}
-              <SourceTypeControl locale={locale} value={kind} onChange={setKind}/>
+              <SourceTypeControl locale={locale} value={kind} onChange={setKind} showLabels={showLabels||labelOptions.length>0}/>
             </div>
             {sourceNotice}
             <div className={f.sourceList}>{(renderSources??presentation?.renderSources) ? (renderSources??presentation?.renderSources)!({options, selected: selectedSource, select: selectSource, query, locale, kind}) : visibleOptions.map(option => <button type="button" key={option.id ?? "all"} className={f.sourceOption} aria-label={option.label} aria-pressed={selectedSource === option.id} onClick={() => selectSource(option.id)}>

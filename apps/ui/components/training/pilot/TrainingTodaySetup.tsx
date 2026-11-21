@@ -306,14 +306,14 @@ export function TrainingTodaySetup({
 
   const activeFamily = familyForDraft(draft);
   const selectedScenario = scenarios.find((option) => option.value === draft.scenarioId);
-  const selectedList = draft.materialMode === "all-dictionaries"
+  const selectedList = draft.librarySelection?.labelName ?? (draft.materialMode === "all-dictionaries"
     ? dictionariesLoading ? t.loadingDictionaries : t.allDictionaries
     : draft.materialMode === "selected-dictionaries"
       ? dictionariesLoading ? t.loadingDictionaries : (draft.dictionaryIds ?? [])
           .map((id) => dictionaries.find((source) => source.value === id)?.label)
           .filter(Boolean)
           .join(", ") || t.materialUnavailable
-      : lists.find((option) => option.value === draft.listValue)?.label;
+      : lists.find((option) => option.value === draft.listValue)?.label);
   const openSetup = () => {
     setEditorSection(undefined);
     setSelectedIntent(null);
@@ -363,11 +363,11 @@ export function TrainingTodaySetup({
     setFailedStart(null);
     const started = await (options?onStart(nextDraft,sessionName,options):sessionName?onStart(nextDraft,sessionName):onStart(nextDraft));
     if (started === false) {
-      const scopeLabel = nextDraft.materialMode === "all-dictionaries"
+      const scopeLabel = nextDraft.librarySelection?.labelName ?? (nextDraft.materialMode === "all-dictionaries"
         ? t.allDictionaries
         : nextDraft.materialMode === "selected-dictionaries"
           ? (nextDraft.dictionaryIds ?? []).map(id => dictionaries.find(source => source.value === id)?.label).filter(Boolean).join(", ") || t.materialUnavailable
-          : lists.find(option => option.value === nextDraft.listValue)?.label ?? t.selectedMaterial;
+          : lists.find(option => option.value === nextDraft.listValue)?.label ?? t.selectedMaterial);
       setFailedStart({draft: {...nextDraft}, sessionName, scopeLabel, options,
         ownerId: userId, languageCode: trainingLanguageCode});
       setScreen("today");
@@ -530,7 +530,7 @@ export function TrainingTodaySetup({
     editing={Boolean(editingPresetId)} onSave={()=>savePreset()} onSaveAs={name=>savePreset(name)}
     onDelete={editingTraining?async()=>{const removed=await accountAction(()=>account.remove(editingTraining.id));if(removed){setEditingPresetId(null);setScreen("today");}return removed;}:undefined}
     deletionChangesMain={Boolean(editingTraining && account.snapshot.document.mainTrainingId===editingTraining.id && account.snapshot.document.trainings.length>1)} deleteDisabled={account.pending||account.status!=="ready"}
-    onBeginSave={()=>setPresetMessage("")} onStart={()=>void requestStart(draft,trainingName??undefined,editingTraining&&!hasUnsavedTrainingChanges(editingTraining,{name:trainingName??selectedList??"",languageCode:trainingLanguageCode??"nl",draft})?{trainingId:editingTraining.id}:undefined)} canSave={canSaveAccount}
+    onBeginSave={()=>setPresetMessage("")} onStart={()=>void requestStart(draft,trainingName??draft.librarySelection?.labelName,editingTraining&&!hasUnsavedTrainingChanges(editingTraining,{name:trainingName??selectedList??"",languageCode:trainingLanguageCode??"nl",draft})?{trainingId:editingTraining.id}:undefined)} canSave={canSaveAccount}
     saveDisabled={account.status!=="ready"||account.pending||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
     startDisabled={(account.snapshot.starterStatus==="pending" && (!editingTraining || hasUnsavedTrainingChanges(editingTraining,{name:trainingName??selectedList??"",languageCode:trainingLanguageCode??"nl",draft})))||Boolean(queuedLanguageStart)||!canSaveAccount||account.status!=="ready"||account.pending||isTrainingSetupPaused(draft)||startPending||scenarioLoading||startBlocked||!material.currentLanguageAllowed||!draftScenarioSupported||!draftMaterialAvailable||trainingLanguageLoading||Boolean(pendingLanguage)}
     saveLabel={editingPresetId?(localizedField("trainingSetup", "saveChanges"))[interfaceLanguage]:accountCopy.save} startLabel={material.status==="loading"||scenarioLoading?t.loading:!draftScenarioSupported?t.chooseGoal:!draftMaterialAvailable&&!sourceReferenceBlocked?t.materialUnavailable:(localizedField("trainingSetup", "start"))[interfaceLanguage]}

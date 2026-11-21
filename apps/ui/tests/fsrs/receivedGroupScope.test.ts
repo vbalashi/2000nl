@@ -40,6 +40,45 @@ async function fixture(c:PoolClient){
   expect((await read(c,f.label,'Outside')).groupTree).toMatchObject({labels:[],placements:{}});
   expect(first.collections[0]).toMatchObject({ownership:'received',isShared:true,labelIds:[]});
  }));
+ test('Words and Training share the live group scope without duplicate entries',async()=>withTransaction(pool,async c=>{
+  const f=await fixture(c);
+  await asUser(c,f.owner);
+  const entries=[];
+  for(const [index,name] of ['scope-alpha','scope-beta','scope-outside'].entries()){
+   const id=(await c.query('select create_user_dictionary_entry($1,null,$2) id',[f.owner,{headword:name,languageCode:'nl',definition:'Fixture meaning'}])).rows[0].id;
+   entries.push(id);
+   await c.query('select refresh_dictionary_search_document($1,2)',[id]);
+   await c.query('insert into user_word_list_items(list_id,word_id) values($1,$2)',[f.rows[[0,1,3][index]],id]);
+  }
+  await c.query('insert into user_word_list_items(list_id,word_id) values($1,$2)',[f.rows[1],entries[0]]);
+  const material={kind:'label',id:f.label};
+  const filter={dictionaryScope:{mode:'all',languageCode:'nl'},librarySelection:{query:'',category:'headwords',labelId:f.label}};
+  const browse=async(user:string)=>(await c.query('select entry_id from private.readable_material_entry_ids_v1($1,$2) order by entry_id',[user,material])).rows.map(row=>row.entry_id);
+  const training=async(user:string)=>(await c.query("select read_training_recipe_availability_v1($1,ARRAY['word-to-definition'],null,'curated',$2,'meaning') r",[user,filter])).rows[0].r.newCards;
+  const page=async(user:string)=>(await c.query(
+   "select lookup_platform_v2_library_material_entries($1,'','nl',null,null,25,50,'{}',$2) r",[user,material])).rows[0].r;
+  const sources=async()=>(await c.query(
+   'select private.words_bulk_material_sources_v1($1,$2) r',[f.reader,material])).rows[0].r;
+  const search=async(user:string)=>(await c.query(
+   "select search_library_category_v1($1,'scope','nl',null,'{}',$2,'headwords') r",[user,material])).rows[0].r;
+  await asUser(c,f.reader);
+  expect(await browse(f.reader)).toEqual(entries.slice(0,2).sort());
+  expect((await page(f.reader)).page.totalMeanings).toBe(2);
+  expect((await search(f.reader)).groups[0].items.map((item:{entry:{id:string}})=>item.entry.id).sort()).toEqual(entries.slice(0,2).sort());
+  expect(await training(f.reader)).toBe(2);
+  expect((await sources()).map((source:{id:string})=>source.id)).toEqual(f.rows.slice(0,3).sort());
+  await asUser(c,f.other);
+  expect(await browse(f.other)).toEqual([]);
+  expect((await page(f.other)).error).toBe('material_not_accessible');
+  expect((await search(f.other)).error).toBe('material_not_accessible');
+  await asUser(c,f.reader);
+  await c.query('select unsubscribe_label_share_v1($1)',[f.label]);
+  expect(await browse(f.reader)).toEqual([]);
+  expect(await training(f.reader)).toBe(0);
+  expect(await sources()).toEqual([]);
+  expect((await page(f.reader)).error).toBe('material_not_accessible');
+  expect((await c.query("select private.entry_access_v1($1,$2,'browse') allowed",[f.reader,entries[0]])).rows[0].allowed).toBe(true);
+ }));
  test('grants the tree read only to authenticated users',async()=>withTransaction(pool,async c=>{
   const name='public.read_received_group_catalog_v1(text,text,uuid,text,jsonb,integer,text)';
   for(const role of ['anon','service_role','authenticated']){

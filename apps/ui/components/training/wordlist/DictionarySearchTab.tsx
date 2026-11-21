@@ -577,7 +577,7 @@ export function DictionarySearchTab({
   const filterButton = (
     materialEnabled && <button type="button" className={workspace.filterButton}
           aria-label={copy.filters} aria-haspopup={presentation?.filterPlacement === "panel" ? undefined : "dialog"} aria-expanded={presentation ? filtersOpen : undefined} disabled={!searchMaterialReady}
-          data-active={Boolean(searchState.entryFilters?.parts.length || vocabularySelectionActive(searchState.entryFilters?.vocabulary) || dictionaryId)} onClick={()=>setFiltersOpen(current=>presentation?.filterPlacement === "panel" ? !current : true)}>
+          data-active={Boolean(searchState.entryFilters?.parts.length || vocabularySelectionActive(searchState.entryFilters?.vocabulary) || dictionaryId || searchState.labelId)} onClick={()=>setFiltersOpen(current=>presentation?.filterPlacement === "panel" ? !current : true)}>
           <SlidersHorizontal size={18}/>
         </button>
   );

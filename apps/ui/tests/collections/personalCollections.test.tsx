@@ -173,3 +173,18 @@ test('external group requests select the same account-bound catalog scope and ca
  view.rerender(<PersonalCollections {...props} userId="different-account" scopeRequest={group}/>);
  expect(personalCatalog.mock.calls.at(-1)?.[0].query).toMatchObject({scope:'all',labelId:null});
 });
+
+test('View words on a received label closes the mobile picker and opens the full group',async()=>{
+ vi.stubEnv('NEXT_PUBLIC_LABEL_SHARING_ENABLED','true');
+ vi.stubEnv('NEXT_PUBLIC_COLLECTION_SHARING_ENABLED','true');
+ const onOpenLabel=vi.fn();
+ render(<PersonalCollections {...props} onOpenLabel={onOpenLabel}/>);
+ await screen.findByRole('button',{name:'Received group'});
+ const scopeButton=screen.getAllByRole('button',{name:'All collections'}).find(button=>!button.hasAttribute('aria-pressed'))!;
+ fireEvent.click(scopeButton);
+ const picker=screen.getByRole('dialog',{name:'Choose a label'});
+ fireEvent.click(within(picker).getByRole('button',{name:'More actions: Received group'}));
+ fireEvent.click(screen.getByRole('menuitem',{name:'View words'}));
+ expect(screen.queryByRole('dialog')).toBeNull();
+ expect(onOpenLabel).toHaveBeenCalledWith({id:'00000000-0000-4000-8000-000000000099',name:'Received group'});
+});
