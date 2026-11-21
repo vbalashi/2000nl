@@ -1,3 +1,4 @@
+import { handleDestinationAction, readTelegramDestinations } from './destinations';
 import { handleTemplateAction, readTemplates } from './templates';
 import { storeBotToken } from '@/lib/operatorNotifications/secretBroker';
 import { NextResponse } from 'next/server';
@@ -9,7 +10,9 @@ const response=(body:unknown,status=200)=>NextResponse.json(body,{status,headers
 export async function GET(request:Request) {
  try {
   const principal=await requireAdmin(request,'notifications.manage');
-  if(new URL(request.url).searchParams.get('view')==='templates')return await readTemplates(principal,response);
+  const view=new URL(request.url).searchParams.get('view');
+  if(view==='telegram-destinations')return await readTelegramDestinations(principal,response);
+  if(view==='templates')return await readTemplates(principal,response);
   const {data,error}=await createAdminServiceClient().rpc('admin_notification_configuration_v2',{p_operator:principal.userId,p_request:principal.requestId});
   if(error)throw new Error('configuration unavailable');
   return response(data);
@@ -24,12 +27,15 @@ async function mutate(request:Request,kind:"bot"|"route"|"secret") {
   if(!request.headers.get('content-type')?.toLowerCase().startsWith('application/json'))return response({error:'invalid_request'},400);
   const reader=request.body?.getReader();if(!reader)return response({error:'invalid_request'},400);
   const chunks:Uint8Array[]=[];let size=0;
-  for(;;){const part=await reader.read();if(part.done)break;size+=part.value.length;if(size>(kind==='bot'?16384:1024)){await reader.cancel();return response({error:'request_too_large'},413);}chunks.push(part.value);}
+  for(;;){const part=await reader.read();if(part.done)break;size+=part.value.length;if(size>(kind==='bot'?16384:kind==='route'?2048:1024)){await reader.cancel();return response({error:'request_too_large'},413);}chunks.push(part.value);}
   let input:unknown;
   try{input=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));}catch{return response({error:'invalid_request'},400);}
   const templateAction=kind==='bot' && input && typeof input==='object' && !Array.isArray(input) && 'action' in input
    && ['preview-template','publish-template','test-template','save-test-destination'].includes(input.action as string);
-  if(size>1024 && !templateAction)return response({error:'request_too_large'},413);
+  const destinationAction=kind==='bot' && input && typeof input==='object' && !Array.isArray(input) && 'action' in input
+   && ['link-telegram-destination','create-telegram-topic'].includes(input.action as string);
+  if(size>1024 && kind==='bot' && !templateAction)return response({error:'request_too_large'},413);
+  if(destinationAction)return await handleDestinationAction(input as Record<string,unknown>,principal,response);
   if(templateAction) {
    return await handleTemplateAction(input as Record<string,unknown>,principal,response);
   }
@@ -62,12 +68,12 @@ async function mutate(request:Request,kind:"bot"|"route"|"secret") {
    const keys=['id','revision','botId','kind','chatId','topicId','enabled'];
    const named='chatTitle' in route || 'topicTitle' in route;
    if(named)keys.push('chatTitle','topicTitle');
-   const validTitle=(value:unknown)=>value===null || (typeof value==='string' && value.trim().length<=120 && !value.includes('\0'));
+   const validTitle=(value:unknown)=>value===null || (typeof value==='string' && Array.from(value.trim()).length<=120 && !value.includes('\0'));
    if(named&&(!validTitle(route.chatTitle)||!validTitle(route.topicTitle)))return response({error:'invalid_route'},400);
    const uuid=(value:unknown)=>typeof value==='string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
    if(Object.keys(route).length!==keys.length || keys.some(key=>!(key in route)) || (route.id!==null && !uuid(route.id)) || !uuid(route.botId)
     || !Number.isInteger(route.revision) || (route.revision as number)<0 || (route.revision as number)>2147483647
-    || !['admission-request','feedback'].includes(route.kind as string) || typeof route.chatId!=='string' || !/^-?[1-9][0-9]{0,19}$/.test(route.chatId)
+    || !['admission-request','feedback','deployment'].includes(route.kind as string) || typeof route.chatId!=='string' || !/^-?[1-9][0-9]{0,19}$/.test(route.chatId)
     || (route.topicId!==null && (!Number.isSafeInteger(route.topicId) || (route.topicId as number)<1)) || typeof route.enabled!=='boolean')return response({error:'invalid_request'},400);
    const {data,error}=await createAdminServiceClient().rpc(named?'admin_notification_save_route_v2':'admin_notification_save_route_v1',{p_operator:principal.userId,p_request:principal.requestId,p_id:route.id,p_revision:route.revision,p_bot:route.botId,p_kind:route.kind,p_chat:route.chatId,p_topic:route.topicId,p_enabled:route.enabled,...(named?{p_chat_title:route.chatTitle,p_topic_title:route.topicTitle}:{})});
    if(error?.code==='40001')return response({error:'revision_conflict'},409);
