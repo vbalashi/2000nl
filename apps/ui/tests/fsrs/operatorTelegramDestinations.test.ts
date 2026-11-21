@@ -74,4 +74,23 @@ describeIfDb('Telegram destinations and deployment notification routes', () => {
       expect(route.kind).toBe('deployment');
     });
   });
+  test('archives a bot, disables its routes, and removes it from active settings', async () => {
+    await withTransaction(pool, async client => {
+      const {operator, bot} = await setup(client);
+      await client.query("select public.admin_notification_save_route_v2($1,$2,null,0,$3,'feedback','-100123',7,true,'Team','Reports')",
+        [operator, randomUUID(), bot]);
+      const archive = (revision: number) => client.query('select public.admin_archive_notification_bot_v1($1,$2,$3,$4) as archived',
+        [operator, randomUUID(), bot, revision]);
+      expect((await archive(9)).rows[0].archived).toBe(false);
+      expect((await archive(1)).rows[0].archived).toBe(true);
+      expect((await archive(1)).rows[0].archived).toBe(false);
+      const {rows:[{settings}]} = await client.query('select public.admin_notification_configuration_v3($1,$2) as settings',
+        [operator, randomUUID()]);
+      expect(settings.bots.some((item:{id:string}) => item.id === bot)).toBe(false);
+      expect(settings.routes.some((item:{botId:string}) => item.botId === bot)).toBe(false);
+      expect((await client.query('select enabled from private.operator_notification_routes where bot_id=$1',[bot])).rows)
+        .toEqual([{enabled:false}]);
+    });
+  });
+
 });
