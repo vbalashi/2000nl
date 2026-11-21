@@ -90,3 +90,4 @@
 \i db/migrations/383_telegram_chat_discovery.sql
 \i db/migrations/384_deployment_notifications.sql
 \i db/migrations/385_archive_notification_bots.sql
+\i db/migrations/386_telegram_per_route_delivery.sql
