@@ -13,7 +13,7 @@ export async function GET(request:Request) {
   const view=new URL(request.url).searchParams.get('view');
   if(view==='telegram-destinations')return await readTelegramDestinations(principal,response);
   if(view==='templates')return await readTemplates(principal,response);
-  const {data,error}=await createAdminServiceClient().rpc('admin_notification_configuration_v2',{p_operator:principal.userId,p_request:principal.requestId});
+  const {data,error}=await createAdminServiceClient().rpc('admin_notification_configuration_v3',{p_operator:principal.userId,p_request:principal.requestId});
   if(error)throw new Error('configuration unavailable');
   return response(data);
  } catch(error){return adminErrorResponse(error);}
@@ -35,6 +35,18 @@ async function mutate(request:Request,kind:"bot"|"route"|"secret") {
   const destinationAction=kind==='bot' && input && typeof input==='object' && !Array.isArray(input) && 'action' in input
    && ['link-telegram-destination','create-telegram-topic'].includes(input.action as string);
   if(size>1024 && kind==='bot' && !templateAction)return response({error:'request_too_large'},413);
+  if(kind==='bot' && input && typeof input==='object' && 'action' in input && input.action==='archive-bot') {
+   const {botId,revision}=input as Record<string,unknown>;
+   if(typeof botId!=='string' || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(botId)
+    || typeof revision!=='number' || !Number.isInteger(revision) || revision<1 || revision>2147483647) {
+    return response({error:'invalid_request'},400);
+   }
+   const {data,error}=await createAdminServiceClient().rpc('admin_archive_notification_bot_v1',{
+    p_operator:principal.userId,p_request:principal.requestId,p_bot:botId,p_revision:revision,
+   });
+   if(error)throw new Error('bot archive unavailable');
+   return data===true ? response({archived:true}) : response({error:'revision_conflict'},409);
+  }
   if(destinationAction)return await handleDestinationAction(input as Record<string,unknown>,principal,response);
   if(templateAction) {
    return await handleTemplateAction(input as Record<string,unknown>,principal,response);
