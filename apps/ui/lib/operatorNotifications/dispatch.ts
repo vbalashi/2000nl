@@ -4,7 +4,7 @@ import { createAdminServiceClient } from '@/lib/admin/adminServerClient';
 import { defaultTemplates, renderTemplate } from './templates';
 import { sendBotMessage } from './secretBroker';
 
-type Event={id:string;kind:'admission-request'|'admission-approved'|'feedback';leaseId:string;attempts:number;email:string|null;feedbackId:string|null;admissionStatus:string|null;emailVerified:boolean;templateBody?:string|null;eventId:string;botId:string;secretVersion:string;chatId:string;topicId:number|null;transport:"telegram"|"email"};
+type Event={id:string;kind:'admission-request'|'admission-approved'|'feedback'|'deployment';deploymentStage?:'staging'|'production';deploymentValues?:Record<string,string>;leaseId:string;attempts:number;email:string|null;feedbackId:string|null;admissionStatus:string|null;emailVerified:boolean;templateBody?:string|null;eventId:string;botId:string;secretVersion:string;chatId:string;topicId:number|null;transport:"telegram"|"email"};
 type Outcome='sent'|'retry'|'failed';
 
 /** Processes one lease; external delivery may succeed even when its receipt is lost. */
@@ -33,7 +33,10 @@ export async function dispatchOne(): Promise<'disabled'|'idle'|Outcome> {
    }
   } else if(event.kind==='admission-request' && event.admissionStatus!=='pending') outcome='sent';
   else {
-   const message=event.kind==='admission-request' && event.email
+   const deploymentTemplate=event.deploymentStage==='staging'?'deployment-staging':'deployment-production';
+   const message=event.kind==='deployment' && event.deploymentStage && event.deploymentValues
+    ? {botId:event.botId,version:event.secretVersion,chatId:event.chatId,topicId:event.topicId,text:renderTemplate(deploymentTemplate,event.templateBody??defaultTemplates[deploymentTemplate],event.deploymentValues),buttons:null}
+    : event.kind==='admission-request' && event.email
     ? {botId:event.botId,version:event.secretVersion,chatId:event.chatId,topicId:event.topicId,text:renderTemplate(event.kind,event.templateBody??defaultTemplates[event.kind],{email:event.email}),buttons:[[{text:'Approve',callback_data:`a_${event.id}`},{text:'Reject',callback_data:`r_${event.id}`}]]}
     : event.kind==='feedback' && event.feedbackId
       ? {botId:event.botId,version:event.secretVersion,chatId:event.chatId,topicId:event.topicId,text:renderTemplate(event.kind,event.templateBody??defaultTemplates[event.kind],{report_id:event.feedbackId,report_url:`${siteUrl.origin}/admin/reports/?feedback=${encodeURIComponent(event.feedbackId)}`}),buttons:null}

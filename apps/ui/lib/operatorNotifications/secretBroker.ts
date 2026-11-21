@@ -12,7 +12,7 @@ async function brokerRequest(path:string,payload:unknown,timeoutMs=15000):Promis
   const fail=()=>{if(!settled){settled=true;clearTimeout(timeout);reject(new Error('secret storage unavailable'));}};
   const req=request({socketPath,path,method:'PUT',headers:{'Content-Type':'application/json','Content-Length':Buffer.byteLength(body)}},res=>{
    const chunks:Buffer[]=[];let size=0;
-   res.on('data',(chunk:Buffer)=>{size+=chunk.length;if(size>1024){res.destroy();fail();}else chunks.push(chunk);});
+   res.on('data',(chunk:Buffer)=>{size+=chunk.length;if(size>2048){res.destroy();fail();}else chunks.push(chunk);});
    res.on('error',fail);res.on('aborted',fail);
    res.on('end',()=>{
     try {
@@ -41,4 +41,18 @@ export async function sendBotMessage(message:BrokerDelivery):Promise<{status:'se
  const status=value.status as 'sent'|'retry'|'failed';
  const delay=value.retryAfterSeconds;
  return {status,...(typeof delay==='number' && Number.isInteger(delay) && delay>0 && delay<=86400?{retryAfterSeconds:delay}:{})};
+}
+
+export async function refreshTelegramWebhook(botId: string, version: string): Promise<string> {
+ const result = await brokerRequest('/v1/telegram-webhook', {botId, version}, 30000) as {username?: unknown} | null;
+ if (typeof result?.username !== 'string' || !/^[A-Za-z0-9_]{5,32}$/.test(result.username)) throw new Error('bot unavailable');
+ return result.username;
+}
+
+export async function createTelegramTopic(input: {botId: string; version: string; chatId: string; title: string}) {
+ const result = await brokerRequest('/v1/telegram-topic', input) as {status?: unknown; topicId?: unknown; title?: unknown} | null;
+ if (result?.status === 'rejected') return null;
+ if (typeof result?.topicId !== 'number' || !Number.isSafeInteger(result.topicId) || result.topicId <= 1 ||
+  typeof result.title !== 'string' || !result.title.trim() || Array.from(result.title).length > 128) throw new Error('topic unavailable');
+ return {topicId: result.topicId, title: result.title};
 }

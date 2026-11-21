@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 const rpc=vi.hoisted(()=>vi.fn());
 vi.mock('@/lib/admin/adminServerClient',()=>({createAdminServiceClient:()=>({rpc})}));
@@ -45,4 +45,18 @@ test('a webhook credential cannot cross bot or key-version boundaries',async()=>
   expect((await POST(request)).status).toBe(401);
  }
  expect(rpc).not.toHaveBeenCalled();
+});
+
+test('a signed group command registers its topic without passing message text to storage', async () => {
+ const code='b'.repeat(32);
+ const update={update_id:42,message:{date:1700000000,chat:{id:-100123,type:'supergroup',title:'Team',is_forum:true},
+  is_topic_message:true,message_thread_id:7,from:{id:201},text:`/connect@fixture_bot ${code} Releases`}};
+ rpc.mockResolvedValueOnce({data:true,error:null});
+ const response=await POST(req(update));
+ expect(response.status).toBe(200);
+ expect(await response.json()).toMatchObject({method:'sendMessage',chat_id:-100123,message_thread_id:7});
+ expect(rpc.mock.calls[0][0]).toBe('operator_telegram_target_event_v1');
+ const calls=rpc.mock.calls[0][1];
+ expect(calls).toMatchObject({p_action:'link',p_topic:7,p_title:'Releases',p_hash:createHash('sha256').update(code).digest('hex')});
+ expect(JSON.stringify(calls)).not.toContain(code);
 });

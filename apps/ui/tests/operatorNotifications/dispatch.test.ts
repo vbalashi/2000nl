@@ -18,3 +18,13 @@ test('links feedback to its administrative detail by feedback item ID',async()=>
 
 
 test('does not mail when the approved identity is no longer verified',async()=>{claim([{...event,kind:'admission-approved',admissionStatus:'approved',emailVerified:false}]);expect(await dispatchOne()).toBe('failed');expect(mocks.mail).not.toHaveBeenCalled();});
+
+test('renders the pinned release template for its Telegram topic without decision buttons', async () => {
+ claim([{...event,kind:'deployment',deploymentStage:'production',email:null,templateBody:'Prod {{status}}\n{{version}}',
+  deploymentValues:{status:'❌ Ошибка',version:'1.2.3'}}]);
+ mocks.send.mockResolvedValue({status:'sent'});
+ expect(await dispatchOne()).toBe('sent');
+ expect(mocks.send).toHaveBeenCalledWith({
+  botId:event.botId,version:event.secretVersion,chatId:'-100',topicId:7,text:'Prod ❌ Ошибка\n1.2.3',buttons:null,
+ });
+});
