@@ -41,7 +41,7 @@ import s from "./organization.module.css";
 
 type CatalogCollection=WordListSummary&{ownership?:'owned'|'received';isShared?:boolean;accessDescription?:string;labelIds?:string[]};
 export type CollectionCatalogScopeRequest={userId:string;id:string;name:string;kind:'label'|'group';request:number};
-type Props = {scopeRequest?:CollectionCatalogScopeRequest;active: boolean; userId: string; language: string; locale: OnboardingLanguage; collections: WordListSummary[]; onReload: () => Promise<void>; onOpen: (collection: WordListSummary) => void; onOpenReceived?: (collection:WordListSummary)=>void; onOpenLabel?: (label:CollectionLabel) => void};
+type Props = {scopeRequest?:CollectionCatalogScopeRequest;active: boolean; userId: string; language: string; locale: OnboardingLanguage; collections: WordListSummary[]; onReload: () => Promise<void>; onOpen: (collection: WordListSummary) => void; onOpenReceived?: (collection:WordListSummary)=>void; onOpenLabel?: (label:{id:string;name:string}) => void};
 type Editor = {kind:"label"; id:string; existing?:CollectionLabel} | {kind:"collection"; existing?:WordListSummary} | {kind:"assign"; collection:WordListSummary} | {kind:"delete-label"; label:CollectionLabel} | {kind:"delete-collection"; collection:WordListSummary};
 
 export function PersonalCollections({active, userId, language, locale, collections, onReload, onOpen, onOpenReceived, onOpenLabel, scopeRequest}: Props) {
@@ -86,7 +86,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
   const saveLock = React.useRef(false);
   const alive = React.useRef(true);
   React.useEffect(() => {alive.current = true; return () => {alive.current = false;};}, []);
-  const [menu, setMenu] = useState<{anchor:HTMLButtonElement; label?:CollectionLabel; collection?:CatalogCollection} | null>(null);
+  const [menu, setMenu] = useState<{anchor:HTMLButtonElement; label?:CollectionLabel; receivedGroup?:{id:string;name:string}; collection?:CatalogCollection} | null>(null);
   const organizerRoot = React.useRef<HTMLDivElement>(null);
   const editorFocus = React.useRef<HTMLElement | null>(null);
   const wasEditing = React.useRef(false);
@@ -185,7 +185,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
         <button type="button" aria-label={label.name} aria-pressed={effectiveScope === label.id} title={path} onClick={()=>changeScope(label.id)}><CollectionAccessIcon kind="label" shared={isSharedLabel(label.id)} label={isSharedLabel(label.id)?t.shared:t.labels}/><span>{label.name}{labelQuery.trim() && parents ? ` · ${parents}` : ""}</span></button>
         <button type="button" aria-label={`${t.more}: ${label.name}`} onClick={event=>setMenu({anchor:event.currentTarget,label})}><MoreHorizontal size={16} strokeWidth={1.5}/></button>
       </div>)}
-      {groupSharingEnabled&&publicationEnabled&&<ReceivedGroupScopes locale={locale} groups={sharedLabels.data?.received??[]} query={labelQuery} selectedId={selectedReceived?.id??null} onSelect={group=>{setReceivedScope({userId,id:group.labelId,name:group.name});changeScope(`group:${group.labelId}`);}}/>}
+      {groupSharingEnabled&&publicationEnabled&&<ReceivedGroupScopes locale={locale} groups={sharedLabels.data?.received??[]} query={labelQuery} selectedId={selectedReceived?.id??null} onMenu={onOpenLabel ? (anchor,group)=>setMenu({anchor,receivedGroup:{id:group.labelId,name:group.name}}) : undefined} onSelect={group=>{setReceivedScope({userId,id:group.labelId,name:group.name});changeScope(`group:${group.labelId}`);}}/>}
       {!labelRows.length && !sharedLabels.data?.received.length && <p className={s.muted}>{t.noLabels}</p>}
     </div>
   </div>;
@@ -210,7 +210,11 @@ export function PersonalCollections({active, userId, language, locale, collectio
     </section>
     {details&&<CollectionDetailsSurface name={t.collections} onClose={()=>setDetails(null)}><CollectionDetailsController key={`${userId}:${details.id}`} userId={userId} id={details.id} itemCount={details.item_count??null} canEditLabels={details.ownership==='owned'||details.ownership==='received'||!publicationEnabled} onUnavailable={()=>{setReceivedEditor(null);setEditor(current=>current?.kind==='assign'&&current.collection.id===details.id?null:current);}} onChanged={()=>{void onReload();void catalog.refresh();}} labelNames={details.labelIds?.map(id=>labelRows.find(row=>row.label.id===id)?.path).filter((name):name is string=>Boolean(name))??(snapshot.assignments.filter(item=>item.collection_id===details.id).map(item=>labelRows.find(row=>row.label.id===item.label_id)?.path).filter((path):path is string=>Boolean(path)))} locale={locale} isShared={details.isShared===true} onClose={()=>setDetails(null)} onLabels={name=>{const collection={...details,name};if(details.ownership==='received')setReceivedEditor({ownerId:userId,collection});else begin({kind:"assign",collection});}} onOpen={name=>{setDetails(null);const collection={...details,name};if(details.ownership==='received')onOpenReceived?.(collection);else onOpen(collection);}}/></CollectionDetailsSurface>}
     {scopeOpen && <DialogSurface className={overlays.dialog} aria-label={t.chooseScope} onDismiss={()=>setScopeOpen(false)}><div className={s.scopeDialog}><button className={s.dismiss} aria-label={t.close} onClick={()=>setScopeOpen(false)}><X size={20}/></button>{scopePicker}</div></DialogSurface>}
-    {menu && <ActionMenu anchor={menu.anchor} title={t.more} language={locale} onClose={()=>setMenu(null)} items={menu.label ? [
+    {menu && <ActionMenu anchor={menu.anchor} title={t.more} language={locale} onClose={()=>setMenu(null)} items={menu.receivedGroup ? [{id:"open",label:t.open,onSelect:()=>{
+      setMenu(null);
+      setScopeOpen(false);
+      onOpenLabel?.(menu.receivedGroup!);
+    }}] : menu.label ? [
       ...(onOpenLabel ? [{id:"open",label:t.open,onSelect:()=>{
         setMenu(null);
         setScopeOpen(false);

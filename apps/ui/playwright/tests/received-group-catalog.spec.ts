@@ -1,5 +1,6 @@
 import {expect,test} from '@playwright/test';
 import {setupAuthenticatedTrainingAttributionPage} from '../support/trainingAttributionHarness';
+import {multiSenseBankGroup} from '../../tests/platformV2LibraryFixture';
 const groupId='12200000-0000-4000-8000-000000000001';
 const lessonId='12200000-0000-4000-8000-000000000002';
 const subgroupId='12200000-0000-4000-8000-000000000003';
@@ -10,6 +11,16 @@ for(const width of [350,390,1200])test(`received group uses main catalog at ${wi
  await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:'en'}}});
  await page.route('**/api/library/collection-labels',route=>route.fulfill({json:{revision:0,labels:[],assignments:[]}}));
  await page.route('**/api/library/label-sharing/catalog',route=>route.fulfill({json:{owned:[],received:[{labelId:groupId,name:'333',collectionCount:1}]}}));
+ const wordScopes:unknown[]=[];
+ await page.route('**/api/library/search',route=>{
+  const body=route.request().postDataJSON();
+  wordScopes.push(body.material);
+  return route.fulfill({json:{contractVersion:'platform-lookup-v2',query:body.query??'',request:body,
+   groups:[multiSenseBankGroup],page:{selectedTierComplete:true,nextGroupCursor:null},
+   librarySearch:{totalGroups:1,totalMeanings:2,unavailableEntryCount:0,selectedTierComplete:true,
+    matchingEntryIds:multiSenseBankGroup.entries.flatMap(entry=>'entryId'in entry?[entry.entryId]:[])},
+  }});
+ });
  const requests:URL[]=[];
  await page.route('**/api/library/collections/catalog?*',route=>{
   const url=new URL(route.request().url());requests.push(url);
@@ -84,6 +95,30 @@ for(const width of [350,390,1200])test(`received group uses main catalog at ${wi
  await page.getByRole('button',{name:'Open group',exact:true}).click();
  await expect(page.getByRole('dialog')).toHaveCount(0);
  await expect(leaf).toBeVisible();
+ if(width<=700)await catalog.locator('header').getByRole('button',{name:'333',exact:true}).click();
+ await page.getByRole('button',{name:'More actions: 333'}).click();
+ await page.getByRole('menuitem',{name:'View words'}).click();
+ await expect(page.getByRole('dialog')).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Words',exact:true})).toHaveAttribute('aria-current','page');
+ if(width===390){
+  const words=page.getByTestId('library-workspace');
+  await expect(words.getByRole('button',{name:/Dutch · 333/})).toBeVisible();
+  await expect.poll(()=>wordScopes.at(-1)).toEqual({kind:'label',id:groupId});
+  await words.getByRole('button',{name:'Search filters'}).click();
+  const filters=page.getByRole('dialog');
+  await filters.getByRole('button',{name:/^Source/}).click();
+  await filters.getByRole('button',{name:'Labels',exact:true}).click();
+  await expect(filters.getByRole('button',{name:'333',exact:true})).toHaveAttribute('aria-pressed','true');
+  await filters.getByRole('button',{name:'Show results'}).click();
+  await words.locator('button[aria-haspopup="menu"][class*="countTrigger"]').click();
+  await page.getByRole('menuitem',{name:'Set up training with these words'}).click();
+  await expect(page.getByRole('heading',{name:'Session builder'})).toBeVisible();
+  await expect(page.locator('[data-testid$="-source-summary"]')).toHaveText('333');
+  const source=page.locator('[data-builder-section="source"]');
+  if(await source.getAttribute('aria-expanded')==='false')await source.click();
+  await page.getByRole('button',{name:'Labels',exact:true}).click();
+  await expect(page.getByRole('button',{name:'333',exact:true})).toHaveAttribute('aria-pressed','true');
+ }
 });
 
 for(const width of [350,390,705,1200])for(const theme of ['light','dark'])test(`shared publication rows stay readable ${width} ${theme} @received-group-catalog`,async({page})=>{

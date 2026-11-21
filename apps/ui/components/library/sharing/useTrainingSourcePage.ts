@@ -5,8 +5,8 @@ import {useCallback,useEffect,useRef,useState} from 'react';
 import {readTrainingCollectionPage} from '@/lib/collections/sharing/readableTrainingCatalog';
 import type {TrainingCollectionPage} from '@/lib/collections/sharing/trainingCollectionCatalogContract';
 import {useCollectionSelectionScope} from './CollectionSelectionContext';
-export function useTrainingSourcePage(query:string,ownership:SourceOwnership='all'){
- const scope=useCollectionSelectionScope(),active=process.env.NEXT_PUBLIC_COLLECTION_SHARING_ENABLED==='true'&&Boolean(scope?.onTrainingResolved);
+export function useTrainingSourcePage(query:string,ownership:SourceOwnership='all',enabled=true){
+ const scope=useCollectionSelectionScope(),active=process.env.NEXT_PUBLIC_COLLECTION_SHARING_ENABLED==='true'&&Boolean(scope?.onTrainingResolved)&&enabled;
  const key=JSON.stringify([scope?.userId,scope?.languageCode,query,ownership,active]),latest=useRef({key,scope,active,query,ownership});latest.current={key,scope,active,query,ownership};
  const [state,setState]=useState<{key:string;page:TrainingCollectionPage;status:'loading'|'ready'|'error';more:boolean}>({key:'',page:{collections:[],nextCursor:null},status:'loading',more:false}),request=useRef<AbortController|null>(null),stateRef=useRef(state);stateRef.current=state;
  const load=useCallback(async(more=false)=>{

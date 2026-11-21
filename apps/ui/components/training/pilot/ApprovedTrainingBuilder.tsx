@@ -310,7 +310,7 @@ export function ApprovedTrainingBuilder(p: Props) {
               lists={p.lists}
               dictionaries={p.dictionaries}
               draft={p.draft}
-              onChange={next=>p.onDraftChange(current=>{const updated=typeof next==="function"?next(current):next;return current.librarySelection?.labelId?{...updated,librarySelection:current.librarySelection.query||current.librarySelection.languageCode?{query:current.librarySelection.query,category:current.librarySelection.category,...(current.librarySelection.languageCode?{languageCode:current.librarySelection.languageCode}:{})}:undefined}:updated;})}
+              onChange={p.onDraftChange}
               disabled={p.languagePending || p.dictionariesLoading}
               expanded={open.includes("source")}
               renderSection={({ toolbar, content }) => (

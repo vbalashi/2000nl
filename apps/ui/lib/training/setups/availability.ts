@@ -22,11 +22,11 @@ export const isTrainingSetupDraftSupported = (
 };
 
 export const isTrainingSetupMaterialAvailable = (
-  draft: Pick<TrainingSetupDraft, "listValue" | "materialMode" | "dictionaryIds">,
+  draft: Pick<TrainingSetupDraft, "listValue" | "materialMode" | "dictionaryIds" | "librarySelection">,
   lists: TrainingSetupOption[],
   dictionaries: TrainingSetupOption[] = [],
 ) => {
-  if (draft.materialMode === "all-dictionaries") return dictionaries.length > 0;
+  if (draft.materialMode === "all-dictionaries") return Boolean(draft.librarySelection?.labelId) || dictionaries.length > 0;
   if (draft.materialMode === "selected-dictionaries") {
     return Boolean(draft.dictionaryIds?.some((id) => dictionaries.some((source) => source.value === id)));
   }

@@ -15,6 +15,7 @@ import { LibraryFilters, type LibraryFilterDraft } from "./LibraryFilters";
 import type { WordListSummary } from "@/lib/types";
 import {formatLibraryCounts} from "@/lib/platform/libraryCountLabel";
 import f from "./libraryFilters.module.css";
+import {useLabelSharingCatalog} from '@/components/library/sharing/useLabelSharingCatalog';
 import { usePersonalLabels } from "@/components/library/organization/usePersonalLabels";
 import { labelRows } from "@/lib/collections/labels/catalog";
 import { organizationCopy } from "@/components/library/organization/copy";
@@ -37,6 +38,7 @@ type PreviewScope = {
   revision?: number;
   labelId?: string;
   labelsRevision?: number;
+  groupCollectionCount?: number;
   collectionId?: string;
   collectionType?: "user" | "curated";
 };
@@ -58,15 +60,21 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
   const [draft, setDraft] = useState(value);
   const labelsEnabled = process.env.NEXT_PUBLIC_COLLECTION_ORGANIZATION_ENABLED === "true";
   const labels = usePersonalLabels(labelsEnabled && Boolean(account?.userId), account?.userId ?? "");
-  const labelOptions = labelRows(labels.snapshot, locale).map(({label,path}) => ({id:label.id,label:path}));
+  const sharedLabelsEnabled=process.env.NEXT_PUBLIC_LABEL_SHARING_ENABLED==='true';
+  const sharedLabels=useLabelSharingCatalog(account?.userId??"",sharedLabelsEnabled&&Boolean(account?.userId));
+  const labelOptions = [
+    ...(labelsEnabled?labelRows(labels.snapshot, locale).map(({label,path}) => ({id:label.id,label:path})):[]),
+    ...(sharedLabels.data?.received ?? []).map(group=>({id:group.labelId,label:group.name,received:true})),
+  ];
   const selectedLabel = labels.snapshot?.labels.find(label => label.id === draft.labelId);
+  const selectedGroup=sharedLabels.data?.received.find(group=>group.labelId===draft.labelId);
   const labelCopy = organizationCopy(locale);
   const material = useLibraryMaterialSelection(true, draft.languageCode, locale);
   const copy = getUiMessages(locale).library;
   const materialCopy = getUiMessages(locale).materialPreferences;
   const freshChoice=catalogChoice&&catalogChoice.userId===account?.userId&&catalogChoice.language===draft.languageCode&&catalogChoice.row.id===draft.collectionId?catalogChoice.row:null;
   const selectedCollection = freshChoice?{id:freshChoice.id,name:freshChoice.name,type:'user' as const}:draft.collectionId ? collections.find(item=>item.id===draft.collectionId) : collection;
-  const ready = draft.labelId ? Boolean(selectedLabel && !labels.error && !labels.loading) : draft.applyListFilter ? Boolean(selectedCollection) : Boolean(
+  const ready = draft.labelId ? Boolean(selectedGroup || (selectedLabel && !labels.error && !labels.loading)) : draft.applyListFilter ? Boolean(selectedCollection) : Boolean(
     material?.status === "ready" && material.currentLanguageAllowed &&
     (!draft.dictionaryId || material.dictionaries.some(source => source.id === draft.dictionaryId)),
   );
@@ -80,7 +88,7 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
     available: ready,
     userId: account?.userId,
     revision: account?.snapshot?.revision,
-    ...(draft.labelId ? {labelId:draft.labelId, labelsRevision:labels.snapshot?.revision} : {}),
+    ...(draft.labelId ? {labelId:draft.labelId, labelsRevision:labels.snapshot?.revision,groupCollectionCount:selectedGroup?.collectionCount} : {}),
     ...(draft.applyListFilter && selectedCollection ? {collectionId:selectedCollection.id,collectionType:selectedCollection.type} : {}),
   };
   const key = JSON.stringify(scope);
@@ -175,7 +183,8 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
     onApply={next=>{if(freshChoice&&next.collectionId===freshChoice.id)selectionScope?.onBrowseSelected?.(freshChoice);onApply(next);}}
     canApply={ready}
     countContent={countContent}
-    sourceNotice={<>{sourceNotice}{labelsEnabled && labels.error ? <p className={f.help} role="alert">{labelCopy.error} <button type="button" className={f.reset} onClick={() => void labels.refresh()}>{labelCopy.retry}</button></p> : null}</>}
+    sourceNotice={<>{sourceNotice}{labelsEnabled && labels.error ? <p className={f.help} role="alert">{labelCopy.error} <button type="button" className={f.reset} onClick={() => void labels.refresh()}>{labelCopy.retry}</button></p> : null}{sharedLabels.status==='error'&&<p className={f.help} role="alert">{labelCopy.sharingStatusError} <button type="button" onClick={()=>void sharedLabels.refresh()}>{labelCopy.retry}</button></p>}</>}
+    showLabels={labelsEnabled||sharedLabelsEnabled}
     labelOptions={labelOptions}
     languageOptions={(material?.languages ?? []).map(language => ({ id: language.code, label: language.label }))}
     sourceOptions={(material?.dictionaries ?? []).map(source => ({ id: source.id, label: source.name }))}
