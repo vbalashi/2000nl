@@ -55,8 +55,6 @@ describeIfDb('Telegram destinations and deployment notification routes', () => {
       const values = {status:'Success', version:'0.19.1', commit:'a'.repeat(40), run_url:'https://example.test', candidate_url:'—'};
       const enqueue = (stage: string) => client.query('select public.operator_enqueue_deployment_v1($1,$2,$3) as status',
         [stage, '1042:1', JSON.stringify(values)]);
-      expect((await enqueue('staging')).rows[0].status).toBe('disabled');
-      await client.query('update private.operator_notification_settings set enabled=true where singleton');
       expect((await enqueue('staging')).rows[0].status).toBe('no-route');
       const {rows:[{route}]} = await client.query("select public.admin_notification_save_route_v2($1,$2,null,0,$3,'deployment','-100123',7,true,'Team','Deployments') as route",
         [operator, randomUUID(), bot]);
@@ -90,6 +88,24 @@ describeIfDb('Telegram destinations and deployment notification routes', () => {
       expect(settings.routes.some((item:{botId:string}) => item.botId === bot)).toBe(false);
       expect((await client.query('select enabled from private.operator_notification_routes where bot_id=$1',[bot])).rows)
         .toEqual([{enabled:false}]);
+    });
+  });
+
+  test('disabling one route cancels its queued deliveries while another route can still send', async () => {
+    await withTransaction(pool, async client => {
+      const {bot} = await setup(client);
+      const {rows} = await client.query(`insert into private.operator_notification_routes(bot_id,kind,chat_id,enabled)
+        values($1,'deployment','-100123',true),($1,'deployment','-100124',true) returning id`,[bot]);
+      const run = '7784:1';
+      await client.query("select public.operator_enqueue_deployment_v1('staging',$1,'{}')",[run]);
+      await client.query('update private.operator_notification_routes set enabled=false where id=$1',[rows[0].id]);
+      await client.query('update private.operator_notification_routes set enabled=true where id=$1',[rows[0].id]);
+      expect((await client.query('select state from private.operator_notification_deliveries where route_id=$1',[rows[0].id])).rows)
+        .toEqual([{state:'cancelled'}]);
+      const claimed = (await client.query('select public.operator_delivery_claim_v1(50) as item')).rows;
+      expect(claimed.map(row=>row.item).filter(item=>item.botId===bot)).toEqual([
+        expect.objectContaining({chatId:'-100124',kind:'deployment'}),
+      ]);
     });
   });
 
