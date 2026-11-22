@@ -72,3 +72,16 @@ test('unknown and revoked status credentials are denied before database access',
  expect((await GET(request('GET',status))).status).toBe(401);
  expect(mocks.rpc).not.toHaveBeenCalled();
 });
+
+test('Telegram scope also limits queue status and retention',async()=>{
+ const secret='d'.repeat(40);
+ vi.stubEnv('OPERATOR_NOTIFICATION_DISPATCH_SECRET',secret);
+ vi.stubEnv('OPERATOR_NOTIFICATION_DISPATCH_TRANSPORT','telegram');
+ mocks.rpc.mockResolvedValueOnce({data:{pending:1,leased:0,failed:0,oldestPendingAt:null},error:null});
+ expect((await GET(request('GET',secret))).status).toBe(200);
+ mocks.rpc.mockResolvedValueOnce({data:1,error:null});
+ expect(await (await DELETE(request('DELETE',secret))).json()).toEqual({removed:1});
+ expect(mocks.rpc.mock.calls.map(([rpc])=>rpc)).toEqual([
+  'operator_telegram_notification_status_v1','operator_telegram_notification_cleanup_v1',
+ ]);
+});

@@ -113,6 +113,38 @@ describeIfDb('operator notification events',()=>{
   });
  });
 
+ test('Telegram dispatch keeps pending, exhausted, and old mail deliveries byte-for-byte',async()=>{
+  await withTransaction(pool,async client=>{
+   await client.query('update private.operator_notification_settings set enabled=true where singleton');
+   const user=randomUUID(),email=`${randomUUID()}@example.test`;
+   await ensureUserWithSettings(client,user);
+   await client.query('insert into private.admission_requests(email,user_id,status) values($1,$2,$3)',[email,user,'pending']);
+   const mailEvents=(await client.query(`insert into private.operator_notification_events(kind,admission_email,created_at)
+    select 'admission-approved',$1,now()-interval '100 days' from generate_series(1,3) returning id`,[email])).rows.map(({id})=>id);
+   await client.query(`update private.operator_notification_deliveries set state='leased',attempts=10,lease_id=gen_random_uuid(),
+    lease_until=now()-interval '1 day' where event_id=$1`,[mailEvents[1]]);
+   await client.query(`update private.operator_notification_deliveries set state='sent',finished_at=now()-interval '90 days'
+    where event_id=$1`,[mailEvents[2]]);
+   const notification=(await client.query(`insert into private.operator_notification_events(kind,admission_email)
+     values('admission-request',$1) returning id`,[email])).rows[0].id;
+   const telegram=await sentAdmission(client,notification);
+   await client.query("update private.operator_notification_deliveries set state='pending',finished_at=null where id=$1",[telegram.id]);
+   const mailSnapshot=()=>client.query('select to_jsonb(d) as row from private.operator_notification_deliveries d where event_id=any($1::uuid[]) order by id',[mailEvents]);
+   const before=await mailSnapshot();
+   const statuses=(await client.query('select public.operator_notification_status_v1() as all,public.operator_telegram_notification_status_v1() as telegram')).rows[0];
+   expect(statuses.all.pending-statuses.telegram.pending).toBe(1);
+   expect(statuses.all.leased-statuses.telegram.leased).toBe(1);
+   const claimed=(await client.query('select public.operator_telegram_delivery_claim_v1(50) as item')).rows.map(row=>row.item);
+   expect(claimed).toContainEqual(expect.objectContaining({id:telegram.id,transport:'telegram',attempts:1}));
+   expect(claimed.every(item=>item.transport==='telegram')).toBe(true);
+   await client.query(`update private.operator_notification_deliveries set state='sent',lease_id=null,lease_until=null,
+    finished_at=now()-interval '90 days' where id=$1`,[telegram.id]);
+   await client.query('select public.operator_telegram_notification_cleanup_v1()');
+   expect((await client.query('select id from private.operator_notification_deliveries where id=$1',[telegram.id])).rows).toHaveLength(0);
+   expect((await mailSnapshot()).rows).toEqual(before.rows);
+  });
+ });
+
  test('settlement cannot requeue a final attempt',async()=>{
   await withTransaction(pool,async client=>{
    await client.query('update private.operator_notification_settings set enabled=true where singleton');await feedbackRoute(client);

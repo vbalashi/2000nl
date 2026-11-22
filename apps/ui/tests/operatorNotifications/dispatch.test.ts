@@ -28,3 +28,19 @@ test('renders the pinned release template for its Telegram topic without decisio
   botId:event.botId,version:event.secretVersion,chatId:'-100',topicId:7,text:'Prod ❌ Ошибка\n1.2.3',buttons:null,
  });
 });
+
+test('Telegram scope claims only from the Telegram RPC and refuses a mail response',async()=>{
+ vi.stubEnv('OPERATOR_NOTIFICATION_DISPATCH_TRANSPORT','telegram');
+ mocks.rpc.mockResolvedValueOnce({data:[{...event,transport:'email',kind:'admission-approved'}],error:null});
+ await expect(dispatchOne()).rejects.toThrow('unexpected Telegram delivery');
+ expect(mocks.rpc).toHaveBeenCalledTimes(1);
+ expect(mocks.rpc).toHaveBeenCalledWith('operator_telegram_delivery_claim_v1',{p_limit:1});
+ expect(mocks.mail).not.toHaveBeenCalled();
+ expect(mocks.send).not.toHaveBeenCalled();
+});
+
+test('unrecognized dispatch scope does not claim any events',async()=>{
+ vi.stubEnv('OPERATOR_NOTIFICATION_DISPATCH_TRANSPORT','mixed');
+ expect(await dispatchOne()).toBe('disabled');
+ expect(mocks.rpc).not.toHaveBeenCalled();
+});
