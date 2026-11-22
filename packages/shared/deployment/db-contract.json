@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-389",
+  "contractId": "2000nl-db-390",
   "rollout": {
     "status": "hold",
-    "coordinationIssue": 848,
-    "requiredMigrationId": 389
+    "coordinationIssue": 482,
+    "requiredMigrationId": 390
   },
   "baseline": {
     "migrationId": 287,
@@ -477,11 +477,16 @@
       "migrationId": 389,
       "file": "db/migrations/389_release_note_audiences.sql",
       "sha256": "d133ef16c6c6c8379c0b8b645247a8820725e39bae31bd10fd83487623856b88"
+    },
+    {
+      "migrationId": 390,
+      "file": "db/migrations/390_admin_user_learning_overview.sql",
+      "sha256": "3555dae8b266397f92b9feb9e8e4d106d1bbdad40c9b9fa294bea6d393ccbc0d"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-389.sql",
+  "postflightProbe": "db/deploy-contract/postflight-390.sql",
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-389.sql",
-    "sha256": "f0c72a5dd8d80c7155edc18c6d3e851e5164a0a017b1123db68010082b2ec126"
+    "file": "db/deploy-contract/read-only-postflight-390.sql",
+    "sha256": "7e9d27602dc658e768f1beabd90bcd7260e67dd06ecad6e7b2d720ac1407c1b8"
   }
 }

@@ -1,6 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { Pool } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ensureLanguage, ensureUserWithSettings, getDbUrl, runMigrations, withTransaction } from "./dbTestUtils";
@@ -11,12 +9,7 @@ const describeIfDb = url ? describe : describe.skip;
 describeIfDb("Admin learning overview", () => {
   const pool = new Pool({ connectionString: url });
 
-  beforeAll(async () => {
-    await runMigrations(pool);
-    // Until release coordination assigns a migration slot, qualify the SQL on
-    // the isolated test database above the current public schema.
-    await pool.query(readFileSync(resolve(process.cwd(), "../../db/admin-user-overview.sql"), "utf8"));
-  });
+  beforeAll(async () => { await runMigrations(pool); });
   afterAll(async () => { await pool.end(); });
 
   it("reports learner-local rated activity, material and real session outcomes with mandatory audit", async () => {
@@ -105,6 +98,37 @@ describeIfDb("Admin learning overview", () => {
         "select action,outcome,target_id from admin_audit_events where request_id=$1", [request],
       );
       expect(audit).toEqual({ action: "user.activity.read", outcome: "success", target_id: learner });
+    });
+  });
+
+  it("shows assigned groups and limits access history to audit readers", async () => {
+    await withTransaction(pool, async client => {
+      const user = randomUUID();
+      const operator = randomUUID();
+      await ensureUserWithSettings(client, user);
+      await ensureUserWithSettings(client, operator);
+      await client.query(
+        "insert into public.admin_operators(email,user_id,is_active,permissions) values($1,$2,true,ARRAY['users.read'])",
+        [`operator-${operator}@example.test`, operator],
+      );
+      const { rows: [group] } = await client.query(
+        "insert into public.dictionary_access_groups(key,name,description) values($1,'Assigned','Stored description') returning id,key",
+        [`fixture-${randomUUID()}`],
+      );
+      await client.query("insert into public.dictionary_access_group_members(group_id,user_id) values($1,$2)", [group.id, user]);
+      await client.query(
+        `insert into public.admin_audit_events(operator_user_id,action,outcome,target_type,target_id,request_id)
+         values($1,'user.testers.added','success','user_profile',$2,gen_random_uuid())`, [operator, user],
+      );
+      const getDetails = async () => (await client.query(
+        "select public.admin_user_access_details_v1($1,$2,gen_random_uuid()) result", [operator, user],
+      )).rows[0].result;
+      expect(await getDetails()).toEqual({
+        assignedGroups: [{ id: group.key, name: "Assigned", description: "Stored description" }],
+        operatorPermissions: [], history: null,
+      });
+      await client.query("update public.admin_operators set permissions=ARRAY['users.read','audit.read'] where user_id=$1", [operator]);
+      expect((await getDetails()).history).toEqual([expect.objectContaining({ operatorId: operator, action: "user.testers.added" })]);
     });
   });
 
