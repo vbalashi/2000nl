@@ -6,6 +6,7 @@ export const adminConsolePermissions = {
   reports: "feedback.read",
   users: "users.read",
   journal: "audit.read",
+  releases: "audit.read",
   notifications: "notifications.manage",
 } as const;
 

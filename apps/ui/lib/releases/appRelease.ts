@@ -33,6 +33,7 @@ export type ReleaseHistoryEntry = ReleaseAnnouncement & {
   version: string;
   details: string;
   revision: number;
+  audiences?: string[];
 };
 export type ReleaseCatalog = {
   items: ReleaseHistoryEntry[];
@@ -66,7 +67,7 @@ function parseAnnouncement(value: unknown): ReleaseAnnouncement {
     ...(a.detailsUrl ? { detailsUrl: a.detailsUrl } : {}),
   };
 }
-export function parseReleaseCatalog(value: unknown): ReleaseCatalog {
+export function parseReleaseCatalog(value: unknown, includeAudiences = false): ReleaseCatalog {
   const v = value as ReleaseCatalog | null;
   if (
     !v ||
@@ -89,12 +90,17 @@ export function parseReleaseCatalog(value: unknown): ReleaseCatalog {
       item.revision < 1
     )
       throw new Error("Invalid release history entry");
+    if (includeAudiences && (!Array.isArray(item.audiences) || item.audiences.length > 12
+      || !item.audiences.every((tag) => typeof tag === "string" && /^[a-z][a-z0-9-]{0,31}$/.test(tag))
+      || new Set(item.audiences).size !== item.audiences.length))
+      throw new Error("Invalid release audiences");
     versions.add(item.version);
     return {
       ...announcement,
       version: item.version,
       details: item.details,
       revision: item.revision,
+      ...(includeAudiences ? { audiences: item.audiences } : {}),
     };
   });
   return { items, nextVersion: v.nextVersion };

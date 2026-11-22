@@ -16,8 +16,9 @@ async function write(
   revision: number | null = null,
   createOnly = false,
   commit = "a".repeat(40),
+  audiences = ["user-app"],
 ) {
-  return (
+  const result = (
     await c.query(
       "select public.write_app_release_notes_v1($1,$2,$3,$4,$5,$6) result",
       [
@@ -30,6 +31,8 @@ async function write(
       ],
     )
   ).rows[0].result;
+  await c.query("select public.set_app_release_audiences_v1($1,$2::text[])", [version, audiences]);
+  return result;
 }
 async function read(
   c: PoolClient,
@@ -76,6 +79,27 @@ describe.skipIf(!url)("editable version-bound release notes", () => {
         ).rows[0].allowed,
       ).toBe(false);
     }));
+  test("public pagination skips internal notes and Admin receives every audience", async () =>
+    withTransaction(pool, async (c) => {
+      await c.query("set local role service_role");
+      await write(c, "0.19.20");
+      await write(c, "0.19.21", "Editor change", null, false, "a".repeat(40), ["dictionary-editor", "admin"]);
+      await write(c, "0.19.22", "Admin change", null, false, "a".repeat(40), ["admin"]);
+      await write(c, "0.19.23", "Unclassified", null, false, "a".repeat(40), []);
+      await write(c, "0.19.24", "Public change");
+      const first = await read(c, "0.19.24", "en", 1);
+      expect(first.items.map((item: { version: string }) => item.version)).toEqual(["0.19.24"]);
+      expect(first.nextVersion).toBe("0.19.24");
+      const next = await read(c, "0.19.24", "en", 1, first.nextVersion);
+      expect(next.items.map((item: { version: string }) => item.version)).toEqual(["0.19.20"]);
+      expect(next.nextVersion).toBeNull();
+      const admin = (await c.query(
+        "select public.read_admin_app_release_notes_v1('0.19.24','en',5,NULL) result",
+      )).rows[0].result;
+      expect(admin.items.map((item: { audiences: string[] }) => item.audiences))
+        .toEqual([["user-app"], [], ["admin"], ["dictionary-editor", "admin"], ["user-app"]]);
+    }));
+
   test("service publication is localized and immediately correctable without a build change", async () =>
     withTransaction(pool, async (c) => {
       await c.query("set local role service_role");
@@ -103,6 +127,7 @@ describe.skipIf(!url)("editable version-bound release notes", () => {
         ["0.19.22", "a".repeat(40), "2026-01-01T00:00:00Z", content, revision],
       );
       await publish(english, null);
+      await c.query("select public.set_app_release_audiences_v1('0.19.22', ARRAY['user-app'])");
       expect((await read(c, "0.19.22", "ru")).items[0]).toMatchObject({locale: "en", title: "English"});
       expect((await read(c, "0.19.22", "nl")).items[0]).toMatchObject({locale: "en", title: "English"});
       await publish({en: {title: "Updated", summary: "Updated English."}, ru: {title: "Русский", summary: "Перевод."}}, 1);
