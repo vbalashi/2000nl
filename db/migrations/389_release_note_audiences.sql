@@ -47,7 +47,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.read_app_release_notes_v1(p_max_version text,p_locale text DEFAULT 'en',p_limit integer DEFAULT 5,p_before_version text DEFAULT NULL)
-RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,private,pg_temp AS $$
  SELECT private.read_app_release_catalog(p_max_version,p_locale,p_limit,p_before_version,true);
 $$;
 

@@ -476,7 +476,7 @@
     {
       "migrationId": 389,
       "file": "db/migrations/389_release_note_audiences.sql",
-      "sha256": "73a79fcf2a78eeb1feb05fbe56a698d66456517e853c6d0e501ddf2666975533"
+      "sha256": "d133ef16c6c6c8379c0b8b645247a8820725e39bae31bd10fd83487623856b88"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-389.sql",
