@@ -14,6 +14,7 @@ export async function readReleaseCatalog(
   language: OnboardingLanguage,
   limit = 5,
   before: string | null = null,
+  audience: "public" | "admin" = "public",
 ): Promise<ReleaseCatalog> {
   if (!releaseVersionPattern.test(version))
     return { items: [], nextVersion: null };
@@ -25,7 +26,7 @@ export async function readReleaseCatalog(
   const timer = setTimeout(() => controller.abort(), 3000);
   try {
     const { data, error } = await client
-      .rpc("read_app_release_notes_v1", {
+      .rpc(audience === "admin" ? "read_admin_app_release_notes_v1" : "read_app_release_notes_v1", {
         p_max_version: version,
         p_locale: catalogLocale,
         p_limit: limit,
@@ -33,7 +34,7 @@ export async function readReleaseCatalog(
       })
       .abortSignal(controller.signal);
     if (error) throw new Error("Release catalog unavailable");
-    return parseReleaseCatalog(data);
+    return parseReleaseCatalog(data, audience === "admin");
   } finally {
     clearTimeout(timer);
   }
