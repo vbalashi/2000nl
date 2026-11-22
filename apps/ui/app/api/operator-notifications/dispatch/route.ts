@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createAdminServiceClient } from '@/lib/admin/adminServerClient';
+import { notificationDispatchScope } from '@/lib/operatorNotifications/dispatchScope';
 import { dispatchOne } from '@/lib/operatorNotifications/dispatch';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -27,7 +28,10 @@ const respond=(body:unknown,status=200)=>NextResponse.json(body,{status,headers:
 export async function GET(request:Request) {
  if (!authorized(request,true)) return respond({error:'unauthorized'},401);
  try {
-  const {data,error}=await createAdminServiceClient().rpc('operator_notification_status_v1');
+  const scope=notificationDispatchScope();
+  if(!scope) return respond({error:'unavailable'},503);
+  const rpc=scope==='telegram'?'operator_telegram_notification_status_v1':'operator_notification_status_v1';
+  const {data,error}=await createAdminServiceClient().rpc(rpc);
   if(error || !data || typeof data!=='object' || Array.isArray(data)) throw new Error('status unavailable');
   const {pending,leased,failed,oldestPendingAt}=data;
   if(![pending,leased,failed].every(value=>Number.isSafeInteger(value) && value>=0) || !(oldestPendingAt===null || (typeof oldestPendingAt==='string' && Number.isFinite(Date.parse(oldestPendingAt))))) throw new Error('status unavailable');
@@ -43,7 +47,10 @@ export async function POST(request:Request) {
 export async function DELETE(request:Request) {
  if (!authorized(request)) return respond({error:'unauthorized'},401);
  try {
-  const {data,error}=await createAdminServiceClient().rpc('operator_notification_cleanup_v1');
+  const scope=notificationDispatchScope();
+  if(!scope) return respond({error:'unavailable'},503);
+  const rpc=scope==='telegram'?'operator_telegram_notification_cleanup_v1':'operator_notification_cleanup_v1';
+  const {data,error}=await createAdminServiceClient().rpc(rpc);
   if(error || !Number.isInteger(data) || data<0) throw new Error('cleanup unavailable');
   return respond({removed:data});
  } catch {return respond({error:'unavailable'},503);}
