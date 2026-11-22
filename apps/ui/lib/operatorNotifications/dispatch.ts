@@ -2,6 +2,7 @@ import 'server-only';
 import nodemailer from 'nodemailer';
 import { createAdminServiceClient } from '@/lib/admin/adminServerClient';
 import { defaultTemplates, renderTemplate } from './templates';
+import { notificationDispatchScope } from './dispatchScope';
 import { sendBotMessage } from './secretBroker';
 
 type Event={id:string;kind:'admission-request'|'admission-approved'|'feedback'|'deployment';deploymentStage?:'staging'|'production';deploymentValues?:Record<string,string>;leaseId:string;attempts:number;email:string|null;feedbackId:string|null;admissionStatus:string|null;emailVerified:boolean;templateBody?:string|null;eventId:string;botId:string;secretVersion:string;chatId:string;topicId:number|null;transport:"telegram"|"email"};
@@ -9,6 +10,8 @@ type Outcome='sent'|'retry'|'failed';
 
 /** Processes one lease; external delivery may succeed even when its receipt is lost. */
 export async function dispatchOne(): Promise<'disabled'|'idle'|Outcome> {
+ const scope=notificationDispatchScope();
+ if(!scope) return 'disabled';
  const env=process.env;
  const host=env.OPERATOR_SMTP_HOST,user=env.OPERATOR_SMTP_USER,pass=env.OPERATOR_SMTP_PASSWORD,from=env.OPERATOR_SMTP_FROM,site=env.OPERATOR_NOTIFICATION_SITE_URL;
  const port=Number(env.OPERATOR_SMTP_PORT);
@@ -17,9 +20,11 @@ export async function dispatchOne(): Promise<'disabled'|'idle'|Outcome> {
  if (siteUrl.protocol!=='https:' || siteUrl.username || siteUrl.password || siteUrl.search || siteUrl.hash
 ) return 'disabled';
  const service=createAdminServiceClient();
- const {data,error}=await service.rpc('operator_delivery_claim_v1',{p_limit:1});
+ const claim=scope==='telegram'?'operator_telegram_delivery_claim_v1':'operator_delivery_claim_v1';
+ const {data,error}=await service.rpc(claim,{p_limit:1});
  if(error) throw new Error('notification claim failed');
  const event=(data as Event[] | null)?.[0]; if(!event)return 'idle';
+ if(scope==='telegram' && (event.transport!=='telegram' || event.kind==='admission-approved')) throw new Error('unexpected Telegram delivery');
  let outcome:Outcome='retry'; let retryAfter=0;
  try {
   if(event.kind==='admission-approved') {
