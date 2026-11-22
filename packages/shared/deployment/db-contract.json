@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-387",
+  "contractId": "2000nl-db-388",
   "rollout": {
     "status": "hold",
     "coordinationIssue": 920,
-    "requiredMigrationId": 387
+    "requiredMigrationId": 388
   },
   "baseline": {
     "migrationId": 287,
@@ -467,11 +467,16 @@
       "migrationId": 387,
       "file": "db/migrations/387_telegram_dispatch_scope.sql",
       "sha256": "bdfb3513563f816b36a52901d02ea71f092dc7688b3154d68ae4230d9967be30"
+    },
+    {
+      "migrationId": 388,
+      "file": "db/migrations/388_admin_tester_membership.sql",
+      "sha256": "8c11c1c10d9fb6964ef0a525a616262e18dc31f3af2435954d88f257cb8a8e74"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-387.sql",
+  "postflightProbe": "db/deploy-contract/postflight-388.sql",
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-387.sql",
-    "sha256": "7846fcb2ceff1a263afeb7f5b4843623ccca44c2889bb671f2cd9068d10c58f6"
+    "file": "db/deploy-contract/read-only-postflight-388.sql",
+    "sha256": "a5af497bb4ec7aba32319e84a863403f767d73635c3d648b5b165e9c0f4df9e6"
   }
 }

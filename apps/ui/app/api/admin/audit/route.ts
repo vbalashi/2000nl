@@ -3,30 +3,11 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { adminErrorResponse, requireAdmin } from "@/lib/admin/adminAccess";
 import { readAdminAuditEvents, writeAdminAuditEvent } from "@/lib/admin/adminAuditRepository";
-import type { AdminAuditAction } from "@/lib/admin/auditContract";
+import { ADMIN_AUDIT_ACTIONS, type AdminAuditAction } from "@/lib/admin/auditContract";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-const JOURNAL_ACTIONS = [
-  "auth.sign_in",
-  "auth.sign_in_denied",
-  "auth.sign_out",
-  "access.denied",
-  "dictionary.registry.read",
-  "dictionary.metadata.read",
-  "dictionary.content.read",
-  "dictionary.publication.updated",
-  "dictionary.audience.updated",
-  "audit.journal.read",
-  "user.registry.read",
-  "user.profile.read",
-  "feedback.registry.read",
-  "feedback.detail.read",
-  "operator.permissions.updated",
-  "notifications.configuration.read", "notifications.configuration.updated",
-  "admission.approve", "admission.reject", "admission.revoke", "admission.invite", "admission.mode", "admission.auto_approve",
-] as const satisfies readonly AdminAuditAction[];
 const PAGE_SIZES = [25, 50, 100] as const;
 const PERIOD_DAYS = [7, 30, 90, 365] as const;
 
@@ -42,7 +23,7 @@ export async function GET(request: Request) {
     const pageSize = PAGE_SIZES.includes(rawPageSize as (typeof PAGE_SIZES)[number])
       ? rawPageSize as (typeof PAGE_SIZES)[number]
       : 25;
-    const action = JOURNAL_ACTIONS.includes(rawAction as AdminAuditAction)
+    const action = ADMIN_AUDIT_ACTIONS.includes(rawAction as AdminAuditAction)
       ? rawAction as AdminAuditAction
       : undefined;
     const period = PERIOD_DAYS.includes(rawPeriod as (typeof PERIOD_DAYS)[number]) ? rawPeriod : 30;
