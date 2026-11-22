@@ -63,6 +63,7 @@ const actionOptions: Array<{ value: AdminAuditAction | ""; label: string }> = [
   { value: "dictionary.content.read", label: "Содержимое словаря" },
   { value: "user.registry.read", label: "Реестр пользователей" },
   { value: "user.profile.read", label: "Профиль пользователя" },
+  { value: "user.activity.read", label: "Активность пользователя" },
   { value: "feedback.registry.read", label: "Реестр репортов" },
   { value: "feedback.detail.read", label: "Репорт" },
   { value: "operator.permissions.updated", label: "Права оператора" },

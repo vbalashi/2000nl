@@ -471,12 +471,12 @@
     {
       "migrationId": 388,
       "file": "db/migrations/388_admin_tester_membership.sql",
-      "sha256": "b9fc019ca3c591b20bca648e013341f9ae26de76405bd79948f2dd3d6fee69f5"
+      "sha256": "8c11c1c10d9fb6964ef0a525a616262e18dc31f3af2435954d88f257cb8a8e74"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-388.sql",
   "readOnlyPostflightProbe": {
     "file": "db/deploy-contract/read-only-postflight-388.sql",
-    "sha256": "ddfb5b4b411dcfd81c9d93eb61cc28d860d576de757e9275519e8fc884fe76b8"
+    "sha256": "a5af497bb4ec7aba32319e84a863403f767d73635c3d648b5b165e9c0f4df9e6"
   }
 }
