@@ -93,3 +93,4 @@
 \i db/migrations/386_telegram_per_route_delivery.sql
 \i db/migrations/387_telegram_dispatch_scope.sql
 \i db/migrations/388_admin_tester_membership.sql
+\i db/migrations/389_release_note_audiences.sql

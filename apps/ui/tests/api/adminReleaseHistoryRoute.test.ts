@@ -13,7 +13,7 @@ vi.mock("@/lib/releases/releaseCatalogServer", () => ({
   readReleaseCatalog,
   releaseLanguage: (value: string | null) => value ?? "en",
 }));
-beforeEach(() => vi.resetAllMocks());
+beforeEach(() => { vi.resetAllMocks(); });
 
 test("Admin history checks permission before requesting internal notes", async () => {
   requireAdmin.mockRejectedValue(new Error("denied"));
