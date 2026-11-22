@@ -471,7 +471,7 @@
     {
       "migrationId": 388,
       "file": "db/migrations/388_admin_tester_membership.sql",
-      "sha256": "b9fc019ca3c591b20bca648e013341f9ae26de76405bd79948f2dd3d6fee69f5"
+      "sha256": "8c11c1c10d9fb6964ef0a525a616262e18dc31f3af2435954d88f257cb8a8e74"
     },
     {
       "migrationId": 389,
