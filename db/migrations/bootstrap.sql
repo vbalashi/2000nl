@@ -96,3 +96,4 @@
 \i db/migrations/389_release_note_audiences.sql
 \i db/migrations/390_admin_user_learning_overview.sql
 \i db/migrations/391_admin_owner_access_groups.sql
+\i db/migrations/392_library_category_unfiltered_scope.sql
