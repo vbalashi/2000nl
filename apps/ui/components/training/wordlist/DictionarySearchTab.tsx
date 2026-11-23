@@ -499,7 +499,15 @@ export function DictionarySearchTab({
   const [bulkNotice,setBulkNotice]=useState<string|null>(null);
   const currentBulk=reconcileBulkArticleSelection(bulkSelection,userId,bulkScopeKey);
   const bulkCopy=getUiMessages(interfaceLanguage).wordsBulk;
-  React.useEffect(()=>{setBulkSelection(emptyBulkArticleSelection(userId,bulkScopeKey));setBulkMode(false);setBulkAll(false);setBulkDialogScope(null);setBulkNotice(null);},[userId,bulkScopeKey]);
+  const browseReadDiscarded = !query.trim() && Boolean(searchError) && !hasCurrentResults && groupResults.length === 0;
+  React.useLayoutEffect(() => {
+    setBulkSelection(emptyBulkArticleSelection(userId, bulkScopeKey));
+    setBulkMode(false);
+    setBulkAll(false);
+    setBulkDialogScope(null);
+    setBulkNotice(null);
+    if (browseReadDiscarded) setCountAnchor(null);
+  }, [userId, bulkScopeKey, browseReadDiscarded]);
   React.useEffect(()=>{if(!bulkNotice)return;const timer=window.setTimeout(()=>setBulkNotice(null),4000);return()=>window.clearTimeout(timer);},[bulkNotice]);
   const bulkRequest=useMemo(()=>({groups:[...currentBulk.articleIds].sort(),all:bulkAll,category:categorySearchActive ? "headwords" as const : "browse" as const,query,language:searchLanguage,
     dictionaryIds:categoryMaterial ? null : dictionaryId ? [dictionaryId] : null,

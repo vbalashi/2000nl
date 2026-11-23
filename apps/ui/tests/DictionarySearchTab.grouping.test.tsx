@@ -405,6 +405,49 @@ test('empty Library renders 25 admitted rows before the remaining 25 and fences 
  expect(within(pagination).getByRole('button',{name:'Volgende'})).toBeEnabled();
 });
 
+test.each(["manual dialog", "whole filter menu"] as const)(
+  "failed browse continuation clears the %s and its selection before retry",
+  async mode => {
+    const {AccountMaterialProvider} = await import("@/components/practice/material/AccountMaterialProvider");
+    readableSources.mockReset().mockResolvedValue([source(scopeB, "Enabled B")]);
+    const continuation = deferred<unknown>();
+    const page = {
+      groups: [firstGroup], selectedTierComplete: false, nextGroupCursor: "middle",
+      librarySearch: {totalGroups: 2, totalMeanings: 3, matchingEntryIds: ["entry-goed-bn"]},
+    };
+    fetchGroupPage.mockReset().mockImplementationOnce(input => {
+      input.onPartial(page);
+      return continuation.promise;
+    }).mockResolvedValueOnce({...page, groups: [firstGroup, nextPageGroup], selectedTierComplete: true, nextGroupCursor: null});
+    render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}>
+      <Harness locale="en" initial={{query: ""}}/>
+    </AccountMaterialProvider>);
+
+    const row = await screen.findByTestId("library-headword-group-group-goed-main");
+    fireEvent.click(screen.getByRole("button", {name: "2 articles"}));
+    if (mode === "manual dialog") {
+      fireEvent.click(screen.getByRole("menuitem", {name: "Select articles"}));
+      fireEvent.click(row);
+      fireEvent.click(screen.getByRole("button", {name: "Selected: 1"}));
+      fireEvent.click(screen.getByRole("menuitem", {name: "Add to collection"}));
+      expect(screen.getByRole("dialog", {name: "Choose a collection"})).toBeVisible();
+    } else {
+      fireEvent.click(screen.getByRole("menuitem", {name: "Select all in this filter (2)"}));
+      fireEvent.click(screen.getByRole("button", {name: "All: 2"}));
+      expect(screen.getByRole("menuitem", {name: "Add to collection"})).toBeEnabled();
+    }
+
+    await act(async () => continuation.reject(new Error("auth_account_changed")));
+    expect(screen.queryByTestId("library-headword-group-group-goed-main")).toBeNull();
+    expect(screen.queryByRole("dialog", {name: "Choose a collection"})).toBeNull();
+    expect(screen.queryByRole("menuitem", {name: "Add to collection"})).toBeNull();
+    fireEvent.click(screen.getByRole("button", {name: "Try again"}));
+    await screen.findByTestId("library-headword-group-group-goed-main");
+    fireEvent.click(screen.getByRole("button", {name: "2 articles"}));
+    expect(screen.getByRole("menuitem", {name: "Select articles"})).toBeVisible();
+  },
+);
+
 test("search filters exclude disabled material and changing source starts at the first scoped page",async()=>{
  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
  readableSources.mockReset().mockResolvedValue([source(scopeA,"Disabled A"),source(scopeB,"Enabled B")]);
