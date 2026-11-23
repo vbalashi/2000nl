@@ -46,8 +46,8 @@ export function CollectionDetailsPanel({details,labelNames,locale,isShared,isRec
   return <form className={`${s.detailsForm} ${s.inlineFieldForm}`} aria-label={label(key)} data-empty={draft.value===''} aria-busy={saving} onSubmit={submit} onBlur={event=>{
    if(event.target instanceof Element&&event.target.closest('dialog')!==event.currentTarget.closest('dialog'))return;
    const target=event.relatedTarget;
-   // Safari may blur a picker control before dispatching the tap on a choice.
-   if(!target&&(choices||key==='publishedOn'))return;
+   // WebKit can move focus to the containing dialog before a tapped option receives its click.
+   if((choices||key==='publishedOn')&&(!target||target===event.currentTarget.closest('dialog')))return;
    if(event.currentTarget.contains(target as Node|null)||target instanceof Element&&target.closest('[role="menu"]'))return;
    if(event.currentTarget.reportValidity())void commit();
   }} onKeyDown={event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.nativeEvent.isComposing&&(event.target instanceof HTMLTextAreaElement||event.target instanceof HTMLInputElement)&&event.target.closest('dialog')===event.currentTarget.closest('dialog')){event.preventDefault();if(event.currentTarget.reportValidity())void commit();}if(event.key==='Escape'&&!event.defaultPrevented&&(!(event.target instanceof Element)||event.target.closest('dialog')===event.currentTarget.closest('dialog'))){event.preventDefault();event.stopPropagation();if(!saving)cancel();}}}>
