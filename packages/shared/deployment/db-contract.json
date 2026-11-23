@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-391",
+  "contractId": "2000nl-db-392",
   "rollout": {
     "status": "hold",
     "coordinationIssue": 482,
-    "requiredMigrationId": 391
+    "requiredMigrationId": 392
   },
   "baseline": {
     "migrationId": 287,
@@ -487,6 +487,11 @@
       "migrationId": 391,
       "file": "db/migrations/391_admin_owner_access_groups.sql",
       "sha256": "d36682686367a06e8307bf7bbb21b18a3b8ea3a30d8b665eb3d8bee635377e41"
+    },
+    {
+      "migrationId": 392,
+      "file": "db/migrations/392_library_category_unfiltered_scope.sql",
+      "sha256": "1d8262c7d9e675f678e7587f605b7d8c8d4bcf8d61a1e1771ad7663627215d45"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-391.sql",
