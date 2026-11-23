@@ -8,6 +8,7 @@ import {
 } from "@/components/training/wordlist/DictionarySearchTab";
 import type { PlatformHeadwordGroupV2 } from "../../../packages/shared/types/platformV2";
 import type { DictionaryEntry } from "@/lib/types";
+import * as categorySearch from "@/lib/platform/dictionaryCategorySearch";
 import {buildLibraryHeadwordGroupResults} from '@/components/training/wordlist/libraryHeadwordGroupResults';
 
 const fetchGroupPage = vi.fn();
@@ -162,7 +163,7 @@ const deferred = <T,>() => {
   return { promise, resolve, reject };
 };
 
-function Harness({preload=false,open=true,initial = {},locale="nl",translationLang="en",collection=false,unavailableSourceCount=0,reloadLists=async()=>{},notifyListsUpdated=()=>{},sourceRead}: {preload?:boolean;open?:boolean;collection?:boolean;unavailableSourceCount?:number;initial?: Partial<DictionarySearchTabState>;locale?: "en"|"nl"|"ru";translationLang?:string|null;reloadLists?:()=>Promise<void>;notifyListsUpdated?:()=>void;sourceRead?:React.ComponentProps<typeof DictionarySearchTab>['collectionSourceRead']} = {}) {
+function Harness({preload=false,open=true,initial = {},locale="nl",translationLang="en",collection=false,unavailableSourceCount=0,reloadLists=async()=>{},notifyListsUpdated=()=>{},sourceRead,onTrainSelection}: {preload?:boolean;open?:boolean;collection?:boolean;unavailableSourceCount?:number;initial?: Partial<DictionarySearchTabState>;locale?: "en"|"nl"|"ru";translationLang?:string|null;reloadLists?:()=>Promise<void>;notifyListsUpdated?:()=>void;onTrainSelection?:React.ComponentProps<typeof DictionarySearchTab>['onTrainSelection'];sourceRead?:React.ComponentProps<typeof DictionarySearchTab>['collectionSourceRead']} = {}) {
   const [state, setState] = React.useState<DictionarySearchTabState>(() => ({
     ...createDictionarySearchTabState(),
     query: "goed",
@@ -178,6 +179,7 @@ function Harness({preload=false,open=true,initial = {},locale="nl",translationLa
       translationLang={translationLang}
       interfaceLanguage={locale}
       userLists={[]}
+      onTrainSelection={onTrainSelection}
       collectionSourceRead={sourceRead}
       viewedListId={collection ? "owned-list" : null}
       viewedList={collection ? {id:"owned-list",name:"My collection",type:"user",language_code:"nl",unavailable_source_count:unavailableSourceCount} : null}
@@ -447,6 +449,84 @@ test.each(["manual dialog", "whole filter menu"] as const)(
     expect(screen.getByRole("menuitem", {name: "Select articles"})).toBeVisible();
   },
 );
+
+describe("category article access", () => {
+  afterEach(() => {
+    for (const method of [categorySearch.readDictionaryCategory, categorySearch.readMoreDictionaryContext, categorySearch.hydrateDictionaryWordResults]) {
+      if (vi.isMockFunction(method)) method.mockRestore();
+    }
+  });
+
+  async function renderCategory() {
+    const {AccountMaterialProvider} = await import("@/components/practice/material/AccountMaterialProvider");
+    const page = {
+      id: "headwords" as const, total: 2, wordGroupCount: 2,
+      page: {hasMore: true, nextCursor: "continue"},
+      items: [{headwordGroupId: firstGroup.headwordGroupId, entry: {id: "entry-goed-bn", headword: "goed"}}],
+    };
+    const read = vi.spyOn(categorySearch, "readDictionaryCategory").mockImplementation(async (_scope, _id, publish) => {
+      publish(page, true);
+      return page;
+    });
+    vi.spyOn(categorySearch, "hydrateDictionaryWordResults").mockImplementation(async (_scope, hits) =>
+      hits.length ? buildLibraryHeadwordGroupResults([firstGroup]) : []);
+    readableSources.mockReset().mockResolvedValue([source(scopeB, "Enabled B")]);
+    const repo = materialRepository();
+    const tab = (open: boolean) => <AccountMaterialProvider userId="user-1" repository={repo}>
+      <Harness locale="en" open={open} onTrainSelection={vi.fn()}/>
+    </AccountMaterialProvider>;
+    const view = render(tab(true));
+    const row = await screen.findByTestId("library-headword-group-group-goed-main");
+    fireEvent.click(row);
+    expect(screen.getByTestId("library-detail-mobile")).toBeInTheDocument();
+    expect(screen.getByTestId("library-detail-desktop")).toBeInTheDocument();
+    return {page, read, row, view, tab};
+  }
+
+  test.each(["dialog", "menu"] as const)("access loss closes parent article details and bulk %s", async surface => {
+    const {row, view} = await renderCategory();
+    const pending = deferred<never>();
+    vi.spyOn(categorySearch, "readMoreDictionaryContext").mockReturnValue(pending.promise);
+    fireEvent.click(screen.getByRole("button", {name: "More 25"}));
+    fireEvent.click(screen.getByRole("button", {name: "2 articles · 2 meanings"}));
+    if (surface === "dialog") {
+      fireEvent.click(screen.getByRole("menuitem", {name: "Select articles"}));
+      fireEvent.click(row);
+      fireEvent.click(screen.getByRole("button", {name: "Selected: 1"}));
+      fireEvent.click(screen.getByRole("menuitem", {name: "Add to collection"}));
+      expect(screen.getByRole("dialog", {name: "Choose a collection"})).toBeVisible();
+    } else {
+      fireEvent.click(screen.getByRole("menuitem", {name: "Select all in this filter (2)"}));
+      fireEvent.click(screen.getByRole("button", {name: "All: 2"}));
+      expect(screen.getByRole("menuitem", {name: "Add to collection"})).toBeEnabled();
+    }
+    await act(async () => pending.reject(new Error(surface === "dialog" ? "auth_account_changed" : "material_not_accessible")));
+    await screen.findByRole("alert");
+    expect(screen.queryByTestId("library-detail-desktop")).toBeNull();
+    expect(screen.queryByTestId("library-detail-mobile")).toBeNull();
+    expect(screen.queryByRole("dialog", {name: "Choose a collection"})).toBeNull();
+    expect(screen.queryByRole("menuitem", {name: "Add to collection"})).toBeNull();
+    expect(view.container.querySelector("[data-count-detail]")?.closest("button")).toBeNull();
+    fireEvent.click(screen.getByRole("button", {name: "Retry"}));
+    await screen.findByTestId("library-headword-group-group-goed-main");
+    fireEvent.click(await screen.findByRole("button", {name: "2 articles · 2 meanings"}));
+    expect(screen.getByRole("menuitem", {name: "Select articles"})).toBeVisible();
+    expect(screen.queryByTestId("library-detail-mobile")).toBeNull();
+  });
+
+  test("ordinary hide and a successful empty category read retain selected details", async () => {
+    const {page, read, view, tab} = await renderCategory();
+    const empty = {...page, items: [], total: 0, wordGroupCount: 0, page: {hasMore: false, nextCursor: null}};
+    read.mockImplementationOnce(async (_scope, _id, publish) => { publish(empty, true); return empty; });
+    view.rerender(tab(false));
+    view.rerender(tab(true));
+    await waitFor(() => expect(read).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.getByRole("button", {name: "0 articles · 0 meanings"})).toBeVisible());
+    expect(screen.queryByTestId("library-headword-group-group-goed-main")).toBeNull();
+    expect(screen.getByTestId("library-detail-desktop")).toBeInTheDocument();
+    expect(screen.getByTestId("library-detail-mobile")).toBeInTheDocument();
+  });
+});
 
 test("search filters exclude disabled material and changing source starts at the first scoped page",async()=>{
  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");

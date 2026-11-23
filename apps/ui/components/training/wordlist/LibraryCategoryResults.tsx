@@ -28,7 +28,7 @@ function isAccessError(code?: string) {
   return code === "material_not_accessible" || code === "dictionary_search_access_changed" || code === "auth_account_changed";
 }
 
-export function LibraryCategoryResults({ query, languageCode, dictionaryId, selectedId, selectedResultKey, onSelect, onSelectGroup, tabsHost, countHost, interfaceLanguage, userId, filters, material, materialRevision, refreshRevision = 0, enabled = true, category = "headwords", onCategoryChange, onWordResults, onSearchComplete, onWordCount, bulkSelected, bulkAll, bulkExcludedCount, onBulkSelect, appearance = "plain" }: {
+export function LibraryCategoryResults({ query, languageCode, dictionaryId, selectedId, selectedResultKey, onSelect, onSelectGroup, tabsHost, countHost, interfaceLanguage, userId, filters, material, materialRevision, refreshRevision = 0, enabled = true, category = "headwords", onCategoryChange, onWordResults, onAccessInvalidated, onSearchComplete, onWordCount, bulkSelected, bulkAll, bulkExcludedCount, onBulkSelect, appearance = "plain" }: {
   query: string; languageCode: string; dictionaryId: string | null; selectedId?: string; selectedResultKey?: string; userId?: string;
   onSelect: (item: SearchItem) => void; onSelectGroup?: (group: LibraryHeadwordGroupResult) => void;
   tabsHost?: HTMLElement | null; countHost?: HTMLElement | null; interfaceLanguage: OnboardingLanguage;
@@ -36,6 +36,7 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
   appearance?: "plain" | "framed";
   refreshRevision?: number; enabled?: boolean; category?: DictionarySearchCategory;
   onWordResults?: (results: LibraryHeadwordGroupResult[]) => void;
+  onAccessInvalidated?: () => void;
   onSearchComplete?: () => void;
   onWordCount?: (count:number|null)=>void;
   bulkSelected?: ReadonlySet<string>;bulkAll?:boolean;bulkExcludedCount?:number;
@@ -61,16 +62,20 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
   const previousVisibility = useRef({ enabled, readScope });
   const lastEnabledScope = useRef<string | null>(null);
   const immediateScope = useRef<string | null>(null);
-  const publishWordResults = useRef(onWordResults);
-  publishWordResults.current = onWordResults;
-  const invalidateAccess = useCallback((category: DictionarySearchCategory, error: string) => {
+  const [moreRequest, setMoreRequest] = useState<{scopeKey:string; category:DictionarySearchCategory; page:DictionaryCategoryPage} | null>(null);
+  const observers = useRef({ onWordResults, onAccessInvalidated });
+  observers.current = { onWordResults, onAccessInvalidated };
+  const invalidateAccess = useCallback((error: string) => {
     ++generation.current;
     hydrated.current.clear();
     articles.current.clear();
     completed.current.clear();
     setWords({});
-    publishWordResults.current?.([]);
-    setCategories({ [category]: { complete: false, error } });
+    observers.current.onWordResults?.([]);
+    observers.current.onAccessInvalidated?.();
+    setMoreRequest(null);
+    // A background Words hydration can lose access while a context tab is active.
+    setCategories(Object.fromEntries(DICTIONARY_SEARCH_CATEGORIES.map(id => [id, { complete: false, error }])));
   }, []);
   useEffect(() => {
     const previous = previousVisibility.current;
@@ -81,7 +86,7 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
     hydrated.current.clear();
     articles.current.clear();
     completed.current.clear();
-    publishWordResults.current?.([]);
+    observers.current.onWordResults?.([]);
     setCategories({}); setWords({}); setAppliedScope(scopeKey);
   }, [scopeKey, enabled, readScope]);
   useEffect(() => {
@@ -102,13 +107,12 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
       ).catch(cause => {
         if (abort.signal.aborted || version !== generation.current) return;
         const code = cause instanceof Error ? cause.message : "search_failed";
-        if (isAccessError(code)) invalidateAccess(active, code);
+        if (isAccessError(code)) invalidateAccess(code);
         else setCategories(current => ({ ...current, [active]: { ...current[active], complete: false, error: code } }));
       });
     }, delay);
     return () => { clearTimeout(timer); abort.abort(); };
   }, [scopeKey, currentScope, active, query, languageCode, dictionaryId, userId, filters, material, enabled, invalidateAccess]);
-  const [moreRequest, setMoreRequest] = useState<{scopeKey:string; category:DictionarySearchCategory; page:DictionaryCategoryPage} | null>(null);
   useEffect(() => { setMoreRequest(null); }, [scopeKey, active]);
   useEffect(() => {
     if (!moreRequest || moreRequest.scopeKey !== scopeKey || moreRequest.category !== active) return;
@@ -125,7 +129,7 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
       if (!abort.signal.aborted && version === generation.current) {
         const code = cause instanceof Error ? cause.message : "search_failed";
         if (code === "invalid_cursor") setRevision(value => value + 1);
-        else if (isAccessError(code)) invalidateAccess(category, code);
+        else if (isAccessError(code)) invalidateAccess(code);
         else setCategories(current => ({...current,[category]:{...current[category]!,moreError:true}}));
         setMoreRequest(null);
       }
@@ -161,7 +165,7 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
       if (abort.signal.aborted || version !== generation.current) return;
       const code = cause instanceof Error ? cause.message : "search_failed";
       if (code === "invalid_cursor") { setRevision(value => value + 1); return; }
-      if (isAccessError(code)) invalidateAccess(wordCategory, code);
+      if (isAccessError(code)) invalidateAccess(code);
       else setWords(current => ({ ...current, [wordCategory]: {
         results: current[wordCategory]?.results ?? [], loading: false, error: true,
       }}));
@@ -188,7 +192,7 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
     ? formatUiCount(locale,current.page.wordGroupCount,getUiMessages(locale).librarySearch,"articleCount") : countLabel;
   return <div className={styles.results}>
     {tabsHost ? createPortal(tabs, tabsHost) : tabs}
-    {countHost && createPortal(<span className={styles.count} role="status" data-count-detail={!enabled || loading || failed ? "" : countLabel}>{!enabled ? "" : loading ? copy.busy : !failed ? compactCount : ""}</span>, countHost)}
+    {countHost && createPortal(<span className={styles.count} role="status" data-count-detail={!enabled || loading || failed ? "" : countLabel}>{!enabled || failed ? "" : loading ? copy.busy : compactCount}</span>, countHost)}
     <div id="library-search-results" aria-busy={loading && !failed} aria-label={copy.labels[active]}>
       {!enabled ? null : !query.trim() ? <p className={styles.empty}>{copy.prompt}</p> : <>
         {failed && <p role="alert" className={styles.empty}>{isAccessError(current?.error) ? getUiMessages(locale).library.materialUnavailable : copy.error} <button type="button" onClick={() => current?.error ? setRevision(value => value + 1) : setHydrationRevision(value => value + 1)}>{copy.retry}</button></p>}
