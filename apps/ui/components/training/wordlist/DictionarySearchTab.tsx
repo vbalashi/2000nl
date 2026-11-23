@@ -172,6 +172,7 @@ export function DictionarySearchTab({
   },[categoryCountHost]);
   const categoryAppearance = "plain" as const;
   const [categoryRevision, setCategoryRevision] = useState(0);
+  const [categoryAccessDenied, setCategoryAccessDenied] = useState(false);
   const [categoryBulkCount,setCategoryBulkCount]=useState<number|null>(null);
   const presentation = React.useContext(LibraryPresentationContext);
   const {
@@ -499,7 +500,30 @@ export function DictionarySearchTab({
   const [bulkNotice,setBulkNotice]=useState<string|null>(null);
   const currentBulk=reconcileBulkArticleSelection(bulkSelection,userId,bulkScopeKey);
   const bulkCopy=getUiMessages(interfaceLanguage).wordsBulk;
-  React.useEffect(()=>{setBulkSelection(emptyBulkArticleSelection(userId,bulkScopeKey));setBulkMode(false);setBulkAll(false);setBulkDialogScope(null);setBulkNotice(null);},[userId,bulkScopeKey]);
+  const browseReadDiscarded = !query.trim() && Boolean(searchError) && !hasCurrentResults && groupResults.length === 0;
+  const resetBulkSelection = useCallback(() => {
+    setBulkSelection(emptyBulkArticleSelection(userId, bulkScopeKey));
+    setBulkMode(false);
+    setBulkAll(false);
+    setBulkDialogScope(null);
+    setBulkNotice(null);
+  }, [userId, bulkScopeKey]);
+  React.useLayoutEffect(() => {
+    resetBulkSelection();
+    if (browseReadDiscarded) setCountAnchor(null);
+  }, [resetBulkSelection, browseReadDiscarded]);
+  const invalidateCategoryAccess = useCallback(() => {
+    ++latestDetailRequestRef.current;
+    updateSearchState({ groupResults: [], wordResults: [], selectedHeadwordGroupId: null, detailSelection: null, mobileDetailOpen: false });
+    setCategoryAccessDenied(true);
+    setCategoryBulkCount(null);
+    setCountAnchor(null);
+    resetBulkSelection();
+  }, [updateSearchState, resetBulkSelection]);
+  const categorySourceUnavailable = categorySearchActive && useViewedListFilter && selectedSourceRead?.status === "unavailable";
+  React.useLayoutEffect(() => {
+    if (categorySourceUnavailable) invalidateCategoryAccess();
+  }, [categorySourceUnavailable, invalidateCategoryAccess]);
   React.useEffect(()=>{if(!bulkNotice)return;const timer=window.setTimeout(()=>setBulkNotice(null),4000);return()=>window.clearTimeout(timer);},[bulkNotice]);
   const bulkRequest=useMemo(()=>({groups:[...currentBulk.articleIds].sort(),all:bulkAll,category:categorySearchActive ? "headwords" as const : "browse" as const,query,language:searchLanguage,
     dictionaryIds:categoryMaterial ? null : dictionaryId ? [dictionaryId] : null,
@@ -521,6 +545,10 @@ export function DictionarySearchTab({
     [searchLanguage,categoryMaterial,dictionaryId,viewedList?.ownership,searchState.collectionOwnership,searchState.labelName,resultScopeLabel,searchState.entryFilters]);
   const rememberHistory=useCallback(()=>{if(open && recentReady)rememberScope(historyScope);},[open,recentReady,rememberScope,historyScope]);
   React.useEffect(()=>{if(!categorySearchActive && hasCurrentResults && !searchLoading && !searchError && searchMaterialReady)rememberHistory();},[categorySearchActive,hasCurrentResults,searchLoading,searchError,searchMaterialReady,rememberHistory]);
+  const completeCategorySearch = useCallback(() => {
+    setCategoryAccessDenied(false);
+    rememberHistory();
+  }, [rememberHistory]);
   const historyChoices=recentItems.filter(item=>recentLibraryScopeKey(item)!==recentLibraryScopeKey(historyScope)).slice(0,5);
   const historySource=(item:RecentLibraryScope)=>item.dictionaryId || item.collectionId || item.labelId ? item.sourceName : copy.allSources;
   const historyDescription=(item:RecentLibraryScope)=>{
@@ -658,7 +686,7 @@ export function DictionarySearchTab({
             {id:"reset",label:copy.resetFilters,icon:<RotateCcw size={14}/>,onSelect:()=>{setScopeAnchor(null);updateSearchState({labelId:null,labelName:null,dictionaryId:null,applyListFilter:false,collectionId:null,collectionOwnership:null,entryFilters:{...EMPTY_LIBRARY_ENTRY_FILTERS,sort:searchState.entryFilters?.sort},page:1,groupPageCursors:[null],groupHasMore:false,groupTotal:null,meaningTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});refreshSearch();}},
             ...historyChoices.map((item,index)=>({id:`recent-${index}`,label:item.query || historySource(item),description:historyDescription(item),icon:<History size={14}/>,onSelect:()=>restoreHistory(item)})),
           ]}/>}
-          {!unresolvedSource && categorySearchActive && ((onTrainSelection && searchMaterialReady) || canBulk ? <button type="button" className={`${workspace.scope} ${workspace.countTrigger}`} aria-label={bulkCountLabel || categoryCountText || copy.entries} aria-haspopup="menu" aria-expanded={Boolean(countAnchor)} onClick={event=>{setBulkNotice(null);setCountAnchor(countAnchor ? null : event.currentTarget);}}><span ref={setCategoryCountHost} className={`${workspace.categoryCountContent} ${bulkCountLabel ? 'sr-only' : ''}`}/>{bulkCountLabel}</button> : <span ref={setCategoryCountHost} className={workspace.scope}/>)}
+          {!unresolvedSource && categorySearchActive && (!categoryAccessDenied && ((onTrainSelection && searchMaterialReady) || canBulk) ? <button type="button" className={`${workspace.scope} ${workspace.countTrigger}`} aria-label={bulkCountLabel || categoryCountText || copy.entries} aria-haspopup="menu" aria-expanded={Boolean(countAnchor)} onClick={event=>{setBulkNotice(null);setCountAnchor(countAnchor ? null : event.currentTarget);}}><span ref={setCategoryCountHost} className={`${workspace.categoryCountContent} ${bulkCountLabel ? 'sr-only' : ''}`}/>{bulkCountLabel}</button> : <span ref={setCategoryCountHost} className={workspace.scope}/>)}
 
           {!unresolvedSource && !categorySearchActive && hasCurrentResults && (!groupedSearchActive || groupTotal != null) && <button type="button" className={`${workspace.scope} ${workspace.countTrigger}`} aria-haspopup="menu" aria-expanded={Boolean(countAnchor)} onClick={event => {setBulkNotice(null);setCountAnchor(countAnchor ? null : event.currentTarget);}}>{bulkCountLabel ?? formatUiCount(interfaceLanguage, !groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length), getUiMessages(interfaceLanguage).librarySearch, "articleCount")}</button>}
           {!unresolvedSource && countAnchor && <ActionMenu anchor={countAnchor} title={categorySearchActive ? categoryCountText : formatLibraryCounts(interfaceLanguage,!groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length),groupedSearchActive ? meaningTotal : undefined)} language={interfaceLanguage} notice={categorySearchActive ? categoryCountText : formatLibraryCounts(interfaceLanguage,!groupedSearchActive ? wordTotal : (groupTotal ?? groupResults.length),groupedSearchActive ? meaningTotal : undefined)} onClose={closeCount} items={[
@@ -733,7 +761,7 @@ export function DictionarySearchTab({
           workspace.results
         }
       >
-        {unresolvedSource ? null : categorySearchActive ? <LibraryCategoryResults onWordResults={applyCategoryWordResults} onWordCount={setCategoryBulkCount} onSearchComplete={rememberHistory}
+        {unresolvedSource ? null : categorySearchActive ? <LibraryCategoryResults onWordResults={applyCategoryWordResults} onWordCount={setCategoryBulkCount} onAccessInvalidated={invalidateCategoryAccess} onSearchComplete={completeCategorySearch}
           bulkSelected={bulkMode ? (bulkAll ? new Set(pageIds.filter(id=>!currentBulk.articleIds.has(id))) : currentBulk.articleIds) : undefined} bulkAll={bulkAll} bulkExcludedCount={currentBulk.articleIds.size} onBulkSelect={bulkMode ? (id,selected)=>{if(bulkAll && !selected && currentBulk.articleIds.size>=200)return;setSelected([id],selected);} : undefined} appearance={categoryAppearance} userId={userId} onSelectGroup={openGroupDetail} tabsHost={categoryTabsHost} countHost={categoryCountHost}
           interfaceLanguage={interfaceLanguage} query={query} languageCode={searchLanguage} dictionaryId={dictionaryId}
           filters={searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS} material={categoryMaterial}
