@@ -494,9 +494,9 @@
       "sha256": "e1ad12c7f322d196bf0fa360f4c7471e2e00aab6732e12b61e4602a4755807b1"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-391.sql",
+  "postflightProbe": "db/deploy-contract/postflight-392.sql",
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-391.sql",
-    "sha256": "8c27ae9f84319e74eb57d6d76815863de43736c29552ae642a53b4d6f06802e1"
+    "file": "db/deploy-contract/read-only-postflight-392.sql",
+    "sha256": "5f7f74e2f92b4bca71e42d6f7fc5a656c7ba79e5fe32940b5620d9cc8cd3063d"
   }
 }
