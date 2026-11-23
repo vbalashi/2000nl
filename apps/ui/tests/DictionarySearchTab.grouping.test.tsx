@@ -457,7 +457,7 @@ describe("category article access", () => {
     }
   });
 
-  async function renderCategory() {
+  async function renderCategory(collection = false) {
     const {AccountMaterialProvider} = await import("@/components/practice/material/AccountMaterialProvider");
     const page = {
       id: "headwords" as const, total: 2, wordGroupCount: 2,
@@ -472,8 +472,10 @@ describe("category article access", () => {
       hits.length ? buildLibraryHeadwordGroupResults([firstGroup]) : []);
     readableSources.mockReset().mockResolvedValue([source(scopeB, "Enabled B")]);
     const repo = materialRepository();
-    const tab = (open: boolean) => <AccountMaterialProvider userId="user-1" repository={repo}>
-      <Harness locale="en" open={open} onTrainSelection={vi.fn()}/>
+    const tab = (open: boolean, status: "ready" | "unavailable" = "ready") => <AccountMaterialProvider userId="user-1" repository={repo}>
+      <Harness locale="en" open={open} onTrainSelection={vi.fn()}
+        initial={collection ? {applyListFilter: true, collectionId: "received-list", collectionOwnership: "received"} : {}}
+        sourceRead={collection ? {collectionId: "received-list", type: "user", status, onRetry: vi.fn()} : undefined}/>
     </AccountMaterialProvider>;
     const view = render(tab(true));
     const row = await screen.findByTestId("library-headword-group-group-goed-main");
@@ -512,6 +514,25 @@ describe("category article access", () => {
     fireEvent.click(await screen.findByRole("button", {name: "2 articles · 2 meanings"}));
     expect(screen.getByRole("menuitem", {name: "Select articles"})).toBeVisible();
     expect(screen.queryByTestId("library-detail-mobile")).toBeNull();
+  });
+
+  test("an unavailable collection clears selected category details even when its result component is unmounted", async () => {
+    const {row, view, tab} = await renderCategory(true);
+    fireEvent.click(screen.getByRole("button", {name: "2 articles · 2 meanings"}));
+    fireEvent.click(screen.getByRole("menuitem", {name: "Select articles"}));
+    fireEvent.click(row);
+    fireEvent.click(screen.getByRole("button", {name: "Selected: 1"}));
+    fireEvent.click(screen.getByRole("menuitem", {name: "Add to collection"}));
+    expect(screen.getByRole("dialog", {name: "Choose a collection"})).toBeVisible();
+
+    view.rerender(tab(true, "unavailable"));
+    expect(screen.queryByTestId("library-detail-desktop")).toBeNull();
+    expect(screen.queryByTestId("library-detail-mobile")).toBeNull();
+    view.rerender(tab(true));
+    await screen.findByTestId("library-headword-group-group-goed-main");
+    expect(screen.queryByRole("dialog", {name: "Choose a collection"})).toBeNull();
+    fireEvent.click(await screen.findByRole("button", {name: "2 articles · 2 meanings"}));
+    expect(screen.getByRole("menuitem", {name: "Select articles"})).toBeVisible();
   });
 
   test("ordinary hide and a successful empty category read retain selected details", async () => {

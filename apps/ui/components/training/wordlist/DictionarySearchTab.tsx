@@ -520,6 +520,10 @@ export function DictionarySearchTab({
     setCountAnchor(null);
     resetBulkSelection();
   }, [updateSearchState, resetBulkSelection]);
+  const categorySourceUnavailable = categorySearchActive && useViewedListFilter && selectedSourceRead?.status === "unavailable";
+  React.useLayoutEffect(() => {
+    if (categorySourceUnavailable) invalidateCategoryAccess();
+  }, [categorySourceUnavailable, invalidateCategoryAccess]);
   React.useEffect(()=>{if(!bulkNotice)return;const timer=window.setTimeout(()=>setBulkNotice(null),4000);return()=>window.clearTimeout(timer);},[bulkNotice]);
   const bulkRequest=useMemo(()=>({groups:[...currentBulk.articleIds].sort(),all:bulkAll,category:categorySearchActive ? "headwords" as const : "browse" as const,query,language:searchLanguage,
     dictionaryIds:categoryMaterial ? null : dictionaryId ? [dictionaryId] : null,
