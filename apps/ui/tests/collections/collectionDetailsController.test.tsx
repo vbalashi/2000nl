@@ -162,3 +162,32 @@ test('an unrecognizable address keeps its draft and gives a quiet inline hint',a
  expect(screen.queryByRole('alert')).toBeNull();expect(saves()).toHaveLength(0);
  fireEvent.change(input,{target:{value:'www.lib.ru'}});expect(screen.queryByRole('status')).toBeNull();
 });
+
+test('a touch menu item can lose focus before the source choice is clicked',async()=>{
+ const empty={...record,source:null,revision:'0'};
+ mocks.fetch.mockResolvedValueOnce(Response.json(empty));
+ render(<CollectionDetailsController {...props}/>);await screen.findByRole('heading',{name:'Lesson'});edit('Source');
+ fireEvent.click(screen.getByRole('button',{name:'Source: Not specified'}));
+ const firstOption=screen.getByRole('menuitemradio',{name:'Not specified'});
+ const youtube=screen.getByRole('menuitemradio',{name:'YouTube'});
+ expect(firstOption).toHaveFocus();
+ fireEvent.blur(firstOption,{relatedTarget:null});
+ expect(saves()).toHaveLength(0);
+ expect(youtube).toBeInTheDocument();
+ mocks.fetch.mockResolvedValueOnce(Response.json({...empty,source:{originKind:'youtube'},revision:'1'}));
+ fireEvent.click(youtube);
+ await waitFor(()=>expect(screen.queryByRole('form',{name:'Source'})).toBeNull());
+ expect(saves()).toEqual([{collectionId:id,expectedRevision:'0',patch:{source:{originKind:'youtube'}}}]);
+});
+
+test('a changed text field saves when touch blur has no related target',async()=>{
+ const empty={...record,source:null,revision:'0'};
+ mocks.fetch.mockResolvedValueOnce(Response.json(empty));
+ render(<CollectionDetailsController {...props}/>);await screen.findByRole('heading',{name:'Lesson'});edit('Original material title');
+ const input=screen.getByRole('textbox',{name:'Original material title'});
+ fireEvent.change(input,{target:{value:'Film title'}});
+ mocks.fetch.mockResolvedValueOnce(Response.json({...empty,source:{materialTitle:'Film title'},revision:'1'}));
+ fireEvent.blur(input,{relatedTarget:null});
+ await screen.findByText('Film title');
+ expect(saves()).toEqual([{collectionId:id,expectedRevision:'0',patch:{source:{materialTitle:'Film title'}}}]);
+});

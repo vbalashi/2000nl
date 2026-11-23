@@ -134,13 +134,12 @@ export function useLibrarySearchLifecycle({
     : null;
   const listMode = Boolean(collectionId) && !scoped;
   const listPage = listMode ? page : 1;
-  const readKey = JSON.stringify([
+  const readScopeKey = JSON.stringify([
     userId,
     contentLanguageCode,
     translationLanguageCode,
     dictionaryId,
     query.trim(),
-    page,
     listMode,
     materialScopeKey,
     listMode ? collectionId : null,
@@ -149,17 +148,20 @@ export function useLibrarySearchLifecycle({
     materialRevision,
     refreshRevision,
   ]);
+  const readKey = JSON.stringify([readScopeKey, page]);
   const blockedByMaterial = !listMode && !ready;
-  const previousReadScopeRef = useRef({ readKey, blockedByMaterial });
+  const previousReadScopeRef = useRef({ readKey, readScopeKey, blockedByMaterial });
 
   useLayoutEffect(() => {
     const previous = previousReadScopeRef.current;
     if (previous.readKey !== readKey || (!previous.blockedByMaterial && blockedByMaterial)) {
       // Fence the old read before the query debounce; visibility changes alone must retain pending work.
       if (partialRef.current?.key === previous.readKey) {
+        const resetPagination = previous.readScopeKey !== readScopeKey || blockedByMaterial;
         freshRef.current = null;
         setState(current => ({...current, groupResults: [], groupTotal: null, meaningTotal: null, unavailableEntryCount: 0,
-          wordTotal: 0, page: 1, groupHasMore: false, groupPageCursors: [null], selectedHeadwordGroupId: null,
+          wordTotal: 0, groupHasMore: false, selectedHeadwordGroupId: null,
+          ...(resetPagination ? {page: 1, groupPageCursors: [null]} : {}),
           detailSelection: null, mobileDetailOpen: false}));
       }
       requestSequenceRef.current += 1;
@@ -169,8 +171,8 @@ export function useLibrarySearchLifecycle({
       partialRef.current = null;
       setLoading(false);
     }
-    previousReadScopeRef.current = { readKey, blockedByMaterial };
-  }, [readKey, blockedByMaterial, setState]);
+    previousReadScopeRef.current = { readKey, readScopeKey, blockedByMaterial };
+  }, [readKey, readScopeKey, blockedByMaterial, setState]);
 
   const isCurrentSearch = useCallback(
     (requestId: number) => requestSequenceRef.current === requestId,

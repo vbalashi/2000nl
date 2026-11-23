@@ -249,6 +249,84 @@ test('revocation clears parent bulk rows and completed tabs can load again',asyn
  expect(vi.mocked(readDictionaryCategory).mock.calls.filter(call=>call[1]==='examples')).toHaveLength(2);
 });
 
+test.each(['category', 'continuation', 'hydration'] as const)(
+  'an account change detected during %s clears the prior account’s rows and parent selection',
+  async (phase) => {
+    const onRows = vi.fn();
+    const invalidated = vi.fn();
+    const page = {
+      id: 'headwords' as const, total: 2, wordGroupCount: 2,
+      items: [{ entry: { id: 'entry-bank-furniture', headword: 'bank' } }],
+      page: { hasMore: true, nextCursor: 'next' },
+    };
+    vi.mocked(readDictionaryCategory).mockImplementationOnce(async (_scope, _category, publish) => {
+      publish(page, true);
+      return page;
+    });
+    const view = render(<LibraryCategoryResults {...props} onWordResults={onRows} onAuthorizationReset={invalidated}/>);
+    await screen.findByTestId('library-headword-group-group-bank');
+    expect(onRows.mock.lastCall?.[0]).toHaveLength(1);
+
+    invalidated.mockClear();
+    const changed = new Error('auth_account_changed');
+    if (phase === 'category') {
+      vi.mocked(readDictionaryCategory).mockRejectedValueOnce(changed);
+      view.rerender(<LibraryCategoryResults {...props} onWordResults={onRows} onAuthorizationReset={invalidated} category="examples"/>);
+    } else {
+      if (phase === 'continuation') {
+        vi.mocked(readMoreDictionaryContext).mockRejectedValueOnce(changed);
+      } else {
+        vi.mocked(readMoreDictionaryContext).mockResolvedValueOnce({
+          ...page, items: [...page.items, { entry: { id: 'entry-two', headword: 'fiets' } }],
+          page: { hasMore: false, nextCursor: null },
+        });
+        vi.mocked(hydrateDictionaryWordResults).mockRejectedValueOnce(changed);
+      }
+      fireEvent.click(screen.getByRole('button', { name: 'More 25' }));
+    }
+
+    await screen.findByRole('alert');
+    expect(onRows).toHaveBeenLastCalledWith([]);
+    expect(invalidated).toHaveBeenCalledOnce();
+    expect(screen.queryByTestId('library-headword-group-group-bank')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'More 25' })).toBeNull();
+    if (phase === 'category') {
+      view.rerender(<LibraryCategoryResults {...props} onWordResults={onRows} onAuthorizationReset={invalidated}/>);
+      expect(screen.queryByTestId('library-headword-group-group-bank')).toBeNull();
+      await screen.findByTestId('library-headword-group-group-bank');
+      expect(readDictionaryCategory).toHaveBeenCalledTimes(3);
+    }
+  },
+);
+
+test("a late denial from a previous scope leaves the current rows and parent selection intact", async () => {
+  let rejectOld!: (error: Error) => void;
+  vi.mocked(hydrateDictionaryWordResults).mockImplementationOnce(() => new Promise((_resolve, reject) => {rejectOld = reject;}));
+  const invalidated = vi.fn();
+  const view = render(<LibraryCategoryResults {...props} onAuthorizationReset={invalidated}/>);
+  await waitFor(() => expect(hydrateDictionaryWordResults).toHaveBeenCalledOnce());
+  view.rerender(<LibraryCategoryResults {...props} query="fiets" onAuthorizationReset={invalidated}/>);
+  await screen.findByTestId("library-headword-group-group-bank");
+  invalidated.mockClear();
+  await act(async () => rejectOld(new Error("auth_account_changed")));
+  expect(invalidated).not.toHaveBeenCalled();
+  expect(screen.getByTestId("library-headword-group-group-bank")).toBeVisible();
+});
+
+test("a denied Words hydration clears the active context tab and offers a fresh read", async () => {
+  let rejectHydration!: (error: Error) => void;
+  vi.mocked(hydrateDictionaryWordResults).mockImplementationOnce(() => new Promise((_resolve, reject) => {rejectHydration = reject;}));
+  render(<Harness/>);
+  await waitFor(() => expect(hydrateDictionaryWordResults).toHaveBeenCalledOnce());
+  fireEvent.click(screen.getByRole("button", {name: "Examples"}));
+  expect(await screen.findByRole("button", {name: "Sentence 6 about bank bank"})).toBeVisible();
+  await act(async () => rejectHydration(new Error("dictionary_search_access_changed")));
+  expect(screen.queryByRole("button", {name: "Sentence 6 about bank bank"})).toBeNull();
+  expect(screen.getByRole("alert")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", {name: "Retry"}));
+  expect(await screen.findByRole("button", {name: "Sentence 6 about bank bank"})).toBeVisible();
+});
+
 test('a reference row opens its exact source article, preserving dictionary and homograph identity',async()=>{
  const groups=[0,1,2].map(i=>({...multiSenseBankGroup,headwordGroupId:`pointer-group-${i}`,dictionary:{...multiSenseBankGroup.dictionary,dictionaryId:i===2?'other':'same'},header:{text:'same spelling',homographNumber:i+1},senseCount:0,entryCount:1,entries:[{kind:'cross-reference' as const,crossReferenceId:`pointer-${i}`,meaningOrdinal:1,label:null,text:'target',target:{query:'target'},capabilities:[]}]}));
  const rows=buildLibraryHeadwordGroupResults(groups);
