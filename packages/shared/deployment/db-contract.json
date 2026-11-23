@@ -486,7 +486,7 @@
     {
       "migrationId": 391,
       "file": "db/migrations/391_admin_owner_access_groups.sql",
-      "sha256": "28f4e08724a00cd47f2e9cf9cd767c8a57c8e2521575b434e877e1ef4e6f086e"
+      "sha256": "d36682686367a06e8307bf7bbb21b18a3b8ea3a30d8b665eb3d8bee635377e41"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-391.sql",

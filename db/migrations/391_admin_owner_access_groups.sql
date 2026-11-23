@@ -14,7 +14,8 @@ GRANT EXECUTE ON FUNCTION private.admin_owner_permissions_v1() TO service_role;
 
 ALTER TABLE public.admin_operators DROP CONSTRAINT admin_operators_permissions_allowed;
 ALTER TABLE public.admin_operators ADD CONSTRAINT admin_operators_permissions_allowed CHECK (
-  permissions <@ private.admin_owner_permissions_v1()
+  permissions <@ ARRAY['dictionaries.read','audit.read','publication.manage','dictionary.content.read',
+    'users.read','admission.manage','feedback.read','editorial.edit','notifications.manage','testers.manage','owner']::text[]
   AND (NOT ('owner' = ANY(permissions)) OR private.admin_owner_permissions_v1() <@ permissions)
 );
 
