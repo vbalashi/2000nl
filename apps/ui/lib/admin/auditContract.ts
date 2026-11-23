@@ -16,6 +16,8 @@ export const ADMIN_AUDIT_ACTIONS = [
   "user.access.read",
   "user.testers.added",
   "user.testers.removed",
+  "user.group.added",
+  "user.group.removed",
   "feedback.registry.read",
   "feedback.detail.read",
   "operator.permissions.updated",

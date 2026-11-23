@@ -31,7 +31,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       assignedGroups: assignedGroups.map(({ id, name, description }) => ({ id, name, description })),
       operatorPermissions: operatorPermissions.filter(permission => typeof permission === "string"),
       history: principal.permissions.includes("audit.read") && history
-        ? history.map(({ at, action, operatorId }: Record<string, unknown>) => ({ at, action, operatorId })) : null,
+        ? history.map(({ at, action, operatorId, groupName }: Record<string, unknown>) => ({
+          at, action, operatorId, ...(typeof groupName === "string" ? { groupName } : {}),
+        })) : null,
     });
   } catch (error) {
     return adminErrorResponse(error);

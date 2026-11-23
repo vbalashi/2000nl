@@ -52,3 +52,20 @@ it("rejects a different origin, an unsupported group and a missing permission be
   expect((await post("testers")).status).toBe(403);
   expect(mocks.rpc).not.toHaveBeenCalled();
 });
+
+it("lets only owners select a non-tester group and binds the write to the verified principal", async () => {
+  const groupId = "22222222-2222-4222-8222-222222222222";
+  expect((await post(groupId)).status).toBe(400);
+  expect(mocks.rpc).not.toHaveBeenCalled();
+
+  const ownerAccess = { ...access, groups: [...access.groups, { id: groupId, name: "Reviewers", description: null, member: false }] };
+  mocks.requireAdmin.mockResolvedValue({
+    userId: "owner-account", requestId: "request", permissions: ["owner", "users.read", "testers.manage"],
+  });
+  mocks.rpc.mockResolvedValue({ data: ownerAccess, error: null });
+  expect(await (await GET(new Request(url), context)).json()).toEqual(ownerAccess);
+  expect((await post(groupId)).status).toBe(200);
+  expect(mocks.rpc).toHaveBeenLastCalledWith("admin_owner_user_access_v1", {
+    p_operator: "owner-account", p_user: id, p_request: "request", p_member: true, p_group_id: groupId,
+  });
+});
