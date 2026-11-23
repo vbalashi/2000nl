@@ -32,4 +32,29 @@ SET search_path TO 'pg_catalog','public','private','pg_temp' AS $$
     ARRAY(SELECT id FROM authorized)) chosen
   WHERE (SELECT unfiltered FROM selection) IS NOT TRUE;
 $$;
+
+-- Each candidate arm joins its search document to selected_entries. That very
+-- row also witnesses membership of its dictionary, including for form matches.
+-- Keep the catalog visibility, principal and dictionary ID checks.
+DO $migration$
+DECLARE
+  signature constant regprocedure :=
+    'private.search_library_headwords_v1(uuid,boolean,text,text,uuid[],integer,text,jsonb)'::regprocedure;
+  definition text := pg_get_functiondef(signature);
+  membership constant text := $old$ELSE p_user_id IS NOT NULL AND EXISTS (
+                SELECT 1 FROM dictionary_search_documents document
+                JOIN selected_entries chosen ON chosen.entry_id=document.entry_id
+                WHERE document.dictionary_id=d.id
+            )$old$;
+  candidate_join constant text := 'JOIN selected_entries chosen ON chosen.entry_id=s.entry_id';
+BEGIN
+  IF cardinality(string_to_array(definition, membership)) <> 2
+     OR cardinality(string_to_array(definition, candidate_join)) <> 6 THEN
+    RAISE EXCEPTION 'Unexpected headword search candidate or dictionary scope';
+  END IF;
+  -- Register the extension GUC before replaying the function's SET clauses.
+  PERFORM public.similarity('a', 'a');
+  EXECUTE replace(definition, membership, 'ELSE p_user_id IS NOT NULL');
+END;
+$migration$;
 COMMIT;

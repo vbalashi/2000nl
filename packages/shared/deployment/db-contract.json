@@ -491,7 +491,7 @@
     {
       "migrationId": 392,
       "file": "db/migrations/392_library_category_unfiltered_scope.sql",
-      "sha256": "1d8262c7d9e675f678e7587f605b7d8c8d4bcf8d61a1e1771ad7663627215d45"
+      "sha256": "e1ad12c7f322d196bf0fa360f4c7471e2e00aab6732e12b61e4602a4755807b1"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-391.sql",
