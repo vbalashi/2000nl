@@ -63,8 +63,8 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
   const lastEnabledScope = useRef<string | null>(null);
   const immediateScope = useRef<string | null>(null);
   const [moreRequest, setMoreRequest] = useState<{scopeKey:string; category:DictionarySearchCategory; page:DictionaryCategoryPage} | null>(null);
-  const observers = useRef({ onWordResults, onAccessInvalidated });
-  observers.current = { onWordResults, onAccessInvalidated };
+  const observers = useRef({ active, onWordResults, onAccessInvalidated });
+  observers.current = { active, onWordResults, onAccessInvalidated };
   const invalidateAccess = useCallback((error: string) => {
     ++generation.current;
     hydrated.current.clear();
@@ -75,7 +75,7 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
     observers.current.onAccessInvalidated?.();
     setMoreRequest(null);
     // A background Words hydration can lose access while a context tab is active.
-    setCategories(Object.fromEntries(DICTIONARY_SEARCH_CATEGORIES.map(id => [id, { complete: false, error }])));
+    setCategories({ [observers.current.active]: { complete: false, error } });
   }, []);
   useEffect(() => {
     const previous = previousVisibility.current;
