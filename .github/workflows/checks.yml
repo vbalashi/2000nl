@@ -98,7 +98,7 @@ jobs:
           echo "profile=$profile" >> "$GITHUB_OUTPUT"
           echo "Browser profile: $profile"
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - if: steps.profile.outputs.profile == 'release'
         run: npx playwright test playwright/tests/release-updates.spec.ts
       - if: steps.profile.outputs.profile == 'full'

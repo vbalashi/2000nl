@@ -212,6 +212,39 @@ test('page 2 continuation failure keeps the page-start cursor and rejects a late
  expect(result.current.state.groupPageCursors).toEqual([null,'page-two','page-three']);
 });
 
+test('going back from a partial page 3 keeps the page 2 cursor and ignores page 3 completion', async () => {
+  const partial = {groups: [multiSenseBankGroup], nextGroupCursor: 'middle', selectedTierComplete: false};
+  let finishOld!: (page: unknown) => void;
+  let finishPrevious!: (page: unknown) => void;
+  fetchPage.mockImplementationOnce(input => {
+    input.onPartial(partial);
+    return new Promise(resolve => { finishOld = resolve; });
+  }).mockImplementationOnce(() => new Promise(resolve => { finishPrevious = resolve; }));
+  const {result} = setup({
+    query: '',
+    page: 3,
+    groupPageCursors: [null, 'page-two', 'page-three'],
+    groupScopeKey: JSON.stringify(['owner', 1, 'nl', null, '', null, {parts: ['noun'], article: null}]),
+  });
+  await waitFor(() => expect(result.current.state.groupResults).toHaveLength(1));
+  const firstRead = fetchPage.mock.calls[0][0];
+  expect(firstRead.cursor).toBe('page-three');
+
+  act(() => result.current.setState(current => ({...current, page: current.page - 1})));
+  expect(firstRead.signal.aborted).toBe(true);
+  expect(result.current.state.page).toBe(2);
+  expect(result.current.state.groupResults).toEqual([]);
+  expect(result.current.state.detailSelection).toBeNull();
+  expect(fetchPage).toHaveBeenLastCalledWith(expect.objectContaining({cursor: 'page-two'}));
+
+  await act(async () => finishOld({...partial, nextGroupCursor: 'page-four'}));
+  expect(result.current.state.groupResults).toEqual([]);
+  await act(async () => finishPrevious({...partial, nextGroupCursor: 'page-three', selectedTierComplete: true}));
+  expect(result.current.state.page).toBe(2);
+  expect(result.current.state.groupPageCursors).toEqual([null, 'page-two', 'page-three']);
+  expect(result.current.state.groupHasMore).toBe(true);
+});
+
 test.each([401,403,404,429,503])('final HTTP %s during continuation removes partial rows and selection',async status=>{
  const partial={groups:[multiSenseBankGroup],nextGroupCursor:'middle',selectedTierComplete:false,
   librarySearch:{totalGroups:51,matchingEntryIds:[financeEntry.entryId]}};
