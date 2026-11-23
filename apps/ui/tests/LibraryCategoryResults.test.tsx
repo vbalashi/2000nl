@@ -263,14 +263,15 @@ test.each(['category', 'continuation', 'hydration'] as const)(
       publish(page, true);
       return page;
     });
-    const view = render(<LibraryCategoryResults {...props} onWordResults={onRows} onAccessInvalidated={invalidated}/>);
+    const view = render(<LibraryCategoryResults {...props} onWordResults={onRows} onAuthorizationReset={invalidated}/>);
     await screen.findByTestId('library-headword-group-group-bank');
     expect(onRows.mock.lastCall?.[0]).toHaveLength(1);
 
+    invalidated.mockClear();
     const changed = new Error('auth_account_changed');
     if (phase === 'category') {
       vi.mocked(readDictionaryCategory).mockRejectedValueOnce(changed);
-      view.rerender(<LibraryCategoryResults {...props} onWordResults={onRows} onAccessInvalidated={invalidated} category="examples"/>);
+      view.rerender(<LibraryCategoryResults {...props} onWordResults={onRows} onAuthorizationReset={invalidated} category="examples"/>);
     } else {
       if (phase === 'continuation') {
         vi.mocked(readMoreDictionaryContext).mockRejectedValueOnce(changed);
@@ -290,7 +291,7 @@ test.each(['category', 'continuation', 'hydration'] as const)(
     expect(screen.queryByTestId('library-headword-group-group-bank')).toBeNull();
     expect(screen.queryByRole('button', { name: 'More 25' })).toBeNull();
     if (phase === 'category') {
-      view.rerender(<LibraryCategoryResults {...props} onWordResults={onRows} onAccessInvalidated={invalidated}/>);
+      view.rerender(<LibraryCategoryResults {...props} onWordResults={onRows} onAuthorizationReset={invalidated}/>);
       expect(screen.queryByTestId('library-headword-group-group-bank')).toBeNull();
       await screen.findByTestId('library-headword-group-group-bank');
       expect(readDictionaryCategory).toHaveBeenCalledTimes(3);
@@ -302,10 +303,11 @@ test("a late denial from a previous scope leaves the current rows and parent sel
   let rejectOld!: (error: Error) => void;
   vi.mocked(hydrateDictionaryWordResults).mockImplementationOnce(() => new Promise((_resolve, reject) => {rejectOld = reject;}));
   const invalidated = vi.fn();
-  const view = render(<LibraryCategoryResults {...props} onAccessInvalidated={invalidated}/>);
+  const view = render(<LibraryCategoryResults {...props} onAuthorizationReset={invalidated}/>);
   await waitFor(() => expect(hydrateDictionaryWordResults).toHaveBeenCalledOnce());
-  view.rerender(<LibraryCategoryResults {...props} query="fiets" onAccessInvalidated={invalidated}/>);
+  view.rerender(<LibraryCategoryResults {...props} query="fiets" onAuthorizationReset={invalidated}/>);
   await screen.findByTestId("library-headword-group-group-bank");
+  invalidated.mockClear();
   await act(async () => rejectOld(new Error("auth_account_changed")));
   expect(invalidated).not.toHaveBeenCalled();
   expect(screen.getByTestId("library-headword-group-group-bank")).toBeVisible();

@@ -28,7 +28,7 @@ function isAccessError(code?: string) {
   return code === "material_not_accessible" || code === "dictionary_search_access_changed" || code === "auth_account_changed";
 }
 
-export function LibraryCategoryResults({ query, languageCode, dictionaryId, selectedId, selectedResultKey, onSelect, onSelectGroup, tabsHost, countHost, interfaceLanguage, userId, filters, material, materialRevision, refreshRevision = 0, enabled = true, category = "headwords", onCategoryChange, onWordResults, onAccessInvalidated, onSearchComplete, onWordCount, bulkSelected, bulkAll, bulkExcludedCount, onBulkSelect, appearance = "plain" }: {
+export function LibraryCategoryResults({ query, languageCode, dictionaryId, selectedId, selectedResultKey, onSelect, onSelectGroup, tabsHost, countHost, interfaceLanguage, userId, filters, material, materialRevision, refreshRevision = 0, enabled = true, category = "headwords", onCategoryChange, onWordResults, onAuthorizationReset, onSearchComplete, onWordCount, bulkSelected, bulkAll, bulkExcludedCount, onBulkSelect, appearance = "plain" }: {
   query: string; languageCode: string; dictionaryId: string | null; selectedId?: string; selectedResultKey?: string; userId?: string;
   onSelect: (item: SearchItem) => void; onSelectGroup?: (group: LibraryHeadwordGroupResult) => void;
   tabsHost?: HTMLElement | null; countHost?: HTMLElement | null; interfaceLanguage: OnboardingLanguage;
@@ -36,7 +36,7 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
   appearance?: "plain" | "framed";
   refreshRevision?: number; enabled?: boolean; category?: DictionarySearchCategory;
   onWordResults?: (results: LibraryHeadwordGroupResult[]) => void;
-  onAccessInvalidated?: () => void;
+  onAuthorizationReset?: () => void;
   onSearchComplete?: () => void;
   onWordCount?: (count:number|null)=>void;
   bulkSelected?: ReadonlySet<string>;bulkAll?:boolean;bulkExcludedCount?:number;
@@ -63,8 +63,8 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
   const lastEnabledScope = useRef<string | null>(null);
   const immediateScope = useRef<string | null>(null);
   const [moreRequest, setMoreRequest] = useState<{scopeKey:string; category:DictionarySearchCategory; page:DictionaryCategoryPage} | null>(null);
-  const observers = useRef({ active, onWordResults, onAccessInvalidated });
-  observers.current = { active, onWordResults, onAccessInvalidated };
+  const observers = useRef({ active, onWordResults, onAuthorizationReset });
+  observers.current = { active, onWordResults, onAuthorizationReset };
   const invalidateAccess = useCallback((error: string) => {
     ++generation.current;
     hydrated.current.clear();
@@ -72,12 +72,12 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
     completed.current.clear();
     setWords({});
     observers.current.onWordResults?.([]);
-    observers.current.onAccessInvalidated?.();
+    observers.current.onAuthorizationReset?.();
     setMoreRequest(null);
     // A background Words hydration can lose access while a context tab is active.
     setCategories({ [observers.current.active]: { complete: false, error } });
   }, []);
-  useEffect(() => {
+  React.useLayoutEffect(() => {
     const previous = previousVisibility.current;
     immediateScope.current = enabled && !previous.enabled && previous.readScope === readScope && lastEnabledScope.current === readScope ? scopeKey : null;
     previousVisibility.current = { enabled, readScope };
@@ -87,6 +87,7 @@ export function LibraryCategoryResults({ query, languageCode, dictionaryId, sele
     articles.current.clear();
     completed.current.clear();
     observers.current.onWordResults?.([]);
+    observers.current.onAuthorizationReset?.();
     setCategories({}); setWords({}); setAppliedScope(scopeKey);
   }, [scopeKey, enabled, readScope]);
   useEffect(() => {

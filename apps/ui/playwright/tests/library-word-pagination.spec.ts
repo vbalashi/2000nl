@@ -34,17 +34,45 @@ for(const mobile of [false,true])test(`Library Words pages, retry and revocation
  await expect(rows).toHaveCount(13);
  await expect(page.locator('[data-count-detail="50 articles · 100 meanings"]')).toBeVisible();
  expect(requests).toEqual([{cursor:null,limit:25}]);expect(batches).toHaveLength(1);expect(batches[0]).toHaveLength(13);
+ const nav = page.locator('nav[aria-label="Primary"]:visible');
+ const library = nav.getByRole('button', {name:'Library', exact:true});
+ await nav.getByRole('button').first().click();
+ await expect(rows).toHaveCount(0);
+ const returnStarted = Date.now();
+ await library.click();
+ await expect(rows).toHaveCount(13);
+ console.log(JSON.stringify({mobile, returnMs:Date.now()-returnStarted, categoryReads:requests.length-1, articleReads:batches.length-1}));
+ expect(requests).toHaveLength(2);
+ expect(batches).toHaveLength(2);
  continuationError=503;
  await page.getByRole('button',{name:'More 25',exact:true}).click();await expect(page.locator('#library-search-results').getByRole('alert')).toBeVisible();
  await expect(rows).toHaveCount(13);
  await page.locator('#library-search-results').getByRole('button',{name:'Retry',exact:true}).click();await expect(rows).toHaveCount(25);
- expect(batches).toHaveLength(2);expect(new Set(batches.flat()).size).toBe(25);
+ expect(batches).toHaveLength(3);expect(new Set(batches.flat()).size).toBe(25);
  await expect(page.locator('[data-count-detail="50 articles · 100 meanings"]')).toBeVisible();
  continuationError=404;
  await page.getByRole('button',{name:'More 25',exact:true}).click();await expect(rows).toHaveCount(0);
  await expect(page.getByRole('button',{name:'More 25',exact:true})).toHaveCount(0);
  await page.getByRole('button',{name:'Examples',exact:true}).click();await expect(page.locator('#library-search-results')).toHaveAttribute('aria-busy','false');
  await page.getByRole('button',{name:'Words',exact:true}).last().click();await expect(rows).toHaveCount(13);
- expect(requests.filter(request=>request.cursor===null)).toHaveLength(3);
+ expect(requests.filter(request=>request.cursor===null)).toHaveLength(4);
+ await nav.getByRole('button').first().click();
+ let releaseRead!: () => void;
+ const pendingRead = new Promise<void>(resolve => {releaseRead = resolve;});
+ await page.route('**/api/library/category-search', async route => {
+   await pendingRead;
+   await route.fulfill({status:404, json:{error:'material_not_accessible'}});
+ }, {times:1});
+ const readStarted = page.waitForRequest('**/api/library/category-search');
+ await library.click();
+ await readStarted;
+ try {
+   await expect(rows).toHaveCount(0);
+   await expect(page.locator('[data-testid="library-workspace"] [data-detail-open="true"]')).toHaveCount(0);
+ } finally {
+   releaseRead();
+ }
+ await expect(page.locator('#library-search-results').getByRole('alert')).toBeVisible();
+ await expect(rows).toHaveCount(0);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
 });

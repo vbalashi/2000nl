@@ -535,17 +535,19 @@ describe("category article access", () => {
     expect(screen.getByRole("menuitem", {name: "Select articles"})).toBeVisible();
   });
 
-  test("ordinary hide and a successful empty category read retain selected details", async () => {
+  test("return clears prior details before a fresh read and keeps them closed for empty results", async () => {
     const {page, read, view, tab} = await renderCategory();
     const empty = {...page, items: [], total: 0, wordGroupCount: 0, page: {hasMore: false, nextCursor: null}};
     read.mockImplementationOnce(async (_scope, _id, publish) => { publish(empty, true); return empty; });
     view.rerender(tab(false));
     view.rerender(tab(true));
+    expect(screen.queryByTestId("library-detail-desktop")).toBeNull();
+    expect(screen.queryByTestId("library-detail-mobile")).toBeNull();
     await waitFor(() => expect(read).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.getByRole("button", {name: "0 articles · 0 meanings"})).toBeVisible());
     expect(screen.queryByTestId("library-headword-group-group-goed-main")).toBeNull();
-    expect(screen.getByTestId("library-detail-desktop")).toBeInTheDocument();
-    expect(screen.getByTestId("library-detail-mobile")).toBeInTheDocument();
+    expect(screen.queryByTestId("library-detail-desktop")).toBeNull();
+    expect(screen.queryByTestId("library-detail-mobile")).toBeNull();
   });
 });
 
