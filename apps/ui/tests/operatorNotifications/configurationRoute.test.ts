@@ -81,3 +81,25 @@ test('validates the rendered draft before publishing and preserves conflict hand
  mocks.rpc.mockResolvedValueOnce({data:null,error:{code:'40001'}});
  expect((await POST(request(input))).status).toBe(409);
 });
+
+test('sends the preview to the saved route, including its Telegram topic', async () => {
+ const routeId = '22222222-2222-4222-8222-222222222222';
+ const target = {botId:'11111111-1111-4111-8111-111111111111',chatId:'-100987',topicId:7,version:'a'.repeat(32)};
+ const input = {action:'test-route-template',kind:'deployment-production',body:'Production: {{status}}',routeId,routeRevision:3};
+ mocks.send.mockReset().mockResolvedValue({status:'sent'});
+ const preview = await POST(request({action:'preview-template',kind:input.kind,body:input.body}));
+ mocks.rpc.mockResolvedValueOnce({data:target,error:null});
+ expect((await POST(request(input))).status).toBe(200);
+ expect(mocks.rpc).toHaveBeenCalledTimes(1);
+ expect(mocks.rpc).toHaveBeenCalledWith('admin_notification_authorize_route_test_v1',
+  {p_operator:'operator',p_request:'request',p_route:routeId,p_revision:3,p_kind:'deployment'});
+ expect(mocks.send).toHaveBeenCalledTimes(1);
+ expect(mocks.send).toHaveBeenCalledWith({...target,text:'[ТЕСТ]\n'+(await preview.json()).text,buttons:null});
+ mocks.send.mockClear();
+ mocks.rpc.mockClear();
+ expect((await POST(request({...input,chatId:'-100999'}))).status).toBe(400);
+ expect(mocks.rpc).not.toHaveBeenCalled();
+ mocks.rpc.mockResolvedValueOnce({data:null,error:{code:'40001'}});
+ expect((await POST(request(input))).status).toBe(409);
+ expect(mocks.send).not.toHaveBeenCalled();
+});

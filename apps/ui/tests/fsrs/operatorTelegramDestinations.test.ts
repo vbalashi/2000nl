@@ -21,6 +21,36 @@ describeIfDb('Telegram destinations and deployment notification routes', () => {
   beforeAll(() => runMigrations(pool), 120000);
   afterAll(() => pool.end());
 
+  test('authorizes tests for the exact saved route and shares the bot cooldown', async () => {
+    await withTransaction(pool, async client => {
+      const {operator, bot, version} = await setup(client);
+      const {rows: [route]} = await client.query(
+        `insert into private.operator_notification_routes(bot_id,kind,chat_id,topic_id,enabled,revision)
+         values($1,'deployment','-100123',7,false,3) returning id`, [bot],
+      );
+      const request = randomUUID();
+      const authorize = (revision: number, kind: string, actor = operator) => client.query(
+        'select public.admin_notification_authorize_route_test_v1($1,$2,$3,$4,$5) as target',
+        [actor, request, route.id, revision, kind],
+      );
+      await client.query('savepoint rejects');
+      await expect(authorize(2, 'deployment')).rejects.toMatchObject({code:'40001'});
+      await client.query('rollback to savepoint rejects');
+      await expect(authorize(3, 'feedback')).rejects.toMatchObject({code:'40001'});
+      await client.query('rollback to savepoint rejects');
+      await expect(authorize(3, 'deployment', randomUUID())).rejects.toMatchObject({code:'42501'});
+      await client.query('rollback to savepoint rejects');
+      expect((await authorize(3, 'deployment')).rows).toEqual([{target:{botId:bot,version,chatId:'-100123',topicId:7}}]);
+      expect((await client.query('select target_type,target_id from public.admin_audit_events where request_id=$1', [request])).rows)
+        .toEqual([{target_type:'notification_route_test_request',target_id:route.id}]);
+      await client.query('savepoint cooldown');
+      await expect(authorize(3, 'deployment')).rejects.toMatchObject({code:'P0001',message:'test_rate_limit'});
+      await client.query('rollback to savepoint cooldown');
+      await expect(client.query("select public.admin_notification_authorize_test_v1($1,$2,$3,'-100999')",
+        [operator, randomUUID(), bot])).rejects.toMatchObject({message:'test_rate_limit'});
+    });
+  });
+
   test('links an existing topic once, tracks its name and stops offering closed topics', async () => {
     await withTransaction(pool, async client => {
       const {operator, bot, version} = await setup(client);
