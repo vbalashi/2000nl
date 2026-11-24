@@ -272,273 +272,282 @@ export function ApprovedTrainingBuilder(p: Props) {
       lang={p.interfaceLanguage}
     >
       <div className={s.viewport}>
-        <div className={s.main}>
-          <header className={s.header}>
-            <button type="button" onClick={p.onBack}>
-              <ArrowLeft size={16} /> <span>{b.back}</span>
-            </button>
-            <h1 className={s.visuallyHidden}>{b.title}</h1>
-          </header>
-          {
-            <TrainingName
-              label={b.trainingName}
-              name={p.name}
-              onChange={p.onNameChange}
-              disabled={saving}
-            />
-          }
-          {activityScope && <p className={`${s.help} ${s.activityNotice}`}>
-            {formatUiMessage(localizedField("trainingBuilderActions", "activityScopeNotice")[p.interfaceLanguage],{scope:activityScope})}
-          </p>}
-          <div className={`${s.section_group} builder-section-group`}>
-            <section className={s.inline_language}>
-              <h2>{b.language}</h2>
-              <SegmentedControl standard label={b.language}>
-                {p.languageOptions.map((option) => (
-                  <BuilderChoice
-                    key={option.value}
-                    active={option.value === p.languageCode}
-                    disabled={p.languagePending}
-                    onClick={() => p.onLanguageChange(option.value)}
+        <div className={s.fieldsViewport} data-builder-fields>
+          <div className={s.main}>
+            <header className={s.header}>
+              <button type="button" onClick={p.onBack}>
+                <ArrowLeft size={16} /> <span>{b.back}</span>
+              </button>
+              <h1 className={s.visuallyHidden}>{b.title}</h1>
+            </header>
+            {
+              <TrainingName
+                label={b.trainingName}
+                name={p.name}
+                onChange={p.onNameChange}
+                disabled={saving}
+              />
+            }
+            {activityScope && <p className={`${s.help} ${s.activityNotice}`}>
+              {formatUiMessage(localizedField("trainingBuilderActions", "activityScopeNotice")[p.interfaceLanguage],{scope:activityScope})}
+            </p>}
+            <div className={`${s.section_group} builder-section-group`}>
+              <section className={s.inline_language}>
+                <h2>{b.language}</h2>
+                <SegmentedControl standard label={b.language}>
+                  {p.languageOptions.map((option) => (
+                    <BuilderChoice
+                      key={option.value}
+                      active={option.value === p.languageCode}
+                      disabled={p.languagePending}
+                      onClick={() => p.onLanguageChange(option.value)}
+                    >
+                      {language(option.value)}
+                    </BuilderChoice>
+                  ))}
+                </SegmentedControl>
+              </section>
+              <TrainingSourcePicker
+                locale={p.interfaceLanguage}
+                lists={p.lists}
+                dictionaries={p.dictionaries}
+                draft={p.draft}
+                onChange={p.onDraftChange}
+                disabled={p.languagePending || p.dictionariesLoading}
+                expanded={open.includes("source")}
+                renderSection={({ toolbar, content }) => (
+                  <BuilderSection
+                    id={`${uid}-source`}
+                    title={b.source}
+                    summary={material}
+                    open={open.includes("source")}
+                    onToggle={() => toggle("source")}
+                    headerChoices={toolbar}
                   >
-                    {language(option.value)}
-                  </BuilderChoice>
-                ))}
-              </SegmentedControl>
-            </section>
-            <TrainingSourcePicker
-              locale={p.interfaceLanguage}
-              lists={p.lists}
-              dictionaries={p.dictionaries}
-              draft={p.draft}
-              onChange={p.onDraftChange}
-              disabled={p.languagePending || p.dictionariesLoading}
-              expanded={open.includes("source")}
-              renderSection={({ toolbar, content }) => (
-                <BuilderSection
-                  id={`${uid}-source`}
-                  title={b.source}
-                  summary={material}
-                  open={open.includes("source")}
-                  onToggle={() => toggle("source")}
-                  headerChoices={toolbar}
-                >
-                  {p.dictionariesLoading && <p role="status" className={s.help}>{c.loadingDictionaries}</p>}
-                  {content}
-                  {materialMode === "selected-dictionaries" &&
-                    (p.draft.dictionaryIds ?? []).some(id => !p.dictionaries.some(option => option.value === id)) &&
-                    !p.dictionariesLoading && <p role="status" className={s.help}>{c.partialDictionaryAccess}</p>}
-                </BuilderSection>
-              )}
-            />
-            {section(
-              "exercises",
-              b.exercises,
-              <span className={s.exerciseSummary} title={fullExerciseSummary}>
-                <span className={s.exerciseSummaryVisual} aria-hidden="true"><span>{familyName}</span>
-                  {family!=="word-in-context"&&family!=="sentence"&&<DirectionIcon modes={p.draft.modes}/>}
-                  {usesSourceWordSelection(family)&&<SourceWordIcon status={sourceStatus}/>}
-                </span><span className={s.visuallyHidden}>{fullExerciseSummary}</span>
-              </span>,
-              <>
-                <div className={`${s.field} ${s.filterRow}`}>
-                  <h2>{b.exerciseType}</h2>
-                  <SegmentedControl standard label={b.exerciseType}>
-                    {(["meaning", "idiom", "word-in-context"] as const).map(
-                      (value) => (
-                        <BuilderChoice
-                          key={value}
-                          active={family === value}
-                          disabled={
-                            !p.scenarios.some(
-                              (item) =>
-                                item.value ===
-                                (value === "idiom" ? "idiom" : "understanding"),
-                            ) ||
-                            (value === "word-in-context" &&
-                              p.translationLanguage === null)
-                          }
-                          onClick={() => p.onSelectFamily(value)}
-                        >
-                          {value === "idiom"
-                            ? o.exerciseType.Idioms
-                            : value === "word-in-context"
-                              ? c.wordInContext
-                              : o.exerciseType.Words}
-                        </BuilderChoice>
-                      ),
-                    )}
-                  </SegmentedControl>
-                </div>
-                <div className={`${s.dynamicReveal} ${usesSourceWordSelection(family)?s.dynamicRevealOpen:""}`} aria-hidden={!usesSourceWordSelection(family)} ref={node=>{node?.toggleAttribute("inert",!usesSourceWordSelection(family))}}><div><div className={s.sourceWordReveal}><SourceWordSelection translation={family === "word-in-context"} language={p.interfaceLanguage} value={p.draft.sourceWordStatus ?? "learning"} onChange={sourceWordStatus=>p.onDraftChange(current=>({...current,sourceWordStatus}))}/></div></div></div>
-                {family === "sentence" && (
-                  <p role="status" className={s.help}>
-                    {c.sentencePaused}
-                  </p>
+                    {p.dictionariesLoading && <p role="status" className={s.help}>{c.loadingDictionaries}</p>}
+                    {content}
+                    {materialMode === "selected-dictionaries" &&
+                      (p.draft.dictionaryIds ?? []).some(id => !p.dictionaries.some(option => option.value === id)) &&
+                      !p.dictionariesLoading && <p role="status" className={s.help}>{c.partialDictionaryAccess}</p>}
+                  </BuilderSection>
                 )}
-                {family === "word-in-context" &&
-                  p.translationLanguage === null && (
-                    <p className={s.help}>{c.contextLanguageNeeded}</p>
-                  )}
-                <div className={s.field}>
-                  <h2>{b.direction}</h2>
-                  <div className={s.directions}>
-                    {(["word-to-definition", "definition-to-word"] as const)
-                      .filter(
-                        (mode) =>
-                          ((family !== "sentence" &&
-                            family !== "word-in-context") ||
-                            mode === "definition-to-word") &&
-                          scenario?.modes?.includes(mode),
-                      )
-                      .map((mode) => {
-                        const example = directionExample(
-                          p.languageCode,
-                          family,
-                          p.translationLanguage,
-                        );
-                        const direct = mode === "word-to-definition";
-                        const prompt = example
-                          ? example[direct ? 0 : 1]
-                          : direct
-                            ? family === "idiom"
+              />
+              {section(
+                "exercises",
+                b.exercises,
+                <span className={s.exerciseSummary} title={fullExerciseSummary}>
+                  <span className={s.exerciseSummaryVisual} aria-hidden="true"><span>{familyName}</span>
+                    {family!=="word-in-context"&&family!=="sentence"&&<DirectionIcon modes={p.draft.modes}/>}
+                    {usesSourceWordSelection(family)&&<SourceWordIcon status={sourceStatus}/>}
+                  </span><span className={s.visuallyHidden}>{fullExerciseSummary}</span>
+                </span>,
+                <>
+                  <div className={`${s.field} ${s.filterRow}`}>
+                    <h2>{b.exerciseType}</h2>
+                    <SegmentedControl standard label={b.exerciseType}>
+                      {(["meaning", "idiom", "word-in-context"] as const).map(
+                        (value) => (
+                          <BuilderChoice
+                            key={value}
+                            active={family === value}
+                            disabled={
+                              !p.scenarios.some(
+                                (item) =>
+                                  item.value ===
+                                  (value === "idiom" ? "idiom" : "understanding"),
+                              ) ||
+                              (value === "word-in-context" &&
+                                p.translationLanguage === null)
+                            }
+                            onClick={() => p.onSelectFamily(value)}
+                          >
+                            {value === "idiom"
                               ? o.exerciseType.Idioms
-                              : o.exerciseType.Words
-                            : family === "word-in-context"
-                              ? c.contextPrompt
-                              : family === "sentence"
-                                ? p.translationLanguage
-                                  ? language(p.translationLanguage)
-                                  : b.chooseTranslation
-                                : c.meaning;
-                        const answer = example
-                          ? example[direct ? 1 : 0]
-                          : direct
-                            ? c.meaning
-                            : family === "sentence"
-                              ? language(p.languageCode)
-                              : family === "idiom"
-                                ? o.exerciseType.Idioms
-                                : o.exerciseType.Words;
-                        return (
-                          <DirectionCard
-                            key={mode}
-                            label={
-                              family === "word-in-context"
-                                ? c.contextDirection
-                                : direct
-                                  ? o.direction.Direct
-                                  : o.direction.Reverse
-                            }
-                            labelIcon={family!=="word-in-context"&&family!=="sentence"?<DirectionIcon modes={[mode]}/>:undefined}
-                            selected={p.draft.modes.includes(mode)}
-                            onClick={
-                              family === "word-in-context"
-                                ? undefined
-                                : () => p.onToggleMode(mode)
-                            }
-                            prompt={prompt}
-                            answer={answer}
-                            promptLanguage={
-                              example
-                                ? !direct &&
-                                  (family === "sentence" ||
-                                    family === "word-in-context")
-                                  ? (p.translationLanguage ?? undefined)
-                                  : p.languageCode
-                                : undefined
-                            }
-                            answerLanguage={
-                              example
-                                ? direct &&
-                                  (family === "sentence" ||
-                                    family === "word-in-context")
-                                  ? (p.translationLanguage ?? undefined)
-                                  : p.languageCode
-                                : undefined
-                            }
-                            classes={{
-                              card: s.direction,
-                              heading: s.directionHeading,
-                              headingLabel: s.directionHeadingLabel,
-                              check: s.directionCheck,
-                              prompt: s.prompt,
-                              arrow: s.directionArrow,
-                              answer: s.answer,
-                            }}
-                          />
-                        );
-                      })}
+                              : value === "word-in-context"
+                                ? c.wordInContext
+                                : o.exerciseType.Words}
+                          </BuilderChoice>
+                        ),
+                      )}
+                    </SegmentedControl>
                   </div>
-                </div>
-                <div className={s.field}>
-                  <h2 className={s.helpHeading}>{b.answerMode}<SettingsHelp label={b.answerMode} text={localizedField("trainingBuilderActions", "responseModesHelp")[p.interfaceLanguage]}/></h2>
-                  <SegmentedControl standard label={b.answerMode}>
-                    <BuilderChoice active onClick={() => undefined}>
-                      {b.answerModes["Reveal & self-rate"]}
-                    </BuilderChoice>
-                    <BuilderChoice active={false} disabled>
-                      {b.answerModes["Type the answer"]}
-                    </BuilderChoice>
-                  </SegmentedControl>
-                </div>
-              </>,
-            )}
-            {section(
-              "filters",
-              b.filters,
-              <VocabularyFilterSummary value={filterValue} language={p.interfaceLanguage}/>,
-              <div>
-                <VocabularyFilters value={filterValue} language={p.interfaceLanguage} languageCode={p.languageCode} onChange={next=>p.onDraftChange(current=>({...current,...(next.vocabulary!==filterValue.vocabulary?{vocabulary:next.vocabulary}:{}),...(next.parts!==filterValue.parts||next.article!==filterValue.article?{partOfSpeech:next.parts.map(partCode),nounArticles:next.article?[next.article]:[]}: {})}))}/>
-                {p.draft.librarySelection&&(p.draft.librarySelection.query||p.draft.librarySelection.labelId)&&<p className={s.help}>{[p.draft.librarySelection.labelName,p.draft.librarySelection.query?`${messages.librarySearch.labels[p.draft.librarySelection.category]}: «${p.draft.librarySelection.query}»`:null].filter(Boolean).join(" · ")} <button type="button" onClick={()=>p.onDraftChange(current=>({...current,librarySelection:(!current.materialMode||current.materialMode==="collection")&&current.librarySelection?.languageCode?{languageCode:current.librarySelection.languageCode,query:"",category:"headwords"}:undefined}))}>{localizedField("trainingBuilderActions", "clearLibrarySelection")[p.interfaceLanguage]}</button></p>}
-              </div>,
-              <SettingsHelp label={b.filters} text={localizedField("trainingBuilderActions", "filtersHelp")[p.interfaceLanguage]}/>,
-            )}
-            {section(
-              "session",
-              b.session,
-              <span className={s.sessionSummary} title={`${size === "all-due-today" ? c.allDueToday : formatUiCount(p.interfaceLanguage,size,messages.collections,"card")} · ${balance}`}><span aria-hidden="true"><span className={s.sessionIcon}><SessionSizeIcon/></span>{" "}{size === "all-due-today" ? c.allDueToday : formatUiCount(p.interfaceLanguage,size,messages.collections,"card")}{" · "}<SessionMix filter={p.draft.cardFilter} ratio={p.draft.newReviewRatio} label={balance} expanded/></span><span className={s.visuallyHidden}>{`${size === "all-due-today" ? c.allDueToday : formatUiCount(p.interfaceLanguage,size,messages.collections,"card")} · ${balance}`}</span></span>,
-              <div className={s.sessionFields}>
-                <TrainingSessionSizePicker
-                  approved
-                  value={size}
-                  onChange={(sessionSize) =>
-                    p.onDraftChange((current) => ({
-                      ...current,
-                      sessionSize,
-                    }))
-                  }
-                  label={b.sessionSize}
-                  helpText={family === "meaning" ? [localizedField("trainingBuilderActions", "sessionSizeHelp")[p.interfaceLanguage],c.allDueHelp] : localizedField("trainingBuilderActions", "sessionSizeHelp")[p.interfaceLanguage]}
-                  exercisesLabel={(count) =>
-                    formatUiCount(p.interfaceLanguage,count,messages.collections,"card")
-                  }
-                  allDueLabel={c.allDueToday}
-                  allAvailableTick={localizedField("trainingBuilderActions", "all")[p.interfaceLanguage]}
-                  allDueHelp={c.allDueHelp}
-                  allowAllDueToday={family === "meaning"}
-                />
-                <TrainingMixPicker
-                  approved
-                  cardFilter={p.draft.cardFilter}
-                  ratio={p.draft.newReviewRatio}
-                  onChange={p.onMixChange}
-                  label={b.balanceLabel}
-                  helpText={localizedField("trainingBuilderActions", "mixChoiceHelp")[p.interfaceLanguage]}
-                  reviewsOnly={c.reviewsOnly}
-                  newOnly={c.newOnly}
-                  ratioLabel={ratioLabel}
-                  help=""
-                />
-              </div>,
-            )}
-          </div>
-          {p.accountControls}
-          <div className={s.contentEnd}>
+                  <div className={`${s.dynamicReveal} ${usesSourceWordSelection(family)?s.dynamicRevealOpen:""}`} aria-hidden={!usesSourceWordSelection(family)} ref={node=>{node?.toggleAttribute("inert",!usesSourceWordSelection(family))}}><div><div className={s.sourceWordReveal}><SourceWordSelection translation={family === "word-in-context"} language={p.interfaceLanguage} value={p.draft.sourceWordStatus ?? "learning"} onChange={sourceWordStatus=>p.onDraftChange(current=>({...current,sourceWordStatus}))}/></div></div></div>
+                  {family === "sentence" && (
+                    <p role="status" className={s.help}>
+                      {c.sentencePaused}
+                    </p>
+                  )}
+                  {family === "word-in-context" &&
+                    p.translationLanguage === null && (
+                      <p className={s.help}>{c.contextLanguageNeeded}</p>
+                    )}
+                  <div className={s.field}>
+                    <h2>{b.direction}</h2>
+                    <div className={s.directions}>
+                      {(["word-to-definition", "definition-to-word"] as const)
+                        .filter(
+                          (mode) =>
+                            ((family !== "sentence" &&
+                              family !== "word-in-context") ||
+                              mode === "definition-to-word") &&
+                            scenario?.modes?.includes(mode),
+                        )
+                        .map((mode) => {
+                          const example = directionExample(
+                            p.languageCode,
+                            family,
+                            p.translationLanguage,
+                          );
+                          const direct = mode === "word-to-definition";
+                          const prompt = example
+                            ? example[direct ? 0 : 1]
+                            : direct
+                              ? family === "idiom"
+                                ? o.exerciseType.Idioms
+                                : o.exerciseType.Words
+                              : family === "word-in-context"
+                                ? c.contextPrompt
+                                : family === "sentence"
+                                  ? p.translationLanguage
+                                    ? language(p.translationLanguage)
+                                    : b.chooseTranslation
+                                  : c.meaning;
+                          const answer = example
+                            ? example[direct ? 1 : 0]
+                            : direct
+                              ? c.meaning
+                              : family === "sentence"
+                                ? language(p.languageCode)
+                                : family === "idiom"
+                                  ? o.exerciseType.Idioms
+                                  : o.exerciseType.Words;
+                          return (
+                            <DirectionCard
+                              key={mode}
+                              label={
+                                family === "word-in-context"
+                                  ? c.contextDirection
+                                  : direct
+                                    ? o.direction.Direct
+                                    : o.direction.Reverse
+                              }
+                              labelIcon={family!=="word-in-context"&&family!=="sentence"?<DirectionIcon modes={[mode]}/>:undefined}
+                              selected={p.draft.modes.includes(mode)}
+                              onClick={
+                                family === "word-in-context"
+                                  ? undefined
+                                  : () => p.onToggleMode(mode)
+                              }
+                              prompt={prompt}
+                              answer={answer}
+                              promptLanguage={
+                                example
+                                  ? !direct &&
+                                    (family === "sentence" ||
+                                      family === "word-in-context")
+                                    ? (p.translationLanguage ?? undefined)
+                                    : p.languageCode
+                                  : undefined
+                              }
+                              answerLanguage={
+                                example
+                                  ? direct &&
+                                    (family === "sentence" ||
+                                      family === "word-in-context")
+                                    ? (p.translationLanguage ?? undefined)
+                                    : p.languageCode
+                                  : undefined
+                              }
+                              classes={{
+                                card: s.direction,
+                                heading: s.directionHeading,
+                                headingLabel: s.directionHeadingLabel,
+                                check: s.directionCheck,
+                                prompt: s.prompt,
+                                arrow: s.directionArrow,
+                                answer: s.answer,
+                              }}
+                            />
+                          );
+                        })}
+                    </div>
+                  </div>
+                  <div className={s.field}>
+                    <h2 className={s.helpHeading}>{b.answerMode}<SettingsHelp label={b.answerMode} text={localizedField("trainingBuilderActions", "responseModesHelp")[p.interfaceLanguage]}/></h2>
+                    <SegmentedControl standard label={b.answerMode}>
+                      <BuilderChoice active onClick={() => undefined}>
+                        {b.answerModes["Reveal & self-rate"]}
+                      </BuilderChoice>
+                      <BuilderChoice active={false} disabled>
+                        {b.answerModes["Type the answer"]}
+                      </BuilderChoice>
+                    </SegmentedControl>
+                  </div>
+                </>,
+              )}
+              {section(
+                "filters",
+                b.filters,
+                <VocabularyFilterSummary value={filterValue} language={p.interfaceLanguage}/>,
+                <div>
+                  <VocabularyFilters value={filterValue} language={p.interfaceLanguage} languageCode={p.languageCode} onChange={next=>p.onDraftChange(current=>({...current,...(next.vocabulary!==filterValue.vocabulary?{vocabulary:next.vocabulary}:{}),...(next.parts!==filterValue.parts||next.article!==filterValue.article?{partOfSpeech:next.parts.map(partCode),nounArticles:next.article?[next.article]:[]}: {})}))}/>
+                  {p.draft.librarySelection&&(p.draft.librarySelection.query||p.draft.librarySelection.labelId)&&<p className={s.help}>{[p.draft.librarySelection.labelName,p.draft.librarySelection.query?`${messages.librarySearch.labels[p.draft.librarySelection.category]}: «${p.draft.librarySelection.query}»`:null].filter(Boolean).join(" · ")} <button type="button" onClick={()=>p.onDraftChange(current=>({...current,librarySelection:(!current.materialMode||current.materialMode==="collection")&&current.librarySelection?.languageCode?{languageCode:current.librarySelection.languageCode,query:"",category:"headwords"}:undefined}))}>{localizedField("trainingBuilderActions", "clearLibrarySelection")[p.interfaceLanguage]}</button></p>}
+                </div>,
+                <SettingsHelp label={b.filters} text={localizedField("trainingBuilderActions", "filtersHelp")[p.interfaceLanguage]}/>,
+              )}
+              {section(
+                "session",
+                b.session,
+                <span className={s.sessionSummary} title={`${size === "all-due-today" ? c.allDueToday : formatUiCount(p.interfaceLanguage,size,messages.collections,"card")} · ${balance}`}><span aria-hidden="true"><span className={s.sessionIcon}><SessionSizeIcon/></span>{" "}{size === "all-due-today" ? c.allDueToday : formatUiCount(p.interfaceLanguage,size,messages.collections,"card")}{" · "}<SessionMix filter={p.draft.cardFilter} ratio={p.draft.newReviewRatio} label={balance} expanded/></span><span className={s.visuallyHidden}>{`${size === "all-due-today" ? c.allDueToday : formatUiCount(p.interfaceLanguage,size,messages.collections,"card")} · ${balance}`}</span></span>,
+                <div className={s.sessionFields}>
+                  <TrainingSessionSizePicker
+                    approved
+                    value={size}
+                    onChange={(sessionSize) =>
+                      p.onDraftChange((current) => ({
+                        ...current,
+                        sessionSize,
+                      }))
+                    }
+                    label={b.sessionSize}
+                    helpText={family === "meaning" ? [localizedField("trainingBuilderActions", "sessionSizeHelp")[p.interfaceLanguage],c.allDueHelp] : localizedField("trainingBuilderActions", "sessionSizeHelp")[p.interfaceLanguage]}
+                    exercisesLabel={(count) =>
+                      formatUiCount(p.interfaceLanguage,count,messages.collections,"card")
+                    }
+                    allDueLabel={c.allDueToday}
+                    allAvailableTick={localizedField("trainingBuilderActions", "all")[p.interfaceLanguage]}
+                    allDueHelp={c.allDueHelp}
+                    allowAllDueToday={family === "meaning"}
+                  />
+                  <TrainingMixPicker
+                    approved
+                    cardFilter={p.draft.cardFilter}
+                    ratio={p.draft.newReviewRatio}
+                    onChange={p.onMixChange}
+                    label={b.balanceLabel}
+                    helpText={localizedField("trainingBuilderActions", "mixChoiceHelp")[p.interfaceLanguage]}
+                    reviewsOnly={c.reviewsOnly}
+                    newOnly={c.newOnly}
+                    ratioLabel={ratioLabel}
+                    help=""
+                  />
+                </div>,
+              )}
+            </div>
+            {p.accountControls}
             {p.notice && <div className={s.notice}>{p.notice}</div>}
-            {p.availability && <TrainingAvailabilityStrip state={p.availability} language={p.interfaceLanguage} onRetry={p.onAvailabilityRetry} alignBottom />}
           </div>
         </div>
+        {p.availability && (
+          <div className={s.contentEnd}>
+            <TrainingAvailabilityStrip
+              state={p.availability}
+              language={p.interfaceLanguage}
+              onRetry={p.onAvailabilityRetry}
+              alignBottom
+            />
+          </div>
+        )}
       </div>
       <footer className={s.footer}>
         <div>

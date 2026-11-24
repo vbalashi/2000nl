@@ -40,32 +40,51 @@ expect(geometry.remove!.width).toBeGreaterThanOrEqual(32);expect(geometry.dropdo
  const start = footer.getByRole('button', { name: ru ? 'Начать тренировку' : 'Start training', exact: true });
  if (profile.width === 320 || !ru) {
    await page.setViewportSize({ width: profile.width, height: 568 });
-   const viewport = page.locator('[data-onboarding="builder"] > div').first();
    const filters = page.locator('[data-builder-section="filters"]');
+   const builder = page.locator('[data-onboarding="builder"]');
+   const desktop = profile.width >= 768;
+   const scrollArea = desktop ? builder.locator('[data-builder-fields]') : builder.locator(':scope > div').first();
    const session = page.locator('[data-builder-section="session"]');
    await start.click({ trial: true });
    const before = await footer.boundingBox();
+   const summaryBefore = await summary.boundingBox();
    expect(before).not.toBeNull();
 
    await filters.click();
    await session.click();
    await expect(filters).toHaveAttribute('aria-expanded', 'true');
    await expect(session).toHaveAttribute('aria-expanded', 'true');
-   await viewport.evaluate(el => { el.scrollTop = 0; });
+   await scrollArea.evaluate(el => { el.scrollTop = 0; });
 
    await expect(start).toBeInViewport({ ratio: 0.99 });
    await expect(update).toBeInViewport({ ratio: 0.99 });
    await expect(remove).toBeInViewport({ ratio: 0.99 });
    await expect(dropdown).toBeInViewport({ ratio: 0.99 });
    expect(await footer.boundingBox()).toEqual(before);
-   await expect(summary).not.toBeInViewport();
+   if (!desktop) {
+     await expect(summary).not.toBeInViewport();
+   } else {
+     await expect(summary).toBeInViewport({ ratio: 0.99 });
+     expect(await summary.boundingBox()).toEqual(summaryBefore);
+   }
    await page.screenshot({ path: info.outputPath('builder-expanded-top.png'), animations: 'disabled' });
 
-   await viewport.evaluate(el => { el.scrollTop = el.scrollHeight; });
-   expect(await viewport.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+   await scrollArea.evaluate(el => { el.scrollTop = el.scrollHeight; });
+   expect(await scrollArea.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
    await expect(summary).toBeInViewport({ ratio: 0.99 });
    expect(await footer.boundingBox()).toEqual(before);
+   if (desktop) expect(await summary.boundingBox()).toEqual(summaryBefore);
    await page.screenshot({path:info.outputPath('builder-expanded-bottom.png')});
+
+   if (desktop) {
+     await page.setViewportSize({ width: 844, height: 390 });
+     const compactScrollArea = builder.locator(':scope > div').first();
+     await compactScrollArea.evaluate(el => { el.scrollTop = 0; });
+     await expect(summary).not.toBeInViewport();
+     await expect(start).toBeInViewport({ ratio: 0.99 });
+     await page.setViewportSize({ width: profile.width, height: 568 });
+     await expect(summary).toBeInViewport({ ratio: 0.99 });
+   }
  }
 
  if (profile.width === 320) {
