@@ -5,3 +5,6 @@
 .retry{border:0;background:transparent;color:var(--practice-selected-text);font:inherit;text-decoration:underline;cursor:pointer}
 
 @media(max-width:360px){.summarySpace{min-block-size:4.8em}}
+
+.strip[data-align-bottom] { margin-bottom: 0; }
+.strip[data-align-bottom] .summarySpace > p { align-self: end; }

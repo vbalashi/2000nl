@@ -17,7 +17,7 @@ function emphasizedCount(text:string,number:string){
  const index=text.indexOf(number);
  return index<0?text:<>{text.slice(0,index)}<strong>{number}</strong>{text.slice(index+number.length)}</>;
 }
-export function TrainingAvailabilityStrip({state,language,onRetry}:{state:TrainingAvailabilityState;language:OnboardingLanguage;onRetry?:()=>void}){
+export function TrainingAvailabilityStrip({state,language,onRetry,alignBottom}:{state:TrainingAvailabilityState;language:OnboardingLanguage;onRetry?:()=>void;alignBottom?:boolean}){
  const t=getUiMessages(language), copy=localizedSection("trainingAvailability")[language];
  const updating=state.status==="loading";
  const failed=state.status==="error"||(state.status==="ready"&&state.refreshFailed);
@@ -36,7 +36,7 @@ export function TrainingAvailabilityStrip({state,language,onRetry}:{state:Traini
   const observer=new ResizeObserver(reserve);observer.observe(summary);reserve();return()=>observer.disconnect();
  },[value,language]);
  const number=(n:number)=>n.toLocaleString(language);
- return <section className={local.strip} aria-label={copy.title}>
+ return <section className={local.strip} data-align-bottom={alignBottom || undefined} aria-label={copy.title}>
   <div ref={spaceRef} className={local.summarySpace}>
   {displayValue&&<p ref={summaryRef} className={`${local.summary} ${!value?local.hidden:""}`} aria-hidden={!value} aria-live={value?"polite":"off"}>
    {displayValue.totalWords!==undefined&&displayValue.totalMeanings!==undefined&&displayValue.totalCards!==undefined&&<>

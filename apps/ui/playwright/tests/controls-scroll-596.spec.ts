@@ -1,6 +1,6 @@
 import {expect,test} from '@playwright/test';
 import {setupAuthenticatedTrainingAttributionPage} from '../support/trainingAttributionHarness';
-test('Pixel-sized builder keeps app chrome fixed; saved list shows both scroll edges',async({page},info)=>{
+test('Pixel-sized builder scrolls its actions under fixed app chrome; saved list shows both scroll edges',async({page},info)=>{
  await page.setViewportSize({width:412,height:750});
  await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:'en'}}});
  const draft={family:'meaning',scenarioId:'understanding',modes:['word-to-definition'],cardFilter:'both',listValue:'curated:list-attribution',materialMode:'collection',newReviewRatio:2,dateWindow:'all',sourceValue:'all',sessionSize:5};
@@ -20,11 +20,16 @@ test('Pixel-sized builder keeps app chrome fixed; saved list shows both scroll e
  await page.getByRole('button',{name:/^Filters /}).click();
  await page.getByRole('button',{name:/^Session \d/}).click();
  const viewport=page.locator('.session-builder-standard>div').first();
- const header=page.getByRole('banner'),footer=page.locator('.session-builder-standard>footer'),navigation=page.locator('[data-app-mobile-navigation]');
+ const header=page.getByRole('banner'),footer=viewport.locator('footer'),navigation=page.locator('[data-app-mobile-navigation]');
  const before={header:await header.boundingBox(),footer:await footer.boundingBox(),navigation:await navigation.boundingBox()};
+ expect(before.footer).not.toBeNull();
  await viewport.hover();await page.mouse.wheel(0,1000);
  await expect.poll(()=>viewport.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);
- expect(await header.boundingBox()).toEqual(before.header);expect(await footer.boundingBox()).toEqual(before.footer);expect(await navigation.boundingBox()).toEqual(before.navigation);
+ await expect(footer.getByRole('button',{name:'Start training',exact:true})).toBeInViewport();
+ const scrolledFooter=await footer.boundingBox();
+ expect(scrolledFooter).not.toBeNull();
+ expect(scrolledFooter!.y).toBeLessThan(before.footer!.y);
+ expect(await header.boundingBox()).toEqual(before.header);expect(await navigation.boundingBox()).toEqual(before.navigation);
  expect(await page.evaluate(()=>({top:window.scrollY,height:document.documentElement.scrollHeight,viewport:innerHeight}))).toEqual({top:0,height:750,viewport:750});
  expect(await viewport.evaluate(el=>getComputedStyle(el).overscrollBehaviorY)).toBe('contain');
  await page.screenshot({path:info.outputPath('builder-fixed-chrome.png')});

@@ -487,3 +487,93 @@
 .sessionIcon{display:inline-flex;vertical-align:middle;color:var(--practice-text-muted)}
 
 @media (min-width:651px) and (max-width:850px){.sessionFields{grid-template-columns:1fr;gap:24px}}
+
+/* Filters, availability, and actions share one viewport. */
+:global(.session-builder-standard) .main {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.bottomActions {
+  margin-block-start: auto;
+  padding-block-start: 16px;
+}
+:global(.session-builder-standard) .footer {
+  padding: 4px 0 0;
+}
+:global(.session-builder-standard) .header > button {
+  position: static;
+  display: inline-flex;
+  gap: 6px;
+  width: auto;
+  height: auto;
+  min-height: 32px;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  font-size: var(--practice-text-small);
+}
+.saveText { display: none; }
+
+@media (max-width: 767px) {
+  .startLabel {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Keep both controls 44px tall and bring their icons toward the seam. */
+:global(.session-builder-standard) .updateGroup:has(.saveMenu) > .secondary {
+  width: 36px;
+  justify-items: end;
+  padding-inline-end: 3px;
+}
+:global(.session-builder-standard) .saveMenu summary {
+  width: 32px;
+  justify-items: start;
+  padding-inline-start: 2px;
+}
+
+@media (min-width: 768px) {
+  :global(.session-builder-standard) .footer > div,
+  :global(.session-builder-standard) .footer > div:has(.saveMenu) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px;
+  }
+  :global(.session-builder-standard) .footer > div > .primary {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100%;
+  }
+  :global(.session-builder-standard) .delete {
+    grid-column: 1;
+    grid-row: 2;
+    order: 0;
+  }
+  :global(.session-builder-standard) .updateGroup {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    width: max-content;
+    min-height: 36px;
+    height: auto;
+  }
+  :global(.session-builder-standard) .updateGroup > .secondary,
+  :global(.session-builder-standard) .updateGroup:has(.saveMenu) > .secondary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: auto;
+    height: 36px;
+    min-height: 36px;
+    padding-inline: 12px;
+  }
+  :global(.session-builder-standard) .saveMenu summary {
+    height: 36px;
+    min-height: 36px;
+  }
+  .saveText { display: inline; }
+}
