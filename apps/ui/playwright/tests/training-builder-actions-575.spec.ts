@@ -1,6 +1,7 @@
 import {writeFile} from 'node:fs/promises';
 import {expect,test} from '@playwright/test';
 import {setupAuthenticatedTrainingAttributionPage} from '../support/trainingAttributionHarness';
+
 for(const profile of [{name:'desktop-en',width:1280,height:900,language:'en'},{name:'mobile-ru390',width:390,height:844,language:'ru'},{name:'mobile-ru320',width:320,height:740,language:'ru'}])test(`saved builder identity and footer ${profile.name}`,async({page},info)=>{
  await page.setViewportSize({width:profile.width,height:profile.height});
  await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{preferences:{onboardingLanguage:profile.language}}});
@@ -17,12 +18,6 @@ for(const profile of [{name:'desktop-en',width:1280,height:900,language:'en'},{n
  const footer=page.locator('footer').filter({has:page.getByRole('button',{name:ru?'Сохранить изменения':'Save changes',exact:true})});
  const update=footer.getByRole('button',{name:ru?'Сохранить изменения':'Save changes',exact:true}),remove=footer.getByRole('button',{name:ru?'Удалить тренировку':'Delete training',exact:true}),dropdown=footer.locator('summary');
  const counts=page.getByRole('region',{name:ru?'Доступно для тренировки':'Available for training',exact:true});
- expect(await counts.evaluate(el=>{
-   for(let parent=el.parentElement;parent;parent=parent.parentElement){
-     if(getComputedStyle(parent).overflowY==='auto') return parent.contains(el.closest('[data-onboarding="builder"]')?.querySelector('h1')??null) && !!parent.querySelector('footer');
-   }
-   return false;
- })).toBe(true);
  const geometry={saveControl:await update.locator("..").boundingBox(),update:await update.boundingBox(),remove:await remove.boundingBox(),dropdown:await dropdown.boundingBox(),footer:await footer.boundingBox()};
  expect(geometry.saveControl!.height).toBe(ru ? 44 : 36);expect(geometry.update!.height).toBe(ru ? 44 : 36);
  const startBox=await footer.locator("button").first().boundingBox();
@@ -42,31 +37,42 @@ expect(geometry.remove!.width).toBeGreaterThanOrEqual(32);expect(geometry.dropdo
  await expect(summary).toBeVisible();
  expect(startBox!.y - (await summary.boundingBox())!.y - (await summary.boundingBox())!.height).toBeLessThanOrEqual(12);
  await page.screenshot({path:info.outputPath('builder-footer.png')});
+ const start = footer.getByRole('button', { name: ru ? 'Начать тренировку' : 'Start training', exact: true });
  if (profile.width === 320) {
-   const start = footer.getByRole('button', { name: 'Начать тренировку', exact: true });
    const label = start.locator('span');
    await page.setViewportSize({width:280,height:568});
    await expect(start).toHaveAccessibleName('Начать тренировку');
    await expect(label).toHaveCSS('white-space', 'nowrap');
    await expect(label).toHaveCSS('text-overflow', 'ellipsis');
    expect(await label.evaluate(el => el.scrollWidth > el.clientWidth)).toBe(true);
+ }
 
+ if (profile.width === 320 || !ru) {
+   await page.setViewportSize({ width: profile.width, height: 568 });
+   const viewport = page.locator('[data-onboarding="builder"] > div').first();
    const filters = page.locator('[data-builder-section="filters"]');
    const session = page.locator('[data-builder-section="session"]');
-   await page.setViewportSize({width:320,height:568});
+   const before = await footer.boundingBox();
+   expect(before).not.toBeNull();
+
    await filters.click();
    await session.click();
-   await expect(filters).toHaveAttribute('aria-expanded','true');
-   await expect(session).toHaveAttribute('aria-expanded','true');
-   await filters.evaluate(el => {
-     const viewport = el.closest<HTMLElement>('[class*="viewport"]')!;
-     viewport.scrollTop = 0;
-   });
-   await expect(start).not.toBeInViewport();
+   await expect(filters).toHaveAttribute('aria-expanded', 'true');
+   await expect(session).toHaveAttribute('aria-expanded', 'true');
+   await viewport.evaluate(el => { el.scrollTop = 0; });
+
+   await expect(start).toBeInViewport({ ratio: 0.99 });
+   await expect(update).toBeInViewport({ ratio: 0.99 });
+   await expect(remove).toBeInViewport({ ratio: 0.99 });
+   await expect(dropdown).toBeInViewport({ ratio: 0.99 });
+   expect(await footer.boundingBox()).toEqual(before);
    await expect(summary).not.toBeInViewport();
    await page.screenshot({path:info.outputPath('builder-expanded-top.png')});
-   await start.scrollIntoViewIfNeeded();
-   await expect(summary).toBeInViewport();
+
+   await summary.scrollIntoViewIfNeeded();
+   expect(await viewport.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+   await expect(summary).toBeInViewport({ ratio: 0.99 });
+   expect(await footer.boundingBox()).toEqual(before);
    await page.screenshot({path:info.outputPath('builder-expanded-bottom.png')});
  }
  await update.click();await expect.poll(()=>mutations.length).toBe(1);expect(mutations[0].trainings[0]).toMatchObject({id:'saved-575',name:'Renamed 575'});await expect(page.getByRole('dialog')).toHaveCount(0);await expect(dirty).toHaveCount(0);

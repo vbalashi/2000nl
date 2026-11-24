@@ -369,7 +369,7 @@
 }
 
 /* Approved Session Builder controls */
-:global(.session-builder-standard) .viewport{padding:0;overflow:visible}:global(.session-builder-standard) .main,:global(.session-builder-standard) .footer>div{max-width:720px}
+:global(.session-builder-standard) .main,:global(.session-builder-standard) .footer>div{max-width:720px}
 :global(.session-builder-standard) .header{position:relative;margin-bottom:20px;gap:0}:global(.session-builder-standard) .header h1{font-size:var(--practice-text-title-sm);line-height:1.4}:global(.session-builder-standard) .header>button{position:absolute;right:calc(100% + 12px)}
 :global(.session-builder-standard) .option{height:28px;box-sizing:border-box;min-height:28px;padding:0 10px;border:0;border-radius:11.2px;display:inline-flex;width:fit-content;font-size:var(--practice-text-small);line-height:1.385;justify-content:center}:global(.session-builder-standard) .option span:last-child{display:none}:global(.session-builder-standard) .options{display:flex;flex-direction:row;flex-wrap:wrap;gap:7px;position:relative}
 :global(.session-builder-standard) .nounChoice{border:0;background:transparent;overflow:visible}:global(.session-builder-standard) .nounChoice>button:first-child{border-radius:11.2px}:global(.session-builder-standard) .nounChoice>button:last-child{height:28px;padding:0 6px}
@@ -378,7 +378,7 @@
 :global(.session-builder-standard) .nounChoice:has(>button[aria-pressed=true]){background:var(--practice-surface-hover)}
 :global(.session-builder-standard) .nounChoice>button:first-child,:global(.session-builder-standard) .nounChoice>button:first-child:hover{border-radius:0;background:transparent;padding-right:4px}
 :global(.session-builder-standard) .nounChoice>button:last-child{background:transparent;padding-left:3px;padding-right:7px}
-:global(.session-builder-standard) .footer{padding:20px 0 0}:global(.session-builder-standard) .footer>div{align-items:center;gap:12px}:global(.session-builder-standard) .saveActions{display:contents}:global(.session-builder-standard) .delete{display:flex;align-items:center;gap:7px;width:auto;height:34px;margin-right:auto;padding:0;background:transparent;color:var(--practice-danger);font:inherit;font-size:var(--practice-text-body)}
+:global(.session-builder-standard) .footer>div{align-items:center;gap:12px}:global(.session-builder-standard) .saveActions{display:contents}:global(.session-builder-standard) .delete{display:flex;align-items:center;gap:7px;width:auto;height:34px;margin-right:auto;padding:0;background:transparent;color:var(--practice-danger);font:inherit;font-size:var(--practice-text-body)}
 :global(.session-builder-standard) .updateGroup{flex:none;width:var(--builder-action-width,168px);height:44px;border-radius:13.2px;background:var(--practice-surface-hover)}:global(.session-builder-standard) .updateGroup>.secondary{min-width:0;height:44px;min-height:44px;padding:0 10px;border:0;background:transparent;border-radius:13.2px 0 0 13.2px;white-space:nowrap}:global(.session-builder-standard) .saveMenu summary{height:44px;min-height:44px;width:32px;padding:0;border:0;border-radius:0 13.2px 13.2px 0;background:transparent}:global(.session-builder-standard) .footer>div>.primary{width:var(--builder-action-width,168px)}
 :global(.session-builder-standard) .saveMenuPanel{border-color:color-mix(in srgb,var(--practice-text) 12%,var(--practice-surface))}:global(.session-builder-standard) .saveMenu{background:transparent}:global(.session-builder-standard) .saveMenu summary svg{width:16px;height:16px}
 
@@ -387,10 +387,23 @@
 @media(max-width:650px){.header>button{position:static;margin-right:8px}.name h2,.name input{font-size:var(--practice-training-name-size)}.inline_language{padding:12px;gap:12px}.inline_language h2{width:90px}.footer>div:has(.saveMenu){display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px}.delete{grid-column:1;grid-row:1;width:34px;height:44px;margin:0;justify-content:center}.delete>span{display:none}.updateGroup{grid-column:2;grid-row:1;width:100%;min-width:0}.footer>div>.primary{grid-column:1/-1;grid-row:2;width:100%;min-width:0}}
 @media(max-height:650px){.name h2,.name input{font-size:var(--practice-training-name-size)}}
 
-:global(.session-builder-standard) .viewport{padding:24px 16px 16px;overflow-y:auto;overflow-x:hidden}
+:global(.session-builder-standard) .viewport {
+  padding: 24px 16px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 :global(.session-builder-standard) .header>button{position:static;margin-right:8px}
-:global(.session-builder-standard) .footer{padding:8px 16px 12px}
-@media(min-width:768px){:global(.session-builder-standard) .viewport{padding:40px 32px 24px}:global(.session-builder-standard) .footer{padding-left:32px;padding-right:32px}}
+:global(.session-builder-standard) .footer {
+  padding: 4px 16px 16px;
+}
+@media (min-width: 768px) {
+  :global(.session-builder-standard) .viewport {
+    padding: 40px 32px 0;
+  }
+  :global(.session-builder-standard) .footer {
+    padding: 4px 32px 24px;
+  }
+}
 @media(min-width:850px){:global(.session-builder-standard) .header>button{position:absolute;right:calc(100% + 12px);margin:0}}
 @media(max-width:650px){:global(.session-builder-standard) .footer>div:has(.saveMenu){display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px}:global(.session-builder-standard) .delete{grid-column:1;grid-row:1;width:34px;height:44px;margin:0;justify-content:center}:global(.session-builder-standard) .delete>span{display:none}:global(.session-builder-standard) .updateGroup{grid-column:2;grid-row:1;width:100%;min-width:0}:global(.session-builder-standard) .footer>div>.primary{grid-column:1/-1;grid-row:2;width:100%;min-width:0}}
 
@@ -488,18 +501,15 @@
 
 @media (min-width:651px) and (max-width:850px){.sessionFields{grid-template-columns:1fr;gap:24px}}
 
-/* Filters, availability, and actions share one viewport. */
+/* Align availability just above the action footer when the content fits. */
 :global(.session-builder-standard) .main {
   min-height: 100%;
   display: flex;
   flex-direction: column;
 }
-.bottomActions {
+.contentEnd {
   margin-block-start: auto;
   padding-block-start: 16px;
-}
-:global(.session-builder-standard) .footer {
-  padding: 4px 0 0;
 }
 :global(.session-builder-standard) .header > button {
   position: static;
