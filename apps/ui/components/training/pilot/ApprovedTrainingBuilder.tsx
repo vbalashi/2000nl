@@ -274,10 +274,10 @@ export function ApprovedTrainingBuilder(p: Props) {
       <div className={s.viewport}>
         <div className={s.main}>
           <header className={s.header}>
-            <button type="button" aria-label={b.back} onClick={p.onBack}>
-              <ArrowLeft size={20} />
+            <button type="button" onClick={p.onBack}>
+              <ArrowLeft size={16} /> <span>{b.back}</span>
             </button>
-            <h1>{b.title}</h1>
+            <h1 className={s.visuallyHidden}>{b.title}</h1>
           </header>
           {
             <TrainingName
@@ -534,99 +534,101 @@ export function ApprovedTrainingBuilder(p: Props) {
             )}
           </div>
           {p.accountControls}
-          {p.availability&&<TrainingAvailabilityStrip state={p.availability} language={p.interfaceLanguage} onRetry={p.onAvailabilityRetry}/>}
-          {p.notice && <div className={s.notice}>{p.notice}</div>}
-        </div>
-      </div>
-      <footer className={s.footer}>
-        <div>
-          <button
-            type="button"
-            className={`${s.primary} ${actions.primary}`}
-            disabled={p.startDisabled}
-            onClick={p.onStart}
-          >
-            {p.startLabel}
-          </button>
-          {p.canSave && (
-            <div className={s.saveActions}>
-              {p.editing && p.onDelete && (
+          <div className={s.bottomActions}>
+            {p.notice && <div className={s.notice}>{p.notice}</div>}
+            {p.availability && <TrainingAvailabilityStrip state={p.availability} language={p.interfaceLanguage} onRetry={p.onAvailabilityRetry} alignBottom />}
+            <footer className={s.footer}>
+              <div>
                 <button
                   type="button"
-                  className={s.delete}
-                  aria-label={deleteLabel}
-                  title={deleteLabel}
-                  disabled={saving || p.deleteDisabled}
-                  onClick={() => setDeleteOpen(true)}
+                  className={`${s.primary} ${actions.primary}`}
+                  disabled={p.startDisabled}
+                  onClick={p.onStart}
                 >
-                  <Trash2 size={16} />
-                  <span>{deleteLabel}</span>
+                  <span className={s.startLabel}>{p.startLabel}</span>
                 </button>
-              )}
-              <div className={s.updateGroup}>
-                <button
-                  type="button"
-                  className={s.secondary}
-                  data-onboarding="save-training" aria-label={p.saveLabel} title={p.saveLabel}
-                  disabled={saving || p.saveDisabled}
-                  onClick={() => {
-                    p.onBeginSave();
-                    if (p.editing) void save();
-                    else setSaveOpen(true);
-                  }}
-                >
-                  {p.hasUnsavedChanges && <span className={s.unsavedDot} role="status" aria-label={(localizedField("trainingBuilderActions", "unsaved"))[p.interfaceLanguage]} title={(localizedField("trainingBuilderActions", "unsaved"))[p.interfaceLanguage]} />}
-                  <Save size={19} aria-hidden="true" />
-                </button>
-                {p.editing && p.onSaveAs && (
-                  <details
-                    className={s.saveMenu}
-                    onKeyDown={(event) => {
-                      if (event.key === "Escape")
-                        event.currentTarget.removeAttribute("open");
-                    }}
-                    onBlur={(event) => {
-                      if (
-                        !event.currentTarget.contains(
-                          event.relatedTarget as Node | null,
-                        )
-                      )
-                        event.currentTarget.removeAttribute("open");
-                    }}
-                  >
-                    <summary
-                      aria-label={saveAsLabel}
-                      aria-disabled={saving || p.saveDisabled}
-                      onClick={(event) => {
-                        if (saving || p.saveDisabled) event.preventDefault();
-                      }}
-                    >
-                      <ChevronDown size={16} />
-                    </summary>
-                    <div className={s.saveMenuPanel}>
+                {p.canSave && (
+                  <div className={s.saveActions}>
+                    {p.editing && p.onDelete && (
                       <button
                         type="button"
+                        className={s.delete}
+                        aria-label={deleteLabel}
+                        title={deleteLabel}
+                        disabled={saving || p.deleteDisabled}
+                        onClick={() => setDeleteOpen(true)}
+                      >
+                        <Trash2 size={16} />
+                        <span>{deleteLabel}</span>
+                      </button>
+                    )}
+                    <div className={s.updateGroup}>
+                      <button
+                        type="button"
+                        className={s.secondary}
+                        data-onboarding="save-training" aria-label={p.saveLabel} title={p.saveLabel}
                         disabled={saving || p.saveDisabled}
-                        onClick={(event) => {
-                          const menu = event.currentTarget.closest("details");
-                          menu?.removeAttribute("open");
-                          menu?.querySelector("summary")?.focus();
+                        onClick={() => {
                           p.onBeginSave();
-                          setCopyName(p.name);
-                          setCopyOpen(true);
+                          if (p.editing) void save();
+                          else setSaveOpen(true);
                         }}
                       >
-                        {saveAsLabel}
+                        {p.hasUnsavedChanges && <span className={s.unsavedDot} role="status" aria-label={(localizedField("trainingBuilderActions", "unsaved"))[p.interfaceLanguage]} title={(localizedField("trainingBuilderActions", "unsaved"))[p.interfaceLanguage]} />}
+                        <Save size={19} aria-hidden="true" />
+                        <span className={s.saveText}>{p.saveLabel}</span>
                       </button>
+                      {p.editing && p.onSaveAs && (
+                        <details
+                          className={s.saveMenu}
+                          onKeyDown={(event) => {
+                            if (event.key === "Escape")
+                              event.currentTarget.removeAttribute("open");
+                          }}
+                          onBlur={(event) => {
+                            if (
+                              !event.currentTarget.contains(
+                                event.relatedTarget as Node | null,
+                              )
+                            )
+                              event.currentTarget.removeAttribute("open");
+                          }}
+                        >
+                          <summary
+                            aria-label={saveAsLabel}
+                            aria-disabled={saving || p.saveDisabled}
+                            onClick={(event) => {
+                              if (saving || p.saveDisabled) event.preventDefault();
+                            }}
+                          >
+                            <ChevronDown size={16} />
+                          </summary>
+                          <div className={s.saveMenuPanel}>
+                            <button
+                              type="button"
+                              disabled={saving || p.saveDisabled}
+                              onClick={(event) => {
+                                const menu = event.currentTarget.closest("details");
+                                menu?.removeAttribute("open");
+                                menu?.querySelector("summary")?.focus();
+                                p.onBeginSave();
+                                setCopyName(p.name);
+                                setCopyOpen(true);
+                              }}
+                            >
+                              {saveAsLabel}
+                            </button>
+                          </div>
+                        </details>
+                      )}
                     </div>
-                  </details>
+                  </div>
                 )}
               </div>
-            </div>
-          )}
-
+            </footer>
+          </div>
         </div>
-      </footer>
+      </div>
       {deleteOpen && (
         <DialogSurface
           className={s.dialog}
