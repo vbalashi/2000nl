@@ -1,3 +1,4 @@
+import { maintenanceHintEvent } from "../maintenance/status";
 import {
   observeTrainingRequest,
   linkTrainingRequest,
@@ -80,6 +81,9 @@ export async function platformFetchWithTimeout(
       ...(headers ? { headers } : {}),
       signal: controller.signal,
     });
+    if (monitored && response.status === 503 && response.headers.get("x-app-maintenance") === "active") {
+      window.dispatchEvent(new Event(maintenanceHintEvent));
+    }
     report(response.ok ? "ready" : "failed", response.status);
     return response;
   } catch (error) {

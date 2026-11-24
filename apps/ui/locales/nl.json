@@ -246,6 +246,14 @@
     "zn": "zelfstandig naamwoord"
   },
   "ui": {
+    "maintenance": {
+      "noticeTitle": "Geplande update",
+      "noticeTiming": "Trainen is rond {start} een paar minuten niet beschikbaar.",
+      "dismiss": "Begrepen",
+      "activeTitle": "We werken de app bij",
+      "activeWait": "Wacht nog een paar minuten.",
+      "activeReturn": "Deze pagina wordt automatisch opnieuw geopend zodra alles klaar is."
+    },
     "librarySearch": {
       "labels": {
         "headwords": "Woorden",

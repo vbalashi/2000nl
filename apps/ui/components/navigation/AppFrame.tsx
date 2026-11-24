@@ -2,7 +2,7 @@
 
 import React from "react";
 import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
-import { ReleaseBanner } from "@/components/releases/ReleaseUpdates";
+import { MaintenanceOrReleaseBanner } from "@/components/maintenance/MaintenanceNotice";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AppDestinationNav, appDestinationLabel } from "./AppDestinationNav";
 import { AppUtilityNav, type AppUtilityNavProps } from "./AppUtilityNav";
@@ -105,7 +105,7 @@ export function AppFrame({
         onNavigate={onNavigate}
       />
       <div className={`${practiceTheme.theme} ${styles.releaseSurface}`} data-colour-mode="app">
-        <ReleaseBanner language={headerProps.interfaceLanguage} />
+        <MaintenanceOrReleaseBanner language={headerProps.interfaceLanguage} />
       </div>
       <main className={styles.content}>{children}</main>
       <div className={styles.tabBar} data-app-mobile-navigation="tabs">

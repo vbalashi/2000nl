@@ -246,6 +246,14 @@
     "zn": "noun"
   },
   "ui": {
+    "maintenance": {
+      "noticeTitle": "Scheduled update",
+      "noticeTiming": "Training will be unavailable for a few minutes around {start}.",
+      "dismiss": "Got it",
+      "activeTitle": "Updating the app",
+      "activeWait": "Please wait a few minutes.",
+      "activeReturn": "This page will reopen automatically when everything is ready."
+    },
     "librarySearch": {
       "labels": {
         "headwords": "Words",

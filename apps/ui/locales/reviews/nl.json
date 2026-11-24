@@ -1833,5 +1833,11 @@
   "features.interactionSettings.questionMeaningIdiom": {"source":"Meaning → idiom question","translationHash":"2fd61edf9f9d6c63f23a989ca98b77d3bd80952d6ebd46a97c2113e60e7281a0"},
   "features.interactionSettings.questionTranslation": {"source":"Translation question","translationHash":"c595408726fe566b803683781541c07214280df50e2e3022b3a286260e08e57e"},
   "features.interactionSettings.questionPreviewWord": {"source":"de fiets","translationHash":"5993aad462907c08a4c73a2a15388d097cd19e27cec15b47b6d0010c46897e67"},
-  "features.interactionSettings.questionPreviewDefinition": {"source":"Een voertuig met twee wielen.","translationHash":"829ff9486440eb8a5b6ad6bd1ddb834a932ef17fd36ec04f421b57c3c4055b15"}
+  "features.interactionSettings.questionPreviewDefinition": {"source":"Een voertuig met twee wielen.","translationHash":"829ff9486440eb8a5b6ad6bd1ddb834a932ef17fd36ec04f421b57c3c4055b15"},
+  "ui.maintenance.noticeTitle": {"source":"Scheduled update","translationHash":"32e57f4220c183f23aec2113b511a89ad517099894db0a770880df9994d9cf69"},
+  "ui.maintenance.noticeTiming": {"source":"Training will be unavailable for a few minutes around {start}.","translationHash":"c3de19727a0c0a570af771c1720b5ebfb30a3bdc4281c64516ea84fd1ad7d5bf"},
+  "ui.maintenance.dismiss": {"source":"Got it","translationHash":"8de223d3b21975132e894f7d086aa14c7089b155b6b23f296302db1df1a75dff"},
+  "ui.maintenance.activeTitle": {"source":"Updating the app","translationHash":"b41fb803a81177a6c328b51abfad6926a31c18aff6693fcd95e9f1c5c4f80e59"},
+  "ui.maintenance.activeWait": {"source":"Please wait a few minutes.","translationHash":"00265af9deaac1d9332aa595c65fadf4f8e3634dab59084acdd97550e4e89a36"},
+  "ui.maintenance.activeReturn": {"source":"This page will reopen automatically when everything is ready.","translationHash":"b3f96d16a8090800140f086672ce07405d72a21f3f9926d1e9040355eabfa5fc"}
 }
