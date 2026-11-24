@@ -38,20 +38,12 @@ expect(geometry.remove!.width).toBeGreaterThanOrEqual(32);expect(geometry.dropdo
  expect(startBox!.y - (await summary.boundingBox())!.y - (await summary.boundingBox())!.height).toBeLessThanOrEqual(12);
  await page.screenshot({path:info.outputPath('builder-footer.png')});
  const start = footer.getByRole('button', { name: ru ? 'Начать тренировку' : 'Start training', exact: true });
- if (profile.width === 320) {
-   const label = start.locator('span');
-   await page.setViewportSize({width:280,height:568});
-   await expect(start).toHaveAccessibleName('Начать тренировку');
-   await expect(label).toHaveCSS('white-space', 'nowrap');
-   await expect(label).toHaveCSS('text-overflow', 'ellipsis');
-   expect(await label.evaluate(el => el.scrollWidth > el.clientWidth)).toBe(true);
- }
-
  if (profile.width === 320 || !ru) {
    await page.setViewportSize({ width: profile.width, height: 568 });
    const viewport = page.locator('[data-onboarding="builder"] > div').first();
    const filters = page.locator('[data-builder-section="filters"]');
    const session = page.locator('[data-builder-section="session"]');
+   await start.click({ trial: true });
    const before = await footer.boundingBox();
    expect(before).not.toBeNull();
 
@@ -67,14 +59,25 @@ expect(geometry.remove!.width).toBeGreaterThanOrEqual(32);expect(geometry.dropdo
    await expect(dropdown).toBeInViewport({ ratio: 0.99 });
    expect(await footer.boundingBox()).toEqual(before);
    await expect(summary).not.toBeInViewport();
-   await page.screenshot({path:info.outputPath('builder-expanded-top.png')});
+   await page.screenshot({ path: info.outputPath('builder-expanded-top.png'), animations: 'disabled' });
 
-   await summary.scrollIntoViewIfNeeded();
+   await viewport.evaluate(el => { el.scrollTop = el.scrollHeight; });
    expect(await viewport.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
    await expect(summary).toBeInViewport({ ratio: 0.99 });
    expect(await footer.boundingBox()).toEqual(before);
    await page.screenshot({path:info.outputPath('builder-expanded-bottom.png')});
  }
+
+ if (profile.width === 320) {
+   const label = start.locator('span');
+   await page.setViewportSize({width:280,height:568});
+   await expect(start).toHaveAccessibleName('Начать тренировку');
+   await expect(label).toHaveCSS('white-space', 'nowrap');
+   await expect(label).toHaveCSS('text-overflow', 'ellipsis');
+   expect(await label.evaluate(el => el.scrollWidth > el.clientWidth)).toBe(true);
+   await page.setViewportSize({ width: profile.width, height: 568 });
+ }
+
  await update.click();await expect.poll(()=>mutations.length).toBe(1);expect(mutations[0].trainings[0]).toMatchObject({id:'saved-575',name:'Renamed 575'});await expect(page.getByRole('dialog')).toHaveCount(0);await expect(dirty).toHaveCount(0);
  await dropdown.focus();await dropdown.press('Enter');const saveAs=ru?'Сохранить как…':'Save as…';const saveAsItem=footer.getByRole('button',{name:saveAs,exact:true});const menuBox=await saveAsItem.boundingBox();expect(menuBox!.x).toBeGreaterThanOrEqual(0);expect(menuBox!.x+menuBox!.width).toBeLessThanOrEqual(profile.width);await saveAsItem.focus();await saveAsItem.press('Enter');
  const copyDialog=page.getByRole('dialog',{name:saveAs});await expect(copyDialog).toBeVisible();const copyBox=await copyDialog.boundingBox();expect(copyBox!.x).toBeGreaterThanOrEqual(0);expect(copyBox!.x+copyBox!.width).toBeLessThanOrEqual(profile.width);await copyDialog.getByRole('textbox').fill('Copy 575');await copyDialog.getByRole('button',{name:saveAs,exact:true}).click();await expect.poll(()=>mutations.length).toBe(2);
