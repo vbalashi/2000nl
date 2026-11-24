@@ -19,6 +19,7 @@ import {
   Check,
   ChevronDown,
   Trash2,
+  Save,
   X,
   Pencil,
 } from "lucide-react";
@@ -533,11 +534,11 @@ export function ApprovedTrainingBuilder(p: Props) {
             )}
           </div>
           {p.accountControls}
+          {p.availability&&<TrainingAvailabilityStrip state={p.availability} language={p.interfaceLanguage} onRetry={p.onAvailabilityRetry}/>}
           {p.notice && <div className={s.notice}>{p.notice}</div>}
         </div>
       </div>
       <footer className={s.footer}>
-        {p.availability&&<TrainingAvailabilityStrip state={p.availability} language={p.interfaceLanguage} onRetry={p.onAvailabilityRetry}/>}
         <div>
           <button
             type="button"
@@ -566,7 +567,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                 <button
                   type="button"
                   className={s.secondary}
-                  data-onboarding="save-training" aria-label={p.saveLabel}
+                  data-onboarding="save-training" aria-label={p.saveLabel} title={p.saveLabel}
                   disabled={saving || p.saveDisabled}
                   onClick={() => {
                     p.onBeginSave();
@@ -575,7 +576,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                   }}
                 >
                   {p.hasUnsavedChanges && <span className={s.unsavedDot} role="status" aria-label={(localizedField("trainingBuilderActions", "unsaved"))[p.interfaceLanguage]} title={(localizedField("trainingBuilderActions", "unsaved"))[p.interfaceLanguage]} />}
-                  {p.saveLabel}
+                  <Save size={19} aria-hidden="true" />
                 </button>
                 {p.editing && p.onSaveAs && (
                   <details
