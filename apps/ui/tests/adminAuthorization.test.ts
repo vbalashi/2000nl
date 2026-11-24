@@ -109,7 +109,7 @@ describe("admin server authorization", () => {
     await expect(requireAdmin(request(), "dictionaries.read")).rejects.toMatchObject({ status: 403, code: "forbidden" });
   });
 
-  it("denies revoked or expired admin sessions", async () => {
+  it("requires a new sign-in when an active operator has no current admin session", async () => {
     serviceClient.from.mockImplementation((table: string) => {
       if (table === "admin_operators") return query({ data: { email: user.email, user_id: user.id, is_active: true, permissions: ["dictionaries.read"] }, error: null });
       if (table === "admin_operator_sessions") return query({ data: null, error: null });
@@ -117,7 +117,8 @@ describe("admin server authorization", () => {
       if (table === "admin_audit_events") return query(null);
       throw new Error(`Unexpected table ${table}`);
     });
-    await expect(requireAdmin(request(), "dictionaries.read")).rejects.toMatchObject({ status: 403, code: "forbidden" });
+    await expect(requireAdmin(request("/api/admin/session"))).rejects.toMatchObject({ status: 401, code: "unauthorized" });
+    await expect(requireAdmin(request(), "dictionaries.read")).rejects.toMatchObject({ status: 401, code: "unauthorized" });
   });
 
   it("denies operators that lack the requested capability", async () => {
