@@ -144,3 +144,40 @@ PostgreSQL cluster, but it is not a physical-clone identity: a restored or clone
 data directory retains that identifier. Managed execution must therefore also
 pin the expected host, endpoint and network path, keep the service credential
 outside the application, and verify those gates before invoking the function.
+
+## Observing translation and audio
+
+The server and dictionary translation worker emit structured JSON records on the
+`provider_diagnostics` channel. Schema 1 identifies the service and provider
+without logging text, URLs, account identifiers, credentials or response bodies.
+
+- `transport_attempt` records one completed translation or synthesis transport
+  attempt, including retries and fallback calls. HTTP duration measures time to
+  response headers. SDK duration measures time to the unary result. A transport
+  success can still contain an unusable translation or unusable audio. The
+  `inputCharacters` count covers Unicode code points of the submitted text,
+  including prompts or markup where applicable. Provider invoices use their own
+  units. A process that exits during a call can lose its completion event.
+- `provider_configuration` records an explicit invalid API key or exhausted
+  shared provider quota. Generic authorization failures and rate limiting appear
+  only in transport outcomes. Confirmed classifications cover OpenAI-compatible
+  structured codes, Google's API key error details and DeepL's quota status.
+- `audio_resolution` counts successful server resolutions of prepared audio,
+  cache hits and generation. The entry endpoint labels preload requests
+  separately. Legacy resolve endpoints only observe a resolution.
+
+The shallow health response reports `providerDiagnostics.schema` and
+`providerDiagnostics.browserEnabled`. These describe the running server's
+capability and browser policy. Older open tabs can still run older clients.
+
+With first-party browser diagnostics enabled, explicit training and library
+audio actions produce observations for the request and the result of preparing
+and starting playback. Automatic playback and speculative preparation are
+excluded. Explicit dictionary translation requests and retries on supported
+first-party surfaces report when the translation service returned a result.
+Automatic translation preparation, connected clients and pending jobs remain
+separate. A ready translation observation does not measure browser paint.
+Browser start, result and cancellation use a random per-action request ID.
+Count final outcomes at most once per actor and action and exclude pending or
+cancelled observations. These reports are unsampled within the existing shared
+telemetry budget and can be lost during disconnection, navigation or shutdown.

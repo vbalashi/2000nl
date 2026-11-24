@@ -1,3 +1,4 @@
+import { observeManualTranslation } from "../diagnostics/manualTranslation";
 import {readCurrentTrainingCard,type CurrentTrainingCardContext} from "@/lib/platform/trainingCurrentCardClient";
 import type { PlatformTranslationExerciseCandidateV2 } from "../../../../packages/shared/types/platformV2";
 import { fetchPlatformV2LibraryGroup, PlatformV2LibraryLookupError, requestPlatformV2LibraryTranslation } from "@/lib/platform/platformV2LibraryClient";
@@ -111,7 +112,8 @@ export async function loadSentenceExerciseContent(input: {
       );
     if (resolveSentencePrompt(content, input.translationTargetLanguageCode).status !== "ready" || capability) {
       if (!capability || capability.actionId !== "request-translation") return { state: "translation-unavailable" };
-      const result = await requestPlatformV2LibraryTranslation({ entryId: input.candidate.entryId, targetLanguageCode: input.translationTargetLanguageCode, force: input.force, ...(input.currentCard ? {currentCard:input.currentCard} : {}), ...(input.signal ? {signal:input.signal} : {}) });
+      const request = () => requestPlatformV2LibraryTranslation({ entryId: input.candidate.entryId, targetLanguageCode: input.translationTargetLanguageCode, force: input.force, ...(input.currentCard ? {currentCard:input.currentCard} : {}), ...(input.signal ? {signal:input.signal} : {}) });
+      const result = input.force ? await observeManualTranslation(request, input.signal) : await request();
       if (result !== "ready") return { state: result === "failed" ? "translation-unavailable" : "translation-pending" };
       group = await readGroup();
       if (!group) return { state: "entry-not-found" };

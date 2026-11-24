@@ -1,3 +1,4 @@
+import { recordProviderConfigurationFault } from "../../providers/providerDiagnostics";
 import { providerFetch, providerCancellableCall } from "../../providers/providerTransport";
 import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import type { IAudioProvider } from "../audioProvider";
@@ -64,11 +65,12 @@ export class GoogleCloudTtsProvider implements IAudioProvider {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(request),
-          }
+          }, "google_tts", [...text].length
         );
 
         if (!response.ok) {
           const errorText = await response.text();
+          recordProviderConfigurationFault("google_tts", response.status, errorText);
           throw new Error(`Google TTS API error: ${response.status} ${errorText}`);
         }
 
@@ -87,7 +89,7 @@ export class GoogleCloudTtsProvider implements IAudioProvider {
       let response;
       try {
         [response] = await providerCancellableCall(remainingMs =>
-          client.innerApiCalls.synthesizeSpeech(request, { timeout: remainingMs, retry: null }) as Promise<[import("@google-cloud/text-to-speech").protos.google.cloud.texttospeech.v1.ISynthesizeSpeechResponse]> & { cancel(): void },
+          client.innerApiCalls.synthesizeSpeech(request, { timeout: remainingMs, retry: null }) as Promise<[import("@google-cloud/text-to-speech").protos.google.cloud.texttospeech.v1.ISynthesizeSpeechResponse]> & { cancel(): void }, "google_tts", [...text].length,
         );
       } finally { void client.close().catch(() => {}); }
       if (!response.audioContent) {

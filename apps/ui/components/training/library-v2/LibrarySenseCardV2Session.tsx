@@ -1,4 +1,5 @@
 "use client";
+import {beginProviderAction, type FinishProviderAction} from "@/lib/diagnostics/client";
 import { useCardLoadDiagnostics } from "@/lib/diagnostics/useCardLoadDiagnostics";
 import {useCollectionComposition} from '@/components/library/sharing/useCollectionComposition';
 import {CollectionAdditionRecovery, CollectionCompositionConfirmation} from '@/components/library/sharing/CollectionCompositionConfirmation';
@@ -551,6 +552,7 @@ function SenseCardV2Session({
     const controller=new AbortController();audioController.current=controller;
     const expected=detailIdentityRef.current;
     const isCurrent=()=>!controller.signal.aborted&&expected===detailIdentityRef.current;
+    const finish = beginProviderAction("audio_playback");
     setAudioBusy(true);setError(null);
     try {
       const url = await resolvePlatformV2Audio({
@@ -558,9 +560,11 @@ function SenseCardV2Session({
         currentCard:selected.entryId===entryId?permittedCurrentCard:undefined,
         signal:controller.signal,capability: group.header.audio,text: group.header.text,
       });
-      if(!isCurrent())return;
+      if(!isCurrent()){ finish?.("cancelled"); return; }
       const audio = new Audio(url);await audio.play();
+      finish?.(isCurrent() ? "ready" : "cancelled");
     } catch (cause) {
+      finish?.(!isCurrent() ? "cancelled" : cause instanceof Error && cause.message === "audio_pending" ? "pending" : "failed");
       if(isCurrent())setError(platformV2Message(interfaceLanguage,"senseCard.audio.failed"));
     } finally {
       if(audioController.current===controller){audioController.current=null;if(expected===detailIdentityRef.current)setAudioBusy(false);}
@@ -689,9 +693,11 @@ function SenseCardV2Session({
       meaningCardTypeId: CardTypeId,
       force = false,
       expectedTranslationSession = translationSession.current,
+      observation?: "manual" | FinishProviderAction,
     ) => {
       if (!translationLanguage) return;
       if (translationRequests.current.has(meaningEntryId)) return;
+      const finish = observation === "manual" ? beginProviderAction("dictionary_translation") : observation;
       const controller = new AbortController();
       const identity = librarySenseCardIdentity(
         meaningEntryId,
@@ -714,8 +720,9 @@ function SenseCardV2Session({
           force,
           signal: controller.signal,
         });
-        if (controller.signal.aborted || expectedTranslationSession !== translationSession.current) return;
+        if (controller.signal.aborted || expectedTranslationSession !== translationSession.current) { finish?.("cancelled"); return; }
         if (status === "ready") {
+          finish?.("ready");
           await load(undefined, expectedTranslationSession);
           if (expectedTranslationSession !== translationSession.current) return;
           setTranslationStates((current) => {
@@ -731,17 +738,20 @@ function SenseCardV2Session({
                 meaningCardTypeId,
                 false,
                 expectedTranslationSession,
+                finish,
               ),
             3000,
           );
         } else {
+          finish?.("failed");
           setTranslationStates((current) => ({
             ...current,
             [identity]: "failed",
           }));
         }
       } catch {
-        if (controller.signal.aborted || expectedTranslationSession !== translationSession.current) return;
+        if (controller.signal.aborted || expectedTranslationSession !== translationSession.current) { finish?.("cancelled"); return; }
+        finish?.("failed");
         setTranslationStates((current) => ({
           ...current,
           [identity]: "failed",
@@ -976,6 +986,7 @@ function SenseCardV2Session({
               translationStates[
                 librarySenseCardIdentity(meaningEntryId, meaningCardTypeId)
               ] === "failed",
+              translationSession.current, "manual",
             )
           }
           onOpenCollections={

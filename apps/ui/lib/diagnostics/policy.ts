@@ -8,6 +8,6 @@ export function sampleDiagnostic(key: string, rate: number) {
 }
 export function acceptsDiagnostic(policy: DiagnosticPolicy, event: TrainingDiagnostic) {
   if (!policy.enabled || policy.validUntil<=Date.now()) return false;
-  return policy.detailed || ["load_failed","load_stalled","request_failed"].includes(event.kind) ||
+  return event.operation === "audio_playback" || event.operation === "dictionary_translation" || policy.detailed || ["load_failed","load_stalled","request_failed"].includes(event.kind) ||
     sampleDiagnostic(event.displayId ?? event.transitionId ?? event.requestId ?? event.eventId,policy.successSampleRate);
 }

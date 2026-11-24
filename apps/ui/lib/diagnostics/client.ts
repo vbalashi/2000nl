@@ -1,6 +1,6 @@
 import { acceptsDiagnostic, disabledDiagnosticPolicy, type DiagnosticPolicy } from "./policy";
 import { readDiagnosticPolicy } from "./policyClient";
-import type { TrainingDiagnostic } from "./contract";
+import { providerActionEvents, type ProviderAction, type TrainingDiagnostic } from "./contract";
 type Timing = {
   transitionId: string;
   stage: string;
@@ -99,7 +99,8 @@ function enqueue(event: Omit<TrainingDiagnostic, "eventId">) {
   const diagnostic = { eventId: crypto.randomUUID(), ...event };
   if (!acceptsDiagnostic(session.policy,diagnostic)) return;
   session.queue.push(diagnostic);
-  if (["load_stalled", "load_failed", "request_failed"].includes(event.kind))
+  if (["load_stalled", "load_failed", "request_failed"].includes(event.kind) ||
+    (event.requestId && (event.operation === "audio_playback" || event.operation === "dictionary_translation") && !event.kind.endsWith("_requested")))
     void flush(session);
 }
 /** Mounted signed-in training only; no durable browser storage, content or account ids. */
@@ -260,3 +261,24 @@ export function endDisplayedCardLoad(
   displayedLoads.delete(id);
   session?.tracker.finish(id, result);
 }
+
+/** One explicit action and at most one final observation. Background preparation does not call this. */
+export function beginProviderAction(operation: ProviderAction) {
+  const owner = session;
+  if (!owner || owner.stopped || !owner.policy.enabled || owner.policy.validUntil <= Date.now()) return;
+  const requestId = crypto.randomUUID();
+  const startedAt = performance.now();
+  let finished = false;
+  const emit = (state: "requested" | "ready" | "failed" | "cancelled" | "pending") => {
+    if (finished || owner !== session || owner.stopped) return;
+    finished = state !== "requested";
+    enqueue({
+      operation, kind: providerActionEvents[operation][state], requestId,
+      durationMs: Math.round(Math.min(performance.now() - startedAt, 86_400_000)),
+      foreground: document.visibilityState === "visible", online: navigator.onLine,
+    });
+  };
+  emit("requested");
+  return (state: "ready" | "failed" | "cancelled" | "pending") => emit(state);
+}
+export type FinishProviderAction = ReturnType<typeof beginProviderAction>;

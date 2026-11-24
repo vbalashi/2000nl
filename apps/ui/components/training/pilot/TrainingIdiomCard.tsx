@@ -1,4 +1,5 @@
 "use client";
+import { observeManualTranslation } from "@/lib/diagnostics/manualTranslation";
 import { useTrainingAudioPlayback } from "../useTrainingAudioPlayback";
 import {useEntryNoteMaterial} from "../useEntryNoteMaterial";
 import { readCurrentTrainingCard, type CurrentTrainingCardContext } from "@/lib/platform/trainingCurrentCardClient";
@@ -56,7 +57,7 @@ export function TrainingIdiomCard({
   busy: boolean;
   onGrade: (result: PlatformTrainingExerciseReviewResultV2) => void;
   onExclude?: () => void;
-  onPlayResolvedAudio?: (url: string, label: string) => void;
+  onPlayResolvedAudio?: (url: string, label: string) => void | Promise<boolean>;
   onOpenDetails?: (details: {
     currentCard?: CurrentTrainingCardContext;
     group: IdiomExerciseContent["group"];
@@ -187,7 +188,7 @@ export function TrainingIdiomCard({
                 run(async () => {
                   if (translationPreparing.current) return { pending: true, content: null };
                   setTranslationPending(false);
-                  const status = await requestPlatformV2Translation(translation, { force: true });
+                  const status = await observeManualTranslation(() => requestPlatformV2Translation(translation, { force: true }));
                   if (status === "pending") {
                     return { pending: true, content: null };
                   }

@@ -81,7 +81,7 @@ export class AzureTtsProvider implements IAudioProvider {
           "User-Agent": userAgent,
         },
         body: ssml,
-      });
+      }, "azure_tts", [...ssml].length);
 
       if (!res.ok) {
         const errText = await res.text().catch(() => "");
