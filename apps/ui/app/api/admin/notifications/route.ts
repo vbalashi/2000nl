@@ -31,7 +31,7 @@ async function mutate(request:Request,kind:"bot"|"route"|"secret") {
   let input:unknown;
   try{input=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));}catch{return response({error:'invalid_request'},400);}
   const templateAction=kind==='bot' && input && typeof input==='object' && !Array.isArray(input) && 'action' in input
-   && ['preview-template','publish-template','test-template','save-test-destination'].includes(input.action as string);
+   && ['preview-template','publish-template','test-template','test-route-template','save-test-destination'].includes(input.action as string);
   const destinationAction=kind==='bot' && input && typeof input==='object' && !Array.isArray(input) && 'action' in input
    && ['link-telegram-destination','create-telegram-topic'].includes(input.action as string);
   if(size>1024 && kind==='bot' && !templateAction)return response({error:'request_too_large'},413);

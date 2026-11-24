@@ -97,3 +97,4 @@
 \i db/migrations/390_admin_user_learning_overview.sql
 \i db/migrations/391_admin_owner_access_groups.sql
 \i db/migrations/392_library_category_unfiltered_scope.sql
+\i db/migrations/393_telegram_route_test.sql

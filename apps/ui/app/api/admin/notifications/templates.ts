@@ -23,6 +23,18 @@ const validChatId = (id: unknown): id is string => typeof id === 'string' && /^-
 const validTopicId = (id: unknown): id is number | null => id === null
   || (typeof id === 'number' && Number.isSafeInteger(id) && id > 0);
 
+type TestTarget = Pick<Parameters<typeof sendBotMessage>[0], 'botId' | 'version' | 'chatId' | 'topicId'>;
+
+async function deliverTest(target: TestTarget, text: string, reply: Reply) {
+  try {
+    const result = await sendBotMessage({...target, text: `[ТЕСТ]\n${text}`, buttons: null});
+    if (result.status === 'sent') return reply({sent: true});
+    return reply({error: result.status === 'failed' ? 'test_delivery_rejected' : 'test_delivery_uncertain'}, 502);
+  } catch {
+    return reply({error: 'test_delivery_uncertain'}, 502);
+  }
+}
+
 export async function handleTemplateAction(input: Record<string, unknown>, principal: Principal, reply: Reply) {
   const {action, kind, body, revision, botId, chatId, topicId, title} = input;
   const auth = {p_operator: principal.userId, p_request: principal.requestId};
@@ -60,6 +72,26 @@ export async function handleTemplateAction(input: Record<string, unknown>, princ
     return reply({revision: data});
   }
 
+  if (action === 'test-route-template') {
+    const {routeId, routeRevision} = input;
+    if (Object.keys(input).length !== 5 || !validBotId(routeId) ||
+      typeof routeRevision !== 'number' || !Number.isInteger(routeRevision) ||
+      routeRevision < 1 || routeRevision > 2147483647) {
+      return reply({error: 'invalid_test_destination'}, 400);
+    }
+    const {data, error} = await service.rpc('admin_notification_authorize_route_test_v1', {
+      ...auth, p_route: routeId, p_revision: routeRevision,
+      p_kind: kind === 'feedback' || kind === 'admission-request' ? kind : 'deployment',
+    });
+    if (error?.code === '40001') return reply({error: 'test_route_changed'}, 409);
+    if (error?.code === '22023') return reply({error: 'bot_not_ready'}, 422);
+    if (error?.code === 'P0001') return reply({error: 'test_rate_limit'}, 429);
+    if (error || !data || !validBotId(data.botId) || !validChatId(data.chatId) ||
+      !validTopicId(data.topicId) || typeof data.version !== 'string') throw new Error('test route unavailable');
+    const {botId, chatId, topicId, version} = data;
+    return deliverTest({botId, chatId, topicId, version}, text, reply);
+  }
+
   if (action !== 'test-template' || !validBotId(botId) || !validChatId(chatId) || !validTopicId(topicId)) {
     return reply({error: 'invalid_test_destination'}, 400);
   }
@@ -70,11 +102,5 @@ export async function handleTemplateAction(input: Record<string, unknown>, princ
   if (error?.code === '22023') return reply({error: error.message === 'chat_is_routed' ? 'chat_is_routed' : 'bot_not_ready'}, 422);
   if (error?.code === 'P0001') return reply({error: 'test_rate_limit'}, 429);
   if (error || typeof version !== 'string') throw new Error('test send unavailable');
-  try {
-    const result = await sendBotMessage({botId, version, chatId, topicId, text: `[ТЕСТ]\n${text}`, buttons: null});
-    if (result.status === 'sent') return reply({sent: true});
-    return reply({error: result.status === 'failed' ? 'test_delivery_rejected' : 'test_delivery_uncertain'}, 502);
-  } catch {
-    return reply({error: 'test_delivery_uncertain'}, 502);
-  }
+  return deliverTest({botId, version, chatId, topicId}, text, reply);
 }
