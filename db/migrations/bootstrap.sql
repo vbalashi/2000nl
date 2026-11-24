@@ -99,3 +99,4 @@
 \i db/migrations/392_library_category_unfiltered_scope.sql
 \i db/migrations/393_telegram_route_test.sql
 \i db/migrations/394_telegram_route_test_conflict.sql
+\i db/migrations/395_training_stats_dictionary_access.sql
