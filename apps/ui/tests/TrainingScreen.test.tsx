@@ -903,7 +903,7 @@ beforeEach(() => {
   libraryLearning.clear();
   performLibraryAction.mockReset().mockImplementation(async capability => {
     if (capability.actionId === "start-learning") libraryLearning.set(capability.target.entryId, "learning");
-    return { accepted: true };
+    return { accepted: true, card: libraryState(capability.target.entryId).card };
   });
   releaseTrainingSessionOwner();
   window.localStorage.clear();
@@ -3480,12 +3480,13 @@ test.each([false, true])("Library inline grade preserves scope and selection (fa
     expect(performLibraryAction).not.toHaveBeenCalled();
     if (!failed) {
       fireEvent.click(within(card).getByRole("button", { name: "Learn" }));
-      await within(card).findByRole("button", { name: "Good" });
+      await within(card).findByRole("button", { name: "Rate knowledge" });
       expect(performLibraryAction).toHaveBeenCalledWith(expect.objectContaining({
         actionId: "start-learning", target: expect.objectContaining({ entryId: dictionaryBoom.id, cardTypeId: "word-to-definition" }),
       }));
       expect(within(card).getByText("Learning")).toBeInTheDocument();
     }
+    fireEvent.click(within(card).getByRole("button", { name: "Rate knowledge" }));
     fireEvent.click(within(card).getByRole("button", { name: "Good" }));
     await waitFor(() => expect(performLibraryAction).toHaveBeenCalledWith(expect.objectContaining({
       actionId: "review-card", reviewResult: "success", target: expect.objectContaining({ entryId: dictionaryBoom.id, cardTypeId: "word-to-definition" }),
@@ -3545,6 +3546,7 @@ test("returning from an inline Library grade preserves the current training card
     fireEvent.change(await screen.findByRole("textbox", { name: "Search words" }), { target: { value: "boom" } });
     fireEvent.click(await screen.findByTestId("library-headword-group-group-word-2"));
     const card = await screen.findByTestId(`library-sense-card-${dictionaryBoom.id}`);
+    fireEvent.click(within(card).getByRole("button", { name: "Rate knowledge" }));
     fireEvent.click(within(card).getByRole("button", { name: "Easy" }));
     await waitFor(() => expect(performLibraryAction).toHaveBeenCalledWith(expect.objectContaining({
       actionId: "review-card", reviewResult: "easy", target: expect.objectContaining({ entryId: dictionaryBoom.id, cardTypeId: "word-to-definition" }),

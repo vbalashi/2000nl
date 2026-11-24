@@ -15,6 +15,7 @@ test("Known choice transfers reading focus on resize without stealing button foc
   const choice=page.getByRole("region",{name:copy.choiceLabel,exact:true});
   const next=choice.getByRole("button",{name:copy.next,exact:true});
   await expect(next).toBeEnabled();
+  await expect(choice.locator('[data-motion="mark"]')).toHaveCSS("animation-name","none");
   const reading=choice.getByTestId("training-answer-scroll");
   await expect(reading).toHaveAttribute("data-reading-layout","compact");
   await reading.focus();
@@ -85,7 +86,18 @@ for (const both of [false,true]) {
     await stage.getByRole("button",{name:copy.markKnown,exact:true}).click();
     const choice=page.getByRole("region",{name:copy.choiceLabel,exact:true});
     await expect(choice.getByRole("button",{name:copy.next,exact:true})).toBeEnabled();
-    if(both)await choice.getByRole("button",{name:copy.markKnown,exact:true}).click();
+    const currentLabel=first.cardTypeId==="word-to-definition"?copy.direct:copy.reverse;
+    const siblingLabel=first.cardTypeId==="word-to-definition"?copy.reverse:copy.direct;
+    const current=choice.getByRole("group",{name:currentLabel,exact:true});
+    const sibling=choice.getByRole("group",{name:siblingLabel,exact:true});
+    await expect(current).toHaveAttribute("data-motion","mark");
+    await expect(current).not.toHaveCSS("animation-name","none");
+    await expect(sibling).toHaveCSS("animation-name","none");
+    if(both){
+      await sibling.getByRole("button",{name:copy.markKnown,exact:true}).click();
+      await expect(sibling).toHaveAttribute("data-motion","mark");
+      await expect(sibling).not.toHaveCSS("animation-name","none");
+    }
     expect(fixture.requests.knownChoices).toHaveLength(0);
     await choice.getByRole("button",{name:copy.next,exact:true}).click();
     await expect(choice).toHaveCount(0);

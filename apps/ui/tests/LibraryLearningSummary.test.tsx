@@ -17,13 +17,13 @@ test("ungraded enrollment differs from missing telemetry and paused scheduling",
  view.rerender(<LibraryLearningSummary meaning={{...model(),schedulerPhase:"frozen",reviewCount:null,lastGrade:null,nextDueAt:"2026-10-03T10:00:00Z"}} language="en"/>);
  expect(screen.queryByText("Not rated yet")).toBeNull();expect(view.container.querySelector("time")).toBeNull();
 });
-test("learning due takes precedence without falling back to later review schedule",()=>{
+test("the learning due date takes priority over the scheduled review date",()=>{
  const group=structuredClone(multiSenseBankGroup);const entry=group.entries.find(e=>e.kind==="sense-card")!;
  if(entry.kind!=="sense-card"||!entry.card)throw new Error("fixture");
  entry.card.scheduler={phase:"learning",reviewCount:2,lastGrade:1,learningDueAt:"2026-10-03T10:00:00Z",nextReviewAt:"2026-10-20T10:00:00Z"};
  expect(buildLibrarySenseCardGroupModel(group,"en").meanings[0].nextDueAt).toBe("2026-10-03T10:00:00Z");
  entry.card.scheduler.learningDueAt=null;
- expect(buildLibrarySenseCardGroupModel(group,"en").meanings[0].nextDueAt).toBeNull();
+ expect(buildLibrarySenseCardGroupModel(group,"en").meanings[0].nextDueAt).toBe("2026-10-20T10:00:00Z");
  entry.card.scheduler.phase="reviewing";
  expect(buildLibrarySenseCardGroupModel(group,"en").meanings[0].nextDueAt).toBe("2026-10-20T10:00:00Z");
 });

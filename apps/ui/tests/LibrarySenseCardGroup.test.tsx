@@ -347,10 +347,12 @@ describe("LibrarySenseCardGroup", () => {
       const card = screen.getByTestId("library-sense-card-entry-bank-furniture");
       const actions = within(card).getByTestId("library-primary-actions");
       const quietRow = within(actions).getByTestId("library-service-actions");
-      const trainNext = within(actions).getAllByRole("button")[0];
-      expect(quietRow).not.toContainElement(trainNext);
+      const review = within(actions).getByRole("button", { name: "Rate knowledge" });
+      expect(quietRow).not.toContainElement(review);
       expect(within(quietRow).getByRole("button", { name: "Collections · 2" })).toBeInTheDocument();
-      fireEvent.click(trainNext);
+      fireEvent.click(review);
+      expect(onAction).not.toHaveBeenCalled();
+      fireEvent.click(within(actions).getByRole("button", { name: "Again" }));
       expect(onTrainNext).not.toHaveBeenCalled();
       expect(onAction).toHaveBeenCalledWith(expect.objectContaining({actionId:"review-card",reviewResult:"fail",target:expect.objectContaining({entryId:"entry-bank-furniture"})}));
       fireEvent.click(within(quietRow).getByRole("button", { name: "More card actions" }));
@@ -379,6 +381,7 @@ describe("LibrarySenseCardGroup", () => {
       />,
     );
 
+    fireEvent.click(screen.getByRole("button", { name: "Rate knowledge" }));
     expect(
       screen.queryByRole("button", { name: "Again" }),
     ).toBeInTheDocument();

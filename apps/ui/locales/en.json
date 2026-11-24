@@ -58,7 +58,9 @@
     "learning": {
       "savedReloadFailed": "Saved. Could not reload the updated learning state. Retry to refresh it.",
       "reviewSaved": "Review saved: {rating}",
-      "start": "Learn"
+      "start": "Learn",
+      "rate": "Rate knowledge",
+      "reviewDue": "Time to review"
     },
     "known": {
       "mark": "Mark as known",

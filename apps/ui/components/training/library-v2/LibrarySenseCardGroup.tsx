@@ -12,7 +12,7 @@ import React from "react";
 import { X, Check, Circle, LoaderCircle, CircleHelp } from "lucide-react";
 import type { CurrentTrainingCardContext } from "@/lib/platform/trainingCurrentCardClient";
 import {OwnNoteEditor} from '@/components/library/notes/OwnNoteEditor';
-import { LibraryMeaningActions } from "./LibraryMeaningActions";
+import { LibraryMeaningActions, type LibraryReviewReceipt } from "./LibraryMeaningActions";
 import {ArticleTranslation,ArticleMeaningDetails} from "@/components/practice/article/ArticleContent";
 import {ProductionArticleReading} from "@/components/practice/article/ProductionArticleReading";
 import {ArticleWordForms,ArticleSenseRelations} from "@/components/practice/article/ArticleWordDetails";
@@ -67,6 +67,8 @@ type Props = {
   busyIdentity?: string | null;
   actionsDisabled?: boolean;
   inlineGrading?: boolean;
+  reviewButton?: boolean;
+  savedReview?: LibraryReviewReceipt & { identity: string };
   activeTrainingEntryId?: string;
   headwordTrainingBlocked?: boolean;
   audioBusy?: boolean;
@@ -116,6 +118,8 @@ export function LibrarySenseCardGroup({
   busyIdentity = null,
   actionsDisabled = false,
   inlineGrading = true,
+  reviewButton = true,
+  savedReview,
   activeTrainingEntryId,
   headwordTrainingBlocked = false,
   audioBusy = false,
@@ -421,6 +425,8 @@ export function LibrarySenseCardGroup({
               return (
                 <MeaningCard
                   key={identity}
+                  reviewButton={reviewButton}
+                  savedReview={savedReview?.identity === identity ? savedReview : undefined}
                   currentCard={meaning.entryId === currentCardEntryId ? currentCard : undefined}
                   meaning={inlineGrading ? meaning : {...meaning, reviewCapabilities: []}}
                   activeTraining={meaning.entryId === activeTrainingEntryId}
@@ -485,6 +491,8 @@ function MeaningCard(props: React.ComponentProps<typeof MeaningCardBody>) {
 
 function MeaningCardBody({
   meaning,
+  reviewButton,
+  savedReview,
   userId,
   showSenseForms,
   formPartOfSpeech,
@@ -520,6 +528,8 @@ function MeaningCardBody({
   activeTraining?: boolean;
   headwordTrainingBlocked?: boolean;
   meaning: LibrarySenseCardModel;
+  reviewButton: boolean;
+  savedReview?: LibraryReviewReceipt;
   userId?:string;
   headword:string;
   showSenseForms?:boolean;
@@ -672,7 +682,7 @@ function MeaningCardBody({
 
 
             {(
-              <LibraryMeaningActions activeTraining={activeTraining} headwordTrainingBlocked={headwordTrainingBlocked} meaning={meaning} language={interfaceLanguage} busy={busy||actions.busy} collectionCount={collectionCount}
+              <LibraryMeaningActions reviewButton={reviewButton} savedReview={savedReview} activeTraining={activeTraining} headwordTrainingBlocked={headwordTrainingBlocked} meaning={meaning} language={interfaceLanguage} busy={busy||actions.busy} collectionCount={collectionCount}
                 onEditNote={userId&&process.env.NEXT_PUBLIC_COLLECTION_SHARING_ENABLED==='true'?()=>setNoteOpen(true):undefined}
                 onCopy={onCopy ? () => onCopy(meaning) : undefined}
                 onArchive={onArchive ? () => onArchive(meaning) : undefined}

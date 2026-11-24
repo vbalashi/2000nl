@@ -6,6 +6,7 @@ import {getUiMessages} from '@/lib/uiMessages';
 import {platformV2Message} from '@/lib/platform/platformV2ClientI18n';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
 import {fetchExerciseChoice,saveExerciseChoice,type ExerciseChoiceSnapshot,type ExerciseChoiceRequest,type ExerciseDirection} from '@/lib/platform/exerciseChoiceClient';
+import {TrainingKnownDirection} from './TrainingKnownDirection';
 import {TrainingCardShell,trainingStageClassName} from './TrainingCardTemplates';
 import approved from '../approvedTrainingCard.module.css';
 import builder from '../pilot/approvedTrainingBuilder.module.css';
@@ -24,9 +25,15 @@ export function TrainingExerciseKnownChoice(p:Props){
   <TrainingCardShell answerVisible={p.originSide==='answer'} contentLabel={platformV2Message(p.language,'senseCard.training.content')} scrollMoreLabel={platformV2Message(p.language,'senseCard.scroll.more')}><div className={s.body}><div className={s.content}>
    <LogOut size={40} strokeWidth={1.4} className={s.icon} aria-hidden="true"/>
    {!snapshot&&!error?<p className={s.loading} role="status">{t.loading}</p>:null}
-   {snapshot?<div className={s.cards} data-single={directions.length===1}>{directions.map(d=>{const isKnown=known.includes(d),reverse=d==='reverse';return <div key={d} className={s.direction} data-known={isKnown} role="group" aria-label={directionLabel(d)}>
-    <DirectionCard label={directionLabel(d)} labelIcon={reverse?<ArrowLeft size={14}/>:<ArrowRight size={14}/>} selected={false} prompt={reverse?p.answer:p.prompt} answer={reverse?p.prompt:p.answer} promptLanguage={p.family==='translation'?p.translationLanguage:p.contentLanguage} answerLanguage={p.contentLanguage} classes={{card:s.preview,heading:`${builder.directionHeading} ${s.heading}`,headingLabel:builder.directionHeadingLabel,check:'hidden',prompt:builder.prompt,arrow:builder.directionArrow,answer:builder.answer}}/>
-    <div className={s.status}><span role="status" className={s.stateLabel}>{isKnown?t.known:t.learning}</span><button type="button" className={s.link} disabled={busy||p.disabled||Boolean(frozen.current)} onClick={()=>setKnown(current=>isKnown?current.filter(v=>v!==d):[...current,d])}>{isKnown?t.returnToLearning:t.markKnown}</button></div></div>;})}</div>:null}
+   {snapshot?<div className={s.cards} data-single={directions.length===1}>{directions.map(d=>{
+    const isKnown=known.includes(d),reverse=d==='reverse',label=directionLabel(d);
+    return <TrainingKnownDirection key={d} label={label} initiallyKnown={Object.hasOwn(snapshot.marks,d)} known={isKnown}
+     knownLabel={t.known} learningLabel={t.learning} actionLabel={isKnown?t.returnToLearning:t.markKnown}
+     disabled={busy||Boolean(p.disabled)||Boolean(frozen.current)}
+     onToggle={()=>setKnown(current=>isKnown?current.filter(v=>v!==d):[...current,d])}>
+     <DirectionCard label={label} labelIcon={reverse?<ArrowLeft size={14}/>:<ArrowRight size={14}/>} selected={false} prompt={reverse?p.answer:p.prompt} answer={reverse?p.prompt:p.answer} promptLanguage={p.family==='translation'?p.translationLanguage:p.contentLanguage} answerLanguage={p.contentLanguage} classes={{card:s.preview,heading:`${builder.directionHeading} ${s.heading}`,headingLabel:builder.directionHeadingLabel,check:'hidden',prompt:builder.prompt,arrow:builder.directionArrow,answer:builder.answer}}/>
+    </TrainingKnownDirection>;
+   })}</div>:null}
    {error?<p role="alert" className={s.error}>{t[error]}</p>:null}</div>
    <button type="button" className={`${s.link} ${s.back}`} disabled={busy||p.disabled||(Boolean(frozen.current)&&error!=='conflict')||accepted.current} onClick={p.onBack}>{t.back}</button></div></TrainingCardShell>
   <footer data-testid="training-sense-card-dock" className="shrink-0" style={{height:76}}><button ref={next} type="button" className={`${approved.primary} ${s.next}`} disabled={!snapshot||busy||done||p.disabled||error==='conflict'} onClick={()=>void submit()}>{busy?t.saving:t.next}</button></footer>
