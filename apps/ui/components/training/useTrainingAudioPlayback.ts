@@ -1,5 +1,6 @@
 "use client";
 
+import {beginProviderAction} from "@/lib/diagnostics/client";
 import {useCallback, useLayoutEffect, useRef} from "react";
 
 type Playback = {
@@ -7,7 +8,7 @@ type Playback = {
   active: boolean;
   enabled: boolean;
   resolve: (signal: AbortSignal) => Promise<string>;
-  onPlay: (url: string) => void;
+  onPlay: (url: string) => void | Promise<boolean>;
   onStart?: () => void;
   onError: () => void;
 };
@@ -22,9 +23,10 @@ export function useTrainingAudioPlayback(options: Playback) {
     pending.current = null;
   }, [options.identity, options.active]);
 
-  return useCallback(async () => {
+  return useCallback(async (trigger: "manual" | "automatic" = "manual") => {
     const operation = latest.current;
     if (!operation.active || !operation.enabled || pending.current) return;
+    const finish = trigger === "manual" ? beginProviderAction("audio_playback") : undefined;
     const controller = new AbortController();
     pending.current = controller;
     const isCurrent = () => !controller.signal.aborted &&
@@ -33,8 +35,13 @@ export function useTrainingAudioPlayback(options: Playback) {
     try {
       operation.onStart?.();
       const url = await operation.resolve(controller.signal);
-      if (isCurrent()) operation.onPlay(url);
-    } catch {
+      if (!isCurrent()) { finish?.("cancelled"); return; }
+      const started = await operation.onPlay(url);
+      if (!isCurrent()) finish?.("cancelled");
+      else if (started === true) finish?.("ready");
+      else if (started === false) finish?.("failed");
+    } catch (error) {
+      finish?.(!isCurrent() ? "cancelled" : error instanceof Error && error.message === "audio_pending" ? "pending" : "failed");
       if (isCurrent()) operation.onError();
     } finally {
       if (pending.current === controller) pending.current = null;

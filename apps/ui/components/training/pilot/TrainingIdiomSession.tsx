@@ -52,7 +52,7 @@ type Props = TrainingCompletionActions & {
   onProgress?: (progress: TrainingSessionProgress) => void;
   onSessionSuperseded?: () => void;
   onHistory?: () => void;
-  onPlayResolvedAudio?: (url: string, label: string) => void;
+  onPlayResolvedAudio?: (url: string, label: string) => void | Promise<boolean>;
   onCurrentCardContextChange?: (value: PresentedTrainingCard | null) => void;
   onOpenDetails?: (details: {
     currentCard?: CurrentTrainingCardContext;

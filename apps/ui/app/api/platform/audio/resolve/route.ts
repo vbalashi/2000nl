@@ -1,3 +1,4 @@
+import { recordProviderEvent } from "@/lib/providers/providerDiagnostics";
 import { readProviderJson, assertProviderInput, providerErrorResponse } from "@/lib/providers/providerSafety";
 import { NextRequest } from "next/server";
 import {
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
       quality: body?.quality,
       accountId: auth.user.id,
     });
+    recordProviderEvent({ kind: "audio_resolution", source: artifact.cached ? "cache" : "generated", purpose: "resolve" });
     const response = reply({
       status: "ready",
       asset: {

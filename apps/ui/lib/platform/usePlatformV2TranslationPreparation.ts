@@ -1,4 +1,5 @@
 "use client";
+import { beginProviderAction, type FinishProviderAction } from "../diagnostics/client";
 import type { CurrentTrainingCardContext } from "./trainingCurrentCardClient";
 import { useEffect, useRef, useState } from "react";
 import type { PlatformSenseCardEntryV2 } from "../../../../packages/shared/types/platformV2";
@@ -60,6 +61,7 @@ export function usePlatformV2TranslationPreparation(input: {
       ...(current.currentCard ? [current.currentCard.sessionId,current.currentCard.permitId] : []),
     ]);
     if (!needsPreparation) settledAttempt.current = null;
+    let finish: FinishProviderAction;
     let refreshPromise: Promise<PlatformSenseCardEntryV2 | null> | null = null;
     let refreshDirty = false;
     let poll: ReturnType<typeof setTimeout> | undefined;
@@ -107,6 +109,7 @@ export function usePlatformV2TranslationPreparation(input: {
       )
         return;
       preparing.current = true;
+      if (force) finish = beginProviderAction("dictionary_translation");
       reportStatus("pending");
       let pending = false;
       let ready = false;
@@ -119,10 +122,12 @@ export function usePlatformV2TranslationPreparation(input: {
         if (!isCurrent()) return;
         if (status === "ready") {
           ready = true;
+          finish?.("ready");
           await refresh();
           if (isCurrent()) reportStatus(null);
         } else {
           pending = status === "pending";
+          if (!pending) finish?.("failed");
           reportStatus(status);
         }
       } catch {
@@ -130,6 +135,7 @@ export function usePlatformV2TranslationPreparation(input: {
           // A ready job whose projection could not be refreshed is still ready
           // on the server. Re-observe instead of attributing failure to translation.
           pending = ready;
+          if (!ready) finish?.("failed");
           reportStatus(ready ? "pending" : "failed");
         }
       } finally {
@@ -166,6 +172,7 @@ export function usePlatformV2TranslationPreparation(input: {
       void prepare(current.entry, force);
     }
     return () => {
+      finish?.("cancelled");
       clearTimeout(poll);
       controller.abort();
       detach();

@@ -1,3 +1,4 @@
+import { httpAttemptOutcome, recordProviderEvent, rpcAttemptOutcome, type MeasuredProvider } from "./providerDiagnostics";
 import { AsyncLocalStorage } from "node:async_hooks";
 
 const deadlines = new AsyncLocalStorage<{ signal: AbortSignal; deadlineAt: number }>();
@@ -9,23 +10,42 @@ export function providerOutputTokenLimit() {
 }
 export const PROVIDER_OPERATION_MS = 240_000; // lease is 300s, leaving DB publication margin
 /** All fetch-based primary/retry/fallback calls inherit this operation's deadline. */
-export function providerFetch(input: string | URL | Request, init: RequestInit = {}) {
+export function providerFetch(input: string | URL | Request, init: RequestInit = {}, provider?: MeasuredProvider, inputCharacters?: number) {
   const signal = deadlines.getStore()?.signal;
   if (signal?.aborted) throw new ProviderOperationTimeout("provider_timeout");
-  return fetch(input, { ...init, ...(signal ? { signal: init.signal ? AbortSignal.any([signal, init.signal]) : signal } : {}) });
+  const options = { ...init, ...(signal ? { signal: init.signal ? AbortSignal.any([signal, init.signal]) : signal } : {}) };
+  if (options.signal?.aborted) throw new ProviderOperationTimeout("provider_timeout");
+  const startedAt = performance.now();
+  const attempted = fetch(input, options);
+  if (!provider) return attempted;
+  return attempted.then(response => {
+    recordProviderEvent({ kind: "transport_attempt", provider, inputCharacters, outcome: httpAttemptOutcome(response.status), durationMs: Math.round(performance.now() - startedAt) });
+    return response;
+  }, error => {
+    recordProviderEvent({ kind: "transport_attempt", provider, inputCharacters, outcome: options.signal?.aborted ? "timeout" : "network_error", durationMs: Math.round(performance.now() - startedAt) });
+    throw error;
+  });
 }
 /** SDK attempts inherit the remaining operation budget, including voice fallback.
  * Keep GAX's cancellable promise: the generated public method chains .then and
  * drops cancel(), so callers use its initialized unary innerApiCalls boundary.
  */
-export async function providerCancellableCall<T>(start: (remainingMs: number) => Promise<T> & { cancel(): void }): Promise<T> {
+export async function providerCancellableCall<T>(start: (remainingMs: number) => Promise<T> & { cancel(): void }, provider?: MeasuredProvider, inputCharacters?: number): Promise<T> {
   const context = deadlines.getStore();
   const remaining = context ? context.deadlineAt - Date.now() : PROVIDER_OPERATION_MS;
   if (remaining <= 0 || context?.signal.aborted) throw new ProviderOperationTimeout("provider_timeout");
+  const startedAt = performance.now();
   const call = start(remaining);
   const cancel = () => call.cancel();
   context?.signal.addEventListener("abort", cancel, { once: true });
-  try { return await call; }
+  try {
+    const result = await call;
+    if (provider) recordProviderEvent({ kind: "transport_attempt", provider, inputCharacters, outcome: "ok", durationMs: Math.round(performance.now() - startedAt) });
+    return result;
+  } catch (error) {
+    if (provider) recordProviderEvent({ kind: "transport_attempt", provider, inputCharacters, outcome: context?.signal.aborted ? "timeout" : rpcAttemptOutcome(error), durationMs: Math.round(performance.now() - startedAt) });
+    throw error;
+  }
   finally { context?.signal.removeEventListener("abort", cancel); }
 }
 export async function withProviderDeadline<T>(operation: () => Promise<T>, timeoutMs = PROVIDER_OPERATION_MS): Promise<T> {

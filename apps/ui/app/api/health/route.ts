@@ -1,3 +1,5 @@
+import { providerDiagnosticsSchema } from "@/lib/providers/providerDiagnostics";
+import { diagnosticPolicyFor } from "@/lib/diagnostics/serverPolicy";
 import { checkAdmissionHealth } from "@/lib/admission/health";
 import { NextResponse } from "next/server";
 import {collectionSharingWritesEnabled} from '@/lib/collections/sharing/rollout';
@@ -180,6 +182,7 @@ export async function GET(req: Request) {
     version: versionInfo.version,
     commit: versionInfo.commit,
     uptime: Math.floor(process.uptime()),
+    providerDiagnostics: { schema: providerDiagnosticsSchema, browserEnabled: diagnosticPolicyFor().enabled },
     status: hasWarnings ? "warning" : "ok",
     timestamp: new Date().toISOString(),
     database: {

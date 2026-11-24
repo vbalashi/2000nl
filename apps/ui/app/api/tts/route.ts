@@ -1,3 +1,4 @@
+import { recordProviderEvent } from "@/lib/providers/providerDiagnostics";
 import { readProviderJson, providerErrorResponse } from "@/lib/providers/providerSafety";
 import { getAuthenticatedSupabase, requirePlatformScope } from "@/lib/platform/serverSupabase";
 import { NextRequest, NextResponse } from "next/server";
@@ -58,6 +59,7 @@ export async function POST(req: NextRequest) {
     const trimmedText = text.trim();
     const artifact = await resolveTtsAudio({ text: trimmedText, quality: qualityRaw, accountId: auth.user.id });
 
+    recordProviderEvent({ kind: "audio_resolution", source: artifact.cached ? "cache" : "generated", purpose: "resolve" });
     return NextResponse.json(
       {
         url: artifact.url,

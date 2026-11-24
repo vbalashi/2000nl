@@ -1,3 +1,4 @@
+import { recordProviderConfigurationFault } from "../providers/providerDiagnostics";
 import { providerFetch } from "../providers/providerTransport";
 import {
   ITranslator,
@@ -102,7 +103,8 @@ export class DeepLTranslator implements ITranslator {
     params.set("target_lang", normalizeLang(targetLang));
     params.set("tag_handling", "xml");
     params.set("preserve_formatting", "1");
-    params.append("text", buildContextXml(texts));
+    const xml = buildContextXml(texts);
+    params.append("text", xml);
 
     try {
       const res = await providerFetch(this.apiUrl, {
@@ -112,10 +114,11 @@ export class DeepLTranslator implements ITranslator {
           Authorization: `DeepL-Auth-Key ${this.apiKey}`,
         },
         body: params.toString(),
-      });
+      }, "deepl", [...xml].length);
 
       if (!res.ok) {
         const body = await res.text().catch(() => "");
+        recordProviderConfigurationFault("deepl", res.status, body);
         throw safeTranslationProviderError("provider_http_error", {
           status: res.status,
           diagnostic: body || res.statusText,

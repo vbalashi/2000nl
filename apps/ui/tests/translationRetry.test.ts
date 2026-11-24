@@ -48,8 +48,12 @@ test("provider wiring retries 500 three times with safe diagnostics", async () =
   try {
     const translator=new OpenAITranslator({apiKey:"secret-key",model:"gpt-4.1"});
     await expect(translator.translate("secret input","ru")).rejects.toThrow("provider_http_error");
-    expect(fetchMock).toHaveBeenCalledTimes(4);expect(log).toHaveBeenCalledTimes(4);
-    expect(log.mock.calls[3][1]).toMatchObject({attempt:4,status:500,requestId:"request-safe",reason:"http_status",retry:false});
+    const attempts = log.mock.calls.filter(([label]) => label === "[translation] attempt");
+    const transport = log.mock.calls.filter(([label]) => label !== "[translation] attempt").map(([row]) => JSON.parse(row));
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(attempts).toHaveLength(4);
+    expect(transport.map(row => row.outcome)).toEqual(Array(4).fill("upstream_error"));
+    expect(attempts[3][1]).toMatchObject({attempt:4,status:500,requestId:"request-safe",reason:"http_status",retry:false});
     expect(JSON.stringify(log.mock.calls)).not.toContain("secret");
   } finally {vi.unstubAllGlobals();log.mockRestore();}
 });
@@ -58,6 +62,9 @@ test("malformed HTTP200 is a response error, not a network retry", async () => {
   const log=vi.spyOn(console,"info").mockImplementation(()=>{});
   try {
     await expect(new OpenAITranslator({apiKey:"key"}).translate("text","ru")).rejects.toThrow("provider_response_error");
-    expect(fetchMock).toHaveBeenCalledTimes(1);expect(log.mock.calls[0][1]).toMatchObject({reason:"invalid_json",retry:false});
+    const attempts = log.mock.calls.filter(([label]) => label === "[translation] attempt");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(attempts).toHaveLength(1);
+    expect(attempts[0][1]).toMatchObject({reason:"invalid_json",retry:false});
   } finally {vi.unstubAllGlobals();log.mockRestore();}
 });

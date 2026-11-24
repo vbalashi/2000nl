@@ -242,7 +242,10 @@ async function resolveEntryAudio(input:PlatformV2AudioRequest,prepareOnly:boolea
   if(input.transitionId)recordTrainingTransitionResponse(input.transitionId,
     response.headers.get("x-platform-cache")==="hit"?"audio.cache":"audio.provider",startedAt,response,
     response.ok?response.headers.get("x-platform-cache")??"ready":`http-${response.status}`);
-  if(!response.ok)throw new Error("entry_audio_not_available");
+  if(!response.ok) {
+    if (response.status === 503 && (await response.json().catch(() => null))?.error === "audio_pending") throw new Error("audio_pending");
+    throw new Error("entry_audio_not_available");
+  }
   await platformV2AuthenticatedJsonHeaders(input.cacheOwnerId);
   if(controller.signal.aborted)throw new DOMException("Aborted","AbortError");
   if(prepareOnly)return "";

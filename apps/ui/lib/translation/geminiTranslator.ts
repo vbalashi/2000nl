@@ -1,3 +1,4 @@
+import { recordProviderConfigurationFault } from "../providers/providerDiagnostics";
 import { providerFetch, providerOutputTokenLimit } from "../providers/providerTransport";
 import {
   ITranslator,
@@ -164,6 +165,7 @@ export class GeminiTranslator implements ITranslator {
           url.searchParams.set("key", this.apiKey);
         }
 
+        const prompt = buildPrompt(texts, targetLang);
         const res = await providerFetch(url.toString(), {
           method: "POST",
           headers: {
@@ -175,7 +177,7 @@ export class GeminiTranslator implements ITranslator {
                 role: "user",
                 parts: [
                   {
-                    text: buildPrompt(texts, targetLang),
+                    text: prompt,
                   },
                 ],
               },
@@ -186,10 +188,11 @@ export class GeminiTranslator implements ITranslator {
             },
           }),
           signal: controller.signal,
-        });
+        }, "gemini", [...prompt].length);
 
         if (!res.ok) {
           const body = await res.text().catch(() => "");
+          recordProviderConfigurationFault("gemini", res.status, body);
           throw safeTranslationProviderError("provider_http_error", {
             status: res.status,
             diagnostic: body || res.statusText,

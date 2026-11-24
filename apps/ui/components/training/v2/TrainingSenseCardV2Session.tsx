@@ -92,7 +92,7 @@ type Props = {
   interactionDisabled?: boolean;
   authorityRefreshing?: boolean;
   focusOnPresentation?: boolean;
-  onPlayResolvedAudio?: (url: string, label: string) => void;
+  onPlayResolvedAudio?: (url: string, label: string) => void | Promise<boolean>;
   onCurrentCardContextChange?: (value: PresentedTrainingCard | null) => void;
   onOpenDetails?: (
     details: Pick<PlatformV2TrainingEntryResult, "group" | "entry"> & { currentCard?: CurrentTrainingCardContext },
@@ -700,7 +700,7 @@ export function TrainingSenseCardV2Session({
       return;
     }
     autoPlayedCardRef.current = cardIdentity;
-    void handlePlayAudio();
+    void handlePlayAudio("automatic");
   }, [cardIdentity, handlePlayAudio, mode, onPlayResolvedAudio, result, sessionState]);
 
   const swipeLeftCapability = model?.reviewCapabilities.find(

@@ -1,3 +1,4 @@
+import { recordProviderEvent } from "@/lib/providers/providerDiagnostics";
 import { ProviderWorkError } from "@/lib/providers/providerSafety";
 import {consumeAudioRateLimit} from "@/lib/audio/audioRateLimit";
 import {NextRequest} from "next/server";
@@ -49,6 +50,7 @@ export async function POST(request:NextRequest) {
       &&latest.entry.dictionary_id===entry.dictionary_id&&latest.entry.language_code===entry.language_code
       &&contentFingerprint(normalizeDictionaryContent(latest.entry))===contentFingerprint(normalizeDictionaryContent(entry)));
     if(!stillReadable)return denied;
+    recordProviderEvent({ kind: "audio_resolution", source: prepared ? "prepared" : result.cached ? "cache" : "generated", purpose: body.prepareOnly ? "prepare" : "resolve" });
     if(body.prepareOnly){
       const response=jsonNoStore({status:"ready"});
       response.headers.set("X-Platform-Cache",result.cached?"hit":"miss");

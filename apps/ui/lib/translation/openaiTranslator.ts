@@ -1,3 +1,4 @@
+import { recordProviderConfigurationFault } from "../providers/providerDiagnostics";
 import { providerFetch, providerOutputTokenLimit } from "../providers/providerTransport";
 import { planDictionaryExplanationRepair, mergeDictionaryExplanationRepair } from "./dictionaryExplanationRepair";
 import { dictionaryTranslationProfile } from "./dictionaryTranslationProfile";
@@ -344,7 +345,7 @@ export class OpenAITranslator implements ITranslator {
         },
         body: JSON.stringify(body),
         signal: controller.signal,
-      });
+      }, isAzure ? "azure_openai" : "openai", messages.reduce((sum, message) => sum + [...message.content].length, 0));
       diagnostic.stage = "response";
       diagnostic.status = response.status;
       diagnostic.requestId = safeProviderRequestId(response.headers?.get("x-request-id") ?? response.headers?.get("apim-request-id") ?? null);
@@ -352,6 +353,7 @@ export class OpenAITranslator implements ITranslator {
       if (!response.ok) {
         diagnostic.reason = "http_status";
         const responseBody = await response.text().catch(() => "");
+        recordProviderConfigurationFault(isAzure ? "azure_openai" : "openai", response.status, responseBody);
         throw safeTranslationProviderError("provider_http_error", {
           status: response.status,
           diagnostic: responseBody || response.statusText,
