@@ -110,6 +110,10 @@
 .group[data-testid="library-primary-actions"] .primary{border:0;border-radius:8.4px;background:var(--practice-surface-hover)}
 .group[data-testid="library-primary-actions"] .quiet{border-radius:8.4px}
 
+.reviewPrimary { gap: 5px; }
+.reviewPrimary > svg { flex-shrink: 0; }
+.reviewTiming { color: var(--practice-text-secondary); }
+
 /* Accepted active-training notice occupies the primary action slot. */
 .trainingGuard {
   display: flex;

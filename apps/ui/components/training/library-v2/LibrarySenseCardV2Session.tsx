@@ -132,7 +132,7 @@ function SenseCardV2Session({
     Record<string, "pending" | "failed">
   >({});
   const [error, setError] = React.useState<string | null>(null);
-  const [savedReviewMessageKey, setSavedReviewMessageKey] = React.useState<string | null>(null);
+  const [savedReview, setSavedReview] = React.useState<{ identity: string; messageKey: string; revision: string } | null>(null);
   const [lookupError, setLookupError] = React.useState<
     "forbidden" | "timeout" | "contract" | "unavailable" | null
   >(null);
@@ -204,7 +204,7 @@ function SenseCardV2Session({
     setAcceptedRefreshFailed(false);
     unverifiedActionIdentity.current = null;
     setError(null);
-    setSavedReviewMessageKey(null);
+    setSavedReview(null);
     setMembershipsByEntryId({});
     setMembershipState("loading");
     setCollectionsEntryId(null);
@@ -494,16 +494,21 @@ function SenseCardV2Session({
       ),
     );
     setError(null);
-    setSavedReviewMessageKey(null);
     try {
-      await performPlatformV2LibraryAction(capability);
+      const result = await performPlatformV2LibraryAction(capability);
       if (!isCurrentAction()) return;
       unverifiedActionIdentity.current = expectedDetailIdentity;
       const fresh = await load(undefined, undefined, expectedDetailIdentity);
       if (!fresh) throw new Error("accepted_action_refresh_failed");
       if (isCurrentAction()) {
         unverifiedActionIdentity.current = null;
-        if (capability.actionId === "review-card") setSavedReviewMessageKey(capability.messageKey);
+        if (capability.actionId === "review-card") {
+          setSavedReview({
+            identity: librarySenseCardIdentity(capability.target.entryId, capability.target.cardTypeId),
+            messageKey: capability.messageKey,
+            revision: result.card.stateRevision,
+          });
+        }
       }
     } catch (cause) {
       if (isCurrentAction()) {
@@ -927,6 +932,8 @@ function SenseCardV2Session({
           interfaceLanguage={interfaceLanguage}
           busyIdentity={busyIdentity}
           actionsDisabled={acceptedRefreshFailed}
+          reviewButton={context === "library"}
+          savedReview={savedReview ?? undefined}
           activeTrainingEntryId={trainingGuard?.entryId}
           headwordTrainingBlocked={trainingArticleProtection(trainingGuard, "", group?.headwordGroupId ?? "").headword}
           audioBusy={audioBusy}
@@ -1030,10 +1037,10 @@ function SenseCardV2Session({
       {context === "library" && !collectionsMeaning && collectionStatus ? <p
         role={collectionStatus === platformV2Message(interfaceLanguage, "senseCard.collections.failed") ? "alert" : "status"}
         className={collectionStatus === platformV2Message(interfaceLanguage, "senseCard.collections.failed") ? "px-4 py-2 text-sm text-[var(--practice-text-muted)]" : "sr-only"}>{collectionStatus}</p> : null}
-      {savedReviewMessageKey && !errorNotice ? <p role="status" aria-live="polite" aria-atomic="true"
+      {context !== "library" && savedReview && !errorNotice ? <p role="status" aria-live="polite" aria-atomic="true"
         className="shrink-0 px-4 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
         {platformV2Message(interfaceLanguage, "senseCard.learning.reviewSaved", {
-          rating: platformV2Message(interfaceLanguage, savedReviewMessageKey),
+          rating: platformV2Message(interfaceLanguage, savedReview.messageKey),
         })}
       </p> : null}
       {errorNotice}

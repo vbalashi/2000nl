@@ -267,7 +267,7 @@ function buildMeaning(
     reviewCount: entry.card?.scheduler.reviewCount ?? null,
     lastGrade: entry.card?.scheduler.lastGrade ?? null,
     nextDueAt: entry.card?.scheduler.phase === "learning"
-      ? entry.card.scheduler.learningDueAt ?? null
+      ? entry.card.scheduler.learningDueAt ?? entry.card.scheduler.nextReviewAt ?? null
       : entry.card?.scheduler.nextReviewAt ?? null,
     meaningProgress: entry.card?.meaningProgress,
     schedulerPhase: entry.card?.scheduler.phase ?? null,

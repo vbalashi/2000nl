@@ -3,7 +3,7 @@ import { localizedField } from "@/lib/i18n/catalog";
 
 import React from "react";
 import { RatingControls, type Rating } from "@/components/practice/RatingControls";
-import { Check, Flag, List, MoreHorizontal, ChartNoAxesColumn, LockKeyhole, Plus, Minus, Archive, Copy, StickyNote } from "lucide-react";
+import { Check, ChevronDown, Flag, List, MoreHorizontal, ChartNoAxesColumn, LockKeyhole, Plus, Minus, Archive, Copy, StickyNote } from "lucide-react";
 import { ActionMenu, type ActionMenuItem } from "@/components/practice/ui/ActionMenu";
 import { getUiMessages } from "@/lib/uiMessages";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -14,9 +14,11 @@ import { independentEntryCopyText } from "@/lib/platform/independentEntryCopyTex
 import s from "@/components/practice/article/articleActions.module.css";
 
 /** Presentation adapter; authoritative capabilities and callbacks stay with the owner. */
-export function LibraryMeaningActions({ meaning, language, busy, collectionCount, currentCollection, recentCollections, onAction, onCollections, onReport, onExclude, onArchive, onCopy, onEditNote, exclusionDisabled, onProgress, onResume, activeTraining = false, headwordTrainingBlocked = false }: {
+export function LibraryMeaningActions({ meaning, language, busy, collectionCount, currentCollection, recentCollections, onAction, onCollections, onReport, onExclude, onArchive, onCopy, onEditNote, exclusionDisabled, onProgress, onResume, activeTraining = false, headwordTrainingBlocked = false, reviewButton = true, savedReview }: {
   activeTraining?: boolean;
   headwordTrainingBlocked?: boolean;
+  reviewButton?: boolean;
+  savedReview?: LibraryReviewReceipt;
   meaning: LibrarySenseCardModel;
   language: OnboardingLanguage;
   busy: boolean;
@@ -75,7 +77,9 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
       <LockKeyhole size={16} aria-hidden="true"/><div><strong>{protectionCopy.title}</strong><span>{protectionCopy.hint}</span></div>
     </div> : blocked && onResume ? <button type="button" className={s.primary} disabled={busy || resumeBlocked} onClick={()=>{if(!resumeBlocked)onResume();}}>{getUiMessages(language).learningProgress.resume}</button> : primary ? <button type="button" className={s.primary} disabled={busy} onClick={()=>onAction(primary)}>{t(primary.messageKey)}</button>
       : null}
-    {!activeTraining && !primary && !blocked ? <LibraryMeaningRatings meaning={meaning} language={language} busy={busy} onAction={onAction}/> : null}
+    {!activeTraining && !primary && !blocked ? (reviewButton
+      ? <LibraryReviewButton meaning={meaning} language={language} busy={busy} onAction={onAction} savedReview={savedReview}/>
+      : <LibraryMeaningRatings meaning={meaning} language={language} busy={busy} onAction={onAction}/>) : null}
     {!activeTraining && resumeBlocked && blocked ? <p className={s.status}>{protectionCopy.headwordHint}</p> : null}
     <div data-testid="library-service-actions" className={s.row}>
       {onCollections ? <button data-onboarding="meaning-collections" ref={collectionTrigger} type="button" className={s.quiet}
@@ -95,10 +99,91 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
 
 const reviewRating = { fail: "Again", hard: "Hard", success: "Good", easy: "Easy" } as const;
 /** Only authoritative direct capabilities are projected by the Library model. */
-export function LibraryMeaningRatings({meaning,language,busy,onAction}:{meaning:LibrarySenseCardModel;language:OnboardingLanguage;busy:boolean;onAction:(capability:LibraryMutationCapability)=>void}) {
+type ReviewProps = {
+  meaning: LibrarySenseCardModel;
+  language: OnboardingLanguage;
+  busy: boolean;
+  onAction: (capability: LibraryMutationCapability) => void;
+};
+
+export type LibraryReviewReceipt = { messageKey: string; revision: string };
+
+export function LibraryMeaningRatings({meaning,language,busy,onAction,firstRef}: ReviewProps & {firstRef?: React.Ref<HTMLButtonElement>}) {
  if (!meaning.reviewCapabilities.length) return null;
- return <RatingControls language={language} height={28} compact disabled={busy}
+ return <RatingControls language={language} height={28} compact disabled={busy} firstRef={firstRef}
    label={platformV2Message(language,"senseCard.sections.reviewPrompt")}
    options={meaning.reviewCapabilities.map(capability=>({rating:reviewRating[capability.reviewResult],label:platformV2Message(language,capability.messageKey)}))}
    onRate={(rating:Rating)=>{const capability=meaning.reviewCapabilities.find(item=>reviewRating[item.reviewResult]===rating);if(capability)onAction(capability);}}/>;
+}
+
+const gradeKeys = { 1: "fail", 2: "hard", 3: "success", 4: "easy" } as const;
+const minute = 60_000;
+const hour = 60 * minute;
+const day = 24 * hour;
+
+function relativeReviewTime(language: OnboardingLanguage, remaining: number): string {
+  const [unit, divisor] = remaining >= day ? ["day", day] as const
+    : remaining >= hour ? ["hour", hour] as const : ["minute", minute] as const;
+  return new Intl.RelativeTimeFormat(language).format(Math.max(1, Math.round(remaining / divisor)), unit);
+}
+
+function LibraryReviewButton({ meaning, language, busy, onAction, savedReview }: ReviewProps & {
+  savedReview?: LibraryReviewReceipt;
+}) {
+  const revision = meaning.reviewCapabilities[0]?.target.stateRevision;
+  const receipt = savedReview?.revision === revision ? savedReview : undefined;
+  const [expandedFor, setExpandedFor] = React.useState<{ revision: string; receipt?: LibraryReviewReceipt } | null>(null);
+  const expanded = expandedFor !== null && expandedFor.revision === revision && expandedFor.receipt === receipt;
+  const [clock, updateClock] = React.useState(Date.now);
+  const dueAt = meaning.nextDueAt ? Date.parse(meaning.nextDueAt) : NaN;
+  const remaining = dueAt - clock;
+  const firstRating = React.useRef<HTMLButtonElement>(null);
+  const trigger = React.useRef<HTMLButtonElement>(null);
+  const restoreFocus = React.useRef(false);
+
+  React.useEffect(() => {
+    if (!(remaining > 0)) return;
+    const timer = window.setTimeout(() => updateClock(Date.now()), Math.min(remaining, minute));
+    return () => window.clearTimeout(timer);
+  }, [remaining]);
+
+  React.useLayoutEffect(() => {
+    if (expanded) firstRating.current?.focus();
+    else if (!busy && restoreFocus.current && trigger.current) {
+      trigger.current.focus();
+      restoreFocus.current = false;
+    }
+  }, [busy, expanded]);
+
+  if (!revision) return null;
+  const t = (key: string) => platformV2Message(language, key);
+  const grade = meaning.lastGrade ? t(`senseCard.review.${gradeKeys[meaning.lastGrade]}`) : null;
+  const status = receipt ? platformV2Message(language, "senseCard.learning.reviewSaved", { rating: t(receipt.messageKey) })
+    : remaining <= 0 && grade ? t("senseCard.learning.reviewDue")
+    : grade ? `${t("senseCard.state.lastGrade")} · ${grade}`
+    : t("senseCard.learning.rate");
+  const timing = remaining > 0 ? relativeReviewTime(language, remaining) : null;
+
+  if (expanded) return <div onKeyDown={event => {
+    if (event.key === "Escape" && !busy) {
+      event.stopPropagation();
+      restoreFocus.current = true;
+      setExpandedFor(null);
+    }
+  }}>
+    <LibraryMeaningRatings meaning={meaning} language={language} busy={busy} onAction={onAction} firstRef={firstRating}/>
+  </div>;
+
+  return <button type="button" ref={trigger} className={`${s.primary} ${s.reviewPrimary}`}
+    aria-expanded={false} disabled={busy} onClick={() => {
+      updateClock(Date.now());
+      restoreFocus.current = true;
+      setExpandedFor({ revision, receipt });
+    }}>
+    {receipt ? <Check size={13} aria-hidden="true"/> : null}
+    <span>{status}{timing ? <span className={s.reviewTiming}>
+      {" · "}<span className="sr-only">{t("senseCard.state.nextReview")}{" "}</span>{timing}
+    </span> : null}</span>
+    <ChevronDown size={13} aria-hidden="true"/>
+  </button>;
 }

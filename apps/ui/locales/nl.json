@@ -58,7 +58,9 @@
     "learning": {
       "savedReloadFailed": "Opgeslagen. De bijgewerkte leerstatus kon niet worden geladen. Probeer opnieuw om te vernieuwen.",
       "reviewSaved": "Beoordeling opgeslagen: {rating}",
-      "start": "Leren"
+      "start": "Leren",
+      "rate": "Beoordeel je kennis",
+      "reviewDue": "Tijd om te herhalen"
     },
     "known": {
       "mark": "Markeer als bekend",

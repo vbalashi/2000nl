@@ -343,7 +343,7 @@ describe("LibrarySenseCardV2Session", () => {
     fetchMemberships.mockResolvedValue(new Map());
   });
 
-  test("Learn exposes direct grades inline; a pending double click sends one canonical action", async()=>{
+  test("Learn opens rating on demand; a saved grade replaces the four buttons", async()=>{
     const learnedGroup=structuredClone(multiSenseBankGroup);
     const learned=learnedGroup.entries.find(item=>item.kind==="sense-card"&&item.entryId===financeEntry.entryId)!;
     if(learned.kind!=="sense-card"||!learned.card)throw new Error("fixture");
@@ -355,7 +355,7 @@ describe("LibrarySenseCardV2Session", () => {
     const card=await screen.findByTestId(`library-sense-card-${financeEntry.entryId}`);
     expect(performAction).not.toHaveBeenCalled();
     fireEvent.click(within(card).getByRole("button",{name:"Learn"}));
-    await within(card).findByRole("button",{name:"Good"});
+    fireEvent.click(await within(card).findByRole("button",{name:"Rate knowledge"}));
     expect(within(card).getByText("Learning")).toBeInTheDocument();
     expect(performAction).toHaveBeenCalledWith(expect.objectContaining({actionId:"start-learning",target:expect.objectContaining({entryId:financeEntry.entryId,cardTypeId:"word-to-definition"})}));
     expect(fetchGroup).toHaveBeenCalledWith(expect.objectContaining({cardTypeId:"word-to-definition"}));
@@ -367,17 +367,38 @@ describe("LibrarySenseCardV2Session", () => {
     expect(performAction).toHaveBeenCalledWith(expect.objectContaining({actionId:"review-card",reviewResult:"success",target:expect.objectContaining({entryId:financeEntry.entryId,cardTypeId:"word-to-definition"})}));
     for(const name of ["Again","Hard","Good","Easy"])expect(within(card).getByRole("button",{name})).toBeDisabled();
     expect(screen.queryByText("Review saved: Good")).not.toBeInTheDocument();
-    await act(async()=>pending.resolve({accepted:true}));
-    await waitFor(()=>expect(within(card).getByRole("button",{name:"Good"})).toBeEnabled());
-    expect(screen.getByText("Review saved: Good")).toHaveAttribute("role", "status");
+    const ratedGroup = structuredClone(learnedGroup);
+    const rated = ratedGroup.entries.find(item => item.kind === "sense-card" && item.entryId === financeEntry.entryId)!;
+    if (rated.kind !== "sense-card" || !rated.card) throw new Error("fixture");
+    rated.card.scheduler = {
+      phase: "learning", repeatCount: 1, lastGrade: 3, learningDueAt: null,
+      nextReviewAt: new Date(Date.now() + 86_400_000).toISOString(),
+    };
+    rated.card.stateRevision = "rated-revision";
+    for (const capability of rated.capabilities) {
+      if (capability.actionId === "review-card") capability.target.stateRevision = rated.card.stateRevision;
+    }
+    fetchGroup.mockResolvedValue(ratedGroup);
+    await act(async()=>pending.resolve({accepted:true,card:rated.card}));
+    const saved = await within(card).findByRole("button",{name:"Review saved: Good · Next review in 1 day"});
+    expect(saved).toHaveFocus();
+    expect(within(card).queryByRole("button",{name:"Good"})).not.toBeInTheDocument();
+    expect(screen.queryByText("Review saved: Good", {selector:"p"})).not.toBeInTheDocument();
+    fireEvent.click(saved);
+    expect(within(card).getByRole("button",{name:"Again"})).toHaveFocus();
+    expect(performAction).toHaveBeenCalledOnce();
+    fireEvent.keyDown(within(card).getByRole("button",{name:"Again"}),{key:"Escape"});
+    expect(within(card).getByRole("button",{name:/Review saved: Good/})).toHaveFocus();
     expect(within(card).queryByRole("button",{name:"Train next"})).not.toBeInTheDocument();
   });
 
   test("saved review feedback clears when a different meaning is opened",async()=>{
     const view=render(<LibrarySenseCardV2Session entryId={furnitureEntry.entryId} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
     const card=await screen.findByTestId(`library-sense-card-${furnitureEntry.entryId}`);
+    performAction.mockResolvedValue({accepted:true,card:furnitureEntry.card});
+    fireEvent.click(within(card).getByRole("button",{name:"Rate knowledge"}));
     fireEvent.click(within(card).getByRole("button",{name:"Good"}));
-    await screen.findByText("Review saved: Good");
+    await within(card).findByRole("button",{name:"Review saved: Good"});
     view.rerender(<LibrarySenseCardV2Session entryId={financeEntry.entryId} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
     await waitFor(()=>expect(screen.queryByText("Review saved: Good")).not.toBeInTheDocument());
     expect(performAction).toHaveBeenCalledTimes(1);
@@ -387,6 +408,7 @@ describe("LibrarySenseCardV2Session", () => {
     fetchGroup.mockResolvedValueOnce(multiSenseBankGroup).mockRejectedValueOnce(new Error("offline")).mockResolvedValue(multiSenseBankGroup);
     render(<LibrarySenseCardV2Session entryId={furnitureEntry.entryId} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
     const card=await screen.findByTestId(`library-sense-card-${furnitureEntry.entryId}`);
+    fireEvent.click(within(card).getByRole("button",{name:"Rate knowledge"}));
     fireEvent.click(within(card).getByRole("button",{name:"Good"}));
     expect(await screen.findByRole("alert")).toHaveTextContent("Saved. Could not reload");
     expect(screen.queryByText("Review saved: Good")).not.toBeInTheDocument();
@@ -394,7 +416,7 @@ describe("LibrarySenseCardV2Session", () => {
     expect(performAction).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole("button",{name:"Retry"}));
     await waitFor(()=>expect(screen.queryByRole("alert")).not.toBeInTheDocument());
-    expect(within(screen.getByTestId(`library-sense-card-${furnitureEntry.entryId}`)).getByRole("button",{name:"Good"})).toBeEnabled();
+    expect(within(screen.getByTestId(`library-sense-card-${furnitureEntry.entryId}`)).getByRole("button",{name:"Rate knowledge"})).toBeEnabled();
     expect(performAction).toHaveBeenCalledOnce();
   });
 
@@ -404,11 +426,12 @@ describe("LibrarySenseCardV2Session", () => {
     const first=await screen.findByTestId(`library-sense-card-${furnitureEntry.entryId}`);
     const second=screen.getByTestId(`library-sense-card-${financeEntry.entryId}`);
     fireEvent.click(within(second).getByRole("button",{name:"Expand meaning"}));
+    fireEvent.click(within(first).getByRole("button",{name:"Rate knowledge"}));
     fireEvent.click(within(first).getByRole("button",{name:"Good"}));
     expect(within(second).getByRole("button",{name:"Learn"})).toBeDisabled();
     fireEvent.click(within(second).getByRole("button",{name:"Learn"}));
     expect(performAction).toHaveBeenCalledOnce();
-    await act(async()=>pending.resolve({accepted:true}));
+    await act(async()=>pending.resolve({accepted:true,card:furnitureEntry.card}));
   });
 
   test("Training More keeps enrolled meanings read-only while new meanings retain Learn",async()=>{

@@ -1839,5 +1839,7 @@
   "ui.maintenance.dismiss": {"source":"Got it","translationHash":"e2ce86b38fd50965e8ebbd6b23b0c65544b2018e23abe6f68bd3b94b03b68e8e"},
   "ui.maintenance.activeTitle": {"source":"Updating the app","translationHash":"d9a795c0b3598dd66c31f4dfd6d24a92ac3e45809bee448a690c55635842c2af"},
   "ui.maintenance.activeWait": {"source":"Please wait a few minutes.","translationHash":"8bb7d20db278ef424fee09e863345beb56d031aa2058e58759d9012059234896"},
-  "ui.maintenance.activeReturn": {"source":"This page will reopen automatically when everything is ready.","translationHash":"3399467383a697934ea8cc311237aea106a830f1f26a3eec22d4e92fc7e0db7e"}
+  "ui.maintenance.activeReturn": {"source":"This page will reopen automatically when everything is ready.","translationHash":"3399467383a697934ea8cc311237aea106a830f1f26a3eec22d4e92fc7e0db7e"},
+  "senseCard.learning.rate": {"source":"Rate knowledge","translationHash":"a4cedff9bc6b00951809bd202f3a772f40eb19aae84c8c5718ed5a4ded8f240b"},
+  "senseCard.learning.reviewDue": {"source":"Time to review","translationHash":"0982474e7e72411280d875782d97c04f9db834440d1832653ab8bbe703198ddb"}
 }
