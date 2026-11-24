@@ -1,0 +1,134 @@
+name: Playwright Chromium and WebKit benchmark
+on:
+  push:
+    branches: [codex/194-playwright-webkit-benchmark]
+    paths: [.github/workflows/playwright-webkit-benchmark.yml]
+permissions:
+  contents: read
+jobs:
+  install-per-job:
+    name: Install per job (${{ matrix.sample }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        sample: [1, 2, 3]
+    defaults:
+      run:
+        working-directory: apps/ui
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/ui/package-lock.json
+      - name: Choose conservative browser profile
+        id: profile
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          BEFORE: ${{ github.event.before }}
+          HEAD: ${{ github.sha }}
+        run: |
+          base="$BEFORE"
+          if [[ "$EVENT_NAME" == 'pull_request' ]]; then base="$PR_BASE"; fi
+          # Run the selector from the trusted base, never the proposed change.
+          # If absent/invalid/non-ancestor, keep the full suite.
+          profile=full
+          if [[ "$base" =~ ^[a-f0-9]{40}$ ]] && git show "$base:scripts/ci/browser-profile.mjs" > "$RUNNER_TEMP/browser-profile.mjs" 2>/dev/null; then
+            profile=$(node "$RUNNER_TEMP/browser-profile.mjs" "$base" "$HEAD") || profile=full
+          fi
+          [[ "$profile" == 'release' || "$profile" == 'full' ]] || profile=full
+          echo "profile=$profile" >> "$GITHUB_OUTPUT"
+          echo "Browser profile: $profile"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit
+      - if: steps.profile.outputs.profile == 'release'
+        run: npx playwright test playwright/tests/release-updates.spec.ts
+      - if: steps.profile.outputs.profile == 'full'
+        run: npm run test:e2e:received-groups
+      - if: steps.profile.outputs.profile == 'full'
+        run: npm run test:e2e
+      - if: steps.profile.outputs.profile == 'full'
+        run: npm run test:e2e:i18n
+      - if: steps.profile.outputs.profile == 'full'
+        run: npm run test:e2e:training-reliability
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: install-per-job-failure-${{ matrix.sample }}
+          path: apps/ui/test-results
+          retention-days: 7
+  prebuilt-image:
+    name: Prebuilt image (${{ matrix.sample }})
+    runs-on: ubuntu-24.04
+    container:
+      # Ubuntu 24.04 amd64 manifest of v1.57.0-noble, matching the UI lockfile.
+      image: mcr.microsoft.com/playwright@sha256:8fb7af3bb488c51364d6554876a8eddf377736608327dbdf4177b4901faf7bc9
+      options: --init --ipc=host
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        sample: [1, 2, 3]
+    defaults:
+      run:
+        working-directory: apps/ui
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/ui/package-lock.json
+      - name: Trust the checked-out repository in the job container
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git rev-parse --show-toplevel
+      - name: Choose conservative browser profile
+        id: profile
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          BEFORE: ${{ github.event.before }}
+          HEAD: ${{ github.sha }}
+        run: |
+          base="$BEFORE"
+          if [[ "$EVENT_NAME" == 'pull_request' ]]; then base="$PR_BASE"; fi
+          # Run the selector from the trusted base, never the proposed change.
+          # If absent/invalid/non-ancestor, keep the full suite.
+          profile=full
+          if [[ "$base" =~ ^[a-f0-9]{40}$ ]] && git show "$base:scripts/ci/browser-profile.mjs" > "$RUNNER_TEMP/browser-profile.mjs" 2>/dev/null; then
+            profile=$(node "$RUNNER_TEMP/browser-profile.mjs" "$base" "$HEAD") || profile=full
+          fi
+          [[ "$profile" == 'release' || "$profile" == 'full' ]] || profile=full
+          echo "profile=$profile" >> "$GITHUB_OUTPUT"
+          echo "Browser profile: $profile"
+      - run: npm ci
+      - name: Check that the lockfile matches installed browsers
+        run: |
+          test "$(node -p 'require("@playwright/test/package.json").version')" = 1.57.0
+          node -e 'const fs = require("node:fs"); const {chromium, webkit} = require("playwright"); for (const browser of [chromium, webkit]) fs.accessSync(browser.executablePath(), fs.constants.X_OK)'
+      - if: steps.profile.outputs.profile == 'release'
+        run: npx playwright test playwright/tests/release-updates.spec.ts
+      - if: steps.profile.outputs.profile == 'full'
+        run: npm run test:e2e:received-groups
+      - if: steps.profile.outputs.profile == 'full'
+        run: npm run test:e2e
+      - if: steps.profile.outputs.profile == 'full'
+        run: npm run test:e2e:i18n
+      - if: steps.profile.outputs.profile == 'full'
+        run: npm run test:e2e:training-reliability
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: prebuilt-image-failure-${{ matrix.sample }}
+          path: apps/ui/test-results
+          retention-days: 7
