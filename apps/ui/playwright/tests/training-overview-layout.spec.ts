@@ -36,6 +36,8 @@ for(const profile of [{name:'desktop',width:1280,height:900,language:'en',dark:f
  await page.screenshot({path:info.outputPath('selected34.png'),fullPage:true});
  if(profile.width<500){
   await page.setViewportSize({width:320,height:568});await page.emulateMedia({reducedMotion:'reduce'});
+  expect(await hero.evaluate(el=>getComputedStyle(el).overflowY)).toBe("visible");
+  expect(await hero.evaluate(el=>el.scrollHeight<=el.clientHeight+1)).toBe(true);
   const small=await hero.boundingBox();expect(small!.height).toBeLessThanOrEqual(284);
   const action=await hero.getByRole('button',{name:'Повторить раньше срока'}).boundingBox();expect(action!.y+action!.height).toBeLessThanOrEqual(small!.y+small!.height);
   expect(await hero.locator('dd span').first().evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
