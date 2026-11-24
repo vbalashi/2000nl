@@ -9,6 +9,7 @@ import { fetchMeaningProgress } from "@/lib/platform/meaningProgressClient";
 import { saveTrainingKnownChoice } from "@/lib/platform/trainingKnownChoiceClient";
 import type { MeaningLearningProgress } from "../../../../../packages/shared/types/meaningLearningProgress";
 import { meaningDirections, type MeaningDirection, type TrainingKnownChoiceRequest } from "../../../../../packages/shared/types/trainingKnownChoice";
+import { TrainingKnownDirection } from "./TrainingKnownDirection";
 import { TrainingCardShell, trainingStageClassName, useCompactAnswerLayout } from "./TrainingCardTemplates";
 import approved from "../approvedTrainingCard.module.css";
 import builder from "../pilot/approvedTrainingBuilder.module.css";
@@ -46,7 +47,7 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
     void fetchMeaningProgress(entryId,controller.signal).then(value=>{
       if(controller.signal.aborted)return;
       setProgress(value);
-      setKnown(meaningDirections.filter(d=>d===direction||Boolean(value.exclusionId)||Boolean(value.directions.find(state=>state.cardTypeId===d)?.knownMarkId)));
+      setKnown(meaningDirections.filter(d=>d===direction||isDirectionKnown(value,d)));
       nextRef.current?.focus({preventScroll:true});
     }).catch(()=>{if(!controller.signal.aborted)setError("loadFailed");});
     return ()=>{mounted.current=false;controller.abort();};
@@ -74,13 +75,14 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
         {!progress&&!error?<p className={s.loading} role="status">{t.loading}</p>:null}
         {progress?<div className={s.cards}>{meaningDirections.map(d=>{
           const isKnown=known.includes(d),direct=d==="word-to-definition";
-          return <div key={d} className={s.direction} data-known={isKnown} role="group" aria-label={direct?t.direct:t.reverse}>
-            <DirectionCard label={direct?t.direct:t.reverse} labelIcon={direct?<ArrowRight size={14} aria-hidden="true"/>:<ArrowLeft size={14} aria-hidden="true"/>} selected={false} prompt={direct?headword:definition} answer={direct?definition:headword} promptLanguage={contentLanguage} answerLanguage={contentLanguage}
+          const label=direct?t.direct:t.reverse;
+          return <TrainingKnownDirection key={d} label={label} initiallyKnown={isDirectionKnown(progress,d)} known={isKnown}
+            knownLabel={t.known} learningLabel={t.learning} actionLabel={isKnown?t.returnToLearning:t.markKnown}
+            disabled={busy||disabled||Boolean(frozen.current)}
+            onToggle={()=>setKnown(current=>isKnown?current.filter(value=>value!==d):[...current,d])}>
+            <DirectionCard label={label} labelIcon={direct?<ArrowRight size={14} aria-hidden="true"/>:<ArrowLeft size={14} aria-hidden="true"/>} selected={false} prompt={direct?headword:definition} answer={direct?definition:headword} promptLanguage={contentLanguage} answerLanguage={contentLanguage}
               classes={{card:s.preview,heading:`${builder.directionHeading} ${s.heading}`,headingLabel:builder.directionHeadingLabel,check:"hidden",prompt:builder.prompt,arrow:builder.directionArrow,answer:builder.answer}}/>
-            <div className={s.status}><span role="status" className={s.stateLabel}>{isKnown?t.known:t.learning}</span>
-              <button type="button" className={s.link} disabled={busy||disabled||Boolean(frozen.current)} onClick={()=>setKnown(current=>isKnown?current.filter(value=>value!==d):[...current,d])}>{isKnown?t.returnToLearning:t.markKnown}</button>
-            </div>
-          </div>;
+          </TrainingKnownDirection>;
         })}</div>:null}
         {error?<p role="alert" className={s.error}>{t[error]}</p>:null}
         </div>
@@ -91,6 +93,10 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
       <button type="button" ref={nextRef} className={`${approved.primary} ${s.next}`} disabled={!progress||busy||handedOff||disabled||error==="conflict"} onClick={()=>void submit()}>{busy?t.saving:t.next}</button>
     </footer>
   </section>;
+}
+
+function isDirectionKnown(progress: MeaningLearningProgress, direction: MeaningDirection) {
+  return Boolean(progress.exclusionId || progress.directions.find(state=>state.cardTypeId===direction)?.knownMarkId);
 }
 
 function KnownChoiceBody({originSide,label,children}: {originSide:"face"|"answer"; label:string; children:React.ReactNode}) {

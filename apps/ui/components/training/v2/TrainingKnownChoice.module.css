@@ -2,7 +2,7 @@
 .content{display:flex;flex-direction:column;align-items:center;gap:20px;width:100%;margin:auto 0;flex-shrink:0}
 .icon{flex:none;color:var(--practice-accent);margin:4px 0 12px}
 .cards{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto;gap:8px 16px;width:100%;max-width:680px;align-items:stretch}
-.direction{display:grid;grid-template-rows:subgrid;grid-row:span 2;border:1px dashed var(--practice-control-border);border-radius:16px;padding:8px;min-width:0;gap:8px}
+.direction{position:relative;isolation:isolate;display:grid;grid-template-rows:subgrid;grid-row:span 2;border:1px dashed var(--practice-control-border);border-radius:16px;padding:8px;min-width:0;gap:8px}
 .direction[data-known=true]{border-color:transparent;background:var(--practice-surface-subtle)}
 .preview{display:grid;grid-template-rows:auto 1fr auto 1fr;gap:6px;min-width:0;min-height:172px;padding:10px;border:1px solid var(--practice-control-border);border-radius:14px;background:var(--practice-surface);text-align:center;color:var(--practice-text-secondary)}
 .status{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:3px;padding:4px;font-size:var(--practice-text-small);color:var(--practice-text-secondary)}
@@ -15,6 +15,139 @@
 .preview .heading > span:last-child{display:none}
 
 .stateLabel{font-size:var(--practice-text-body);font-weight:600;line-height:1.4;color:var(--practice-text)}
-.direction[data-known=true] .stateLabel{color:var(--practice-accent)}
+.direction[data-known=true] .preview {
+  background: var(--practice-surface-subtle);
+  border-color: transparent;
+  color: var(--practice-text-muted);
+  transform: scale(.94);
+}
+
+.direction[data-known=true] .stateLabel {
+  color: var(--practice-text-muted);
+}
+
+.statusText {
+  display: grid;
+}
+
+.statusText > span {
+  grid-area: 1 / 1;
+  align-self: center;
+}
+
+.previousState {
+  display: none;
+}
+
+.pulse {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .direction[data-motion] {
+    --known-motion-duration: 760ms;
+  }
+
+  .direction[data-motion="mark"] {
+    --motion-start-background: transparent;
+    --motion-start-border: var(--practice-control-border);
+    animation: settleKnown var(--known-motion-duration) ease-out;
+  }
+
+  .direction[data-motion="restore"] {
+    --motion-start-background: var(--practice-surface-subtle);
+    --motion-start-border: transparent;
+    animation: restoreLearning var(--known-motion-duration) ease-out;
+  }
+
+  .direction[data-motion="mark"] .preview {
+    --motion-start-background: var(--practice-surface);
+    --motion-start-color: var(--practice-text-secondary);
+    animation: settleKnown var(--known-motion-duration) ease-out;
+  }
+
+  .direction[data-motion="restore"] .preview {
+    --motion-start-color: var(--practice-text-muted);
+    --motion-start-scale: .94;
+    animation: restoreLearning var(--known-motion-duration) ease-out;
+  }
+
+  .direction[data-motion] .pulse {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  .pulse::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    /* The minimum diameter lets the ring reach the top of a tall, narrow card. */
+    width: max(220%, 510px);
+    aspect-ratio: 1;
+    background: radial-gradient(circle,
+      transparent 57%,
+      color-mix(in srgb, var(--practice-accent) 34%, transparent) 67%,
+      transparent 72%);
+    animation: knowledgePulse var(--known-motion-duration) ease-out both;
+  }
+
+  .direction[data-motion] .previousState {
+    display: block;
+    color: var(--practice-text-secondary);
+    font-size: var(--practice-text-body);
+    font-weight: 600;
+    line-height: 1.4;
+    animation: previousStatus var(--known-motion-duration) both;
+  }
+
+  .previousState::before {
+    content: attr(data-label);
+  }
+
+  .direction[data-motion] .stateLabel {
+    animation: nextStatus var(--known-motion-duration) both;
+  }
+}
+
+@keyframes settleKnown {
+  0%, 33% {
+    background-color: var(--motion-start-background);
+    border-color: var(--motion-start-border);
+    color: var(--motion-start-color, var(--practice-text));
+    transform: none;
+  }
+}
+
+@keyframes restoreLearning {
+  0%, 33% {
+    background-color: var(--motion-start-background);
+    border-color: var(--motion-start-border);
+    color: var(--motion-start-color, var(--practice-text));
+    transform: scale(var(--motion-start-scale, 1));
+  }
+}
+
+@keyframes knowledgePulse {
+  0% { transform: translate(-50%, 47%) scale(.04); opacity: 0; }
+  19% { opacity: 1; }
+  72% { opacity: .85; }
+  100% { transform: translate(-50%, 47%) scale(1.28); opacity: 0; }
+}
+
+@keyframes previousStatus {
+  0%, 27% { opacity: 1; }
+  43%, 100% { opacity: 0; }
+}
+
+@keyframes nextStatus {
+  0%, 41% { opacity: 0; }
+  70%, 100% { opacity: 1; }
+}
 
 .cards[data-single=true]{grid-template-columns:minmax(0,1fr);max-width:330px}

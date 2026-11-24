@@ -13,9 +13,12 @@ panels share equal height. Their status and underlined action are centred.
 The editor reuses the training shell and preserves its bounds and the current
 action dock height, including wrapped review controls. Next replaces the main
 action in that dock. The choice group is vertically centred inside the shell.
-Known state uses a quiet theme background without an accent border; status text
-is stronger than the action links, and the icon follows the current theme.
-Preview typography and direction arrows match the training builder.
+When a direction changes, a single pulse crosses that preview as its status
+changes. A known preview settles slightly smaller and uses a quieter theme
+background. Its Return to learning action stays available. A direction that was
+already known starts in the settled state. Reduced motion shows the status and
+settled preview immediately. Preview typography and direction arrows match the
+training builder.
 
 English statuses/actions are Already know / Return to learning and Still learning /
 Mark as known. Russian uses Уже знаю / Вернуть в обучение and Ещё изучаю /
