@@ -110,7 +110,7 @@ export async function requireAdmin(request: Request, permission?: AdminPermissio
       service.from("admin_operator_sessions").select("auth_session_id").eq("auth_session_id", sessionId).eq("operator_user_id", user.id).is("revoked_at", null).gt("expires_at", new Date().toISOString()).maybeSingle(),
     ]);
     if (operatorError || activeSessionError) throw new Error("Admin authorization lookup failed");
-    if (!operator || !operator.is_active || operator.email !== user.email.toLowerCase() || !activeSession) {
+    if (!operator || !operator.is_active || operator.email !== user.email.toLowerCase()) {
       await writeAdminAuditEvent({
         operatorUserId: user.id,
         action: "access.denied",
@@ -134,6 +134,10 @@ export async function requireAdmin(request: Request, permission?: AdminPermissio
         context,
       });
       throw new AdminAccessError(403, "forbidden");
+    }
+    if (!activeSession) {
+      await auditDenied(request, user.id);
+      throw new AdminAccessError(401, "unauthorized");
     }
     return {
       userId: user.id,
