@@ -36,4 +36,6 @@ export function onTrainingAvailabilityInvalidated(listener: (ownerId?: string) =
 }
 // Domain subscription survives Training overview unmounting during grading.
 // Ordinary action notifications have no owner payload, so clear every retained owner.
-onPlatformV2CardStateChanged(() => invalidateTrainingAvailability());
+onPlatformV2CardStateChanged((_entryId, actualChange) => {
+  if (actualChange) invalidateTrainingAvailability();
+});

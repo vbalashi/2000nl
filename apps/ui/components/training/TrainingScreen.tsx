@@ -300,7 +300,8 @@ function TrainingScreenContent({
         const snapshot=activeExerciseFamily==="idiom"
           ? await fetchPlatformV2IdiomTrainingSessionSnapshot(user.id,sessionId)
           : await fetchPlatformV2TranslationTrainingSessionSnapshot(user.id,sessionId);
-        if(!snapshot || snapshot.runStatus==="superseded")return {kind:"superseded"};
+        if (!snapshot) return {kind:"unavailable"};
+        if(snapshot.runStatus==="superseded")return {kind:"superseded"};
         return {kind:"active",commit:()=>{
           if(snapshot.exerciseFamily==="idiom")setIdiomSession(current=>current?.sessionId===sessionId ? {...snapshot,completedActions:Math.max(current.completedActions,snapshot.completedActions)} : current);
           else setSentenceSession(current=>current?.sessionId===sessionId ? {...snapshot,completedActions:Math.max(current.completedActions,snapshot.completedActions)} : current);
@@ -308,7 +309,8 @@ function TrainingScreenContent({
       }
       const snapshot = await fetchTrainingSessionSnapshot(user.id, sessionId);
       const decision = decideAuthoritySnapshot(snapshot, sessionId, reconciledSessionPlanRef.current);
-      if (decision.kind === "superseded" || !snapshot) return {kind:"superseded"};
+      if (!snapshot || decision.kind === "unavailable") return {kind:"unavailable"};
+      if (decision.kind === "superseded") return decision;
       if (decision.kind !== "replan") return {kind:"active"};
       return {kind:"replan",revision:decision.revision,
         reconcile: async () => {
@@ -1997,9 +1999,9 @@ function TrainingScreenContent({
   useUserEventHints(user?.id, ["training.changed"], async () => {
     if (sessionAuthority.ownerToken.sessionId) await validateTrainingSessionAuthority();
   });
-  useUserEventHints(user?.id, ["learning.changed"], () => {
+  useUserEventHints(user?.id, ["learning.changed"], actualChange => {
     // A domain hint can cover several changed entries in one transaction.
-    publishPlatformV2CardStateChanged();
+    publishPlatformV2CardStateChanged(undefined, actualChange);
   });
   const handleContinueTrainingSession = useCallback(() => {
     if(specializedSessionId){

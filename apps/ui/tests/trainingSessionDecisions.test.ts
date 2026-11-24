@@ -52,7 +52,7 @@ describe("training session decisions", () => {
   });
 
   test.each([
-    [null, null, { kind: "superseded" }],
+    [null, null, { kind: "unavailable" }],
     [{ runStatus: "superseded", planRevision: 4 }, { sessionId: "session-1", revision: 3 }, { kind: "superseded" }],
     [{ runStatus: "active", planRevision: 3 }, { sessionId: "session-1", revision: 3 }, { kind: "unchanged", revision: 3 }],
     [{ runStatus: "active", planRevision: 4 }, { sessionId: "session-1", revision: 3 }, { kind: "replan", revision: 4 }],

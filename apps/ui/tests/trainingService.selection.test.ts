@@ -365,7 +365,8 @@ describe("trainingService next-word selection", () => {
             cardTypeId: "word-to-definition",
             queueSource: "new",
             consumedAt: null,
-            unavailableAt: null,
+            unavailableAt: "2026-09-10T12:01:00.000Z",
+            unavailableReason: "known",
           },
           {
             ordinal: 2,
@@ -400,7 +401,8 @@ describe("trainingService next-word selection", () => {
           cardTypeId: "word-to-definition",
           queueSource: "new",
           consumedAt: null,
-          unavailableAt: null,
+          unavailableAt: "2026-09-10T12:01:00.000Z",
+          unavailableReason: "known",
         },
         {
           ordinal: 2,

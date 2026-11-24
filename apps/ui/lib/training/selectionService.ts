@@ -64,7 +64,7 @@ export type TrainingSessionSnapshotMember = {
   queueSource: string;
   consumedAt: string | null;
   unavailableAt: string | null;
-  unavailableReason?: TrainingSessionUnavailableReason | null;
+  unavailableReason?: TrainingSessionUnavailableReason | "known" | null;
 };
 
 export type TrainingSessionUnavailableReason =
@@ -281,6 +281,7 @@ const mapTrainingSessionSnapshot = (
       (item.unavailableAt !== null && typeof item.unavailableAt !== "string") ||
       (item.unavailableReason !== undefined &&
         item.unavailableReason !== null &&
+        item.unavailableReason !== "known" &&
         !isTrainingSessionUnavailableReason(item.unavailableReason))
     ) {
       return [];
@@ -295,7 +296,7 @@ const mapTrainingSessionSnapshot = (
       ...(item.unavailableReason !== undefined
         ? {
             unavailableReason:
-              item.unavailableReason as TrainingSessionUnavailableReason | null,
+              item.unavailableReason as TrainingSessionSnapshotMember["unavailableReason"],
           }
         : {}),
     }];
