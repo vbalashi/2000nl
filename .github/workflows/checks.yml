@@ -65,10 +65,15 @@ jobs:
           FSRS_TEST_DB_URL: postgres://postgres:postgres@localhost:5432/fsrs_test
   browser:
     runs-on: ubuntu-24.04
+    container:
+      # Ubuntu 24.04 amd64 manifest of v1.57.0-noble, matching the UI lockfile.
+      image: mcr.microsoft.com/playwright@sha256:8fb7af3bb488c51364d6554876a8eddf377736608327dbdf4177b4901faf7bc9
+      options: --init --ipc=host
     timeout-minutes: 60
     defaults:
       run:
         working-directory: apps/ui
+        shell: bash
     steps:
       - uses: actions/checkout@v4
         with:
@@ -78,6 +83,10 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: apps/ui/package-lock.json
+      - name: Trust the checked-out repository in the job container
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git rev-parse --show-toplevel
       - name: Choose conservative browser profile
         id: profile
         env:
@@ -98,7 +107,20 @@ jobs:
           echo "profile=$profile" >> "$GITHUB_OUTPUT"
           echo "Browser profile: $profile"
       - run: npm ci
-      - run: npx playwright install --with-deps chromium webkit
+      - name: Check that the lockfile matches installed browsers
+        run: |
+          version=$(node -p 'require("@playwright/test/package.json").version')
+          if [[ "$version" != 1.57.0 ]]; then
+            echo "::error::Playwright is $version. Update the browser job image and expected version together."
+            exit 1
+          fi
+          node <<'NODE'
+          const {accessSync, constants} = require('node:fs');
+          const {chromium, webkit} = require('playwright');
+          for (const browser of [chromium, webkit]) {
+            accessSync(browser.executablePath(), constants.X_OK);
+          }
+          NODE
       - if: steps.profile.outputs.profile == 'release'
         run: npx playwright test playwright/tests/release-updates.spec.ts
       - if: steps.profile.outputs.profile == 'full'
