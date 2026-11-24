@@ -1,4 +1,5 @@
 "use client";
+import { maintenanceEndedEvent } from "@/lib/maintenance/status";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   APP_RELEASES_TOPIC,
@@ -131,6 +132,7 @@ export function useAppRelease(ownerId: string, unsafe: boolean, language: Onboar
     const online = () => {
       void check(true);
     };
+    window.addEventListener(maintenanceEndedEvent, focused);
     window.addEventListener("focus", focused);
     document.addEventListener("visibilitychange", focused);
     window.addEventListener("online", online);
@@ -183,6 +185,7 @@ export function useAppRelease(ownerId: string, unsafe: boolean, language: Onboar
       request.current = null;
       unsubscribe();
       unsubscribeConnection();
+      window.removeEventListener(maintenanceEndedEvent, focused);
       window.removeEventListener("focus", focused);
       document.removeEventListener("visibilitychange", focused);
       window.removeEventListener("online", online);

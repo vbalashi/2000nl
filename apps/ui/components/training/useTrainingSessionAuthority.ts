@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTrainingOperationScope } from "./useTrainingOperationScope";
 import type { TrainingOperation } from "@/lib/training/trainingOperationScope";
+import { maintenanceEndedEvent } from "@/lib/maintenance/status";
 import { subscribeTrainingSessionInvalidation, subscribeTrainingSessionOwnerInvalidation } from "@/lib/training/sessionResumeStore";
 
 export type TrainingAuthorityRead =
@@ -107,12 +108,14 @@ export function useTrainingSessionAuthorityEvents(authority: Authority, input: {
     const onVisibility = () => { if (!document.hidden) onReturn(); };
     const onOffline = () => invalidate(expected);
     window.addEventListener("focus",onReturn); window.addEventListener("online",onReturn);
+    window.addEventListener(maintenanceEndedEvent,onReturn);
     window.addEventListener("pageshow",onReturn); window.addEventListener("offline",onOffline);
     document.addEventListener("visibilitychange",onVisibility);
     const unsubscribe = subscribeTrainingSessionInvalidation(input.userId,onReturn);
     const unsubscribeOwner = subscribeTrainingSessionOwnerInvalidation(() => supersede(expected));
     return () => {
       window.removeEventListener("focus",onReturn); window.removeEventListener("online",onReturn);
+      window.removeEventListener(maintenanceEndedEvent,onReturn);
       window.removeEventListener("pageshow",onReturn); window.removeEventListener("offline",onOffline);
       document.removeEventListener("visibilitychange",onVisibility);
       unsubscribe(); unsubscribeOwner();

@@ -1,6 +1,8 @@
 import {getRequestInterfaceSnapshot,interfaceSnapshotScript} from "@/lib/i18n/serverSnapshot";
 import {InterfaceCatalogBoundary} from "@/components/system/InterfaceCatalogBoundary";
 import "../styles/globals.css";
+import "../styles/maintenance-screen.css";
+import { MaintenanceBoundary } from "@/components/maintenance/MaintenanceBoundary";
 import { InterfaceLanguageEffect } from "@/components/system/InterfaceLanguageEffect";
 import { startupAppearanceBootstrap } from "@/lib/preferences/startupAppearance";
 import type { ReactNode } from "react";
@@ -117,7 +119,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <SystemThemeEffect />
         <OfflineBanner /></InterfaceCatalogBoundary>
         <DiagnosticReportOutboxBootstrap />
-        {children}
+        <MaintenanceBoundary>{children}</MaintenanceBoundary>
       </body>
     </html>
   );
