@@ -17,6 +17,7 @@ test("first join, reconnect and event bursts coalesce scoped authoritative reads
   transport.subscriptions[0].listener({ kind: "account.changed" });
   await vi.advanceTimersByTimeAsync(1);
   expect(refresh).toHaveBeenCalledOnce();
+  expect(refresh).toHaveBeenLastCalledWith(true);
   transport.subscriptions[0].listener({ kind: "account.changed", resourceId: "unrelated" });
   await vi.advanceTimersByTimeAsync(1);
   expect(refresh).toHaveBeenCalledOnce();
@@ -24,6 +25,7 @@ test("first join, reconnect and event bursts coalesce scoped authoritative reads
   transport.connections[0]({ status: "connected", reconnect: true });
   await vi.advanceTimersByTimeAsync(1);
   expect(refresh).toHaveBeenCalledTimes(2);
+  expect(refresh).toHaveBeenLastCalledWith(false);
   subscription.dispose();
   expect(transport.detach).toHaveBeenCalledTimes(2);
 });

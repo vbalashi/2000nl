@@ -5,8 +5,9 @@ import { appUserTopic, subscribeAppEvents, subscribeAppEventConnection, type App
 /** Hints only schedule authoritative reads. Coalesce bursts and reconnects, and
  * defer a read during an optimistic write until its owner explicitly flushes. */
 export function subscribeUserEventHints(userId: string | undefined, kinds: readonly AppEventKind[],
-  refresh: () => void | Promise<unknown>, blocked: () => boolean = () => false) {
+  refresh: (actualChange?: boolean) => void | Promise<unknown>, blocked: () => boolean = () => false) {
   let disposed = false, dirty = false, running = false;
+  let receivedEvent = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const flush = () => {
     if (disposed || !dirty || running || timer || blocked()) return;
@@ -15,7 +16,9 @@ export function subscribeUserEventHints(userId: string | undefined, kinds: reado
       if (disposed || blocked()) return;
       dirty = false;
       running = true;
-      void Promise.resolve().then(refresh).catch(() => { /* Read owner reports its own failure. */ }).finally(() => {
+      const actualChange = receivedEvent;
+      receivedEvent = false;
+      void Promise.resolve().then(() => refresh(actualChange)).catch(() => { /* Read owner reports its own failure. */ }).finally(() => {
         running = false;
         flush();
       });
@@ -30,6 +33,7 @@ export function subscribeUserEventHints(userId: string | undefined, kinds: reado
     if (topic) {
       const events = subscribeAppEvents({ topic, kinds }, event => {
         if (event.kind === "account.changed" && event.resourceId && event.resourceId !== "user_settings") return;
+        receivedEvent = true;
         hint();
       });
       let connected = false, safetyTicks = 0;
@@ -54,14 +58,14 @@ export function subscribeUserEventHints(userId: string | undefined, kinds: reado
   return { flush, dispose: () => { disposed = true; if (timer) clearTimeout(timer); detach(); } };
 }
 export function useUserEventHints(userId: string | undefined, kinds: readonly AppEventKind[],
-  refresh: () => void | Promise<unknown>, blocked?: () => boolean) {
+  refresh: (actualChange?: boolean) => void | Promise<unknown>, blocked?: () => boolean) {
   const latest = useRef({ refresh, blocked });
   latest.current = { refresh, blocked };
   const subscription = useRef<ReturnType<typeof subscribeUserEventHints>>();
   const kindsKey = kinds.join(",");
   useEffect(() => {
     const current = subscribeUserEventHints(userId, kindsKey.split(",") as AppEventKind[],
-      () => latest.current.refresh(), () => latest.current.blocked?.() ?? false);
+      actualChange => latest.current.refresh(actualChange), () => latest.current.blocked?.() ?? false);
     subscription.current = current;
     return () => { current.dispose(); };
   }, [userId, kindsKey]);

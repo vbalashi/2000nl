@@ -6,6 +6,7 @@ import type { TrainingOperation } from "@/lib/training/trainingOperationScope";
 import { subscribeTrainingSessionInvalidation, subscribeTrainingSessionOwnerInvalidation } from "@/lib/training/sessionResumeStore";
 
 export type TrainingAuthorityRead =
+  | { kind: "unavailable" }
   | { kind: "active"; commit?:()=>void }
   | { kind: "superseded" }
   | { kind: "replan"; revision: number; reconcile: () => Promise<boolean>; commit: () => void };
@@ -59,6 +60,11 @@ export function useTrainingSessionAuthority(input: {
       const result = await adapter.current.read(expected.sessionId);
       if (!current()) return false;
       setRefreshing(false);
+      if (result.kind === "unavailable") {
+        blocked.current = true;
+        setChecking(true);
+        return false;
+      }
       if (result.kind === "superseded") { supersede(expected); return false; }
       if (result.kind === "replan") {
         let pending = pendingReplan.current;

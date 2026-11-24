@@ -25,6 +25,8 @@ test("cancels and ignores stale rapid selection responses", async () => {
 });
 test("invalidates accepted ordinary actions and prevents previous owner data", async () => {
   const { result, rerender } = renderHook(({ owner }) => useTrainingAvailability({ ownerId: owner, recipe: recipe() }), { initialProps: { owner: "a" } }); await waitFor(() => expect(result.current.status).toBe("ready"));
+  act(() => publishPlatformV2CardStateChanged(undefined, false));
+  expect(load).toHaveBeenCalledTimes(1);
   act(() => publishPlatformV2CardStateChanged("entry")); await waitFor(() => expect(load).toHaveBeenCalledTimes(2)); let finish!: (x: ReturnType<typeof value>) => void; load.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; })); rerender({ owner: "b" }); expect(result.current.status).toBe("loading"); await act(async () => finish(value(4))); expect(result.current).toMatchObject({ value: { dueToday: 4 } });
 });
 test("disabled does not request and failed reads do not become fabricated zeros", async () => {

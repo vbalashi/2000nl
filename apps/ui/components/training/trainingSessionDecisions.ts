@@ -51,6 +51,7 @@ export function decideResumePreflight(
 }
 
 export type AuthorityDecision =
+  | { kind: "unavailable" }
   | { kind: "superseded" }
   | { kind: "unchanged"; revision: number }
   | { kind: "replan"; revision: number };
@@ -60,7 +61,8 @@ export function decideAuthoritySnapshot(
   sessionId: string,
   reconciledPlan: { sessionId: string; revision: number } | null,
 ): AuthorityDecision {
-  if (!snapshot || snapshot.runStatus === "superseded") return { kind: "superseded" };
+  if (!snapshot) return { kind: "unavailable" };
+  if (snapshot.runStatus === "superseded") return { kind: "superseded" };
   const revision = snapshot.planRevision ?? 0;
   const previousRevision = reconciledPlan?.sessionId === sessionId
     ? reconciledPlan.revision
