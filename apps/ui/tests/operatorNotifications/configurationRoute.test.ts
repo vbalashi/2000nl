@@ -99,7 +99,11 @@ test('sends the preview to the saved route, including its Telegram topic', async
  mocks.rpc.mockClear();
  expect((await POST(request({...input,chatId:'-100999'}))).status).toBe(400);
  expect(mocks.rpc).not.toHaveBeenCalled();
- mocks.rpc.mockResolvedValueOnce({data:null,error:{code:'40001'}});
- expect((await POST(request(input))).status).toBe(409);
+ for (const code of ['PT409', '40001']) {
+  mocks.rpc.mockResolvedValueOnce({data:null,error:{code,message:'test_route_changed'}});
+  const conflict = await POST(request(input));
+  expect(conflict.status).toBe(409);
+  expect(await conflict.json()).toEqual({error:'test_route_changed'});
+ }
  expect(mocks.send).not.toHaveBeenCalled();
 });

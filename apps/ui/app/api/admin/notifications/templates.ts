@@ -83,7 +83,9 @@ export async function handleTemplateAction(input: Record<string, unknown>, princ
       ...auth, p_route: routeId, p_revision: routeRevision,
       p_kind: kind === 'feedback' || kind === 'admission-request' ? kind : 'deployment',
     });
-    if (error?.code === '40001') return reply({error: 'test_route_changed'}, 409);
+    if (error?.code === 'PT409' || (error?.code === '40001' && error.message === 'test_route_changed')) {
+      return reply({error: 'test_route_changed'}, 409);
+    }
     if (error?.code === '22023') return reply({error: 'bot_not_ready'}, 422);
     if (error?.code === 'P0001') return reply({error: 'test_rate_limit'}, 429);
     if (error || !data || !validBotId(data.botId) || !validChatId(data.chatId) ||

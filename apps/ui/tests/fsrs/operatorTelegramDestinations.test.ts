@@ -34,9 +34,9 @@ describeIfDb('Telegram destinations and deployment notification routes', () => {
         [actor, request, route.id, revision, kind],
       );
       await client.query('savepoint rejects');
-      await expect(authorize(2, 'deployment')).rejects.toMatchObject({code:'40001'});
+      await expect(authorize(2, 'deployment')).rejects.toMatchObject({code:'PT409',message:'test_route_changed'});
       await client.query('rollback to savepoint rejects');
-      await expect(authorize(3, 'feedback')).rejects.toMatchObject({code:'40001'});
+      await expect(authorize(3, 'feedback')).rejects.toMatchObject({code:'PT409',message:'test_route_changed'});
       await client.query('rollback to savepoint rejects');
       await expect(authorize(3, 'deployment', randomUUID())).rejects.toMatchObject({code:'42501'});
       await client.query('rollback to savepoint rejects');
