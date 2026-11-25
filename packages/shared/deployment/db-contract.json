@@ -3,7 +3,7 @@
   "contractId": "2000nl-db-396",
   "rollout": {
     "status": "hold",
-    "coordinationIssue": 221,
+    "coordinationIssue": 224,
     "requiredMigrationId": 396
   },
   "baseline": {
@@ -511,7 +511,7 @@
     {
       "migrationId": 396,
       "file": "db/migrations/396_personal_articles.sql",
-      "sha256": "bfdd576415fdeb95ec66315d36bbd877d81453ba0e72691cd5bd74917d75d769"
+      "sha256": "999fe85565ecebccebd0dcfcbf62d7ae71ff42efd7897389cddae1bbd8bf3114"
     }
   ],
   "postflightProbe": "db/deploy-contract/postflight-396.sql",

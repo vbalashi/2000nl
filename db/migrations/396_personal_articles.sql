@@ -204,13 +204,13 @@ SET search_path=pg_catalog,public,private,pg_temp AS $$
   WITH origin AS (
     SELECT m.id AS article_id,m.dictionary_id,e.headword
     FROM private.article_members_v1 m JOIN private.active_word_entries e ON e.id=m.singleton_entry_id
-    WHERE m.singleton_entry_id=p_entry AND m.owner_user_id=auth.uid()
+    WHERE m.singleton_entry_id=p_entry AND m.owner_user_id=(select auth.uid())
   )
   SELECT (array_agg(e.id ORDER BY e.meaning_id,e.id))[1],
     array_agg(coalesce(e.raw->>'definition',e.raw#>>'{meanings,0,definition}','') ORDER BY e.meaning_id,e.id)
   FROM origin o JOIN private.article_members_v1 m ON m.dictionary_id=o.dictionary_id AND m.id<>o.article_id
   JOIN private.active_word_entries e ON e.id=m.singleton_entry_id AND e.headword=o.headword
-  WHERE m.owner_user_id=auth.uid()
+  WHERE m.owner_user_id=(select auth.uid())
   GROUP BY m.id HAVING count(*)<50
   ORDER BY min(e.meaning_id),m.id;
 $$;
