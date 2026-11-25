@@ -1,4 +1,5 @@
 'use client';
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import React,{useCallback,useEffect,useRef,useState} from 'react';
 import {X} from 'lucide-react';
 import {DialogSurface} from '@/components/practice/ui/DialogSurface';
@@ -42,7 +43,7 @@ export function BorrowedCollectionCopies({userId,scope,name,collections=[],local
   <CorruptLocalRecovery scopeKey={userId} storageKey={collectionCopyJournalKey(userId)} valid={raw=>Boolean(readCollectionCopyJournal(localRecordSnapshotStore(raw),userId))} verify={async signal=>{await requestLabels(signal,undefined,userId);}} trigger={activeId??visible.status} locale={locale} onClose={onClose} onReset={()=>{setActiveId(null);void refresh();}}/>
   <header><h2>{t.copyTitle}</h2><IconAction label={common.close} onClick={onClose}><X size={18}/></IconAction></header>
   <p>{name}</p><p>{copy.notice}</p><p>{t.copySeparation}</p>
-  {visible.status==='loading'&&<p role="status">{common.loading}</p>}
+  {visible.status==='loading'&&<DelayedReadNotice><p role="status">{common.loading}</p></DelayedReadNotice>}
   {visible.status==='error'&&<p role="alert">{copy.failed} <button onClick={()=>void refresh()}>{common.retry}</button></p>}
   {visible.status==='ready'&&!ordered.length&&<p>{t.noBorrowed}</p>}
   {ordered.slice(0,visibleCount).map(row=><CollectionCopyRow key={`${userId}:${row.collectionId}`} userId={userId} row={row} locale={locale} disabled={Boolean(activeId&&activeId!==row.collectionId)} onStarted={()=>setActiveId(row.collectionId)} onSettled={()=>setActiveId(value=>value===row.collectionId?null:value)} onCompleted={()=>{setCompleted(value=>value.some(item=>item.collectionId===row.collectionId)?value:[...value,row]);onChanged?.();void refresh();}}/>)}
@@ -60,7 +61,7 @@ function CollectionCopyRow({userId,row,locale,disabled,onStarted,onSettled,onCom
   if(state.status==='completed'&&state.command&&notified.current!==state.command.operationId){notified.current=state.command.operationId;onCompleted();}
  },[state.status,state.command,onSettled,onCompleted]);
  return <section className={s.copyCollection}><h3>{row.name}</h3>
-  {state.status==='loading'?<p role="status">{common.loading}</p>:state.status==='saving'?<p role="status">{t.pending}</p>:state.status==='completed'?<p role="status">{t.success}</p>:state.status==='uncertain'?<><p role="alert">{t.uncertain}</p><div><button onClick={()=>void controller.check()}>{t.check}</button><button onClick={()=>void controller.retry()}>{sharing.retry}</button></div></>:state.status==='error'?<><p role="alert">{state.reason?.endsWith('_changed')?t.changed:t.failed}</p><button onClick={()=>void controller.refresh()}>{t.refresh}</button></>:<>
+  {state.status==='loading'?<DelayedReadNotice><p role="status">{common.loading}</p></DelayedReadNotice>:state.status==='saving'?<p role="status">{t.pending}</p>:state.status==='completed'?<p role="status">{t.success}</p>:state.status==='uncertain'?<><p role="alert">{t.uncertain}</p><div><button onClick={()=>void controller.check()}>{t.check}</button><button onClick={()=>void controller.retry()}>{sharing.retry}</button></div></>:state.status==='error'?<><p role="alert">{state.reason?.endsWith('_changed')?t.changed:t.failed}</p><button onClick={()=>void controller.refresh()}>{t.refresh}</button></>:<>
    <p>{state.preview?.borrowedCount?formatMessage(group.borrowedCount,{count:state.preview.borrowedCount.toLocaleString(locale)}):group.noBorrowed}</p>
    {state.status==='storage-error'&&<p role="alert">{common.failed}</p>}
    {state.preview?.borrowedCount?state.preview.canCopy?<button disabled={disabled} onClick={()=>{onStarted();void controller.start();}}>{t.confirm}</button>:<p role="alert">{t.failed}</p>:null}

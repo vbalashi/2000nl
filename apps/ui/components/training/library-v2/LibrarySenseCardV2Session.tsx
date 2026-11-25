@@ -59,6 +59,7 @@ type Props = {
   userLists?: WordListSummary[];
   currentCollection?: WordListSummary;
   dictionaryIdInSummary?: string | null;
+  onEditPersonal?: (entryIds: string[]) => void;
   onArchived?: (entryId: string) => void;
   onOpenCopied?: (copy: OpenIndependentCopy) => void;
   onListsUpdated?: () => Promise<void> | void;
@@ -92,6 +93,7 @@ function SenseCardV2Session({
   userLists = [],
   currentCollection,
   dictionaryIdInSummary,
+  onEditPersonal,
   onArchived,
   onOpenCopied,
   onListsUpdated,
@@ -193,7 +195,7 @@ function SenseCardV2Session({
   ]);
   useCardLoadDiagnostics(detailIdentity, loading ? "loading" : lookupError || !group ? "failed" : "ready");
   const detailIdentityRef = React.useRef(detailIdentity);
-  const [noteAuthority,setNoteAuthority]=React.useState<{scope:string;group:PlatformHeadwordGroupV2}|null>(null);
+  const [noteAuthority,setNoteAuthority]=React.useState<{scope:string;group:PlatformHeadwordGroupV2;ownOnly?:boolean}|null>(null);
   React.useEffect(()=>()=>audioController.current?.abort(),[detailIdentity]);
 
   React.useEffect(() => {
@@ -362,13 +364,12 @@ function SenseCardV2Session({
     );
     const compatibleGroup =
       group && (activeReferenceTarget || matchesSelectedEntry) ? group : null;
-    return compatibleGroup
-      ? buildLibrarySenseCardGroupModel(
-          userId&&noteAuthority?.scope===detailIdentity&&noteAuthority.group===compatibleGroup?compatibleGroup:clearPlatformNoteMaterial(compatibleGroup),
-          interfaceLanguage,
-          cardTypeId,
-        )
-      : null;
+    if (!compatibleGroup) return null;
+    const authorized = userId && noteAuthority?.scope === detailIdentity && noteAuthority.group === compatibleGroup;
+    const readableGroup = authorized && !noteAuthority.ownOnly
+      ? compatibleGroup
+      : clearPlatformNoteMaterial(compatibleGroup, authorized ? userId : undefined);
+    return buildLibrarySenseCardGroupModel(readableGroup, interfaceLanguage, cardTypeId);
   }, [activeReferenceTarget, cardTypeId, entryId, group, interfaceLanguage,userId,detailIdentity,noteAuthority]);
 
   React.useEffect(() => {
@@ -466,11 +467,12 @@ function SenseCardV2Session({
 
   const materialReadController=React.useRef<AbortController|null>(null);
   React.useEffect(()=>()=>{materialReadController.current?.abort();},[detailIdentity]);
-  const flushCollectionHints = useUserEventHints(userId, ["collections.changed","notes.changed"], async () => {
+  const flushCollectionHints = useUserEventHints(userId, ["collections.changed","notes.changed"], async (actualChange = true) => {
     materialReadController.current?.abort();
     const controller=new AbortController();materialReadController.current=controller;
-    // Hints never carry trusted note text or grant continued display authority.
-    setGroup(current=>current?clearPlatformNoteMaterial(current):null);
+    // Rejoining the channel also requests a read. Keep the current reader's own
+    // note mounted during that check. Shared notes always need fresh authority.
+    setNoteAuthority(current => actualChange || !current ? null : {...current, ownOnly:true});
     await Promise.allSettled([
       model?loadMemberships(model.meanings.map(meaning=>meaning.entryId),detailIdentity,true):Promise.resolve(),
       load(controller.signal,undefined,detailIdentity),
@@ -894,12 +896,20 @@ function SenseCardV2Session({
       </p>
     ) : null;
 
+  const waitingForArticle = !model && (loading || !lookupError);
+  const [loadingNoticeIdentity,setLoadingNoticeIdentity] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!waitingForArticle) { setLoadingNoticeIdentity(null); return; }
+    const timer = window.setTimeout(() => setLoadingNoticeIdentity(detailIdentity), 350);
+    return () => window.clearTimeout(timer);
+  }, [waitingForArticle,detailIdentity]);
+
   if (!model) {
     return (
-      <div className="relative h-full min-h-0">
-        {loading || !lookupError ? (
+      <div className="relative h-full min-h-0" aria-busy={waitingForArticle} data-testid={waitingForArticle ? "library-sense-card-loading" : undefined}>
+        {waitingForArticle ? loadingNoticeIdentity===detailIdentity && (
           <div
-            data-testid="library-sense-card-loading"
+            role="status"
             className="flex h-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400"
           >
             {platformV2Message(interfaceLanguage, "senseCard.details.loading")}
@@ -1005,7 +1015,8 @@ function SenseCardV2Session({
             setActiveReferenceTarget(target);
           }}
           onProgressChanged={async()=>{await load();}}
-          onCopy={context === "library" && process.env.NEXT_PUBLIC_INDEPENDENT_ENTRY_COPY_ENABLED === "true" && onOpenCopied && userId && !loading && !lookupError && !copyReviewRequired ? meaning => setCopyEntryId(meaning.entryId) : undefined}
+          onEditPersonal={context === "library" && onEditPersonal ? () => onEditPersonal(model.meanings.map(meaning => meaning.entryId)) : undefined}
+          onCopy={context === "library" && !model.isOwnPersonal && process.env.NEXT_PUBLIC_INDEPENDENT_ENTRY_COPY_ENABLED === "true" && onOpenCopied && userId && !loading && !lookupError && !copyReviewRequired ? meaning => setCopyEntryId(meaning.entryId) : undefined}
           onArchive={context === "library" && process.env.NEXT_PUBLIC_AUTHOR_ENTRY_ARCHIVE_ENABLED === "true" && onArchived && userId ? meaning => { if (meaning.canArchive) setArchiveEntryId(meaning.entryId); } : undefined}
           onAction={(capability) => void handleAction(capability)}
           onReport={meaning => {

@@ -20,6 +20,7 @@ type Props = {
   userLists?: WordListSummary[];
   currentCollection?: WordListSummary;
   dictionaryIdInSummary?: string | null;
+  onEditPersonal?: (entryIds: string[]) => void;
   onArchived?: (entryId: string) => void;
   onOpenCopied?: (copy: OpenIndependentCopy) => void;
   onListsUpdated?: () => Promise<void> | void;
@@ -40,6 +41,7 @@ export function LibraryWordDetail({
   userLists,
   currentCollection,
   dictionaryIdInSummary,
+  onEditPersonal,
   onArchived,
   onOpenCopied,
   onListsUpdated,
@@ -47,31 +49,20 @@ export function LibraryWordDetail({
   onOpenListMembership,
   viewport = "all",
 }: Props) {
-  const [viewportMatches, setViewportMatches] = React.useState(
-    viewport === "all",
-  );
-
-  React.useEffect(() => {
-    if (viewport === "all") {
-      setViewportMatches(true);
-      return;
-    }
-    const media = window.matchMedia("(min-width: 701px)");
-    const sync = () =>
-      setViewportMatches(viewport === "desktop" ? media.matches : !media.matches);
-    sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
+  const media = React.useMemo(() => {
+    return viewport === "all" || typeof window === "undefined" ? null
+      : window.matchMedia("(min-width: 701px)");
   }, [viewport]);
-
-  if (!viewportMatches) {
-    return (
-      <div data-testid="library-word-detail-loading" className="h-full animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
-    );
-  }
+  const subscribe = React.useCallback((change:()=>void) => {
+    media?.addEventListener("change",change);
+    return () => media?.removeEventListener("change",change);
+  },[media]);
+  const matches = React.useSyncExternalStore(subscribe, () => !media || (viewport === "desktop" ? media.matches : !media.matches), () => viewport === "all");
+  if (!matches) return null;
 
   return (
     <LibrarySenseCardV2Session
+      key={JSON.stringify([userId,entryId,contentLanguageCode,translationTargetLanguageCode])}
       revealActiveMeaning={revealActiveMeaning}
       entryId={entryId}
       initialGroup={initialGroup}
@@ -83,6 +74,7 @@ export function LibraryWordDetail({
       userLists={userLists}
       currentCollection={currentCollection}
       dictionaryIdInSummary={dictionaryIdInSummary}
+      onEditPersonal={onEditPersonal}
       onArchived={onArchived}
       onOpenCopied={onOpenCopied}
       onListsUpdated={onListsUpdated}

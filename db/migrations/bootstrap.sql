@@ -100,3 +100,4 @@
 \i db/migrations/393_telegram_route_test.sql
 \i db/migrations/394_telegram_route_test_conflict.sql
 \i db/migrations/395_training_stats_dictionary_access.sql
+\i db/migrations/396_personal_articles.sql

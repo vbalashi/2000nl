@@ -1,4 +1,5 @@
 'use client';
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import { localizedSection,formatMessage } from "@/lib/i18n/catalog";
 
 import {localRecordSnapshotStore} from '@/lib/collections/sharing/corruptLocalRecord';
@@ -48,5 +49,5 @@ export function ForwardCollection({userId,row,locale,onClose}:{userId:string;row
  const code=state.key===key?state.code:null;
  const link=code?shareInvitationUrl(code,window.location.origin):null;
  const copyText=async(value:string)=>{try{await navigator.clipboard.writeText(value);if(!controller.current?.signal.aborted)setNotice(t.copied);}catch{setNotice(t.copyError);}};
- return <DialogSurface className={overlays.dialog} aria-label={t.forward} onDismiss={onClose}><div className={`${s.editor} ${s.sharingAction}`}><h2>{t.forward}</h2><p>{row.name}</p>{state.key!==key||state.loading?<p role="status">{common.loading}</p>:code&&link?<><label>{t.link}<input readOnly value={link}/></label><button onClick={()=>void copyText(link)}>{t.copyLink}</button><label>{t.code}<input readOnly value={code}/></label><button onClick={()=>void copyText(code)}>{t.copyCode}</button></>:<p role="alert">{t.unavailable}</p>}{notice&&<p role="status">{notice}</p>}<footer><button onClick={onClose}>{common.close}</button></footer></div></DialogSurface>;
+ return <DialogSurface className={overlays.dialog} aria-label={t.forward} onDismiss={onClose}><div className={`${s.editor} ${s.sharingAction}`}><h2>{t.forward}</h2><p>{row.name}</p>{state.key!==key||state.loading?<DelayedReadNotice><p role="status">{common.loading}</p></DelayedReadNotice>:code&&link?<><label>{t.link}<input readOnly value={link}/></label><button onClick={()=>void copyText(link)}>{t.copyLink}</button><label>{t.code}<input readOnly value={code}/></label><button onClick={()=>void copyText(code)}>{t.copyCode}</button></>:<p role="alert">{t.unavailable}</p>}{notice&&<p role="status">{notice}</p>}<footer><button onClick={onClose}>{common.close}</button></footer></div></DialogSurface>;
 }

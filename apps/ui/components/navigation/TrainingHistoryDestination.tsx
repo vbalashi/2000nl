@@ -1,5 +1,6 @@
 "use client";
 
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import React from "react";
 import { interfaceFormattingLocale } from "@/lib/i18n/registry";
 import { useRetainedAccountRead } from "@/lib/training/activity/useRetainedAccountRead";
@@ -68,7 +69,7 @@ export function TrainingHistoryDestination({
   return <div className={theme.theme} data-colour-mode="app">
     <PracticePanel title={text.title} language={interfaceLanguage} closeLabel={text.close} onClose={onReturnToTraining}>
       {visibleLoadState.status === "loading" ?
-        <div className={activityStyle.state}><p className={stateStyle.notice} role="status">{text.loading}</p></div> : null}
+        <DelayedReadNotice><div className={activityStyle.state}><p className={stateStyle.notice} role="status">{text.loading}</p></div></DelayedReadNotice> : null}
       {(visibleLoadState.status === "error" || refreshFailed) ? <div className={`${activityStyle.state} ${stateStyle.error}`} role="alert">
         <p>{text.error}</p><button type="button" className={stateStyle.button} onClick={() => setRequestVersion(version => version + 1)}>{text.retry}</button>
       </div> : null}

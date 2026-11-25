@@ -1,4 +1,5 @@
 'use client';
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import React,{useEffect,useState} from 'react';
 import {DialogSurface} from '@/components/practice/ui/DialogSurface';
 import {localizedSection,formatMessage} from '@/lib/i18n/catalog';
@@ -53,7 +54,7 @@ export function LabelAudienceConfirmation({controller,collections,locale,onConfi
  };
  return <><DialogSurface className={overlays.dialog} aria-label={t.audienceTitle} onDismiss={()=>{if(!busy)controller.cancel();}}>
   <div className={`${s.editor} ${s.sharingAction}`}><CorruptLocalRecovery scopeKey={state.userId} storageKey={labelOrganizationJournalKey(state.userId)} valid={raw=>Boolean(readLabelOrganizationJournal(localRecordSnapshotStore(raw),state.userId))} verify={async signal=>{await requestLabels(signal,undefined,state.userId);}} trigger={state.status} locale={locale} onClose={controller.cancel} onReset={controller.cancel}/><h2>{t.audienceTitle}</h2>
-   {uncertain?<p role="alert">{t.saveUncertain}</p>:<div className={s.audienceExplanation}>{loadingContext?<p role="status">{common.loading}</p>:<>{named.length?named:<p>{t.audienceIntro}</p>}{affected('added')}{affected('removed')}</>}{!loadingContext&&!hasAdded&&!hasRemoved&&<p>{t.accessUnchanged}</p>}</div>}
+   {uncertain?<p role="alert">{t.saveUncertain}</p>:<div className={s.audienceExplanation}>{loadingContext?<DelayedReadNotice><p role="status">{common.loading}</p></DelayedReadNotice>:<>{named.length?named:<p>{t.audienceIntro}</p>}{affected('added')}{affected('removed')}</>}{!loadingContext&&!hasAdded&&!hasRemoved&&<p>{t.accessUnchanged}</p>}</div>}
    {state.plan?.copyRequired&&<><p role="alert">{t.copyRequired}</p>{copyScope&&<button onClick={()=>setCopyOpen(true)}>{t.copyTitle}</button>}</>}
    {state.error==='storage'&&<p role="alert">{common.failed}</p>}
    {busy&&<p role="status">{state.status==='checking'?common.loading:common.saving}</p>}

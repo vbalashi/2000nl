@@ -56,4 +56,6 @@ for (const width of [390,610]) test(`@pilot Library sheet edge gestures at ${wid
   await expect.poll(() => scroll.evaluate(el => { let node: HTMLElement | null = el as HTMLElement; while(node) { if(node.scrollTop > 0) return node.scrollTop; node=node.parentElement; } return 0; })).toBeGreaterThan(0);
   await expect.poll(height).toBeCloseTo(before,0);
   await expect(sheet).toHaveAttribute('data-dragging','false');
+  await page.getByTestId('library-workspace').getByRole('textbox').click();
+  await expect(sheet).toHaveCount(0);
 });

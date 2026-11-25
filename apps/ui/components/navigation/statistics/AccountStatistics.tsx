@@ -1,4 +1,5 @@
 "use client";
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import { isDictionaryMirror } from "@/lib/dictionary/sourceProfile";
 import React, { useCallback, useState } from "react";
 import { LoadingIndicator } from "@/components/system/LoadingIndicator";
@@ -48,7 +49,7 @@ export function AccountStatistics({ userId, languageCode, open, interfaceLanguag
   const recentActivity = onHistory ? <button type="button" className={s.recentActivity} onClick={onHistory}>
     <History size={17} aria-hidden="true" />{copy.recentActivity}<ChevronRight size={15} aria-hidden="true" /></button> : null;
   const status = (message: string, failed: boolean) => <div className={s.status} aria-live="polite">
-    {failed ? <><p role="alert">{message}</p><button type="button" onClick={retry}>{copy.timeRetry}</button></> : <div role="status" aria-busy="true"><LoadingIndicator /><p>{message}</p></div>}
+    {failed ? <><p role="alert">{message}</p><button type="button" onClick={retry}>{copy.timeRetry}</button></> : <DelayedReadNotice><div role="status" aria-busy="true"><LoadingIndicator /><p>{message}</p></div></DelayedReadNotice>}
   </div>;
   return <div className={`${s.statistics} ${s.page}`} lang={interfaceLanguage}>
     <h1 className={s.srOnly}>{ui.navigation.statistics}</h1>

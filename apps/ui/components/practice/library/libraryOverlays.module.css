@@ -76,3 +76,5 @@
 .production label:has(+.choiceTick){cursor:pointer}
 .production div:has(>input.hiddenChoice:focus-visible){outline:2px solid var(--practice-focus);outline-offset:2px;border-radius:var(--practice-radius-control)}
 .choiceTick{display:inline-flex;align-items:center;justify-content:center;flex:none;width:20px;color:var(--practice-text-secondary)}
+
+.menuSeparator{margin:4px 8px;border-top:1px solid var(--practice-border)}

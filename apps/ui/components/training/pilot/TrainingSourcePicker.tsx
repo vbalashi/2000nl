@@ -1,4 +1,5 @@
 
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import { localizedField } from "@/lib/i18n/catalog";
 import {usePersonalLabels} from '@/components/library/organization/usePersonalLabels';
 import {useLabelSharingCatalog} from '@/components/library/sharing/useLabelSharingCatalog';
@@ -139,9 +140,9 @@ export function TrainingSourcePicker({
       <div className={s.source_window}>
       {edges.top&&<button type="button" className={`${s.edge} ${s.edgeTop}`} aria-label={scrollLabel[0]} onClick={()=>listRef.current?.scrollBy({top:-180,behavior:"smooth"})}><ChevronUp size={14}/></button>}
       <div ref={listRef} className={s.source_list} onScroll={updateEdges}>
-        {showCollections&&remote.active&&remote.status==='loading'&&<p role="status">{localizedField("sourcePicker", "loading")[locale]}</p>}
+        {showCollections&&remote.active&&remote.status==='loading'&&<DelayedReadNotice><p role="status">{localizedField("sourcePicker", "loading")[locale]}</p></DelayedReadNotice>}
         {showCollections&&remote.active&&remote.status==='error'&&<button type="button" onClick={()=>void remote.retry()}>{localizedField("sourcePicker", "retry")[locale]}</button>}
-        {labelLoading&&<p role="status">{labelCopy.loading}</p>}
+        {labelLoading&&<DelayedReadNotice><p role="status">{labelCopy.loading}</p></DelayedReadNotice>}
         {ownLabelError&&<button type="button" onClick={()=>void ownLabels.refresh()}>{labelCopy.retry}</button>}
         {sharedLabels.status==='error'&&<button type="button" onClick={()=>void sharedLabels.refresh()}>{labelCopy.retry}</button>}
         {visible.map((x) => {

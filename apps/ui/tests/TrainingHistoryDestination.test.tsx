@@ -126,7 +126,7 @@ test("never renders principal A history while principal B is loading", async () 
   rerender(<TrainingHistoryDestination {...props} userId="principal-b" />);
 
   expect(screen.queryByText("private-a")).not.toBeInTheDocument();
-  expect(screen.getByText("Loading history…")).toBeInTheDocument();
+  expect(screen.queryByText("Loading history…")).not.toBeInTheDocument();
   resolveUserB({ items: [], hasMore: false });
   expect(
     await screen.findByText("No training activity yet."),

@@ -1,4 +1,5 @@
 "use client";
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import React from "react";
 import { TrainingInteractionSettings } from "./TrainingInteractionSettings";
 import {
@@ -104,7 +105,7 @@ export function ApprovedAppearanceSection({
             />
           </div>
           {appearance.loadStatus === "loading" && (
-            <p role="status">{status.loading}</p>
+            <DelayedReadNotice><p role="status">{status.loading}</p></DelayedReadNotice>
           )}
           {appearance.loadStatus === "error" && (
             <div role="alert">

@@ -104,13 +104,14 @@ for(const width of [350,390,1200])test(`received group uses main catalog at ${wi
   const words=page.getByTestId('library-workspace');
   await expect(words.getByRole('button',{name:/Dutch · 333/})).toBeVisible();
   await expect.poll(()=>wordScopes.at(-1)).toEqual({kind:'label',id:groupId});
-  await words.getByRole('button',{name:'Search filters'}).click();
+  await words.getByRole('button',{name:/Dutch · 333/}).click();
+  await page.getByRole('menuitem',{name:'Search filters',exact:true}).click();
   const filters=page.getByRole('dialog');
   await filters.getByRole('button',{name:/^Source/}).click();
   await filters.getByRole('button',{name:'Labels',exact:true}).click();
   await expect(filters.getByRole('button',{name:'333',exact:true})).toHaveAttribute('aria-pressed','true');
   await filters.getByRole('button',{name:'Show results'}).click();
-  await words.locator('button[aria-haspopup="menu"][class*="countTrigger"]').click();
+  await words.getByRole('button',{name:'1 article',exact:true}).click();
   await page.getByRole('menuitem',{name:'Set up training with these words'}).click();
   await expect(page.getByRole('heading',{name:'Session builder'})).toBeVisible();
   await expect(page.locator('[data-testid$="-source-summary"]')).toHaveText('333');

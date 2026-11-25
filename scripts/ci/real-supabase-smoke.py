@@ -55,6 +55,9 @@ else:
 # These fixed local sockets are the only supported daemon entry points.
 fault_injection = os.environ.get('REAL_SMOKE_REVOKE_ADD') == '1'
 inherited = {k: os.environ[k] for k in ('PATH', 'HOME', 'TMPDIR', 'CI', 'LANG') if k in os.environ}
+# setup-cli selects Supabase's GitHub registry on Actions. Keep only that trusted value.
+if os.environ.get('SUPABASE_INTERNAL_IMAGE_REGISTRY') == 'ghcr.io':
+    inherited['SUPABASE_INTERNAL_IMAGE_REGISTRY'] = 'ghcr.io'
 home = pathlib.Path(pwd.getpwuid(os.getuid()).pw_dir)
 candidates = ([home / '.colima/default/docker.sock', home / '.docker/run/docker.sock']
               if sys.platform == 'darwin' else [pathlib.Path('/var/run/docker.sock')])

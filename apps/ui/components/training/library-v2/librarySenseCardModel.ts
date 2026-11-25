@@ -1,3 +1,4 @@
+import {getUiMessages} from "@/lib/uiMessages";
 import type {MeaningLearningProgress} from '../../../../../packages/shared/types/meaningLearningProgress';
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -48,6 +49,8 @@ export type LibrarySenseCardModel = {
   meaningProgress?: MeaningLearningProgress;
   entryId: string;
   noteMaterial?: PlatformEntryNoteMaterialV2[];
+  personalReferences?: PlatformSenseCardEntryV2["personalReferences"];
+  canEditPersonal?: boolean;
   canArchive?: boolean;
   wordDetails?: PlatformWordDetailsV2;
   cardTypeId: CardTypeId;
@@ -91,6 +94,7 @@ export type LibraryGroupPresentation =
 
 export type LibrarySenseCardGroupModel = {
   article: string | null;
+  isOwnPersonal?: boolean;
   dictionaryName?: string | null;
   dictionaryId?: string;
   formPartOfSpeech?: string;
@@ -188,15 +192,14 @@ export function buildLibrarySenseCardGroupModel(
   );
   return {
     article: group.header.article ?? null,
+    isOwnPersonal: group.dictionary.isOwnPersonal,
     dictionaryName: group.dictionary.displayName,
     dictionaryId: group.dictionary.dictionaryId,
     formPartOfSpeech: group.header.partOfSpeech?.sourceValue,
     headword: group.header.displayPronunciation ?? group.header.text,
     audioCapability: group.header.audio ?? null,
-    partOfSpeech: localizePlatformSemanticTerm(
-      partOfSpeech,
-      interfaceLanguage,
-    ),
+    partOfSpeech: group.header.personalKind === "expression" ? getUiMessages(interfaceLanguage).article.expression
+      : localizePlatformSemanticTerm(partOfSpeech,interfaceLanguage),
     coreVocabularyLabel: coreVocabulary ? t(coreVocabulary.messageKey) : null,
     senseCount: group.senseCount,
     crossReferences,
@@ -241,6 +244,8 @@ function buildMeaning(
   return {
     entryId: entry.entryId,
     ...(entry.noteMaterial !== undefined ? {noteMaterial:entry.noteMaterial} : {}),
+    personalReferences: entry.personalReferences,
+    canEditPersonal: entry.authorActions?.canEditPersonal === true,
     canArchive: entry.authorActions?.canArchive === true,
     ...(entry.wordDetails ? {wordDetails:entry.wordDetails} : {}),
     cardTypeId: entry.card?.cardTypeId ?? requestedCardTypeId,

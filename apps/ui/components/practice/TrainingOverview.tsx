@@ -1,4 +1,5 @@
 "use client";
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import { localizedField } from "@/lib/i18n/catalog";
 
 
@@ -66,7 +67,7 @@ export function TrainingOverview({state:incomingState,launchPending=false,interf
   const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(updateMore):null;
   observer?.observe(el);updateMore();return()=>observer?.disconnect();
  },[state.status,trainingCount]);
- if(state.status==="loading")return <div className={s.home} lang={interfaceLanguage} aria-busy="true"><h1 className={s.srOnly}>{navigation.training}</h1><p role="status">{copy.loading}</p></div>;
+ if(state.status==="loading")return <div className={s.home} lang={interfaceLanguage} aria-busy="true"><h1 className={s.srOnly}>{navigation.training}</h1><DelayedReadNotice><p role="status">{copy.loading}</p></DelayedReadNotice></div>;
  if(state.status==="error")return <div className={s.home} lang={interfaceLanguage} aria-busy={launchPending}><h1>{navigation.training}</h1><p role="alert">{state.message}</p><button className={s.start} onClick={onRetry}>{copy.retry}</button></div>;
  const resumable=state.resume&&canContinueTrainingSession({completedActions:state.resume.completed,plannedTotal:state.resume.total})?state.resume:undefined;
  const main=resumable?.training??state.trainings.find(item=>item.id===(resumable?.trainingId||state.mainId));

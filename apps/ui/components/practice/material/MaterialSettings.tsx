@@ -1,4 +1,5 @@
 "use client";
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import React from "react";
 import {AddAction} from "../ui/AddAction";
 import { ChevronUp } from "lucide-react";
@@ -162,9 +163,9 @@ export function LearningMaterialSettings({
       {picker && (
         <React.Suspense
           fallback={
-            <p role="status" className={s.hint}>
+            <DelayedReadNotice><p role="status" className={s.hint}>
               {getUiMessages(language).languagePicker.loading}
-            </p>
+            </p></DelayedReadNotice>
           }
         >
           <LanguagePicker
@@ -224,7 +225,7 @@ function DictionaryMaterialInventory({
           <span>
             {inventory.status === "error"
               ? messages.catalogError
-              : messages.loading}
+              : <DelayedReadNotice>{messages.loading}</DelayedReadNotice>}
           </span>
           {inventory.status === "error" && (
             <button

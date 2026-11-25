@@ -2,7 +2,7 @@ const compositionCalls=vi.hoisted(()=>({prepare:vi.fn(),confirm:vi.fn(),read:vi.
 vi.mock('@/lib/collections/sharing/collectionCompositionClient',()=>({prepareCollectionComposition:compositionCalls.prepare,confirmCollectionComposition:compositionCalls.confirm,readCollectionCompositionReceipt:compositionCalls.read}));
 const selectedRead=vi.hoisted(()=>vi.fn());
 vi.mock('@/lib/collections/sharing/selectedMembership',()=>({readSelectedMembership:selectedRead}));
-const noteHintRead=vi.hoisted(()=>({refresh:undefined as undefined|(()=>void|Promise<unknown>),blocked:undefined as undefined|(()=>boolean)}));
+const noteHintRead=vi.hoisted(()=>({refresh:undefined as undefined|((actualChange?:boolean)=>void|Promise<unknown>),blocked:undefined as undefined|(()=>boolean)}));
 vi.mock("@/lib/events/userEventHints",async importOriginal=>{
  const actual=await importOriginal<typeof import("@/lib/events/userEventHints")>();
  return {...actual,useUserEventHints:(...args:Parameters<typeof actual.useUserEventHints>)=>{
@@ -288,6 +288,26 @@ describe("LibrarySenseCardV2Session", () => {
     await act(async()=>{if(outcome==="failed")next.reject(new Error("offline"));else next.resolve(withNotes(outcome==="updated"?"Updated note":undefined));await pending;});
     if(outcome==="updated")expect(screen.getByText("Updated note")).toBeInTheDocument();else expect(screen.queryByText("Current note")).not.toBeInTheDocument();
     expect(performAction).not.toHaveBeenCalled();
+  });
+  test("an idle reconcile keeps the reader's own note mounted while rechecking shared notes",async()=>{
+    const group = structuredClone(multiSenseBankGroup);
+    const entry = group.entries.find(e=>e.kind==="sense-card" && e.entryId===furnitureEntry.entryId);
+    if(entry?.kind!=="sense-card") throw Error("fixture");
+    entry.noteMaterial = [
+      {noteId:"mine",ownerUserId:"reader",text:"My reminder",revision:"1",isOwn:true},
+      {noteId:"shared",ownerUserId:"teacher",text:"Author reminder",revision:"1",isOwn:false},
+    ];
+    fetchGroup.mockResolvedValueOnce(group);
+    render(<LibrarySenseCardV2Session userId="reader" entryId={entry.entryId} headword="bank" contentLanguageCode="nl" translationTargetLanguageCode={null} interfaceLanguage="en"/>);
+    const mine = await screen.findByText("My reminder");
+    const next = deferred<PlatformHeadwordGroupV2>(); fetchGroup.mockReturnValueOnce(next.promise);
+    let pending:Promise<unknown>;
+    act(()=>{pending=Promise.resolve(noteHintRead.refresh!(false));});
+    expect(screen.getByText("My reminder")).toBe(mine);
+    expect(screen.queryByText("Author reminder")).not.toBeInTheDocument();
+    await act(async()=>{next.resolve(group);await pending;});
+    expect(screen.getByText("My reminder")).toBe(mine);
+    expect(screen.getByText("Author reminder")).toBeInTheDocument();
   });
   test("a denied refresh removes the cached card and a fresh authorized lookup restores it",async()=>{
     fetchGroup.mockResolvedValueOnce(multiSenseBankGroup);
@@ -981,12 +1001,13 @@ describe("LibrarySenseCardV2Session", () => {
     fireEvent.click(screen.getByRole("button", { name: "Select bridge" }));
     fireEvent.click(screen.getByRole("button", { name: "Select canal" }));
 
-    expect(
-      committedFrames.find(({ entryId }) => entryId === "entry-bridge")?.text,
-    ).toContain("Loading details");
-    expect(
-      committedFrames.find(({ entryId }) => entryId === "entry-canal")?.text,
-    ).toContain("Loading details");
+    for (const id of ["entry-bridge", "entry-canal"]) {
+      const frame = committedFrames.find(({ entryId }) => entryId === id);
+      expect(frame).toBeDefined();
+      expect(frame?.text).not.toMatch(/bank|Loading details/i);
+    }
+    expect(screen.getByTestId("library-sense-card-loading")).toHaveAttribute("aria-busy","true");
+    expect(await screen.findByText(/Loading details/)).toBeVisible();
 
     await act(async () => {
       canalRequest.resolve(

@@ -14,6 +14,7 @@ import {
   type EntryCopyCommand,
   type EntryCopyPreview,
 } from "@/lib/platform/independentEntryCopyContract";
+import { getUiMessages } from "@/lib/uiMessages";
 import { independentEntryCopyText } from "@/lib/platform/independentEntryCopyText";
 import s from "./AuthorEntryArchiveDialog.module.css";
 export type OpenIndependentCopy = {
@@ -62,6 +63,8 @@ export function IndependentEntryCopyDialog({
     }
   };
   const load = React.useCallback(async () => {
+    setPending(true);
+    setResult(null);
     try {
       const value = await previewEntryCopy(entryId, userId);
       if (mounted.current) {
@@ -244,6 +247,10 @@ export function IndependentEntryCopyDialog({
             }}
           >
             {copy.refresh}
+          </button>
+        ) : result?.status === "rejected" && !preview ? (
+          <button type="button" className={s.button} onClick={() => void load()}>
+            {getUiMessages(language).library.retry}
           </button>
         ) : (
           <button

@@ -1024,7 +1024,7 @@ test("search action opens the dedicated dictionary search surface", async () => 
   await screen.findByTestId("library-workspace");
   const search = await screen.findByRole("textbox",{name:"Search words"});
   expect(screen.getByTestId("library-workspace")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Search filters" })).toBeEnabled();
+  expect(screen.getByTitle("Search filters")).toBeEnabled();
   expect(
     screen.queryByRole("button", { name: "Zoeken" }),
   ).not.toBeInTheDocument();
@@ -3119,7 +3119,8 @@ test("dictionary search scope changes lookup language without changing training"
 
   const { getUiMessages } = await import("@/lib/uiMessages");
   const copy = getUiMessages("en").library;
-  fireEvent.click(screen.getByRole("button", { name: copy.filters }));
+  fireEvent.click(screen.getByTitle(copy.filters));
+  fireEvent.click(screen.getByRole("menuitem", { name: copy.filters }));
   fireEvent.click(screen.getByRole("button", { name: "English" }));
   await waitFor(()=>expect(screen.getByRole("button",{name:copy.showResults})).toBeEnabled());
   fireEvent.click(screen.getByRole("button", { name: copy.showResults }));
@@ -3167,7 +3168,10 @@ test("dictionary lookup keeps an open entry without a stale-detail banner", asyn
     fireEvent.click(huisRow);
     fireEvent.change(queryInput, { target: { value: "boom" } });
 
-    await screen.findByText("boom");
+    const boomRow = await screen.findByTestId("library-headword-group-group-word-2");
+    expect(within(boomRow).getByText("boom")).toBeVisible();
+    expect((await screen.findAllByTestId("library-sense-card-word-1")).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("heading", {name:"boom"})).not.toBeInTheDocument();
     expect(screen.queryByText("This entry stays open while search results change.")).not.toBeInTheDocument();
   } finally {
     restoreDefaultSearchResults();

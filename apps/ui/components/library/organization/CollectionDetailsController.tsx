@@ -1,4 +1,5 @@
 'use client';
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import React,{useCallback,useEffect,useRef,useState} from 'react';
 import {platformV2AuthenticatedJsonHeaders} from '@/lib/platform/platformV2Http';
 import {platformFetchWithTimeout} from '@/lib/platform/platformFetchWithTimeout';
@@ -36,6 +37,6 @@ function ScopedCollectionDetailsController(props:Props){
    if(!value||value.id!==id.toLowerCase())throw new Error('save');setRecord(value);setStatus('ready');props.onChanged?.();return true;
   }catch{if(mounted.current&&n===generation.current){setRecord(null);setStatus('error');callbacks.current.onUnavailable?.();}return false;}finally{saveBusy.current=false;}
  };
- if(!record)return <section className={s.editor}><header><h2>{t.collections}</h2><button onClick={props.onClose}>{t.close}</button></header><p role="status">{status==='loading'?t.loading:t.unavailable}</p>{status!=='loading'&&<button onClick={()=>void read()}>{t.retry}</button>}</section>;
+ if(!record)return <section className={s.editor}><header><h2>{t.collections}</h2><button onClick={props.onClose}>{t.close}</button></header><p role="status">{status==='loading'?<DelayedReadNotice>{t.loading}</DelayedReadNotice>:t.unavailable}</p>{status!=='loading'&&<button onClick={()=>void read()}>{t.retry}</button>}</section>;
  return <CollectionDetailsPanel details={{id:record.id,name:record.name,description:record.description,itemCount:props.itemCount,revision:record.revision,source:record.source,sourceStatus:record.source?'available':'not-specified',capabilities:{canEditDetails:record.isOwner,canEditSource:record.isOwner,canEditLabels:props.canEditLabels},persistence:'saved'}} labelNames={props.labelNames} locale={locale} isShared={props.isShared} isReceived={!record.isOwner} onClose={props.onClose} onLabels={()=>props.onLabels(record.name)} onOpen={()=>props.onOpen(record.name)} onSave={save} saving={status==='saving'} error={status==='conflict'?t.conflict:status==='invalid'?copy.invalid:status==='error'?t.failed:null} onRetry={status==='conflict'?async()=>{const current=await read(true);if(current)setStatus('ready');return current?.revision??null;}:undefined}/>;
 }

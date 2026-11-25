@@ -10,7 +10,7 @@ const props={userId:'reader',entryId:'entry',locale:'en' as const,onClose:vi.fn(
 const state={key:'key',status:'editing',draft:'Draft',base:{notes:null,revision:'0'},server:null,sent:null};
 beforeEach(()=>{sessionStorage.clear();vi.clearAllMocks();mock.hook.mockReturnValue({state,setDraft:mock.draft,save:mock.save,check:mock.check,reload:mock.reload,valid:true,dirty:true,discard:vi.fn()});});
 test('dirty cancellation confirms before discarding the draft',()=>{
- render(<OwnNoteEditor {...props}/>);fireEvent.click(screen.getByRole('button',{name:'Cancel'}));expect(props.onClose).not.toHaveBeenCalled();fireEvent.click(screen.getByRole('button',{name:'Keep editing'}));expect(screen.getByRole('textbox')).toHaveValue('Draft');
+ render(<OwnNoteEditor {...props}/>);expect(screen.queryByRole('dialog')).not.toBeInTheDocument();expect(screen.getByRole('region')).toContainElement(screen.getByRole('textbox'));fireEvent.click(screen.getByRole('button',{name:'Cancel'}));expect(props.onClose).not.toHaveBeenCalled();fireEvent.click(screen.getByRole('button',{name:'Keep editing'}));expect(screen.getByRole('textbox')).toHaveValue('Draft');
  fireEvent.click(screen.getByRole('button',{name:'Cancel'}));fireEvent.click(screen.getByRole('button',{name:'Discard'}));expect(props.onClose).toHaveBeenCalledOnce();expect(mock.save).not.toHaveBeenCalled();
 });
 test('conflict displays current text separately from editable draft and overwrite is explicit',()=>{

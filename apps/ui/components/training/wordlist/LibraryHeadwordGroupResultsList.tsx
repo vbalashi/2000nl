@@ -1,4 +1,5 @@
 "use client";
+import {getUiMessages} from "@/lib/uiMessages";
 
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
@@ -15,6 +16,7 @@ import type { LibraryHeadwordGroupResult } from "./libraryHeadwordGroupResults";
 type Props = {
   interfaceLanguage?: OnboardingLanguage;
   appearance?: "plain" | "framed";
+  pinnedEntryIds?:string[];
   results: LibraryHeadwordGroupResult[];
   selectedHeadwordGroupId: string | null;
   onSelect: (result: LibraryHeadwordGroupResult) => void;
@@ -36,7 +38,7 @@ function coreVocabularyLabel(
 }
 
 export function LibraryHeadwordGroupResultsList({
-  results,
+  results,pinnedEntryIds,
   appearance,
   interfaceLanguage = "nl",
   selectedHeadwordGroupId,
@@ -49,12 +51,12 @@ export function LibraryHeadwordGroupResultsList({
           appearance={appearance}
           hasDetail={Boolean(selectedHeadwordGroupId)}
           showSource={
-            new Set(
+            results.some(result => result.group.dictionary.isOwnPersonal) || new Set(
               results.map((result) => result.group.dictionary.dictionaryId),
             ).size > 1
           }
         >
-          {results.map((result) => (
+          {results.filter(result=>!pinnedEntryIds || !result.group.entries.some(item=>item.kind==="sense-card" && pinnedEntryIds.includes(item.entryId))).map((result) => (
             <div
               key={result.headwordGroupId}
               data-testid="library-headword-group-row"
@@ -66,7 +68,7 @@ export function LibraryHeadwordGroupResultsList({
                 article={result.group.header.article}
                 parts={result.partOfSpeechLabels}
                 source={result.dictionaryLabel}
-                core={coreVocabularyLabel(result, interfaceLanguage)}
+                core={result.group.header.personalKind === "expression" ? getUiMessages(interfaceLanguage).article.expression : coreVocabularyLabel(result, interfaceLanguage)}
                 meaningCount={result.meaningCount}
                 referenceCount={result.referenceCount}
                 homographNumber={result.homographNumber}

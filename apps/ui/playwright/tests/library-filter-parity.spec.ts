@@ -14,7 +14,11 @@ for(const width of [320,390,1280])test(`Library compact filters preview, cancel 
  await page.reload();
  if(width<701)await page.locator('[data-app-mobile-navigation="tabs"]').getByRole('button').nth(1).click();
  else await page.locator('[data-app-primary-navigation="desktop"]').getByRole('button',{name:'Library',exact:true}).click();
- const open=async()=>{await page.getByRole('button',{name:'Search filters',exact:true}).click();return page.getByRole('dialog',{name:'Library filters'});};
+ const open=async()=>{
+  await page.getByRole('button',{name:/^Dutch · All dictionaries/}).click();
+  await page.getByRole('menuitem',{name:'Search filters',exact:true}).click();
+  return page.getByRole('dialog',{name:'Library filters'});
+ };
  const choose=async()=>{
   const dialog=page.getByRole('dialog',{name:'Library filters'});
   await dialog.getByRole('button',{name:'By frequency',exact:true}).click();

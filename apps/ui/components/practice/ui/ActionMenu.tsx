@@ -8,6 +8,7 @@ import s from "../library/libraryOverlays.module.css";
 export type ActionMenuItem = {
   id: string;
   label: string;
+  separatorBefore?: boolean;
   description?: string;
   icon?: React.ReactNode;
   trailingIcon?: React.ReactNode;
@@ -17,10 +18,12 @@ export type ActionMenuItem = {
 };
 
 /** Anchored native popover stays above dialogs and inherits their theme. */
-export function ActionMenu({ anchor, title, language, items, onClose, notice }: {
+export function ActionMenu({ anchor, title, language, items, onClose, notice, followAnchor = false }: {
   anchor: HTMLButtonElement;
   title: string;
   notice?: string;
+  /** Keep a card menu anchored while its scrollable sheet settles. */
+  followAnchor?: boolean;
   language: string;
   items: ActionMenuItem[];
   onClose: () => void;
@@ -33,13 +36,26 @@ export function ActionMenu({ anchor, title, language, items, onClose, notice }: 
   const lastFocusedItem = useRef<HTMLButtonElement | null>(null);
   useLayoutEffect(() => { onCloseRef.current = onClose; }, [onClose]);
   const signature = [notice ?? "", ...items.map(item => `${item.id}:${item.label}:${item.description ?? ""}`)].join("|");
+  const place = React.useCallback(() => {
+    const menu = ref.current;
+    if (!menu) return;
+    const box = menu.getBoundingClientRect(), trigger = anchor.getBoundingClientRect();
+    const left = Math.max(12, Math.min(trigger.right - box.width, window.innerWidth - box.width - 12));
+    const top = trigger.bottom + 8 + box.height <= window.innerHeight - 12
+      ? trigger.bottom + 8 : Math.max(12, trigger.top - box.height - 8);
+    setPosition(current => current?.left === left && current.top === top ? current : {left,top});
+  }, [anchor]);
   useLayoutEffect(() => {
     const menu = ref.current!;
     focused.current = false;
     lastFocusedItem.current = null;
     menu.showPopover?.();
     const dismiss = (event: Event) => {
-      if (event.type === "scroll" && menu.contains(event.target as Node)) return;
+      if (event.type === "scroll" && event.target instanceof Node) {
+        if (menu.contains(event.target)) return;
+        if (followAnchor && !event.target.contains(anchor)) return;
+      }
+      if (followAnchor && anchor.isConnected) { place(); return; }
       onCloseRef.current();
     };
     const outside = (event: PointerEvent) => {
@@ -52,25 +68,22 @@ export function ActionMenu({ anchor, title, language, items, onClose, notice }: 
     window.addEventListener("resize", dismiss);
     window.addEventListener("scroll", dismiss, true);
     menu.addEventListener("toggle", toggled);
+    const visibility = followAnchor && typeof IntersectionObserver !== "undefined"
+      ? new IntersectionObserver(([entry]) => { if (entry && !entry.isIntersecting) onCloseRef.current(); })
+      : null;
+    visibility?.observe(anchor);
     return () => {
+      visibility?.disconnect();
       document.removeEventListener("pointerdown", outside);
       window.removeEventListener("resize", dismiss);
       window.removeEventListener("scroll", dismiss, true);
       menu.removeEventListener("toggle", toggled);
       menu.hidePopover?.();
     };
-  }, [anchor]);
+  }, [anchor, followAnchor, place]);
   // Updating action availability must not hide/reopen the native popover.
   // Only changes to its content require a fresh geometry measurement.
-  useLayoutEffect(() => {
-    const menu = ref.current!;
-    const box = menu.getBoundingClientRect(), trigger = anchor.getBoundingClientRect();
-    setPosition({
-      left: Math.max(12, Math.min(trigger.right - box.width, window.innerWidth - box.width - 12)),
-      top: trigger.bottom + 8 + box.height <= window.innerHeight - 12
-        ? trigger.bottom + 8 : Math.max(12, trigger.top - box.height - 8),
-    });
-  }, [anchor, signature]);
+  useLayoutEffect(place, [place, signature]);
   useLayoutEffect(() => {
     if (position && !focused.current) {
       const first = ref.current?.querySelector<HTMLButtonElement>("button:not(:disabled)");
@@ -107,8 +120,8 @@ export function ActionMenu({ anchor, title, language, items, onClose, notice }: 
         : (index + (event.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length]?.focus();
     }}>
     {notice && <p className={s.menuNotice} aria-hidden="true">{notice}</p>}
-    {items.map(item => <button type="button" role={item.checked===undefined?"menuitem":"menuitemradio"} aria-checked={item.checked} data-menu-action={item.id} key={item.id} disabled={item.disabled} aria-label={item.label} aria-describedby={item.description ? `${descriptionId}-${item.id}` : undefined} onClick={item.onSelect}>
+    {items.map(item => <React.Fragment key={item.id}>{item.separatorBefore && <div role="separator" className={s.menuSeparator}/>}<button type="button" role={item.checked===undefined?"menuitem":"menuitemradio"} aria-checked={item.checked} data-menu-action={item.id} disabled={item.disabled} aria-label={item.label} aria-describedby={item.description ? `${descriptionId}-${item.id}` : undefined} onClick={item.onSelect}>
       {item.icon}<span className={s.menuCopy}>{item.label}{item.description && <span id={`${descriptionId}-${item.id}`} className={s.menuDescription}>{item.description}</span>}</span>{item.trailingIcon && <span className={s.menuTrailing}>{item.trailingIcon}</span>}
-    </button>)}
+    </button></React.Fragment>)}
   </div>, anchor.closest("dialog") || anchor.closest("[data-practice-palette]") || document.body);
 }

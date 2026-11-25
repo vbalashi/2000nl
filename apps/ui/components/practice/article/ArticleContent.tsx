@@ -4,7 +4,7 @@ import { matchInterfaceLanguage } from "@/lib/i18n/registry";
 import React from "react";
 import type {PlatformEntryNoteMaterialV2} from "../../../../../packages/shared/types/platformV2";
 import {useAdditionalCardTranslation,additionalTranslationText} from "./AdditionalCardTranslation";
-import {List,Quote} from "lucide-react";
+import {List,Pencil,Quote,StickyNote} from "lucide-react";
 import type {OnboardingLanguage} from "@/lib/onboardingI18n";
 import type {PlatformV2SenseContentNode} from "@/lib/platform/projections/platformV2SenseContent";
 import {getUiMessages} from "@/lib/uiMessages";
@@ -79,17 +79,28 @@ export function ArticleTranslation({text,literalText,visible,pending=false,faile
 export function ArticleContentNode({node,interfaceLanguage,contentLanguage,translationLanguage,translationVisible=false,translationPending=false,translationFailed=false,onRetryTranslation,classes=s,lead=false}:Presentation&{node:PlatformV2SenseContentNode;lead?:boolean}){
  const copy=getUiMessages(interfaceLanguage).article;
  const literary=node.kind==="example"||node.kind==="idiom";
+ const translation=<ArticleTranslation translationKey={node.contentNodeId} sourceTextFingerprint={node.sourceTextFingerprint} text={node.translation} literalText={node.kind === "idiom" ? node.literalTranslation ?? null : undefined} pending={translationPending} failed={translationFailed} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} multiline={node.kind === "definition"} visible={translationVisible} language={translationLanguage} classes={classes}/>;
+ const children=node.children.length>0&&<div className={classes.children}>{node.children.map(child=><ArticleContentNode key={child.contentNodeId} node={child} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} translationPending={translationPending} translationFailed={translationFailed} onRetryTranslation={onRetryTranslation} classes={classes}/>)}</div>;
+ if(node.kind==="usage-note" && node.noteParagraphs?.length) {
+  return <div className={classes.contentSection} data-content-node-id={node.contentNodeId}>
+   {node.noteParagraphs.map((text,index)=><div key={index} className={classes.contentNode} data-kind={node.kind} data-content-kind={node.kind}>
+    <div className={classes.contentPair}><p lang={contentLanguage} className={classes.explanation}>{text}</p></div>
+   </div>)}
+   {translation}
+   {children}
+  </div>;
+ }
  return <div className={classes.contentNode} data-kind={node.kind} data-content-kind={node.kind} data-content-node-id={node.contentNodeId} data-parent-content-node-id={node.parentContentNodeId??undefined}>
   <div className={classes.contentPair}>
    {!lead&&<span className={classes.nodeRole} data-role={node.kind==="example"?"example":"explanation"}>{node.kind==="example"?copy.example:node.kind==="idiom-explanation"||node.kind==="definition"?copy.explanation:copy.note}</span>}
    <p lang={contentLanguage} className={lead?classes.definitionText:literary?classes.literary:node.kind==="usage-pattern"?classes.usagePattern:classes.explanation}>{node.text}</p>
-   <ArticleTranslation translationKey={node.contentNodeId} sourceTextFingerprint={node.sourceTextFingerprint} text={node.translation} literalText={node.kind === "idiom" ? node.literalTranslation ?? null : undefined} pending={translationPending} failed={translationFailed} onRetry={onRetryTranslation} interfaceLanguage={interfaceLanguage} multiline={node.kind === "definition"} visible={translationVisible} language={translationLanguage} classes={classes}/>
+   {translation}
   </div>
-  {node.children.length>0&&<div className={classes.children}>{node.children.map(child=><ArticleContentNode key={child.contentNodeId} node={child} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={translationVisible} translationPending={translationPending} translationFailed={translationFailed} onRetryTranslation={onRetryTranslation} classes={classes}/>)}</div>}
+  {children}
  </div>;
 }
 
-export function ArticleMeaningDetails({definition,details,noteMaterial,...presentation}:Presentation&{definition:PlatformV2SenseContentNode|null;details:PlatformV2SenseContentNode[];noteMaterial?:PlatformEntryNoteMaterialV2[]}){
+export function ArticleMeaningDetails({definition,details,noteMaterial,onEditOwnNote,...presentation}:Presentation&{definition:PlatformV2SenseContentNode|null;details:PlatformV2SenseContentNode[];noteMaterial?:PlatformEntryNoteMaterialV2[];onEditOwnNote?:()=>void}){
  const classes=presentation.classes??s;const copy=getUiMessages(presentation.interfaceLanguage).article;
  const groups=[
   {id:"examples",label:copy.examples,nodes:details.filter(n=>n.kind==="example")},
@@ -97,15 +108,15 @@ export function ArticleMeaningDetails({definition,details,noteMaterial,...presen
   {id:"expressions",label:copy.expressions,nodes:details.filter(n=>n.kind==="idiom"||n.kind==="idiom-explanation")},
   {id:"notes",label:copy.note,nodes:details.filter(n=>!["example","usage-pattern","idiom","idiom-explanation"].includes(n.kind))},
  ];
- return <>{definition?.children.map(node=><ArticleContentNode key={node.contentNodeId} node={node} {...presentation}/>)}{groups.filter(g=>g.nodes.length).map(group=><section className={classes.contentSection} key={group.id} data-section={group.id}><h3>{group.id==="examples"?<List size={12} aria-hidden="true"/>:<Quote size={12} aria-hidden="true"/>}<span>{group.label}</span></h3>{group.nodes.map(node=><ArticleContentNode key={node.contentNodeId} node={node} {...presentation}/>)}</section>)}<ArticleNoteMaterial notes={noteMaterial} interfaceLanguage={presentation.interfaceLanguage} classes={classes}/></>;
+ return <>{definition?.children.map(node=><ArticleContentNode key={node.contentNodeId} node={node} {...presentation}/>)}{groups.filter(g=>g.nodes.length).map(group=><section className={classes.contentSection} key={group.id} data-section={group.id}><h3>{group.id==="examples"?<List size={12} aria-hidden="true"/>:<Quote size={12} aria-hidden="true"/>}<span>{group.label}</span></h3>{group.nodes.map(node=><ArticleContentNode key={node.contentNodeId} node={node} {...presentation}/>)}</section>)}<ArticleNoteMaterial onEditOwnNote={onEditOwnNote} notes={noteMaterial} interfaceLanguage={presentation.interfaceLanguage} classes={classes}/></>;
 }
 
 /** Authorized overlays remain read-only text, separate from reportable study nodes. */
-export function ArticleNoteMaterial({notes,interfaceLanguage,classes=s}:{notes?:PlatformEntryNoteMaterialV2[];interfaceLanguage:OnboardingLanguage;classes?:ArticleContentClasses}){
+export function ArticleNoteMaterial({notes,interfaceLanguage,onEditOwnNote,classes=s}:{onEditOwnNote?:()=>void;notes?:PlatformEntryNoteMaterialV2[];interfaceLanguage:OnboardingLanguage;classes?:ArticleContentClasses}){
  const copy=getUiMessages(interfaceLanguage).article;
  return <>{[...(notes??[])].sort((a,b)=>Number(a.isOwn)-Number(b.isOwn)).map(note=><section key={note.noteId} className={classes.contentSection} data-note-id={note.noteId} data-note-origin={note.isOwn?"own":"shared"}>
-  <h3><Quote size={12} aria-hidden="true"/><span>{note.isOwn?copy.myNote:copy.authorNote}</span></h3>
-  <p lang="" className={`${classes.explanation} ${s.noteMaterialText}`}>{note.text}</p>
+  <h3>{note.isOwn?<StickyNote size={13} aria-hidden="true"/>:<Quote size={12} aria-hidden="true"/>}<span>{note.isOwn?copy.myNote:copy.authorNote}</span></h3>
+  <p lang="" className={`${classes.explanation} ${s.noteMaterialText} ${note.isOwn?s.ownNoteRail:''}`}>{note.text}{note.isOwn&&onEditOwnNote&&<button type="button" aria-label={copy.myNote} className={s.notePencil} onClick={onEditOwnNote}><Pencil size={13} aria-hidden="true"/></button>}</p>
  </section>)}</>;
 }
 

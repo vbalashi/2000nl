@@ -1,4 +1,5 @@
 'use client';
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import React from 'react';
 import {localizedSection} from '@/lib/i18n/catalog';
 import type {OnboardingLanguage} from '@/lib/onboardingI18n';
@@ -13,7 +14,7 @@ export function LabelInvitationPreviewView({locale,preview,status,accepted=false
  const group=localizedSection('labelSharing')[locale],t=localizedSection('invitationPreview')[locale],common=organizationCopy(locale);
  return <section className={`${s.catalog} ${s.invitation}`}>
   {preview&&<><h2>{preview.name}</h2><p>{group.description}</p><p>{group.collections}: {preview.collectionCount.toLocaleString(locale)} · {t.view}</p></>}
-  {status==='loading'?<p role="status">{common.loading}</p>:status==='saving'?<p role="status">{common.saving}</p>:status==='uncertain'?<>
+  {status==='loading'?<DelayedReadNotice><p role="status">{common.loading}</p></DelayedReadNotice>:status==='saving'?<p role="status">{common.saving}</p>:status==='uncertain'?<>
    <p role="alert">{t.uncertain}</p><button onClick={onReconcile}>{t.check}</button><button onClick={onRetry}>{t.retry}</button>
   </>:status==='unavailable'?<p role="alert">{t.unavailable}</p>:status==='error'||status==='rejected'?<>
    <p role="alert">{status==='rejected'?localizedSection('collectionSharing')[locale].rejected:t.loadError}</p><button onClick={onRefresh}>{common.retry}</button>

@@ -177,3 +177,17 @@
 .detail [data-kind=usage-note]>.contentPair .translation{font-size:var(--practice-reading-caption)}
 .detail[data-nested-reading] .children [data-kind=usage-note]>.contentPair>p,
 .detail[data-nested-reading] .children [data-kind=usage-note]>.contentPair .translation{font-size:var(--practice-reading-small)}
+
+.contentNode:is([data-kind=usage-note],[data-kind=idiom-explanation]) > .contentPair > .explanation {
+  white-space: pre-line;
+}
+
+.ownNoteRail { border-inline-start:2px solid var(--practice-accent); padding-inline-start:var(--practice-content-inset,10px); }
+.notePencil { display:inline-flex; vertical-align:middle; align-items:center; justify-content:center; width:26px; height:26px; margin-inline-start:3px; border:0; background:transparent; color:var(--practice-text-muted); cursor:pointer; }
+.notePencil:hover { color:var(--practice-text); }
+.notePencil:focus-visible { outline:2px solid var(--practice-focus); outline-offset:2px; }
+
+.contentSection:is([data-own-note-editor], [data-note-origin="own"]) > h3 > svg {
+  color: var(--practice-accent);
+  opacity: 1;
+}

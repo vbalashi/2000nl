@@ -65,7 +65,9 @@ export type PlatformContentNodeBindingV2Input = {
 };
 
 export type PlatformLookupV2ProjectionEntry = {
+  isOwnPersonal?: boolean;
   noteMaterial?: unknown;
+  allowEditPersonalEntry?: boolean;
   allowArchiveAuthorEntry?: boolean;
   headwordGroupId: string;
   meaningOrdinal?: number | null;
@@ -196,6 +198,7 @@ function projectHeadwordGroup(
     headwordGroupId,
     dictionary: {
       dictionaryId: first.dictionary.id,
+      ...(first.isOwnPersonal ? { isOwnPersonal: true } : {}),
       sourceLanguageCode: first.dictionary.languageCode,
       displayName:
         first.dictionary.name.trim() ||
@@ -205,6 +208,7 @@ function projectHeadwordGroup(
     },
     header: {
       text: first.entry.headword,
+      ...(entries.every(item => asRecord(item.entry.raw).personalKind === "expression") ? {personalKind: "expression" as const} : {}),
       ...(homographNumber ? { homographNumber } : {}),
       ...(displayPronunciation ? { displayPronunciation } : {}),
       ...(pronunciation ? { pronunciation } : {}),
@@ -261,6 +265,11 @@ function projectSenseCard(
         ? [{ sourcePath: section.sourcePath, kind, text: section.text }]
         : [];
     });
+  const fields = asRecord(item.entry.raw).personalFields;
+  const personalNotes = Array.isArray(fields) ? fields.flatMap(value => {
+    const field = asRecord(value);
+    return field.kind === "note" && typeof field.text === "string" && field.text.trim() ? [field.text.trim()] : [];
+  }) : [];
   const contentNodes = sections.flatMap((section, order) => {
     const kind = section.kind;
     if (!kind) return [];
@@ -278,6 +287,8 @@ function projectSenseCard(
         kind,
         order,
         text: section.text,
+        ...(section.sourcePath === "raw.notes" && personalNotes.length > 1 && personalNotes.join("\n") === section.text
+          ? {noteParagraphs:personalNotes} : {}),
         sourceTextFingerprint: binding.sourceTextFingerprint,
         // Cached bindings may contain several languages. A lookup owns exactly
         // the requested projection; array order must never select its language.
@@ -298,10 +309,16 @@ function projectSenseCard(
 
   if(item.noteMaterial!==undefined&&!isPlatformEntryNoteMaterialV2(item.noteMaterial))
     throw new PlatformV2ProjectionError("invalid_note_material","Invalid instructional note material");
+  const personalReferences = item.allowEditPersonalEntry && Array.isArray(fields) ? fields.flatMap(value => {
+    const field = asRecord(value);
+    return field.kind === "reference" && typeof field.text === "string" && typeof field.targetEntryId === "string"
+      ? [{text:field.text, targetEntryId:field.targetEntryId}] : [];
+  }) : [];
   return {
     kind: "sense-card",
+    ...(personalReferences.length ? {personalReferences} : {}),
     ...(item.noteMaterial!==undefined?{noteMaterial:item.noteMaterial}:{}),
-    ...(item.allowArchiveAuthorEntry ? { authorActions: { canArchive: true } } : {}),
+    ...(item.allowArchiveAuthorEntry || item.allowEditPersonalEntry ? { authorActions: { canArchive: Boolean(item.allowArchiveAuthorEntry), ...(item.allowEditPersonalEntry ? {canEditPersonal:true}: {}) } } : {}),
     ...(item.entry.sourceVersion ? { sourceVersion: item.entry.sourceVersion } : {}),
     entryId: item.entry.id,
     meaningOrdinal: item.meaningOrdinal ?? item.entry.meaningId ?? null,

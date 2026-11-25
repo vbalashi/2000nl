@@ -60,6 +60,6 @@
 
 .closeHost { position:relative;display:flex;flex-direction:column;flex:1;min-height:0; }
 .fallbackClose { position:absolute;top:0;right:0;z-index:2; }
-.closeHost:has([data-testid=library-sense-card-group]) > .fallbackClose { display:none; }
+.closeHost:has([data-card-header-close]) > .fallbackClose { display:none; }
 
 .librarySheet[data-dragging=true] { transition:none; }

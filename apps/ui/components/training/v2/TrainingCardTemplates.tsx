@@ -217,15 +217,13 @@ export function TrainingCardAnswerHeader({
           data-testid="training-answer-header-actions"
           className="flex shrink-0 items-center gap-[7px]"
         >
-          {onPlayAudio ? (
-            <TrainingCardIconButton
-              tour="audio" label={audioLabel}
-              disabled={busy}
-              onClick={onPlayAudio}
-            >
-              <Volume2 aria-hidden="true" className="h-5 w-5" />
-            </TrainingCardIconButton>
-          ) : null}
+          <TrainingCardIconButton
+            tour="audio" label={audioLabel}
+            disabled={busy || !onPlayAudio}
+            onClick={() => onPlayAudio?.()}
+          >
+            <Volume2 aria-hidden="true" className="h-5 w-5" />
+          </TrainingCardIconButton>
           {(
             <TrainingCardIconButton
               label={translationLabel}
