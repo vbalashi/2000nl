@@ -65,18 +65,30 @@ export function WordDetailDrawer({
   const [entered, setEntered] = React.useState(false);
   const resize = useLibrarySheetResize(open ? selection?.entryId ?? (draft ? "personal-entry-draft" : null) : null,onClose);
   const { expanded, ref } = resize;
+  const pointerStartedInside = React.useRef(false);
   React.useEffect(() => {
-    if (!open || expanded) return;
+    if (!open) return;
+    const trackPointerStart = (event: PointerEvent) => {
+      if (event.isPrimary) {
+        pointerStartedInside.current = event.target instanceof Node && !!ref.current?.contains(event.target);
+      }
+    };
     const dismissOutside = (event: MouseEvent) => {
       const panel = ref.current;
       const target = event.target;
+      // Releasing a drag or losing capture can retarget its click outside the sheet.
+      if (expanded || (event.detail !== 0 && pointerStartedInside.current)) return;
       if (!panel?.getClientRects().length || !(target instanceof Element) || panel.contains(target)) return;
       // Menus and dialogs opened by the card may render through a portal.
       if (target.closest('dialog,[role="dialog"],[role="menu"],[role="listbox"],[popover]')) return;
       onClose();
     };
+    document.addEventListener("pointerdown", trackPointerStart, true);
     document.addEventListener("click", dismissOutside, true);
-    return () => document.removeEventListener("click", dismissOutside, true);
+    return () => {
+      document.removeEventListener("pointerdown", trackPointerStart, true);
+      document.removeEventListener("click", dismissOutside, true);
+    };
   }, [open, expanded, ref, onClose]);
   React.useEffect(() => { setEntered(open); }, [open, selection?.entryId]);
   React.useEffect(() => { if (!open) setEntered(false); }, [open]);
