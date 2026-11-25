@@ -15,7 +15,7 @@ cleanup() {
 trap cleanup EXIT
 openssl req -x509 -newkey rsa:2048 -nodes -keyout "$task_dir/key.pem" -out "$task_dir/cert.pem" -days 1 -subj '/CN=127.0.0.1' -addext 'subjectAltName=IP:127.0.0.1' >/dev/null 2>&1
 # Copy, rather than bind mount, so the test also works with a remote Docker VM.
-docker create --name "$task_container" -p 127.0.0.1::1025 -p 127.0.0.1::8025 public.ecr.aws/supabase/mailpit:v1.22.3 --smtp-tls-cert /tmp/cert.pem --smtp-tls-key /tmp/key.pem --smtp-require-starttls --smtp-auth-accept-any >/dev/null
+docker create --name "$task_container" -p 127.0.0.1::1025 -p 127.0.0.1::8025 ghcr.io/supabase/mailpit@sha256:f7f7c31de4de59540ad6515a0ca057a77525bca2069b6e747d873ca66c10fe08 --smtp-tls-cert /tmp/cert.pem --smtp-tls-key /tmp/key.pem --smtp-require-starttls --smtp-auth-accept-any >/dev/null
 task_created=1
 docker cp "$task_dir/cert.pem" "$task_container:/tmp/cert.pem"
 docker cp "$task_dir/key.pem" "$task_container:/tmp/key.pem"
