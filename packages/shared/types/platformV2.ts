@@ -18,6 +18,7 @@ export type PlatformSemanticTermV2 = {
 };
 
 export type PlatformDictionarySummaryV2 = {
+  isOwnPersonal?: boolean;
   dictionaryId: string;
   sourceLanguageCode: string;
   displayName: string;
@@ -37,6 +38,7 @@ export type PlatformAudioCapabilityV2 = {
 };
 
 export type PlatformHeadwordHeaderV2 = {
+  personalKind?: "expression";
   text: string;
   homographNumber?: number;
   displayPronunciation?: string;
@@ -73,6 +75,8 @@ export type PlatformContentNodeV2 = {
   kind: PlatformContentNodeKindV2;
   order: number;
   text: string;
+  /** Original personal note fields sharing this single translation binding. */
+  noteParagraphs?: string[];
   sourceTextFingerprint: string;
   translations: PlatformContentNodeTranslationV2[];
 };
@@ -438,9 +442,10 @@ export type PlatformEntryNoteMaterialV2 = {
 };
 
 export type PlatformSenseCardEntryV2 = {
+  personalReferences?: {text:string; targetEntryId:string}[];
   noteMaterial?: PlatformEntryNoteMaterialV2[];
   /** First-party owner commands, separate from learning capabilities. */
-  authorActions?: { canArchive: boolean };
+  authorActions?: { canArchive: boolean; canEditPersonal?: boolean };
   /** Monotonic source revision used by explicit current-card acknowledgement. */
   sourceVersion?: number;
   kind: "sense-card";

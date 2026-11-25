@@ -9,7 +9,7 @@ import { useWordDetailsClose } from "../WordDetailsHeader";
 
 import { SheetDragRegion } from "@/components/practice/ui/SheetDragRegion";
 import React from "react";
-import { X, Check, Circle, LoaderCircle, CircleHelp } from "lucide-react";
+import { BookOpen, X, Check, Circle, LoaderCircle, CircleHelp } from "lucide-react";
 import type { CurrentTrainingCardContext } from "@/lib/platform/trainingCurrentCardClient";
 import {OwnNoteEditor} from '@/components/library/notes/OwnNoteEditor';
 import { LibraryMeaningActions, type LibraryReviewReceipt } from "./LibraryMeaningActions";
@@ -28,6 +28,7 @@ import {
   IdiomIcon,
   LearningStateBadge,
   SenseCardHeaderAction,
+  SenseCardTranslateIcon,
   SenseCardReveal,
   SenseCardHeadwordLockup,
   SenseSectionHeader,
@@ -88,6 +89,7 @@ type Props = {
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
   onReport?: (meaning: LibrarySenseCardModel) => void;
+  onEditPersonal?: () => void;
   onArchive?: (meaning: LibrarySenseCardModel) => void;
   onCopy?: (meaning: LibrarySenseCardModel) => void;
   onExclude?: (entryId:string) => void;
@@ -136,6 +138,7 @@ export function LibrarySenseCardGroup({
   onOpenCollections,
   onTrainNext,
   onReport,
+  onEditPersonal,
   onArchive,
   onCopy,
   onExclude,
@@ -322,23 +325,23 @@ export function LibrarySenseCardGroup({
           partOfSpeech={model.partOfSpeech}
           coreVocabularyLabel={model.coreVocabularyLabel}
           dictionaryLabel={model.dictionaryName}
-          dictionaryInSummary={Boolean(dictionaryIdInSummary && dictionaryIdInSummary === model.dictionaryId)}
+          dictionaryInSummary={!model.isOwnPersonal && Boolean(dictionaryIdInSummary && dictionaryIdInSummary === model.dictionaryId)}
           tone="light"
           headerActions={
             (
               <>
-                {onPlayAudio && model.audioCapability ? (
+                {(
                   <SenseCardHeaderAction
                     label={platformV2Message(
                       interfaceLanguage,
                       "senseCard.audio.play",
                     )}
-                    disabled={audioBusy}
-                    onClick={onPlayAudio}
+                    disabled={audioBusy || !onPlayAudio || !model.audioCapability}
+                    onClick={() => onPlayAudio?.()}
                   >
                     <AudioIcon />
                   </SenseCardHeaderAction>
-                ) : null}
+                )}
                 {(
                   <SenseCardHeaderAction
                     label={platformV2Message(
@@ -351,10 +354,10 @@ export function LibrarySenseCardGroup({
                     pending={translationsVisible && Object.values(translationStates).some(status => status === "pending")}
                     onClick={toggleGroupTranslation}
                   >
-                    <TranslateIcon />
+                    <SenseCardTranslateIcon />
                   </SenseCardHeaderAction>
                 )}
-                {closeDetails && <span data-onboarding="details-close" className={surfaces.closeAction}><SenseCardHeaderAction
+                {closeDetails && <span data-card-header-close="" data-onboarding="details-close" className={surfaces.closeAction}><SenseCardHeaderAction
                   label={platformV2Message(interfaceLanguage,"common.close")} onClick={closeDetails}>
                   <X size={18} aria-hidden="true" />
                 </SenseCardHeaderAction></span>}
@@ -455,6 +458,8 @@ export function LibrarySenseCardGroup({
                       expanded: !current.expanded,
                     }))
                   }
+                  onFollowPersonalReference={onFollowCrossReference ? (query,targetEntryId) =>
+                    onFollowCrossReference({query,targetEntryId,targetHeadwordGroupId:null,sourceDictionaryId:model.dictionaryId ?? ""}) : undefined}
                   onActiveMeaningChange={onActiveMeaningChange}
                   onRetryTranslation={() =>
                     onRequestTranslation?.(meaning.entryId, meaning.cardTypeId)
@@ -463,6 +468,7 @@ export function LibrarySenseCardGroup({
                   onOpenCollections={onOpenCollections}
                   onTrainNext={onTrainNext}
                   onReport={onReport}
+                  onEditPersonal={onEditPersonal}
                   onArchive={onArchive}
                   onCopy={onCopy}
                   userId={userId} onExclude={onExclude} onProgressChanged={onProgressChanged}
@@ -510,12 +516,14 @@ function MeaningCardBody({
   currentCollection,
   onToggleCurrentCollection,
   onToggleExpanded,
+  onFollowPersonalReference,
   onActiveMeaningChange,
   onRetryTranslation,
   recentCollections, recentMemberships, recentMembershipReady, onToggleRecentCollection,
   onOpenCollections,
   onTrainNext,
   onReport,
+  onEditPersonal,
   onArchive,
   onCopy,
   onExclude,
@@ -545,6 +553,7 @@ function MeaningCardBody({
   currentCollection?: CurrentCollectionPresentation;
   onToggleCurrentCollection?: (meaning: LibrarySenseCardModel, included: boolean) => void;
   onToggleExpanded: () => void;
+  onFollowPersonalReference?: (text:string, entryId:string)=>void;
   onActiveMeaningChange?: (entryId: string) => void;
   onRetryTranslation: () => void;
   recentCollections?: WordListSummary[];
@@ -554,6 +563,7 @@ function MeaningCardBody({
   onOpenCollections?: (meaning: LibrarySenseCardModel) => void;
   onTrainNext?: (meaning: LibrarySenseCardModel) => void;
   onReport?: (meaning: LibrarySenseCardModel) => void;
+  onEditPersonal?: () => void;
   onArchive?: (meaning: LibrarySenseCardModel) => void;
   onCopy?: (meaning: LibrarySenseCardModel) => void;
   onExclude?: (entryId:string) => void;
@@ -577,6 +587,20 @@ function MeaningCardBody({
 
   const [progressOpen,setProgressOpen]=React.useState(false);
   const [noteOpen,setNoteOpen]=React.useState(false);
+  const cardRef=React.useRef<HTMLElement>(null);
+  const noteTrigger=React.useRef<HTMLElement|null>(null);
+  const editOwnNote=userId && process.env.NEXT_PUBLIC_COLLECTION_SHARING_ENABLED==='true' ? ()=>{
+    noteTrigger.current=document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setNoteOpen(true);
+  } : undefined;
+  const closeOwnNote=()=>{
+    setNoteOpen(false);
+    requestAnimationFrame(()=>{
+      const trigger=noteTrigger.current;
+      const target=trigger?.isConnected ? trigger : cardRef.current?.querySelector<HTMLButtonElement>('[data-note-origin="own"] button');
+      target?.focus({preventScroll:true});
+    });
+  };
   const actions=useMeaningLearningActions(meaning.entryId,userId,meaning.meaningProgress,onProgressChanged,{active:activeTraining,headword:headwordTrainingBlocked});
   const statusLabel=meaning.meaningProgress ? getUiMessages(interfaceLanguage).learningProgress[meaningLearningStatus(meaning.meaningProgress)] : null;
   const fallbackStatusLabel = meaning.undoKnown
@@ -602,6 +626,7 @@ function MeaningCardBody({
 
   return (
     <article
+      ref={cardRef}
       data-testid={`library-sense-card-${meaning.entryId}`}
       data-entry-id={meaning.entryId}
       data-expanded={state.expanded ? "true" : "false"}
@@ -616,7 +641,6 @@ function MeaningCardBody({
         <collectionMarker.Icon size={13} aria-hidden="true"/>{collectionMarker.label}
       </span> : null}
       <span className={surfaces.frameExposure}><button type="button" data-testid="meaning-learning-progress-trigger" className={surfaces.statusAction} aria-haspopup="dialog" onClick={event=>{event.stopPropagation();setProgressOpen(true);}}>{exposure}</button></span>
-      {noteOpen&&userId&&<OwnNoteEditor key={`${userId}:${meaning.entryId}`} userId={userId} entryId={meaning.entryId} locale={interfaceLanguage} onClose={()=>setNoteOpen(false)} onSaved={()=>{setNoteOpen(false);void onProgressChanged?.();}}/>}
       {progressOpen&&<MeaningLearningProgress learningActionsBlocked={activeTraining} headwordActionsBlocked={headwordTrainingBlocked} entryId={meaning.entryId} language={interfaceLanguage} onClose={()=>setProgressOpen(false)} onChanged={onProgressChanged}/>}
       {meaning.displayOrdinal != null ? (
         <span className={`absolute -left-px -top-px flex h-5 w-5 -translate-x-[18%] -translate-y-[18%] items-center justify-center ${surfaces.ordinal}`}>
@@ -678,13 +702,18 @@ function MeaningCardBody({
           expandedClassName={"mt-0"}
         >
           <div onClick={(event) => event.stopPropagation()}>
-            {<ProductionArticleReading><ArticleSenseRelations relation={lexicalRelationDetail(meaning.wordDetails,translationLanguage)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={state.translationVisible} translationPending={translationState === "pending"} translationFailed={translationState === "failed"} onRetryTranslation={onRetryTranslation}/>{showSenseForms&&senseForms&&<><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="summary" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="body" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></>}<ArticleMeaningDetails definition={meaning.definition} details={meaning.details} noteMaterial={meaning.noteMaterial} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={state.translationVisible} translationPending={translationState === "pending"} translationFailed={translationState === "failed"} onRetryTranslation={onRetryTranslation}/></ProductionArticleReading>}
+            {onFollowPersonalReference && meaning.personalReferences?.map((reference,i) =>
+              <button type="button" className={surfaces.statusAction} key={reference.targetEntryId+":"+i} onClick={()=>onFollowPersonalReference(reference.text, reference.targetEntryId)}>
+                <BookOpen size={14} aria-hidden="true"/> {reference.text}
+              </button>)}
+            {<ProductionArticleReading><ArticleSenseRelations relation={lexicalRelationDetail(meaning.wordDetails,translationLanguage)} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={state.translationVisible} translationPending={translationState === "pending"} translationFailed={translationState === "failed"} onRetryTranslation={onRetryTranslation}/>{showSenseForms&&senseForms&&<><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="summary" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/><ArticleWordForms detail={senseForms} headword={headword} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} part="body" open={formsOpen} onToggle={()=>setFormsOpen(v=>!v)} id={formsId}/></>}<ArticleMeaningDetails definition={meaning.definition} details={meaning.details} onEditOwnNote={editOwnNote} noteMaterial={noteOpen ? meaning.noteMaterial?.filter(note=>!note.isOwn) : meaning.noteMaterial} interfaceLanguage={interfaceLanguage} contentLanguage={contentLanguage} translationLanguage={translationLanguage} translationVisible={state.translationVisible} translationPending={translationState === "pending"} translationFailed={translationState === "failed"} onRetryTranslation={onRetryTranslation}/>{noteOpen&&userId&&<OwnNoteEditor key={`${userId}:${meaning.entryId}`} userId={userId} entryId={meaning.entryId} locale={interfaceLanguage} onClose={closeOwnNote} onSaved={()=>{closeOwnNote();void onProgressChanged?.();}}/>}</ProductionArticleReading>}
 
 
             {(
               <LibraryMeaningActions reviewButton={reviewButton} savedReview={savedReview} activeTraining={activeTraining} headwordTrainingBlocked={headwordTrainingBlocked} meaning={meaning} language={interfaceLanguage} busy={busy||actions.busy} collectionCount={collectionCount}
-                onEditNote={userId&&process.env.NEXT_PUBLIC_COLLECTION_SHARING_ENABLED==='true'?()=>setNoteOpen(true):undefined}
+                onEditNote={editOwnNote}
                 onCopy={onCopy ? () => onCopy(meaning) : undefined}
+                onEditPersonal={meaning.canEditPersonal ? onEditPersonal : undefined}
                 onArchive={onArchive ? () => onArchive(meaning) : undefined}
                 onAction={onAction}
                 onProgress={()=>setProgressOpen(true)}
@@ -708,24 +737,6 @@ function MeaningCardBody({
         </SenseCardReveal>
       </div>
     </article>
-  );
-}
-
-function TranslateIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M4 5h9M8.5 3v2M6 8c1.2 2.6 3.1 4.4 5.5 5.5M11.5 8c-.8 2.2-2.3 4-4.5 5.5" />
-      <path d="m14 19 3.5-9 3.5 9M15.2 16h4.6" />
-    </svg>
   );
 }
 

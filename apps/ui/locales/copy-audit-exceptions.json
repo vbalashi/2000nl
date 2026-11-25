@@ -118,5 +118,29 @@
     "rule": "property",
     "text": "2K",
     "reason": "Fixed dictionary core-vocabulary mark, represented by the typed 2K indicator identity; not an interface phrase."
+  },
+  {
+    "file": "components/training/wordlist/PersonalDictionaryEntryDraft.tsx",
+    "rule": "expression",
+    "text": "de",
+    "reason": "Dutch noun article from the learning language. Display its original spelling in every interface locale."
+  },
+  {
+    "file": "components/training/wordlist/PersonalDictionaryEntryDraft.tsx",
+    "rule": "expression",
+    "text": "het",
+    "reason": "Dutch noun article from the learning language. Display its original spelling in every interface locale."
+  },
+  {
+    "file": "components/training/wordlist/PersonalDictionaryEntryDraft.tsx",
+    "rule": "property",
+    "text": "de",
+    "reason": "Dutch noun article from the learning language. Display its original spelling in every interface locale."
+  },
+  {
+    "file": "components/training/wordlist/PersonalDictionaryEntryDraft.tsx",
+    "rule": "property",
+    "text": "het",
+    "reason": "Dutch noun article from the learning language. Display its original spelling in every interface locale."
   }
 ]

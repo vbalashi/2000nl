@@ -2505,7 +2505,7 @@ describe("TrainingSenseCardV2Session", () => {
     },
   );
 
-  test("does not invent an audio action when projection has no capability", async () => {
+  test("keeps pronunciation visible and disabled on both sides when the projection has no audio", async () => {
     fetchSingleSense.mockResolvedValue(
       projectedTrainingAudioResult("word-to-definition", false),
     );
@@ -2524,12 +2524,12 @@ describe("TrainingSenseCardV2Session", () => {
 
     await screen.findByRole("heading", { name: "hand" });
     expect(
-      screen.queryByRole("button", { name: "Afspelen" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("button", { name: "Afspelen" }),
+    ).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Antwoord tonen" }));
     expect(
-      screen.queryByRole("button", { name: "Afspelen" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("button", { name: "Afspelen" }),
+    ).toBeDisabled();
   });
 
   test("keeps revealed reverse audio visible while resolution is pending", async () => {

@@ -32,6 +32,17 @@ test('an absent translation renders nothing; a collapsed translation stays hidde
  expect(screen.queryByText('Translation')).not.toBeInTheDocument();
 });
 
+test('structured personal note fields keep separate rails and share one translation; legacy multiline notes stay together',()=>{
+ const node={contentNodeId:'personal-note',parentContentNodeId:null,kind:'usage-note' as const,text:'eerste regel\ntweede regel\nvolgende notitie',translation:'Combined translation',children:[]};
+ const notes=['eerste regel\ntweede regel','volgende notitie'];
+ const view=render(<ArticleContentNode node={{...node,noteParagraphs:notes}} interfaceLanguage="en" translationVisible/>);
+ const rails=()=>Array.from(view.container.querySelectorAll('[data-kind="usage-note"] p:not([data-content-translation])'),p=>p.textContent);
+ expect(rails()).toEqual(notes);
+ expect(view.container.querySelectorAll('[data-content-translation]')).toHaveLength(1);
+ view.rerender(<ArticleContentNode node={node} interfaceLanguage="en" translationVisible/>);
+ expect(rails()).toEqual([node.text]);
+});
+
 test('Library approved renderer preserves the hierarchy and keeps translation toggles read-only',()=>{
  const action=vi.fn();
  const model=buildLibrarySenseCardGroupModel(goedGroup,'en');

@@ -74,7 +74,7 @@ describe("LibraryCollectionsPicker", () => {
 
 
 describe("membership read recovery", () => {
-  test.each(["loading", "failed"] as const)("%s blocks editing without presenting unknown membership as empty", state => {
+  test.each(["loading", "failed"] as const)("%s blocks editing without presenting unknown membership as empty", async state => {
     const retry=vi.fn(), toggle=vi.fn(), create=vi.fn();
     render(<LibraryCollectionsPicker open headword="huis" definition="a house" interfaceLanguage="en"
       userLists={[]} memberships={[]} busyListId={null} status={null} membershipState={state}
@@ -84,7 +84,7 @@ describe("membership read recovery", () => {
     if(state==="failed") {
       expect(screen.getByRole("alert")).toHaveTextContent("Collection membership could not be loaded");
       fireEvent.click(screen.getByRole("button",{name:"Reload membership"}));expect(retry).toHaveBeenCalledOnce();
-    } else expect(screen.getByText("Loading collection membership…")).toBeInTheDocument();
+    } else expect(await screen.findByText("Loading collection membership…")).toBeInTheDocument();
     expect(create).not.toHaveBeenCalled();expect(toggle).not.toHaveBeenCalled();
   });
 });

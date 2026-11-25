@@ -237,9 +237,7 @@ export function TrainingSenseCardStage({
       </span>
       <TrainingAnswerTranslationProvider currentCard={currentCard} entryId={model.entryId} contentLanguage={contentLanguage}>
       <TrainingCardShell answerVisible={answerVisible} question={question} contentLabel={t("senseCard.training.content")} scrollMoreLabel={t("senseCard.scroll.more")} onReachEnd={() => primaryAnswerActionRef.current?.focus()}>
-        {model.audioCapability &&
-        onPlayAudio &&
-        mode === "word-to-definition" &&
+        {mode === "word-to-definition" &&
         !answerVisible ? (
           <div
             data-testid="training-card-audio-corner"
@@ -247,8 +245,8 @@ export function TrainingSenseCardStage({
           >
             <IconButton
               label={t("senseCard.audio.play")}
-              disabled={busy}
-              onClick={onPlayAudio}
+              disabled={busy || !model.audioCapability || !onPlayAudio}
+              onClick={() => onPlayAudio?.()}
             >
               <Volume2 aria-hidden="true" className="h-5 w-5" />
             </IconButton>

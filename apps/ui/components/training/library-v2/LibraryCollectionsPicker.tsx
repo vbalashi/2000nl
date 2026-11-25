@@ -1,5 +1,6 @@
 "use client";
 
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import React from "react";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -199,7 +200,7 @@ export function LibraryCollectionsPicker({
         </div>
 
         <div ref={collectionRegionRef} data-dialog-part="body" role="region" aria-label={t("senseCard.collections.title")} tabIndex={0} className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-          {membershipState === "loading" ? <p role="status">{t("senseCard.collections.loadingMembership")}</p> : null}
+          {membershipState === "loading" ? <DelayedReadNotice><p role="status">{t("senseCard.collections.loadingMembership")}</p></DelayedReadNotice> : null}
           {membershipState === "failed" ? <div>
             <p role="alert">{t("senseCard.collections.membershipFailed")}</p>
             {onRetryMemberships ? <button type="button" onClick={onRetryMemberships}>{t("senseCard.collections.retryMembership")}</button> : null}

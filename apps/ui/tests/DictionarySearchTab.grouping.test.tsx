@@ -551,6 +551,11 @@ describe("category article access", () => {
   });
 });
 
+function openScopeFilters(label: string | RegExp) {
+  fireEvent.click(screen.getByTitle(label));
+  fireEvent.click(screen.getByRole("menuitem", {name: label}));
+}
+
 test("search filters exclude disabled material and changing source starts at the first scoped page",async()=>{
  const {AccountMaterialProvider}=await import("@/components/practice/material/AccountMaterialProvider");
  readableSources.mockReset().mockResolvedValue([source(scopeA,"Disabled A"),source(scopeB,"Enabled B")]);
@@ -559,7 +564,7 @@ test("search filters exclude disabled material and changing source starts at the
  render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness initial={{query:""}}/></AccountMaterialProvider>);
  await screen.findByTestId("library-headword-group-enabled-b");
  const {getUiMessages}=await import("@/lib/uiMessages");const labels=getUiMessages("nl");
- fireEvent.click(screen.getByRole("button",{name:labels.library.filters}));
+ openScopeFilters(labels.library.filters);
  fireEvent.click(screen.getByRole("button",{name:new RegExp(`^${labels.builder.source}`)}));
  expect(await screen.findByRole("button",{name:"Enabled B"})).toBeInTheDocument();
  expect(screen.queryByRole("button",{name:"Disabled A"})).not.toBeInTheDocument();
@@ -573,7 +578,7 @@ test("search filters exclude disabled material and changing source starts at the
  await waitFor(()=>expect(next).toBeEnabled());
  fireEvent.click(next);
  await waitFor(()=>expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({cursor:"next-scoped"})));
- fireEvent.click(screen.getByRole("button",{name:labels.library.filters}));
+ openScopeFilters(labels.library.filters);
  if (!screen.queryByRole("button",{name:"Alle woordenboeken"})) {
    fireEvent.click(screen.getByRole("button",{name:new RegExp(`^${labels.builder.source}`)}));
  }
@@ -602,7 +607,7 @@ test("Library picks an active local search language without changing the trainin
  render(<AccountMaterialProvider userId="user-1" repository={materialRepository(true)}><Harness initial={{query:""}}/></AccountMaterialProvider>);
  await waitFor(()=>expect(fetchGroupPage).toHaveBeenCalled());
  const {getUiMessages}=await import("@/lib/uiMessages");
- fireEvent.click(screen.getByRole("button",{name:getUiMessages("nl").library.filters}));
+ openScopeFilters(getUiMessages("nl").library.filters);
  expect(fetchGroupPage.mock.calls.every(call=>call[0].contentLanguageCode==="en")).toBe(true);
  expect(fetchGroupPage.mock.calls.every(call=>call[0].contentLanguageCode==="en")).toBe(true);
 });
@@ -632,7 +637,7 @@ test("approved chips panel excludes disabled sources, cancels drafts and applies
  await screen.findByTestId("library-headword-group-enabled-b");
  const pageReads=()=>fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]);
  expect(pageReads()).toHaveLength(1);
- fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));
+ openScopeFilters(/zoekfilters|search filters/i);
  let panel=within(screen.getByRole("dialog"));
  fireEvent.click(panel.getByRole("button",{name:new RegExp(`^${copy.builder.source}`)}));
  await panel.findByRole("button",{name:"Enabled B"});expect(panel.queryByRole("button",{name:"Disabled A"})).not.toBeInTheDocument();
@@ -640,7 +645,7 @@ test("approved chips panel excludes disabled sources, cancels drafts and applies
  fireEvent.click(panel.getByRole("button",{name:copy.builder.cancel}));
  expect(pageReads()).toHaveLength(1); // Cancel must not submit the selected draft source.
  expect(pageReads()[0][0].libraryScope.dictionaryIds).toBeNull();
- fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));
+ openScopeFilters(/zoekfilters|search filters/i);
  panel=within(screen.getByRole("dialog"));
  fireEvent.click(panel.getByRole("button",{name:new RegExp(`^${copy.builder.partOfSpeech}`)}));
  fireEvent.click(panel.getByRole("button",{name:copy.builder.parts.Nouns}));
@@ -666,7 +671,7 @@ test("reapplying approved filters starts a first-page read even when the scope i
  await screen.findByTestId("library-headword-group-enabled-b");
  const pageReads=()=>fetchGroupPage.mock.calls.filter(call=>"cursor" in call[0]);
  expect(pageReads()).toHaveLength(1);
- fireEvent.click(screen.getByRole("button",{name:/zoekfilters|search filters/i}));
+ openScopeFilters(/zoekfilters|search filters/i);
  const panel=within(screen.getByRole("dialog"));
  await waitFor(()=>expect(panel.getByRole("button",{name:copy.library.showResults})).toBeEnabled());
  fireEvent.click(panel.getByRole("button",{name:copy.library.showResults}));
@@ -703,7 +708,7 @@ test("reapplying the same filters supersedes an in-flight lookup", async () => {
   await waitFor(() => expect(pageReads()).toHaveLength(1));
   const initialSignal = pageReads()[0][0].signal as AbortSignal;
 
-  fireEvent.click(screen.getByRole("button", { name: copy.library.filters }));
+  openScopeFilters(copy.library.filters);
   await waitFor(() => expect(countLibraryGroups).toHaveBeenCalledOnce());
   expect(countLibraryGroups.mock.calls[0][0]).toMatchObject({
     query: "", libraryScope: { dictionaryIds: null, filters: { parts: ["noun"], article: null } },
@@ -1042,9 +1047,9 @@ test("background refresh failure retains the usable Library list", async () => {
 });
 
 test.each([
-  {placement: "panel" as const, side: "left" as const},
-  {placement: "dialog" as const, side: "right" as const},
-])("one filter entry opens the complete $placement form without a second material picker", async ({placement, side}) => {
+  {placement: "panel" as const},
+  {placement: "dialog" as const},
+])("one filter entry opens the complete $placement form without a second material picker", async ({placement}) => {
   const {AccountMaterialProvider} = await import("@/components/practice/material/AccountMaterialProvider");
   const {LibraryPresentationContext} = await import("@/components/practice/library/LibraryPresentationContext");
   const {getUiMessages} = await import("@/lib/uiMessages");
@@ -1054,13 +1059,12 @@ test.each([
   fetchGroupPage.mockReset().mockResolvedValue({groups:[group], selectedTierComplete:true, nextGroupCursor:null, librarySearch:{totalGroups:1, matchingEntryIds:["unified-entry"]}});
   render(<LibraryPresentationContext.Provider value={{
     filterPlacement:placement,
-    filterButtonSide:side,
     renderColumns:({defaultColumns,filters})=><>{defaultColumns}{filters}</>,
   }}><AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:""}}/></AccountMaterialProvider></LibraryPresentationContext.Provider>);
   await screen.findByTestId("library-headword-group-unified-filter");
-  expect(screen.getAllByRole("button",{name:copy.library.filters})).toHaveLength(1);
+  expect(screen.getAllByTitle(copy.library.filters)).toHaveLength(1);
   expect(screen.queryByRole("button",{name:/^Material$|^Материал$/})).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button",{name:copy.library.filters}));
+  openScopeFilters(copy.library.filters);
   const form = screen.getByRole(placement === "panel" ? "region" : "dialog",{name:copy.library.filterTitle});
   expect(within(form).getByRole("button",{name:new RegExp(`^${copy.builder.source}`)})).toBeInTheDocument();
   fireEvent.click(within(form).getByRole("button",{name:new RegExp(`^${copy.builder.partOfSpeech}`)}));
@@ -1069,11 +1073,11 @@ test.each([
   fireEvent.click(within(form).getByRole("button",{name:copy.builder.cancel}));
   expect(screen.queryByRole(placement === "panel" ? "region" : "dialog",{name:copy.library.filterTitle})).not.toBeInTheDocument();
   // Reopening proves that changing the shared form did not apply the draft.
-  fireEvent.click(screen.getByRole("button",{name:copy.library.filters}));
+  openScopeFilters(copy.library.filters);
   const reopened = screen.getByRole(placement === "panel" ? "region" : "dialog",{name:copy.library.filterTitle});
   fireEvent.click(within(reopened).getByRole("button",{name:new RegExp(`^${copy.builder.partOfSpeech}`)}));
   expect(within(reopened).getByRole("button",{name:"Nouns"})).toHaveAttribute("aria-pressed","false");
-  expect(screen.getAllByRole("button",{name:copy.library.filters})).toHaveLength(1);
+  expect(screen.getAllByTitle(copy.library.filters)).toHaveLength(1);
 });
 
 test("a vanished explicit collection keeps its scope and reports unavailable instead of browsing all words", async () => {
@@ -1113,7 +1117,7 @@ test("ordinary Library reads retain frequency, entry type, meaning limit and sor
  render(<AccountMaterialProvider userId="user-1" repository={materialRepository()}><Harness locale="en" initial={{query:"",entryFilters:{...filters,parts:[]}}}/></AccountMaterialProvider>);
  await screen.findByTestId("library-headword-group-group-goed-homograph");
  expect(fetchGroupPage).toHaveBeenLastCalledWith(expect.objectContaining({libraryScope:{dictionaryIds:null,filters:{...filters,parts:[]}},cursor:null}));
- fireEvent.click(screen.getByRole("button",{name:"Search filters"}));
+ openScopeFilters("Search filters");
  await screen.findByRole("dialog",{name:"Library filters"});
  expect(screen.getByRole("button",{name:"By frequency"})).toHaveAttribute("aria-pressed","true");
  expect(screen.getByRole("button",{name:"Written"})).toHaveAttribute("aria-pressed","true");

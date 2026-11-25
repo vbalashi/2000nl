@@ -1,9 +1,9 @@
 "use client";
-import { localizedField } from "@/lib/i18n/catalog";
+import { getInterfaceCatalog, localizedField } from "@/lib/i18n/catalog";
 
 import React from "react";
 import { RatingControls, type Rating } from "@/components/practice/RatingControls";
-import { Check, ChevronDown, Flag, List, MoreHorizontal, ChartNoAxesColumn, LockKeyhole, Plus, Minus, Archive, Copy, StickyNote } from "lucide-react";
+import { Check, ChevronDown, Flag, List, MoreHorizontal, ChartNoAxesColumn, LockKeyhole, Plus, Minus, Pencil, Archive, Copy, StickyNote } from "lucide-react";
 import { ActionMenu, type ActionMenuItem } from "@/components/practice/ui/ActionMenu";
 import { getUiMessages } from "@/lib/uiMessages";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -14,7 +14,7 @@ import { independentEntryCopyText } from "@/lib/platform/independentEntryCopyTex
 import s from "@/components/practice/article/articleActions.module.css";
 
 /** Presentation adapter; authoritative capabilities and callbacks stay with the owner. */
-export function LibraryMeaningActions({ meaning, language, busy, collectionCount, currentCollection, recentCollections, onAction, onCollections, onReport, onExclude, onArchive, onCopy, onEditNote, exclusionDisabled, onProgress, onResume, activeTraining = false, headwordTrainingBlocked = false, reviewButton = true, savedReview }: {
+export function LibraryMeaningActions({ meaning, language, busy, collectionCount, currentCollection, recentCollections, onAction, onCollections, onReport, onExclude, onEditPersonal, onArchive, onCopy, onEditNote, exclusionDisabled, onProgress, onResume, activeTraining = false, headwordTrainingBlocked = false, reviewButton = true, savedReview }: {
   activeTraining?: boolean;
   headwordTrainingBlocked?: boolean;
   reviewButton?: boolean;
@@ -30,6 +30,7 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
   onTrainNext?: () => void;
   onReport?: () => void;
   onExclude?: () => void;
+  onEditPersonal?: () => void;
   onArchive?: () => void;
   onCopy?: () => void;
   onEditNote?:()=>void;
@@ -58,6 +59,7 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
   if (onReport) items.push({id:"report",label:t("senseCard.report"),icon:<Flag size={15} aria-hidden="true"/>,disabled:busy,
     onSelect:()=>{close();onReport();}});
   if(onEditNote)items.push({id:'own-note',label:localizedField("meaningActions", "personalNote")[language],icon:<StickyNote size={15} aria-hidden="true"/>,disabled:busy,onSelect:()=>{close();onEditNote();}});
+  if (onEditPersonal) items.unshift({id:"edit-personal",label:getInterfaceCatalog(language).features.personalCard.editCard,icon:<Pencil size={15}/>,onSelect:()=>{close();onEditPersonal();}});
   if (onCopy) items.push({id:"copy",label:independentEntryCopyText(language).action,icon:<Copy size={15} aria-hidden="true"/>,disabled:busy,onSelect:()=>{close();onCopy();}});
   if (onArchive && meaning.canArchive) items.push({id:"archive",label:authorEntryArchiveCopy(language).action,icon:<Archive size={15} aria-hidden="true"/>,disabled:busy,onSelect:()=>{close();onArchive();}});
   const collectionItems: ActionMenuItem[] = [];
@@ -93,7 +95,7 @@ export function LibraryMeaningActions({ meaning, language, busy, collectionCount
         onClick={event=>anchor?close():setAnchor(event.currentTarget)}><MoreHorizontal size={18} aria-hidden="true"/></button> : null}
     </div>
     {collectionAnchor ? <ActionMenu anchor={collectionAnchor} title={t("senseCard.collections.label")} language={language} items={collectionItems} onClose={closeCollections}/> : null}
-    {anchor ? <ActionMenu anchor={anchor} title={getUiMessages(language).cardActions.title} language={language} items={items} onClose={close}/> : null}
+    {anchor ? <ActionMenu followAnchor anchor={anchor} title={getUiMessages(language).cardActions.title} language={language} items={items} onClose={close}/> : null}
   </div>;
 }
 

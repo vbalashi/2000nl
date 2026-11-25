@@ -1,4 +1,5 @@
 "use client";
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import {ExerciseKnownChoices} from "./ExerciseKnownChoices";
 import { completeMeaningExclusionResume } from "../training/v2/trainingExclusionUndoStore";
 import React from "react";
@@ -123,7 +124,7 @@ export function MeaningLearningProgress({
         </button>
       </SheetDragRegion>
       <div className={s.body} tabIndex={0}>
-        {!progress && !failed && <p role="status">{t.loading}</p>}
+        {!progress && !failed && <DelayedReadNotice><p role="status">{t.loading}</p></DelayedReadNotice>}
         {failed && (
           <p role="alert">
             {t.failed}{" "}

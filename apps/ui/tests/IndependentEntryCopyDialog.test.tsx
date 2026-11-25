@@ -151,3 +151,14 @@ test("a rejected retry retains the original uncertain intent for receipt recover
  render(<IndependentEntryCopyDialog {...props}/>);await screen.findByText("Copy created");
  expect(mocks.submit).toHaveBeenCalledTimes(2);
 });
+
+test("retrying a failed preview reads the source again before enabling Copy", async () => {
+  mocks.preview.mockResolvedValueOnce(null);
+  render(<IndependentEntryCopyDialog {...props} />);
+  const retry = await screen.findByRole("button", {name: /retry|try again/i});
+  expect(screen.queryByRole("button", {name: "Copy"})).toBeNull();
+  fireEvent.click(retry);
+  await waitFor(() => expect(screen.getByRole("button", {name: "Copy"})).toBeEnabled());
+  expect(mocks.preview).toHaveBeenCalledTimes(2);
+  expect(mocks.submit).not.toHaveBeenCalled();
+});

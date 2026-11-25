@@ -1,4 +1,5 @@
 "use client";
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import React from 'react';
 import {ArrowLeft,ArrowRight,LogOut} from 'lucide-react';
 import {DirectionCard} from '@/components/practice/builder/DirectionCard';
@@ -24,7 +25,7 @@ export function TrainingExerciseKnownChoice(p:Props){
  return <section className={trainingStageClassName()} data-side={p.originSide} aria-label={t.choiceLabel}>
   <TrainingCardShell answerVisible={p.originSide==='answer'} contentLabel={platformV2Message(p.language,'senseCard.training.content')} scrollMoreLabel={platformV2Message(p.language,'senseCard.scroll.more')}><div className={s.body}><div className={s.content}>
    <LogOut size={40} strokeWidth={1.4} className={s.icon} aria-hidden="true"/>
-   {!snapshot&&!error?<p className={s.loading} role="status">{t.loading}</p>:null}
+   {!snapshot&&!error?<DelayedReadNotice><p className={s.loading} role="status">{t.loading}</p></DelayedReadNotice>:null}
    {snapshot?<div className={s.cards} data-single={directions.length===1}>{directions.map(d=>{
     const isKnown=known.includes(d),reverse=d==='reverse',label=directionLabel(d);
     return <TrainingKnownDirection key={d} label={label} initiallyKnown={Object.hasOwn(snapshot.marks,d)} known={isKnown}

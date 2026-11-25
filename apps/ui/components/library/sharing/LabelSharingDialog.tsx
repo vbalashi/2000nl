@@ -1,4 +1,5 @@
 'use client';
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import {ActionButton} from '@/components/practice/ui/ActionButton';
 
 import React,{useEffect,useState} from 'react';
@@ -35,7 +36,7 @@ export function LabelSharingDialog({name,locale,controller,onClose}:{name:string
   <div className={`${s.editor} ${s.sharingAction}`}>
    <header><h2>{group.title}</h2>{status==='ready'&&data?.isOpen&&!confirmation&&<ShareManagementMenu locale={locale} onAction={setConfirmation}/>}</header><p>{name}</p>
    {controller.rejected&&<p role="alert">{t.rejected}</p>}
-   {status==='loading'?<p role="status">{common.loading}</p>:status==='saving'?<p role="status">{common.saving}</p>:status==='error'?<>
+   {status==='loading'?<DelayedReadNotice><p role="status">{common.loading}</p></DelayedReadNotice>:status==='saving'?<p role="status">{common.saving}</p>:status==='error'?<>
     <p role="alert">{t.readError}</p><button onClick={controller.refresh}>{common.retry}</button>
    </>:status==='uncertain'?<>
     <p role="alert">{t.uncertain}</p><button onClick={controller.reconcile}>{t.check}</button><button onClick={controller.retry}>{t.retry}</button>

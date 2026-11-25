@@ -1,4 +1,5 @@
 "use client";
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import { interfaceLanguages } from "@/lib/i18n/registry";
 
 import React from "react";
@@ -109,17 +110,17 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
                   </SegmentedControl>
                 </SettingsRow>
               </SettingsPanel>
-              {secondaryPickerOpen && !translationOff && <React.Suspense fallback={<p role="status">{getUiMessages(props.interfaceLanguage).languagePicker.loading}</p>}><TranslationLanguagePicker title={copy.secondaryTranslationLanguage} language={props.interfaceLanguage} selectedCode={secondaryOff ? null : props.secondaryTranslationLanguage} onChoose={item => {setRememberedSecondary(item.code);props.onSecondaryTranslationLanguageChange?.(item.code);}} onClose={() => setSecondaryPickerOpen(false)}/></React.Suspense>}
+              {secondaryPickerOpen && !translationOff && <React.Suspense fallback={<DelayedReadNotice><p role="status">{getUiMessages(props.interfaceLanguage).languagePicker.loading}</p></DelayedReadNotice>}><TranslationLanguagePicker title={copy.secondaryTranslationLanguage} language={props.interfaceLanguage} selectedCode={secondaryOff ? null : props.secondaryTranslationLanguage} onChoose={item => {setRememberedSecondary(item.code);props.onSecondaryTranslationLanguageChange?.(item.code);}} onClose={() => setSecondaryPickerOpen(false)}/></React.Suspense>}
               <LearningMaterialSettings language={props.interfaceLanguage} />
               {pickerOpen && (
                 <React.Suspense
                   fallback={
-                    <p role="status">
+                    <DelayedReadNotice><p role="status">
                       {
                         getUiMessages(props.interfaceLanguage).languagePicker
                           .loading
                       }
-                    </p>
+                    </p></DelayedReadNotice>
                   }
                 >
                   <TranslationLanguagePicker

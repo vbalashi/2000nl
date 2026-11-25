@@ -1,4 +1,5 @@
 "use client";
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import {BrowseCollectionSources} from '@/components/library/sharing/BrowseCollectionSources';
 import {useCollectionSelectionScope} from '@/components/library/sharing/CollectionSelectionContext';
 import type {PersonalCollection} from '@/lib/collections/sharing/personalCatalogContract';
@@ -144,7 +145,7 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
   const status = preview.key === key ? preview.status : "loading";
   const sourceNotice = material?.status !== "ready" ? (
     <p className={f.help} role={material?.status === "error" ? "alert" : "status"}>
-      {material?.status === "error" ? materialCopy.catalogError : materialCopy.loading}
+      {material?.status === "error" ? materialCopy.catalogError : <DelayedReadNotice>{materialCopy.loading}</DelayedReadNotice>}
       {material?.status === "error" && (
         <button type="button" className={f.reset} onClick={() => material.reload()}>
           {materialCopy.retry}
@@ -153,7 +154,7 @@ export function AccountLibraryFilters({ value, query, locale, collection, collec
     </p>
   ) : null;
 
-  let countContent: React.ReactNode = materialCopy.loading;
+  let countContent: React.ReactNode = <DelayedReadNotice>{materialCopy.loading}</DelayedReadNotice>;
   if (!ready) {
     if (material?.status === "error") countContent = materialCopy.catalogError;
     else if (material?.status === "ready") {

@@ -1,4 +1,10 @@
 "use client";
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
+import {ActionButton} from "@/components/practice/ui/ActionButton";
+import {vocabularySelectionActive} from "@/lib/vocabulary/selection";
+import {openSearchChat,type SearchChat} from "./lastSearchChat";
+import {PersonalCardAssistant} from "./PersonalCardAssistant";
+import {searchRecoveryCopy} from "./searchRecoveryCopy";
 import {ChoiceSelect} from "@/components/library/organization/ChoiceSelect";
 import {SearchField} from "@/components/practice/ui/SearchField";
 import {formatLibraryCounts} from "@/lib/platform/libraryCountLabel";
@@ -14,7 +20,6 @@ import {emptyBulkArticleSelection,reconcileBulkArticleSelection,setBulkArticlesS
 import {ActionMenu} from "@/components/practice/ui/ActionMenu";
 import {LibrarySortControl} from "@/components/practice/library/LibrarySortControl";
 import {librarySelectionToTraining,type LibraryTrainingHandoff} from "@/lib/vocabulary/libraryTrainingHandoff";
-import {vocabularySelectionActive} from "@/lib/vocabulary/selection";
 import {useOnboardingQueryLocked} from "@/components/onboarding/Onboarding";
 import { dictionarySourceProfile } from "@/lib/dictionary/sourceProfile";
 import { useLibraryMaterialSelection } from "@/components/practice/material/useLibraryMaterialSelection";
@@ -30,7 +35,7 @@ import { LibraryCategoryResults } from "./LibraryCategoryResults";
 import type { LibraryMaterialScope } from "@/lib/platform/librarySearchScope";
 import { LibraryPresentationContext } from "@/components/practice/library/LibraryPresentationContext";
 import { LIBRARY_PAGE_SIZE } from "@/lib/platform/libraryPagination";
-import { SlidersHorizontal, ChevronLeft, ChevronRight, FileText, Folder, Play, Check, Layers, ListChecks, FolderPlus, X, History, RotateCcw } from "lucide-react";
+import { BookOpen,Sparkles,SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight, FileText, Folder, Play, Check, Layers, ListChecks, FolderPlus, X, History, RotateCcw } from "lucide-react";
 import { LibraryResultList, LibraryResultRow } from "@/components/practice/library/LibraryResultList";
 import { AccountLibraryFilters } from "@/components/practice/library/AccountLibraryFilters";
 import {SelectedCollectionSourceStatus,collectionSourceMessage,type CollectionSourceRead} from '@/components/library/sharing/SelectedCollectionSourceStatus';
@@ -60,6 +65,10 @@ import { LibraryWordDetail } from "../library-v2/LibraryWordDetail";
 import { languageDisplayName } from "@/lib/languages/languageDisplayName";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { LibraryHeadwordGroupResultsList } from "./LibraryHeadwordGroupResultsList";
+import type {PersonalField} from "@/lib/training/personalArticleClient";
+import {usePersonalCardDrafts,hasDraftChanges,type PersonalCardDraft} from "./usePersonalCardDrafts";
+import {personalCardCopy} from "./personalCardCopy";
+import { PersonalDictionaryEntryDraft } from "./PersonalDictionaryEntryDraft";
 import { useLibrarySearchLifecycle } from "./useLibrarySearchLifecycle";
 import type { LibraryHeadwordGroupResult } from "./libraryHeadwordGroupResults";
 import {
@@ -172,6 +181,7 @@ export function DictionarySearchTab({
   },[categoryCountHost]);
   const categoryAppearance = "plain" as const;
   const [categoryRevision, setCategoryRevision] = useState(0);
+  const [entryRevision, setEntryRevision] = useState(0);
   const [categoryAwaitingAuthorization, setCategoryAwaitingAuthorization] = useState(false);
   const [categoryBulkCount,setCategoryBulkCount]=useState<number|null>(null);
   const presentation = React.useContext(LibraryPresentationContext);
@@ -200,6 +210,26 @@ export function DictionarySearchTab({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [countAnchor, setCountAnchor] = useState<HTMLButtonElement | null>(null);
   const [categoryCountText,setCategoryCountText]=useState("");
+  const draftShelf = usePersonalCardDrafts(userId,languageCode ?? language);
+  const personalDraft = draftShelf.active;
+  const [browseDraftsExpanded,setBrowseDraftsExpanded] = useState(true);
+  const [searchDraftsExpanded,setSearchDraftsExpanded] = useState(true);
+  const searchTerm = query.trim().toLocaleLowerCase();
+  useEffect(() => { setSearchDraftsExpanded(true); }, [searchTerm]);
+  const draftsExpanded = searchTerm ? searchDraftsExpanded : browseDraftsExpanded;
+  const setDraftsExpanded = searchTerm ? setSearchDraftsExpanded : setBrowseDraftsExpanded;
+  const [assistantHost,setAssistantHost] = useState<HTMLDivElement|null>(null);
+  const [draftClosed,setDraftClosed] = useState(false);
+  const [assistantOpen,setAssistantOpen] = useState(false);
+  const [editLoadFailed,setEditLoadFailed] = useState(false);
+  const [mobile,setMobile] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 700px)");
+    const sync = () => setMobile(media.matches);
+    sync();
+    media.addEventListener("change",sync);
+    return () => media.removeEventListener("change",sync);
+  }, []);
   const [scopeAnchor, setScopeAnchor] = useState<HTMLButtonElement | null>(null);
   const closeCount = () => { setCountAnchor(null); countAnchor?.focus({preventScroll:true}); };
   const [availableLanguages, setAvailableLanguages] = useState<
@@ -211,9 +241,11 @@ export function DictionarySearchTab({
   const onboardingQueryLocked=useOnboardingQueryLocked();
   const queryRef = useRef<HTMLInputElement | null>(null);
   const latestDetailRequestRef = useRef(0);
+  const copyToOpen = useRef<{entryId:string; dictionaryId:string; userId:string} | null>(null);
   const pageSize = LIBRARY_PAGE_SIZE;
   const updateSearchState = useCallback(
     (patch: Partial<DictionarySearchTabState>) => {
+      copyToOpen.current = null;
       onSearchStateChange((current) => ({ ...current, ...patch }));
     },
     [onSearchStateChange],
@@ -255,18 +287,60 @@ export function DictionarySearchTab({
       ) ?? null,
     [groupResults, selectedHeadwordGroupId],
   );
+  const hasPersonalChanges = !!personalDraft && hasDraftChanges(personalDraft);
+  const personalEditing = personalDraft !== null && !detailSelection && !draftClosed;
+  const editingRef = useRef(false);
+  editingRef.current = personalEditing;
+  const visibleDraftKey = useRef<string | undefined>();
+  visibleDraftKey.current = personalEditing ? personalDraft?.sessionKey : undefined;
+  const editScope = useRef("");
+  editScope.current = JSON.stringify([userId, searchLanguage, detailSelection?.entryId]);
+  useEffect(() => { setDraftClosed(true); setAssistantOpen(false); }, [userId,searchLanguage]);
+  useEffect(() => { if (!personalEditing) setAssistantOpen(false); }, [personalEditing]);
+  const editPersonal = async (ids:string[]) => {
+    const existing = draftShelf.drafts.find(draft => draft.initialSenses?.some(sense => sense.entryId && ids.includes(sense.entryId)));
+    if (existing) {
+      draftShelf.open(existing);
+      setDraftClosed(false);
+      editingRef.current = true;
+      updateSearchState({detailSelection:null,selectedHeadwordGroupId:null,mobileDetailOpen:true});
+      return;
+    }
+    const scope = editScope.current;
+    setEditLoadFailed(false);
+    const entries = await Promise.all(ids.map(id => fetchDictionaryEntryById(id,userId)));
+    if (scope !== editScope.current) return;
+    const first = entries[0];
+    if (!first || entries.some(item => !item)) { setEditLoadFailed(true); return; }
+    const initialSenses = entries.flatMap(entry => {
+      if (!entry) return [];
+      const raw = entry.raw as typeof entry.raw & {personalFields?:PersonalField[]};
+      const legacy:PersonalField[] = [];
+      const example = typeof raw.example === "string" ? raw.example : raw.example?.source;
+      if (example) legacy.push({kind:"example",text:example});
+      if (raw.notes) legacy.push({kind:"note",text:raw.notes});
+      return [{entryId:entry.id,definition:raw.definition ?? "",fields:raw.personalFields ?? legacy}];
+    });
+    setDraftClosed(false);
+    editingRef.current = true;
+    draftShelf.open({sessionKey:first.id,anchorEntryId:first.id,word:first.headword,definition:initialSenses[0].definition,partOfSpeech:first.part_of_speech ?? null,article:first.gender === "de" || first.gender === "het" ? first.gender : null,kind:(first.raw as {personalKind?:string}).personalKind === "expression" ? "expression" : "word",initialSenses});
+    updateSearchState({detailSelection:null,selectedHeadwordGroupId:null,mobileDetailOpen:true});
+  };
   const closeAfterArchive = React.useRef(false);
   const projectGroupSelection = useCallback(
     (
       current: DictionarySearchTabState,
       nextGroups: LibraryHeadwordGroupResult[],
     ) => {
+      if (editingRef.current && !current.detailSelection) return {detailSelection:null,selectedHeadwordGroupId:null};
       if (closeAfterArchive.current) {
         closeAfterArchive.current = false;
         return { selectedHeadwordGroupId: null, detailSelection: null };
       }
       const selectedStillVisible = nextGroups.find(
-        (group) => group.headwordGroupId === current.selectedHeadwordGroupId,
+        (group) => current.detailSelection
+          ? group.group.entries.some(entry => (entry.kind === "sense-card" ? entry.entryId : entry.crossReferenceId) === current.detailSelection?.entryId)
+          : group.headwordGroupId === current.selectedHeadwordGroupId,
       );
       const selected = selectedStillVisible ?? nextGroups[0] ?? null;
       return {
@@ -321,8 +395,20 @@ export function DictionarySearchTab({
     projectGroupSelection,
   });
   const applyCategoryWordResults = useCallback((results: LibraryHeadwordGroupResult[]) => {
-    onSearchStateChange(current => ({...current,groupResults:results,...projectGroupSelection(current,results)}));
-  }, [onSearchStateChange,projectGroupSelection]);
+    const target = copyToOpen.current;
+    const destination = target?.userId === userId && target.dictionaryId === dictionaryId
+      ? results.find(row => row.group.dictionary.dictionaryId === target.dictionaryId &&
+          row.group.entries.some(entry => entry.kind === "sense-card" && entry.entryId === target.entryId))
+      : undefined;
+    if (destination) copyToOpen.current = null;
+    onSearchStateChange(current => ({
+      ...current, groupResults:results,
+      ...(destination && target ? {
+        selectedHeadwordGroupId: destination.headwordGroupId, mobileDetailOpen:true,
+        detailSelection:{entryId:target.entryId,headword:destination.headword,contentLanguageCode:destination.group.dictionary.sourceLanguageCode},
+      } : projectGroupSelection(current,results)),
+    }));
+  }, [onSearchStateChange,projectGroupSelection,userId,dictionaryId]);
   const refreshSearch = useCallback(() => {
     refreshLegacySearch();
     setCategoryRevision(current => current + 1);
@@ -514,12 +600,12 @@ export function DictionarySearchTab({
   }, [resetBulkSelection, browseReadDiscarded]);
   const resetCategoryAccess = useCallback(() => {
     ++latestDetailRequestRef.current;
-    updateSearchState({ groupResults: [], wordResults: [], selectedHeadwordGroupId: null, detailSelection: null, mobileDetailOpen: false });
+    onSearchStateChange(current => ({...current, groupResults: [], wordResults: [], selectedHeadwordGroupId: null, detailSelection: null, mobileDetailOpen: false }));
     setCategoryAwaitingAuthorization(true);
     setCategoryBulkCount(null);
     setCountAnchor(null);
     resetBulkSelection();
-  }, [updateSearchState, resetBulkSelection]);
+  }, [onSearchStateChange, resetBulkSelection]);
   const categorySourceUnavailable = categorySearchActive && useViewedListFilter && selectedSourceRead?.status === "unavailable";
   React.useLayoutEffect(() => {
     if (categorySourceUnavailable) resetCategoryAccess();
@@ -593,6 +679,50 @@ export function DictionarySearchTab({
       ? formatUiMessage(copy.noResultsHint, { source: resultScopeLabel })
       : copy.emptyQueryHint;
 
+  const [discoveryKey,setDiscoveryKey] = useState<string|null>(null);
+  const category = searchState.searchCategory ?? "headwords";
+  const discoveryScope = JSON.stringify([userId,searchLanguage,query,category,dictionaryId,categoryMaterial,searchState.entryFilters]);
+  const discoveryOpen = discoveryKey===discoveryScope;
+  const [discoveryStart,setDiscoveryStart] = useState(false);
+  const [chatContext,setChatContext] = useState<SearchChat|null>(null);
+  const chatStorageKey = "2000nl.last-search-chat.v1." + userId;
+  function openDiscovery(startSearch:boolean) {
+    setChatContext(openSearchChat(chatStorageKey,userId,{word:query.trim(),scope:resultScopeLabel,category,language:searchLanguage},startSearch));
+    setDiscoveryStart(startSearch);
+    setScopeAnchor(null);
+    setDraftClosed(true);
+    setDiscoveryKey(discoveryScope);
+    updateSearchState({detailSelection:null,selectedHeadwordGroupId:null,mobileDetailOpen:true});
+  }
+  useEffect(()=>{setDiscoveryKey(null);},[discoveryScope]);
+  const recovery = searchRecoveryCopy(interfaceLanguage);
+  const personalCopy = personalCardCopy(interfaceLanguage);
+  const scoped = !!(dictionaryId || categoryMaterial);
+  const entryFilters = searchState.entryFilters;
+  const restricted = scoped || !!(entryFilters?.parts.length || entryFilters?.article || vocabularySelectionActive(entryFilters?.vocabulary));
+  const broadenSearch = () => {
+    onSearchStateChange({...createDictionarySearchTabState(),query,languageCode:searchLanguage,
+      searchCategory:category,applyListFilter:false,entryFilters:{...EMPTY_LIBRARY_ENTRY_FILTERS,sort:entryFilters?.sort}});
+    refreshSearch();
+  };
+  const emptyResult = <div className={workspace.searchRecovery}>
+    <strong>{restricted ? (useViewedListFilter ? recovery.collection : recovery.filters) : getUiMessages(interfaceLanguage).librarySearch.empty}</strong>
+    {restricted && <p>{recovery.hint}</p>}
+    <div>
+      {restricted && <ActionButton variant="primary" onClick={broadenSearch}><BookOpen size={15}/>{scoped ? recovery.all : recovery.clear}</ActionButton>}
+      {process.env.NODE_ENV==="development" && <ActionButton onClick={()=>openDiscovery(true)}><Sparkles size={15}/>{recovery.help}</ActionButton>}
+    </div>
+  </div>;
+  const closeDiscovery = () => {setDiscoveryKey(null);updateSearchState({mobileDetailOpen:false});};
+  const discoveryPanel = discoveryOpen && chatContext && <PersonalCardAssistant key={chatContext.id} senseKey={chatContext.id}
+    word={chatContext.word} languageCode={chatContext.language} definition="" ordinal={1} interfaceLanguage={interfaceLanguage}
+    discovery={{chat:chatContext,storageKey:chatStorageKey,startSearch:discoveryStart,category:chatContext.category,scope:chatContext.scope,onClear:()=>{
+      setDiscoveryStart(false);
+      setChatContext(openSearchChat(chatStorageKey,userId,{word:"",scope:resultScopeLabel,category,language:searchLanguage},true));
+    },onSelect:hit=>{
+      setDiscoveryKey(null);
+      updateSearchState({selectedHeadwordGroupId:null,detailSelection:{entryId:hit.entryId,headword:hit.word,contentLanguageCode:chatContext.language},mobileDetailOpen:true});
+    }}} onClose={closeDiscovery} onApply={()=>{}}/>;
   const presentationController = {
     collections: filterCollections,
     state: searchState,
@@ -602,13 +732,6 @@ export function DictionarySearchTab({
     filtersOpen,
     interfaceLanguage,
   };
-  const filterButton = (
-    materialEnabled && <button type="button" className={workspace.filterButton}
-          aria-label={copy.filters} aria-haspopup={presentation?.filterPlacement === "panel" ? undefined : "dialog"} aria-expanded={presentation ? filtersOpen : undefined} disabled={!searchMaterialReady}
-          data-active={Boolean(searchState.entryFilters?.parts.length || vocabularySelectionActive(searchState.entryFilters?.vocabulary) || dictionaryId || searchState.labelId)} onClick={()=>setFiltersOpen(current=>presentation?.filterPlacement === "panel" ? !current : true)}>
-          <SlidersHorizontal size={18}/>
-        </button>
-  );
   const filters = (
     filtersOpen && <AccountLibraryFilters category={categorySearchActive ? searchState.searchCategory ?? "headwords" : undefined} locale={interfaceLanguage} query={query} collection={viewedList} collections={filterCollections}
           value={{languageCode:searchLanguage,dictionaryId,applyListFilter,labelId:searchState.labelId,labelName:searchState.labelName,collectionId:applyListFilter ? viewedListId : null,...(searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS)}}
@@ -620,6 +743,20 @@ export function DictionarySearchTab({
             setFiltersOpen(false);
           }}/>
   );
+  const visibleDrafts = bulkMode || (categorySearchActive && (searchState.searchCategory ?? "headwords")!=="headwords")
+    ? [] : draftShelf.drafts.filter(draft => hasDraftChanges(draft) && (draft===personalDraft && personalEditing ||
+      ((!dictionaryId || selectedDictionary?.kind==="user") && !useViewedListFilter &&
+        draft.word.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))));
+  const hasMatchingDraft = Boolean(searchTerm) && visibleDrafts.some(draft => draft.word.toLocaleLowerCase().includes(searchTerm));
+  const pinnedIds = draftsExpanded ? visibleDrafts.flatMap(draft=>draft.anchorEntryId ? [draft.anchorEntryId] : []) : [];
+  function openDraft(draft:PersonalCardDraft) {
+    draftShelf.open(draft);
+    setDraftClosed(false);
+    setDraftsExpanded(true);
+    setAssistantOpen(false);
+    editingRef.current = true;
+    updateSearchState({detailSelection:null,mobileDetailOpen:true,selectedHeadwordGroupId:null});
+  }
   const results = (
     <div className={`flex min-h-0 min-w-0 flex-1 flex-col ${workspace.listPane}`}>
       <div
@@ -628,7 +765,6 @@ export function DictionarySearchTab({
         }
       >
         <div className={materialEnabled ? workspace.searchRow : undefined}>
-        {presentation?.filterButtonSide === "left" && filterButton}
         <SearchField>
           <input
             ref={queryRef}
@@ -664,7 +800,6 @@ export function DictionarySearchTab({
             </button>
           ) : null}
         </SearchField>
-        {presentation?.filterButtonSide !== "left" && filterButton}
         {(!categorySearchActive||(searchState.searchCategory??"headwords")==="headwords")&&<LibrarySortControl language={interfaceLanguage} value={searchState.entryFilters?.sort??"alphabetical"} onChange={sort=>{updateSearchState({entryFilters:{...(searchState.entryFilters??EMPTY_LIBRARY_ENTRY_FILTERS),sort},page:1,groupPageCursors:[null],groupHasMore:false});refreshSearch();}}/>}
         {presentation?.renderSearchActions?.(interfaceLanguage)}
         </div>
@@ -672,7 +807,7 @@ export function DictionarySearchTab({
 
         <div className={workspace.scopeRow}>
           <div className={workspace.scopeSummary}>
-            <button type="button" className={`${workspace.scope} ${workspace.scopeButton}`} title={copy.scopeActions} aria-haspopup="menu" aria-expanded={Boolean(scopeAnchor)} onClick={event => setScopeAnchor(scopeAnchor ? null : event.currentTarget)}>
+            <button type="button" className={`${workspace.scope} ${workspace.countTrigger} ${workspace.scopeButton}`} title={materialEnabled ? copy.filters : copy.scopeActions} aria-haspopup="menu" aria-expanded={Boolean(scopeAnchor)} onClick={event => setScopeAnchor(scopeAnchor ? null : event.currentTarget)}>
               {languageDisplayName(interfaceLanguage, searchLanguage)} ·{" "}
               {searchState.labelId ? <Folder size={14} aria-hidden="true" className="inline align-text-bottom"/> : useViewedListFilter ? <FileText size={14} aria-hidden="true" className="inline align-text-bottom"/> : null}{" "}{resultScopeLabel}
               {searchState.entryFilters?.parts.map(part=>
@@ -682,9 +817,11 @@ export function DictionarySearchTab({
             </button>
 
           </div>
-          {scopeAnchor && <ActionMenu anchor={scopeAnchor} title={copy.scopeActions} language={interfaceLanguage} onClose={() => setScopeAnchor(null)} items={[
+          {scopeAnchor && <ActionMenu anchor={scopeAnchor} title={materialEnabled ? copy.filters : copy.scopeActions} language={interfaceLanguage} onClose={() => setScopeAnchor(null)} items={[
+            ...(materialEnabled ? [{id:"filters",label:copy.filters,icon:<SlidersHorizontal size={14}/>,disabled:!searchMaterialReady,onSelect:()=>{setScopeAnchor(null);setFiltersOpen(true);}}] : []),
             {id:"reset",label:copy.resetFilters,icon:<RotateCcw size={14}/>,onSelect:()=>{setScopeAnchor(null);updateSearchState({labelId:null,labelName:null,dictionaryId:null,applyListFilter:false,collectionId:null,collectionOwnership:null,entryFilters:{...EMPTY_LIBRARY_ENTRY_FILTERS,sort:searchState.entryFilters?.sort},page:1,groupPageCursors:[null],groupHasMore:false,groupTotal:null,meaningTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});refreshSearch();}},
             ...historyChoices.map((item,index)=>({id:`recent-${index}`,label:item.query || historySource(item),description:historyDescription(item),icon:<History size={14}/>,onSelect:()=>restoreHistory(item)})),
+            ...(process.env.NODE_ENV==="development" ? [{id:"ai-chat",label:recovery.chat,icon:<Sparkles size={14}/>,onSelect:()=>openDiscovery(false)}] : []),
           ]}/>}
           {!unresolvedSource && categorySearchActive && (!categoryAwaitingAuthorization && ((onTrainSelection && searchMaterialReady) || canBulk) ? <button type="button" className={`${workspace.scope} ${workspace.countTrigger}`} aria-label={bulkCountLabel || categoryCountText || copy.entries} aria-haspopup="menu" aria-expanded={Boolean(countAnchor)} onClick={event=>{setBulkNotice(null);setCountAnchor(countAnchor ? null : event.currentTarget);}}><span ref={setCategoryCountHost} className={`${workspace.categoryCountContent} ${bulkCountLabel ? 'sr-only' : ''}`}/>{bulkCountLabel}</button> : <span ref={setCategoryCountHost} className={workspace.scope}/>)}
 
@@ -702,6 +839,11 @@ export function DictionarySearchTab({
           ]}/> }
           <span className="sr-only" role="status" aria-live="polite">{bulkNotice}</span>
         </div>
+        <button type="button" className={workspace.personalAdd} onClick={() => {
+          openDraft({ sessionKey:crypto.randomUUID(), word:query.trim(), definition:"", partOfSpeech:null });
+        }}>
+          <span aria-hidden="true">＋</span>{personalCopy.addWord}
+        </button>
         {!unresolvedSource && bulkDialogScope===bulkScopeKey && (bulkAll || currentBulk.articleIds.size>0) && <WordsBulkDialog key={bulkScopeKey} userId={userId} language={interfaceLanguage} lists={userLists} selection={bulkRequest} onListsUpdated={()=>{void reloadLists();notifyListsUpdated();}} onClose={()=>setBulkDialogScope(null)} onDone={count=>{setBulkDialogScope(null);setBulkMode(false);setBulkAll(false);setBulkSelection(emptyBulkArticleSelection(userId,bulkScopeKey));setBulkNotice(formatUiMessage(bulkCopy.success,{count:number(count)}));void reloadLists();notifyListsUpdated();}}/>}
         {categorySearchActive && <div ref={setCategoryTabsHost}/> }
 
@@ -720,7 +862,7 @@ export function DictionarySearchTab({
           <p role={material.status === "error" ? "alert" : "status"}>
             {material.status === "error"
               ? materialCopy.catalogError
-              : materialCopy.loading}
+              : <DelayedReadNotice>{materialCopy.loading}</DelayedReadNotice>}
             {material.status === "error" && (
               <button type="button" onClick={material.reload}>
                 {materialCopy.retry}
@@ -761,11 +903,31 @@ export function DictionarySearchTab({
           workspace.results
         }
       >
-        {unresolvedSource ? null : categorySearchActive ? <LibraryCategoryResults onWordResults={applyCategoryWordResults} onWordCount={setCategoryBulkCount} onAuthorizationReset={resetCategoryAccess} onSearchComplete={completeCategorySearch}
+        {visibleDrafts.length>0 && <>
+          <button type="button" aria-expanded={draftsExpanded} className={workspace.personalAdd} onClick={()=>setDraftsExpanded(value=>!value)}>
+            {draftsExpanded ? <ChevronDown size={15}/> : <ChevronRight size={15}/>}
+            {personalCopy.drafts} ({number(visibleDrafts.length)})
+          </button>
+          {draftsExpanded && <LibraryResultList language={interfaceLanguage} appearance="plain" showSource>
+            {visibleDrafts.map(draft=>(
+            <LibraryResultRow key={draft.sessionKey} headword={draft.word || personalCopy.word}
+              source={personalCopy.source}
+              article={draft.article}
+              core={personalCopy.draft}
+              categoryLabel={draft.kind === "expression" ? personalCopy.expression : undefined}
+              parts={draft.partOfSpeech ? [draft.partOfSpeech] : []}
+              meaningCount={draft.initialSenses?.length ?? 1}
+              contentLanguage={searchLanguage} language={interfaceLanguage}
+              selected={personalEditing && draft===personalDraft}
+              onSelect={()=>openDraft(draft)}/>
+            ))}
+          </LibraryResultList>}
+        </>}
+        {unresolvedSource ? null : categorySearchActive ? <LibraryCategoryResults emptyResult={emptyResult} hasMatchingDraft={hasMatchingDraft} pinnedEntryIds={pinnedIds} onWordResults={applyCategoryWordResults} onWordCount={setCategoryBulkCount} onAuthorizationReset={resetCategoryAccess} onSearchComplete={completeCategorySearch}
           bulkSelected={bulkMode ? (bulkAll ? new Set(pageIds.filter(id=>!currentBulk.articleIds.has(id))) : currentBulk.articleIds) : undefined} bulkAll={bulkAll} bulkExcludedCount={currentBulk.articleIds.size} onBulkSelect={bulkMode ? (id,selected)=>{if(bulkAll && !selected && currentBulk.articleIds.size>=200)return;setSelected([id],selected);} : undefined} appearance={categoryAppearance} userId={userId} onSelectGroup={openGroupDetail} tabsHost={categoryTabsHost} countHost={categoryCountHost}
           interfaceLanguage={interfaceLanguage} query={query} languageCode={searchLanguage} dictionaryId={dictionaryId}
           filters={searchState.entryFilters ?? EMPTY_LIBRARY_ENTRY_FILTERS} material={categoryMaterial}
-          materialRevision={material?.revision} refreshRevision={categoryRevision} enabled={searchEnabled && searchMaterialReady && !unresolvedSource}
+          materialRevision={material?.revision} refreshRevision={categoryRevision} entryRevision={entryRevision} enabled={searchEnabled && searchMaterialReady && !unresolvedSource}
           category={searchState.searchCategory ?? "headwords"} onCategoryChange={searchCategory => updateSearchState({searchCategory})}
           selectedResultKey={detailSelection?.searchResultKey} selectedId={detailSelection?.entryId} onSelect={item => updateSearchState({ selectedHeadwordGroupId:null, detailSelection:{searchResultKey:item.resultKey,entryId:item.entry.id,headword:item.entry.headword,contentLanguageCode:item.entry.languageCode ?? searchLanguage},mobileDetailOpen:true })}/> : <>
         {searchError ? (
@@ -784,17 +946,17 @@ export function DictionarySearchTab({
           </div>
         ) : null}
         {unresolvedSource ? null : searchError && !hasCurrentResults ? null : searchLoading ? (
-          <div className="space-y-3">
+          <DelayedReadNotice><div className="space-y-3">
             {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={index}
                 className={workspace.skeleton}
               />
             ))}
-          </div>
+          </div></DelayedReadNotice>
         ) : groupedSearchActive && groupResults.length ? (
           <LibraryHeadwordGroupResultsList appearance={categoryAppearance}
-            results={groupResults}
+            results={groupResults} pinnedEntryIds={pinnedIds}
             interfaceLanguage={interfaceLanguage}
             selectedHeadwordGroupId={selectedHeadwordGroupId}
             bulkSelected={bulkMode ? (bulkAll ? new Set(pageIds.filter(id=>!currentBulk.articleIds.has(id))) : currentBulk.articleIds) : undefined}
@@ -806,7 +968,7 @@ export function DictionarySearchTab({
         ) : wordResults.length ? (
           <LibraryResultList appearance={categoryAppearance} language={interfaceLanguage} listing="preview" entrySelection hasDetail={Boolean(detailSelection)}
             showSource={new Set(wordResults.map(entry => entry.dictionary_id)).size > 1}>
-            {wordResults.map(entry => <LibraryResultRow
+            {wordResults.filter(entry=>!pinnedIds.includes(entry.id)).map(entry => <LibraryResultRow
               key={entry.id}
               headword={entry.headword}
               article={entry.gender === "de" || entry.gender === "het" ? entry.gender : null}
@@ -821,7 +983,7 @@ export function DictionarySearchTab({
               onSelect={() => void openEntryDetail(entry)}
             />)}
           </LibraryResultList>
-        ) : (
+        ) : hasMatchingDraft ? null : query.trim() ? emptyResult : (
           <div className={workspace.empty}>
             <div className={workspace.emptyTitle}>
               {emptyHeading}
@@ -893,13 +1055,14 @@ export function DictionarySearchTab({
   );
 
   const handleOpenCopied = (copy: {entryId:string;dictionaryId:string;headword:string;contentLanguageCode:string}) => {
-    material?.reload();
-    updateSearchState({query:copy.headword,languageCode:copy.contentLanguageCode,dictionaryId:copy.dictionaryId,
+    if (!scopeDictionaries.some(source => source.id === copy.dictionaryId)) material?.reload();
+    invalidateFreshness();
+    updateSearchState({searchCategory:"headwords",query:copy.headword,languageCode:copy.contentLanguageCode,dictionaryId:copy.dictionaryId,
       applyListFilter:false,collectionId:null,labelId:null,labelName:null,entryFilters:EMPTY_LIBRARY_ENTRY_FILTERS,
       detailSelection:{entryId:copy.entryId,headword:copy.headword,contentLanguageCode:copy.contentLanguageCode},
       selectedHeadwordGroupId:null,mobileDetailOpen:true,groupResults:[],wordResults:[],groupTotal:null,meaningTotal:null,wordTotal:0,
       page:1,groupPageCursors:[null],groupHasMore:false});
-    invalidateFreshness();
+    copyToOpen.current = {entryId:copy.entryId,dictionaryId:copy.dictionaryId,userId};
     refreshSearch();
   };
 
@@ -915,13 +1078,48 @@ export function DictionarySearchTab({
     setArchiveStatus(true);
   };
 
+  function refreshAfterPersonalSave() {
+    if (categorySearchActive) {
+      invalidateFreshness();
+      setEntryRevision(value => value + 1);
+    } else {
+      void runSearch(true);
+    }
+  }
+
+  const draftEditor = personalEditing && personalDraft && (
+    <PersonalDictionaryEntryDraft key={personalDraft.sessionKey ?? "new"}
+      anchorEntryId={personalDraft.anchorEntryId} initialSenses={personalDraft.initialSenses} initialPart={personalDraft.partOfSpeech} initialArticle={personalDraft.article} initialKind={personalDraft.kind}
+      initiallyDirty={personalDraft.dirty} initialHeaderDirty={personalDraft.headerDirty}
+      onDraftChange={(initialSenses,partOfSpeech,headerDirty,header) => draftShelf.update(personalDraft.sessionKey,{...header,initialSenses,partOfSpeech,dirty:true,headerDirty})}
+      onPartialSave={(entry,initialSenses) => {
+        draftShelf.update(personalDraft.sessionKey,{anchorEntryId:personalDraft.anchorEntryId ?? entry.id,initialSenses,headerDirty:false});
+        refreshAfterPersonalSave();
+      }}
+      assistantHost={mobile ? null : assistantHost} onAssistantOpenChange={setAssistantOpen} translationLanguage={translationLang}
+      word={personalDraft.word} definition={personalDraft.definition} languageCode={searchLanguage} interfaceLanguage={interfaceLanguage}
+      onChange={patch => draftShelf.update(personalDraft.sessionKey,patch)}
+      onClose={() => {setDraftClosed(true);setAssistantOpen(false);updateSearchState({mobileDetailOpen:false});}}
+      onRead={entryId => {
+        editingRef.current=false;
+        setDraftClosed(true);
+        setAssistantOpen(false);
+        if (!hasPersonalChanges) draftShelf.remove(personalDraft.sessionKey);
+        updateSearchState({detailSelection:{entryId,headword:personalDraft.word,contentLanguageCode:searchLanguage},mobileDetailOpen:true,selectedHeadwordGroupId:null});
+      }}
+      onSaved={entry => {
+        const stillEditing = visibleDraftKey.current === personalDraft.sessionKey;
+        if (stillEditing) editingRef.current=false;
+        draftShelf.remove(personalDraft.sessionKey);
+        refreshAfterPersonalSave();
+        if (!stillEditing) return;
+        updateSearchState({detailSelection:{entryId:entry.id,headword:entry.word,contentLanguageCode:searchLanguage},mobileDetailOpen:true,selectedHeadwordGroupId:null});
+      }}/>
+  );
   const detail = (
-        <aside
-          className={
-            workspace.detail
-          }
-        >
-          {detailSelection ? (
+    <aside className={workspace.detail}>
+          {discoveryOpen ? (mobile ? null : discoveryPanel) : personalEditing ? (mobile ? null : draftEditor)
+          : detailSelection ? (
             <div className="flex h-full min-h-0 flex-col">
               <div className="flex min-h-0 flex-1 flex-col">
                 <WordDetailsCloseProvider onClose={() => updateSearchState({detailSelection:null,selectedHeadwordGroupId:null,mobileDetailOpen:false})} interfaceLanguage={interfaceLanguage}>
@@ -936,6 +1134,7 @@ export function DictionarySearchTab({
                   userLists={userLists}
                   currentCollection={useViewedListFilter ? viewedList ?? undefined : undefined}
                   dictionaryIdInSummary={dictionaryId}
+                  onEditPersonal={editPersonal}
                   onArchived={handleArchived}
                   onOpenCopied={handleOpenCopied}
                   onListsUpdated={async () => {
@@ -959,10 +1158,11 @@ export function DictionarySearchTab({
         </aside>
   );
   const defaultColumns = (
-      <div className={workspace.columns}
-        data-detail-open={detailSelection ? "true" : "false"}>
+      <div className={workspace.columns} data-assistant={assistantOpen && personalEditing && !mobile}
+        data-detail-open={discoveryOpen || detailSelection || personalDraft ? "true" : "false"}>
         {results}
         {detail}
+        <div ref={setAssistantHost} className={workspace.assistantHost}/>
       </div>
   );
 
@@ -973,15 +1173,17 @@ export function DictionarySearchTab({
       }
       data-colour-mode={"app"}
     >
+      {editLoadFailed && <p role="alert">{getUiMessages(interfaceLanguage).librarySearch.error}</p>}
       {archiveStatus ? <p role="status" className="px-4 py-2 text-sm text-[var(--practice-text-muted)]">{authorEntryArchiveCopy(interfaceLanguage).success}</p> : null}
       {presentation?.renderColumns?.({controller: presentationController, results, detail, defaultColumns, filters}) ?? <>{defaultColumns}{filters}</>}
 
       <div className={workspace.mobileDetail}>
         <WordDetailDrawer
-          selection={detailSelection}
+          selection={discoveryOpen ? null : detailSelection}
+          draft={mobile ? (discoveryPanel || draftEditor) : undefined}
           initialGroup={selectedGroupResult?.group}
-          open={mobileDetailOpen && Boolean(detailSelection) && !presentation?.organizerOpen}
-          onClose={() => updateSearchState({ mobileDetailOpen: false })}
+          open={mobileDetailOpen && Boolean(discoveryOpen || detailSelection || personalDraft) && !presentation?.organizerOpen}
+          onClose={discoveryOpen ? closeDiscovery : () => updateSearchState({ mobileDetailOpen: false })}
           userId={userId}
           contentLanguageCode={searchLanguage}
           translationLang={translationLang}
@@ -989,6 +1191,7 @@ export function DictionarySearchTab({
           userLists={userLists}
           currentCollection={useViewedListFilter ? viewedList ?? undefined : undefined}
           dictionaryIdInSummary={dictionaryId}
+                  onEditPersonal={editPersonal}
                   onArchived={handleArchived}
                   onOpenCopied={handleOpenCopied}
           onListsUpdated={async () => {

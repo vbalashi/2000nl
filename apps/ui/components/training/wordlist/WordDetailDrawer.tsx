@@ -1,4 +1,5 @@
 import React from "react";
+import type { ReactNode } from "react";
 import {SheetDragProvider} from "@/components/practice/ui/SheetDragRegion";
 import {SheetHandle} from "@/components/practice/ui/SheetHandle";
 import { useLibrarySheetResize } from "./useLibrarySheetResize";
@@ -22,6 +23,7 @@ type Props = {
     headword: string;
     contentLanguageCode?: string;
   } | null;
+  draft?: ReactNode;
   initialGroup?: PlatformHeadwordGroupV2;
   open: boolean;
   onClose: () => void;
@@ -32,6 +34,7 @@ type Props = {
   userLists: WordListSummary[];
   currentCollection?: WordListSummary;
   dictionaryIdInSummary?: string | null;
+  onEditPersonal?: (entryIds: string[]) => void;
   onArchived?: (entryId: string) => void;
   onOpenCopied?: (copy: OpenIndependentCopy) => void;
   onListsUpdated?: () => Promise<void> | void;
@@ -41,6 +44,7 @@ type Props = {
 
 export function WordDetailDrawer({
   selection,
+  draft,
   initialGroup,
   open,
   onClose,
@@ -51,6 +55,7 @@ export function WordDetailDrawer({
   userLists,
   currentCollection,
   dictionaryIdInSummary,
+  onEditPersonal,
   onArchived,
   onOpenCopied,
   onListsUpdated,
@@ -58,13 +63,26 @@ export function WordDetailDrawer({
   onOpenListMembership,
 }: Props) {
   const [entered, setEntered] = React.useState(false);
-  const resize = useLibrarySheetResize(open ? selection?.entryId ?? null : null,onClose);
-  const { expanded } = resize;
+  const resize = useLibrarySheetResize(open ? selection?.entryId ?? (draft ? "personal-entry-draft" : null) : null,onClose);
+  const { expanded, ref } = resize;
+  React.useEffect(() => {
+    if (!open || expanded) return;
+    const dismissOutside = (event: MouseEvent) => {
+      const panel = ref.current;
+      const target = event.target;
+      if (!panel?.getClientRects().length || !(target instanceof Element) || panel.contains(target)) return;
+      // Menus and dialogs opened by the card may render through a portal.
+      if (target.closest('dialog,[role="dialog"],[role="menu"],[role="listbox"],[popover]')) return;
+      onClose();
+    };
+    document.addEventListener("click", dismissOutside, true);
+    return () => document.removeEventListener("click", dismissOutside, true);
+  }, [open, expanded, ref, onClose]);
   React.useEffect(() => { setEntered(open); }, [open, selection?.entryId]);
   React.useEffect(() => { if (!open) setEntered(false); }, [open]);
-  if (!open || !selection) return null;
+  if (!open || (!selection && !draft)) return null;
 
-  const detail = (revealActiveMeaning: boolean) => <LibraryWordDetail
+  const detail = (revealActiveMeaning: boolean) => selection ? <LibraryWordDetail
     revealActiveMeaning={revealActiveMeaning}
     entryId={selection.entryId}
     initialGroup={initialGroup}
@@ -76,13 +94,14 @@ export function WordDetailDrawer({
     userLists={userLists}
     currentCollection={currentCollection}
       dictionaryIdInSummary={dictionaryIdInSummary}
-    onArchived={onArchived}
+    onEditPersonal={onEditPersonal}
+      onArchived={onArchived}
       onOpenCopied={onOpenCopied}
       onListsUpdated={onListsUpdated}
     onTrainWord={onTrainWord}
     onOpenListMembership={onOpenListMembership}
     viewport="mobile"
-  />;
+  /> : draft;
 
   return <section ref={resize.ref} className={sheet.librarySheet} data-expanded={expanded}
     data-dragging={resize.dragging} style={resize.height === undefined ? undefined : { height: resize.height }}

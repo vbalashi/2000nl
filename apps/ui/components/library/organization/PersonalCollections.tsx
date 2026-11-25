@@ -1,4 +1,5 @@
 "use client";
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import {ReceivedGroupTree} from './ReceivedGroupTree';
 import {ReceivedGroupScopes} from './ReceivedGroupScopes';
 import {ActionButton} from '@/components/practice/ui/ActionButton';
@@ -189,6 +190,8 @@ export function PersonalCollections({active, userId, language, locale, collectio
       {!labelRows.length && !sharedLabels.data?.received.length && <p className={s.muted}>{t.noLabels}</p>}
     </div>
   </div>;
+  if (!active && !snapshot) return null;
+  if (!snapshot && !labels.error) return <DelayedReadNotice><div className={s.state} role="status">{t.loading}</div></DelayedReadNotice>;
   if (!snapshot) return <div className={s.state} role={labels.error ? "alert" : "status"}>{labels.error ? message(labels.error) : t.loading}{labels.error && <button onClick={()=>void labels.refresh()}>{t.retry}</button>}</div>;
   return <div ref={organizerRoot} className={`${s.organizer} ${details?s.withDetails:""}`} data-testid="personal-collections">
     <aside className={s.sidebar}>{scopePicker}</aside>
@@ -200,7 +203,7 @@ export function PersonalCollections({active, userId, language, locale, collectio
       {groupSharingEnabled&&labels.audience?.hasPending&&labels.audience.state.status==='idle'&&<button onClick={labels.audience.resume}>{localizedField('collectionSharing','check')[locale]}</button>}
       {publicationEnabled&&catalog.status==='error'&&<p role="alert">{t.unavailable} <button onClick={()=>void catalog.refresh()}>{t.retry}</button></p>}
       <div className={s.results} aria-busy={labels.loading||publicationEnabled&&catalog.status==='loading'}>
-        {publicationEnabled&&catalog.status==='loading'?<p role="status">{t.loading}</p>:!rows.length&&(!publicationEnabled||catalog.status==='ready')&&<p className={s.state}>{query.trim()||effectiveScope!=='all'?t.noResults:t.empty}</p>}
+        {publicationEnabled&&catalog.status==='loading'?(active && rows.length===0 && <DelayedReadNotice><p role="status">{t.loading}</p></DelayedReadNotice>):!rows.length&&(!publicationEnabled||catalog.status==='ready')&&<p className={s.state}>{query.trim()||effectiveScope!=='all'?t.noResults:t.empty}</p>}
         {sections.map(section=><section key={section.id} className={s.collectionSection}><button className={s.sectionHeading} type="button" aria-expanded={!collapsedSections.has(section.id)} onClick={()=>toggleCollapsed(setCollapsedSections,section.id)}>{collapsedSections.has(section.id)?<ChevronRight size={16}/>:<ChevronDown size={16}/>}<Folder size={18}/><span>{section.name}</span></button>{!collapsedSections.has(section.id)&&section.rows.map(renderCollection)}</section>)}
         {selectedReceived&&catalog.groupTree
           ? <ReceivedGroupTree key={`${userId}:${selectedReceived.id}`} tree={catalog.groupTree} rootId={selectedReceived.id} rows={visibleRows} locale={locale} renderCollection={renderCollection}/>

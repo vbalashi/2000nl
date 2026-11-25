@@ -38,7 +38,6 @@ export const LibraryPresentationContext = createContext<{
   renderSourceActions?: () => ReactNode;
   organizerOpen?: boolean;
   filterPlacement?: "panel" | "dialog";
-  filterButtonSide?: "left" | "right";
   renderSearchActions?: (language: OnboardingLanguage) => ReactNode;
   showPartsFilter?: boolean;
   renderEntryTypeFilter?: (language: OnboardingLanguage) => ReactNode;

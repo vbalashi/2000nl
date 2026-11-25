@@ -54,6 +54,7 @@ export function LibraryResultRow({
   headword,
   article,
   parts,
+  categoryLabel,
   source,
   core,
   meaningCount,
@@ -71,6 +72,7 @@ export function LibraryResultRow({
   headword: string;
   article?: string | null;
   parts: string[];
+  categoryLabel?: string;
   source: string;
   core?: string | null;
   meaningCount: number;
@@ -112,6 +114,7 @@ export function LibraryResultRow({
             {getPartOfSpeechLabel(language, part)}
           </span>
         ))}
+        {categoryLabel && <span className={s.badge}>{categoryLabel}</span>}
         {core && <span className={s.badge}>{core}</span>}
         <span className={s.source}>· {source}</span>
         <span className={s.count}>{count}</span>

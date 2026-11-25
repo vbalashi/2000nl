@@ -529,6 +529,13 @@ export async function performPlatformV2Lookup(
               headwordGroupId: identity.headwordGroupId,
               meaningOrdinal: identity.meaningOrdinal,
               reportContentRevision: identity.reportContentRevision,
+              isOwnPersonal: context.kind === "authenticated" && entry.dictionary?.kind === "user" &&
+                entry.dictionary.owner_user_id === context.auth.user.id,
+              allowEditPersonalEntry: context.kind === "authenticated" && context.auth.principal.authKind === "first_party" &&
+                request.intent === "dictionary-lookup" && context.auth.principal.scopes.has("platform:write") &&
+                dictionaryCanBeEditedByUser(entry, context.auth.user.id) && entry.dictionary?.schema_key === "user-entry-v1" &&
+                !asRecord(asRecord(entry.raw).example).translation &&
+                (!Array.isArray(asRecord(entry.raw).meanings) || Array.isArray(asRecord(entry.raw).personalFields)),
               allowArchiveAuthorEntry: context.kind==="authenticated" && context.auth.principal.authKind==="first_party" &&
                 request.intent==="dictionary-lookup" && process.env.NEXT_PUBLIC_AUTHOR_ENTRY_ARCHIVE_ENABLED==="true" &&
                 context.auth.principal.scopes.has("platform:write") && dictionaryCanBeEditedByUser(entry,context.auth.user.id) &&

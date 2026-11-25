@@ -108,6 +108,7 @@ function capability(value: unknown): value is PlatformSenseCardCapabilityV2 {
 
 function contentNode(value: unknown): value is PlatformContentNodeV2 {
   return record(value) && string(value.contentNodeId) && nullableString(value.parentContentNodeId) &&
+    (value.noteParagraphs === undefined || (value.kind === "usage-note" && Array.isArray(value.noteParagraphs) && value.noteParagraphs.length <= 100 && value.noteParagraphs.every(string) && value.noteParagraphs.join("\n") === value.text)) &&
     NODE_KINDS.has(String(value.kind)) && finiteNumber(value.order) && string(value.text) &&
     string(value.sourceTextFingerprint) && arrayOf(value.translations, (item): item is never => translation(item));
 }
@@ -154,7 +155,9 @@ function entry(value: unknown): value is PlatformEntryPresentationV2 {
         item.actionId === "follow-cross-reference" && string(item.elementId) && string(item.messageKey));
   }
   if (value.kind !== "sense-card" || !string(value.entryId)) return false;
-  if (value.authorActions !== undefined && (!record(value.authorActions) || typeof value.authorActions.canArchive!=="boolean")) return false;
+  if (value.personalReferences !== undefined && (!Array.isArray(value.personalReferences) || value.personalReferences.length > 100 ||
+    !value.personalReferences.every((ref:unknown)=>record(ref) && typeof ref.text === "string" && typeof ref.targetEntryId === "string"))) return false;
+  if (value.authorActions !== undefined && (!record(value.authorActions) || typeof value.authorActions.canArchive!=="boolean" || (value.authorActions.canEditPersonal !== undefined && typeof value.authorActions.canEditPersonal !== "boolean"))) return false;
   if (value.noteMaterial !== undefined && !isPlatformEntryNoteMaterialV2(value.noteMaterial)) return false;
   if (value.sourceVersion !== undefined && (!Number.isSafeInteger(value.sourceVersion) || Number(value.sourceVersion)<1)) return false;
   return (value.meaningOrdinal === null || finiteNumber(value.meaningOrdinal)) &&
@@ -170,10 +173,12 @@ function entry(value: unknown): value is PlatformEntryPresentationV2 {
 function group(value: unknown): value is PlatformHeadwordGroupV2 {
   return record(value) && string(value.headwordGroupId) && record(value.dictionary) &&
     string(value.dictionary.dictionaryId) && string(value.dictionary.sourceLanguageCode) &&
+    (value.dictionary.isOwnPersonal === undefined || typeof value.dictionary.isOwnPersonal === "boolean") &&
     string(value.dictionary.displayName) && string(value.dictionary.messageKey) &&
     record(value.header) && string(value.header.text) && optionalFiniteNumber(value.header.homographNumber) &&
     optionalString(value.header.displayPronunciation) && optionalString(value.header.pronunciation) &&
     optionalString(value.header.article) &&
+    (value.header.personalKind === undefined || value.header.personalKind === "expression") &&
     (value.header.partOfSpeech === undefined || semanticTerm(value.header.partOfSpeech)) &&
     (value.header.audio === undefined || (record(value.header.audio) && string(value.header.audio.audioId) &&
       value.header.audio.actionId === "play-audio" && string(value.header.audio.contentLanguageCode))) &&

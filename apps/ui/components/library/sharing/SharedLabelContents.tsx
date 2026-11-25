@@ -1,4 +1,5 @@
 'use client';
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import {ActionButton} from '@/components/practice/ui/ActionButton';
 import React from 'react';
 import {FileText,ExternalLink,FolderOpen} from 'lucide-react';
@@ -15,7 +16,7 @@ export function SharedLabelContents({userId,labelId,name,locale,onClose,onOpen,o
  const catalog=useLabelShareCollections(userId,labelId),common=organizationCopy(locale),group=localizedSection('labelSharing')[locale];
  return <DialogSurface className={overlays.dialog} aria-label={group.contents} onDismiss={onClose}>
   <section className={`${s.editor} ${s.groupContents}`}><header><h2>{name}</h2><SettingsHelp label={group.contents} text={group.description}/></header>
-   {catalog.status==='loading'?<p role="status">{common.loading}</p>:catalog.status==='error'?<>
+   {catalog.status==='loading'?<DelayedReadNotice><p role="status">{common.loading}</p></DelayedReadNotice>:catalog.status==='error'?<>
     <p role="alert">{localizedSection('invitationPreview')[locale].unavailable}</p><button onClick={catalog.refresh}>{common.retry}</button>
    </>:<>
     {!catalog.page?.collections.length&&!catalog.references.length&&<p>{common.empty}</p>}

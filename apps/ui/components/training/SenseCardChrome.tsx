@@ -29,6 +29,9 @@ export function SenseCardHeadwordLockup({
   dictionaryInSummary = false,
   tone,
   headerActions,
+  metadataContent,
+  articleContent,
+  headwordContent,
   showMetadata = true,
   variant = "default",
 }: {
@@ -43,6 +46,9 @@ export function SenseCardHeadwordLockup({
   dictionaryInSummary?: boolean;
   tone: Tone;
   headerActions?: React.ReactNode;
+  metadataContent?: React.ReactNode;
+  articleContent?: React.ReactNode;
+  headwordContent?: React.ReactNode;
   showMetadata?: boolean;
   variant?: "default" | "training-face" | "training-answer" | "article";
 }) {
@@ -59,7 +65,7 @@ export function SenseCardHeadwordLockup({
   const primaryText = chrome.headword;
   const mutedText = chrome.article;
   const metadataVisible =
-    showMetadata && Boolean(partOfSpeech || coreVocabularyLabel);
+    showMetadata && Boolean(metadataContent || partOfSpeech || coreVocabularyLabel);
 
   return (
     <div className={`relative min-w-0 ${variant === "training-face" ? "w-full" : ""}`} data-testid="sense-card-headword-lockup">
@@ -79,6 +85,7 @@ export function SenseCardHeadwordLockup({
               className={chrome.metadata}
               data-testid="sense-card-metadata"
             >
+              {metadataContent}
               {partOfSpeech ? (
                 <span className={chrome.pos}>
                   <span className={chrome.dot} />
@@ -121,7 +128,7 @@ export function SenseCardHeadwordLockup({
                 longHeadword ? "flex-1" : ""
               }`}
             >
-              {article ? (
+              {article || articleContent ? (
                 <span
                   ref={fit.article}
                   style={meaning && variant === "training-face" ? {gridColumn:1,justifySelf:"end"} : undefined}
@@ -131,7 +138,7 @@ export function SenseCardHeadwordLockup({
                       : "text-[1.35rem] sm:text-[1.5rem]"
                   }`}
                 >
-                  {article}
+                  {articleContent ?? article}
                 </span>
               ) : null}
               <h2
@@ -147,7 +154,7 @@ export function SenseCardHeadwordLockup({
                       : "text-[2.65rem] font-normal leading-[0.92] sm:text-[3rem]"
                 }`}
               >
-                <HeadwordWithPronunciationBreaks text={headword} plainText={plainHeadword} />
+                {headwordContent ?? <HeadwordWithPronunciationBreaks text={headword} plainText={plainHeadword} />}
                 {meaning ? <MeaningIndicator meaning={meaning} language={interfaceLanguage} side={variant === "training-face" ? "front" : "back"}/> : null}
               </h2>
             </div>
@@ -393,3 +400,21 @@ export function ChevronIcon({
 
 // Keep existing New callers on the same state-badge component.
 export { LearningStateBadge as NewExposureBadge };
+
+export function SenseCardTranslateIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 5h9M8.5 3v2M6 8c1.2 2.6 3.1 4.4 5.5 5.5M11.5 8c-.8 2.2-2.3 4-4.5 5.5" />
+      <path d="m14 19 3.5-9 3.5 9M15.2 16h4.6" />
+    </svg>
+  );
+}

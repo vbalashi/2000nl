@@ -1,4 +1,5 @@
 'use client';
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import {ActionButton} from '@/components/practice/ui/ActionButton';
 import { localizedSection, localizedField } from "@/lib/i18n/catalog";
 
@@ -49,11 +50,11 @@ export function OwnedCollectionSharingView({userId,collectionId,name,locale,onCl
  return <DialogSurface className={overlays.dialog} aria-label={t.title} onDismiss={()=>{if(state.status!=='saving')onClose();}}><div className={`${s.editor} ${s.sharingAction}`}><CorruptLocalRecovery scopeKey={JSON.stringify([userId,collectionId])} storageKey={'2000nl.pending-owner-share.v1.'+encodeURIComponent(userId)} valid={raw=>['saving','uncertain'].includes(state.status)||Boolean(readOwnerShareJournal(localRecordSnapshotStore(raw),userId))} verify={async signal=>{await readCollectionShareManagement(userId,collectionId,signal);}} trigger={state.status} locale={locale} onClose={onClose} onReset={()=>{void refresh();}}/><header><h2>{t.title}</h2>{data?.isOpen&&['ready','storage-error'].includes(state.status)&&!confirmation&&<ShareManagementMenu locale={locale} onAction={setConfirmation}/>}</header><p>{name}</p>
 
  {rejection&&<p role="alert">{localizedField("collectionSharing", "rejected")[locale]}</p>}
- {state.status==='loading'?<p role="status">{common.loading}</p>:state.status==='error'?<><p role="alert">{t.readError}</p><button onClick={()=>void refresh()}>{common.retry}</button></>:state.status==='uncertain'?<><p role="alert">{t.uncertain}</p><button onClick={()=>void run('check')}>{t.check}</button><button onClick={()=>void run('retry')}>{t.retry}</button></>:state.status==='saving'?<p role="status">{common.saving}</p>:data?<>
+ {state.status==='loading'?<DelayedReadNotice><p role="status">{common.loading}</p></DelayedReadNotice>:state.status==='error'?<><p role="alert">{t.readError}</p><button onClick={()=>void refresh()}>{common.retry}</button></>:state.status==='uncertain'?<><p role="alert">{t.uncertain}</p><button onClick={()=>void run('check')}>{t.check}</button><button onClick={()=>void run('retry')}>{t.retry}</button></>:state.status==='saving'?<p role="status">{common.saving}</p>:data?<>
  {state.status==='storage-error'&&<p role="alert">{common.failed}</p>}
  {confirmation?<><p>{confirmation==='rotate'?t.rotateNotice:confirmation==='close'?t.closeNotice:t.openNotice}</p><footer><ActionButton onClick={()=>setConfirmation(null)}>{common.cancel}</ActionButton><ActionButton variant="primary" data-onboarding="share-confirm" onClick={()=>{const action=confirmation;setConfirmation(null);void run(action);}}>{t.confirm}</ActionButton></footer></>:<>
  <p>{t.view} · {t.subscribers}: {data.subscriberCount.toLocaleString(locale)}</p>
- {data.isOpen?link&&code?<ShareInvitationFields link={link} code={code} locale={locale} onCopy={(value,kind)=>void copyText(value,kind)}/>:<p role="status">{common.loading}</p>:<button data-onboarding="share-open" onClick={()=>setConfirmation('open')}>{t.open}</button>}
+ {data.isOpen?link&&code?<ShareInvitationFields link={link} code={code} locale={locale} onCopy={(value,kind)=>void copyText(value,kind)}/>:<DelayedReadNotice><p role="status">{common.loading}</p></DelayedReadNotice>:<button data-onboarding="share-open" onClick={()=>setConfirmation('open')}>{t.open}</button>}
  </>}
  </>:null}{notice&&<p role="status">{notice}</p>}<footer><ActionButton data-onboarding="share-close" disabled={state.status==='saving'} onClick={onClose}>{common.close}</ActionButton></footer></div></DialogSurface>;
 }

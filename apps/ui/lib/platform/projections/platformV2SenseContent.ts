@@ -19,6 +19,7 @@ export type PlatformV2SenseContentNode = {
   parentContentNodeId: string | null;
   kind: PlatformContentNodeKindV2;
   text: string;
+  noteParagraphs?: string[];
   translation?: string;
   literalTranslation?: string;
   reportCapability?: PlatformV2NodeReportCapability;
@@ -56,6 +57,7 @@ export function projectPlatformV2SenseContent(
         parentContentNodeId: node.parentContentNodeId,
         kind: node.kind,
         text: node.text,
+        ...(node.noteParagraphs ? {noteParagraphs:node.noteParagraphs} : {}),
         ...(translation ? { translation } : {}),
         ...(node.kind === "idiom" && translation && renderedTranslation?.literalText ? { literalTranslation: renderedTranslation.literalText } : {}),
         ...(reportCapability ? { reportCapability } : {}),

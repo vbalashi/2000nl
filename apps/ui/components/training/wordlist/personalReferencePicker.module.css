@@ -1,0 +1,10 @@
+.bar {display:flex;align-items:center;gap:.5rem}
+.bar > :first-child {flex:1;min-width:0}
+.selected,.choices button {background:transparent;color:var(--practice-text);border:0;text-align:start;cursor:pointer}
+.selected {display:flex;align-items:center;gap:.4rem}
+.choices {max-height:14rem;overflow:auto;font-family:var(--practice-font-ui);font-size:var(--practice-text-small);color:var(--practice-text-muted)}
+.choices button {width:100%;display:grid;padding:.4rem .5rem;border-bottom:1px solid var(--practice-border)}
+.choices button span {font-size:var(--practice-text-caption);color:var(--practice-text-muted)}
+.choices button:hover {background:var(--practice-surface-hover)}
+
+.bar:has(input:focus) .remove { visibility:hidden; }

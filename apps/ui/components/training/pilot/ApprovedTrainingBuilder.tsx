@@ -1,4 +1,5 @@
 "use client";
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import { localizedField, localizedSection } from "@/lib/i18n/catalog";
 
 import {VocabularyFilters,VocabularyFilterSummary} from "@/components/practice/vocabulary/VocabularyFilters";
@@ -324,7 +325,7 @@ export function ApprovedTrainingBuilder(p: Props) {
                     onToggle={() => toggle("source")}
                     headerChoices={toolbar}
                   >
-                    {p.dictionariesLoading && <p role="status" className={s.help}>{c.loadingDictionaries}</p>}
+                    {p.dictionariesLoading && <DelayedReadNotice><p role="status" className={s.help}>{c.loadingDictionaries}</p></DelayedReadNotice>}
                     {content}
                     {materialMode === "selected-dictionaries" &&
                       (p.draft.dictionaryIds ?? []).some(id => !p.dictionaries.some(option => option.value === id)) &&

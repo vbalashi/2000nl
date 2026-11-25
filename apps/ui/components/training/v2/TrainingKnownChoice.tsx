@@ -1,4 +1,5 @@
 "use client";
+import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import React from "react";
 import { ArrowLeft, ArrowRight, LogOut } from "lucide-react";
 import { DirectionCard } from "@/components/practice/builder/DirectionCard";
@@ -72,7 +73,7 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
       <KnownChoiceBody originSide={originSide} label={platformV2Message(language,"senseCard.training.content")}>
         <div className={s.content}>
         <LogOut size={40} strokeWidth={1.4} className={s.icon} aria-hidden="true"/>
-        {!progress&&!error?<p className={s.loading} role="status">{t.loading}</p>:null}
+        {!progress&&!error?<DelayedReadNotice><p className={s.loading} role="status">{t.loading}</p></DelayedReadNotice>:null}
         {progress?<div className={s.cards}>{meaningDirections.map(d=>{
           const isKnown=known.includes(d),direct=d==="word-to-definition";
           const label=direct?t.direct:t.reverse;
