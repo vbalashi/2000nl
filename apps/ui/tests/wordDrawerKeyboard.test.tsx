@@ -8,7 +8,7 @@ test('keeps a focused draft above the visual viewport bottom when the keyboard o
   const viewport = new EventTarget() as VisualViewport;
   Object.assign(viewport, { height: 800, offsetTop: 0 });
   vi.stubGlobal('visualViewport', viewport);
-  Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
+  vi.stubGlobal('innerHeight', 800);
   render(<WordDetailDrawer selection={null} draft={<input aria-label="Word" />} open onClose={() => {}} userId="u" contentLanguageCode="nl" translationLang="en" interfaceLanguage="ru" userLists={[]} />);
   const sheet = screen.getByRole('region');
   act(() => screen.getByLabelText('Word').focus());
@@ -23,7 +23,7 @@ test('does not save a temporary keyboard height when the app loses focus', () =>
   const viewport = new EventTarget() as VisualViewport;
   Object.assign(viewport, { height: 800, offsetTop: 0 });
   vi.stubGlobal('visualViewport', viewport);
-  Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
+  vi.stubGlobal('innerHeight', 800);
   render(<WordDetailDrawer selection={null} draft={<input aria-label="Word" />} open onClose={() => {}} userId="u" contentLanguageCode="nl" translationLang="en" interfaceLanguage="ru" userLists={[]} />);
   const sheet = screen.getByRole('region');
   const initialHeight = sheet.style.height;
@@ -39,7 +39,7 @@ test('keeps its position when the visual viewport is panned after unlock', () =>
   Object.assign(viewport, { height: 800, offsetTop: 0 });
   vi.stubGlobal('visualViewport', viewport);
   vi.stubGlobal('scrollY', 50);
-  Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
+  vi.stubGlobal('innerHeight', 800);
   render(<WordDetailDrawer selection={null} draft={<input aria-label="Word" />} open onClose={() => {}} userId="u" contentLanguageCode="nl" translationLang="en" interfaceLanguage="ru" userLists={[]} />);
   act(() => screen.getByLabelText('Word').focus());
   act(() => { Object.assign(viewport, { height: 500, offsetTop: 50 }); viewport.dispatchEvent(new Event('scroll')); });
@@ -51,7 +51,7 @@ test('uses the visual pan when the layout viewport has not scrolled', () => {
   Object.assign(viewport, { height: 800, offsetTop: 0 });
   vi.stubGlobal('visualViewport', viewport);
   vi.stubGlobal('scrollY', 0);
-  Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 });
+  vi.stubGlobal('innerHeight', 800);
   render(<WordDetailDrawer selection={null} draft={<input aria-label="Word" />} open onClose={() => {}} userId="u" contentLanguageCode="nl" translationLang="en" interfaceLanguage="ru" userLists={[]} />);
   act(() => screen.getByLabelText('Word').focus());
   act(() => { Object.assign(viewport, { height: 500, offsetTop: 50 }); viewport.dispatchEvent(new Event('scroll')); });
