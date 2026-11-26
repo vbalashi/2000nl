@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 import { AppFrame } from "@/components/navigation/AppFrame";
 
@@ -173,4 +173,23 @@ test("logo navigates through the owner callback and obeys pending navigation loc
   expect(logo).toBeDisabled();
   fireEvent.click(logo);
   expect(onNavigate).not.toHaveBeenCalled();
+});
+
+
+test("hides mobile navigation during keyboard resize and restores it afterwards", () => {
+  const viewport = new EventTarget() as VisualViewport;
+  Object.assign(viewport, { height: 800, offsetTop: 0, scale: 1 });
+  vi.stubGlobal("visualViewport", viewport);
+  const originalHeight = window.innerHeight;
+  Object.defineProperty(window, "innerHeight", { configurable: true, value: 800 });
+  const view = render(<AppFrame activeDestination="library" interfaceLanguage="en" themePreference="system" onNavigate={vi.fn()} onCycleTheme={vi.fn()} onOpenSettings={vi.fn()}><input aria-label="Word" /></AppFrame>);
+  const frame = view.container.querySelector("[data-app-frame]")!;
+  act(() => screen.getByLabelText("Word").focus());
+  act(() => { Object.assign(viewport, { height: 500 }); viewport.dispatchEvent(new Event("resize")); });
+  expect(frame).toHaveAttribute("data-keyboard-open", "true");
+  act(() => { Object.assign(viewport, { height: 800 }); viewport.dispatchEvent(new Event("resize")); });
+  expect(frame).not.toHaveAttribute("data-keyboard-open");
+  view.unmount();
+  Object.defineProperty(window, "innerHeight", { configurable: true, value: originalHeight });
+  vi.unstubAllGlobals();
 });

@@ -91,6 +91,27 @@ export function AppFrame({
   immersive = false,
   ...headerProps
 }: AppFrameProps) {
+  const [keyboardOpen, setKeyboardOpen] = React.useState(false);
+  React.useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const update = () => {
+      const editable = document.activeElement?.matches('input, textarea, [contenteditable="true"]');
+      setKeyboardOpen(!!editable && viewport.scale === 1 && viewport.height < window.innerHeight - 100);
+    };
+    const focusout = () => queueMicrotask(update);
+    viewport.addEventListener("resize", update);
+    viewport.addEventListener("scroll", update);
+    document.addEventListener("focusin", update);
+    document.addEventListener("focusout", focusout);
+    update();
+    return () => {
+      viewport.removeEventListener("resize", update);
+      viewport.removeEventListener("scroll", update);
+      document.removeEventListener("focusin", update);
+      document.removeEventListener("focusout", focusout);
+    };
+  }, []);
   const onNavigate = (destination: AppDestination) => {
     headerProps.onNavigate(destination);
   };
@@ -98,6 +119,7 @@ export function AppFrame({
     <div
       className={`${styles.frame}${className ? ` ${className}` : ""}`}
       data-app-frame="true"
+      data-keyboard-open={keyboardOpen ? "true" : undefined}
       data-immersive={immersive ? "true" : undefined}
     >
       <AppHeader

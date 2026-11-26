@@ -65,6 +65,33 @@ export function WordDetailDrawer({
   const [entered, setEntered] = React.useState(false);
   const resize = useLibrarySheetResize(open ? selection?.entryId ?? (draft ? "personal-entry-draft" : null) : null,onClose);
   const { expanded, ref } = resize;
+  const [keyboardViewport, setKeyboardViewport] = React.useState<{ bottom: number; height: number }>();
+  React.useEffect(() => {
+    if (!open) { setKeyboardViewport(undefined); return; }
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const update = () => {
+      // WebKit can report the same pan in both scrollY and offsetTop after
+      // unlocking; do not subtract that displacement twice.
+      const visualPan = Math.max(0, viewport.offsetTop - window.scrollY);
+      const occluded = Math.max(0, window.innerHeight - viewport.height - visualPan);
+      const editing = ref.current?.contains(document.activeElement) &&
+        document.activeElement?.matches('input, textarea, [contenteditable="true"]');
+      setKeyboardViewport(editing && viewport.height < window.innerHeight - 100 ? { bottom: occluded + 8, height: Math.max(0, viewport.height - 16) } : undefined);
+    };
+    viewport.addEventListener('resize', update);
+    viewport.addEventListener('scroll', update);
+    document.addEventListener('focusin', update);
+    const focusout = () => queueMicrotask(update);
+    document.addEventListener('focusout', focusout);
+    update();
+    return () => {
+      viewport.removeEventListener('resize', update);
+      viewport.removeEventListener('scroll', update);
+      document.removeEventListener('focusin', update);
+      document.removeEventListener('focusout', focusout);
+    };
+  }, [open, ref]);
   const pointerStartedInside = React.useRef(false);
   React.useEffect(() => {
     if (!open) return;
@@ -115,12 +142,14 @@ export function WordDetailDrawer({
     viewport="mobile"
   /> : draft;
 
-  return <section ref={resize.ref} className={sheet.librarySheet} data-expanded={expanded}
-    data-dragging={resize.dragging} style={resize.height === undefined ? undefined : { height: resize.height }}
+  return <>
+  {keyboardViewport && <div aria-hidden="true" className={sheet.keyboardFill} style={{height: keyboardViewport.bottom + 12}} />}
+  <section ref={resize.ref} className={sheet.librarySheet} data-expanded={expanded} data-keyboard={keyboardViewport ? 'true' : undefined}
+    data-dragging={resize.dragging} style={{ height: resize.height, ...(keyboardViewport ? { bottom: keyboardViewport.bottom, minHeight: 0, maxHeight: keyboardViewport.height } : {}) }}
     aria-label={platformV2Message(interfaceLanguage,"senseCard.wordDetails.open")}>
     <SheetHandle controller={resize} label={getUiMessages(interfaceLanguage).library[expanded ? "collapseCard" : "expandCard"]}/>
     <SheetDragProvider value={resize}><WordDetailsCloseProvider onClose={onClose} interfaceLanguage={interfaceLanguage}>
       <div className="min-h-0 flex-1">{detail(entered)}</div>
     </WordDetailsCloseProvider></SheetDragProvider>
-  </section>;
+  </section></>;
 }

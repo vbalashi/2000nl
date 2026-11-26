@@ -35,9 +35,12 @@ export function useResizableSheet(
   const suppressClick = React.useRef(false);
   const bounds = React.useCallback(() => {
     const style = ref.current ? getComputedStyle(ref.current) : null;
+    const viewport = window.visualViewport;
+    const visualPan = viewport ? Math.max(0, viewport.offsetTop - window.scrollY) : 0;
+    const occludedBottom = viewport ? Math.max(0, window.innerHeight - viewport.height - visualPan) : 0;
     const limits = sheetBounds(
-      window.visualViewport?.height ?? window.innerHeight,
-      style ? parseFloat(style.bottom) || 0 : 72,
+      viewport?.height ?? window.innerHeight,
+      style ? Math.max(0, (parseFloat(style.bottom) || 0) - occludedBottom) : 72,
       style ? parseFloat(style.getPropertyValue("--sheet-top-inset")) || 0 : 0,
     );
     const minimum = style ? parseFloat(style.minHeight) || 0 : 0;
@@ -60,7 +63,14 @@ export function useResizableSheet(
     suppressClick.current = false;
   }, [resetKey, bounds]);
   React.useEffect(() => {
+    let layoutHeight = window.innerHeight;
     const resize = () => {
+      // A keyboard temporarily constrains the sheet via its viewport-aware CSS.
+      // Keep the user's chosen height for when the keyboard closes.
+      const layoutChanged = window.innerHeight !== layoutHeight;
+      layoutHeight = window.innerHeight;
+      const viewport = window.visualViewport;
+      if (!layoutChanged || (viewport && viewport.height < window.innerHeight - 100)) return;
       if (ref.current) update(ref.current.getBoundingClientRect().height);
     };
     window.addEventListener("resize", resize);
