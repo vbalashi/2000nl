@@ -13,6 +13,7 @@ import {
 } from "../SenseCardChrome";
 import { languageDisplayName } from "@/lib/languages/languageDisplayName";
 import { getPartOfSpeechLabel } from "@/lib/uiMessages";
+import { getInterfaceCatalog } from "@/lib/i18n/catalog";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
   VOCABULARY_PARTS,
@@ -463,10 +464,11 @@ export function PersonalDictionaryEntryDraft({
                 {id:"expression", label:copy.expression, checked:kind === "expression",
                   onSelect:() => {edit(); setHeaderDirty(true); setKind("expression"); setPart(null); setArticle(null); setPosAnchor(null); posAnchor.focus();}},
                 ...[{ code: null, label: copy.unset },
-                  ...[...VOCABULARY_PARTS, { code: "other", id: "other" }].map((part) => ({
+                  ...VOCABULARY_PARTS.map((part) => ({
                     code: part.code,
                     label: getPartOfSpeechLabel(interfaceLanguage, part.code) ?? part.id,
                   })),
+                  { code: "other", label: getInterfaceCatalog(interfaceLanguage).partOfSpeech.other },
                 ].map(({code,label}) => ({
                   id:code ?? "none", label, separatorBefore:code === null,
                   checked:kind === "word" && part === code,
