@@ -1845,7 +1845,7 @@
   "features.personalCard.source": {"source":"My dictionary","translationHash":"f0c1c6f342bf0716520a17bee6f90767bc1c95ff970d9c4e7b94eea6ffcc01f1"},
   "features.personalCard.word": {"source":"Word or expression","translationHash":"e94f8f1f62e6eb4fa21f634ddffbf256c8bf7814cf5824d2dfd69246d4f8df40"},
   "features.personalCard.definition": {"source":"Simple definition","translationHash":"15dd0ffc8d1a7454591dfc70ccb72f2f6cd6409bf5d415d47aa619064e8a859a"},
-  "features.personalCard.unset": {"source":"Part of speech not specified","translationHash":"adf9204d0decf8f1e587f63bb8f7e8757ff8a61b00a4272e7b4b97d84d8c1002"},
+  "features.personalCard.unset": {"source":"Not specified","translationHash":"47a5a151d6e7943a4556e03ae08fede053e056e4dee2d9f6b4b24dd608b530ba"},
   "features.personalCard.draft": {"source":"Draft","translationHash":"7ad8eb2b5422f8e2a78b0d5f477a0c125bc3ab835be1f383a3a8a14519fa47ec"},
   "features.personalCard.article": {"source":"Article","translationHash":"3a2ee6f6833bf4a6ef66c2d1ab1c4f0f4ef8df32e8a9f801536d543ee36b5c8f"},
   "features.personalCard.noArticle": {"source":"No article","translationHash":"834b1a5a4e24d0bfffda29a2eccfbf587d65886771ac0b296b66beb75fee9d28"},
@@ -1938,5 +1938,7 @@
   "features.searchRecovery.clear": {"source":"Search without filters","translationHash":"8cdcf7ae586f1d87b5372b14bc06e7399225fccfc53d1a0466b685b3c822b052"},
   "features.searchRecovery.help": {"source":"Help find the meaning","translationHash":"faf6d34d28cb6e926874bafd408f44bceb94dfcd1ce824edaf29998d36216de7"},
   "features.searchRecovery.prompt": {"source":"Help me find the meaning","translationHash":"17122e6b7a0f681b5247fbb66d8ae1342511cc034f8a1d944841a0034fea7bfc"},
-  "features.searchRecovery.follow": {"source":"Ask about these results…","translationHash":"c27672238b4825451e2308bda4a4ccb99ef2191109dcf0831fa15585277cec11"}
+  "features.searchRecovery.follow": {"source":"Ask about these results…","translationHash":"c27672238b4825451e2308bda4a4ccb99ef2191109dcf0831fa15585277cec11"},
+  "features.personalCard.deleteDraft": {"source":"Delete draft","translationHash":"c0e2b57f245398fcce9e0b6d8dac2b70c6c2f980615e287c8ca0b41cd1da4873"},
+  "partOfSpeech.other": {"source":"Other","translationHash":"e6510ad6c762a948b9bc8bdaa2211372dedabe329009a590c0ca913b29aa3346"}
 }

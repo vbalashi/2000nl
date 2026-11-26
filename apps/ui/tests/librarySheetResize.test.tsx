@@ -33,7 +33,7 @@ describe("Library sheet resizing", () => {
     rerender(<Harness id="two" />);
     expect(sheet.style.height).toBe("501.6px");
   });
-  test("drag follows the pointer, snaps, ignores incidental movement and suppresses its click", () => {
+  test("drag keeps the chosen height, ignores incidental movement and suppresses its click", () => {
     const dismiss=vi.fn();
     const { unmount } = render(<Harness onDismiss={dismiss}/>);
     const sheet = screen.getByTestId("sheet");
@@ -50,10 +50,16 @@ describe("Library sheet resizing", () => {
     pointer("pointermove", 377);
     expect(sheet.style.height).toBe("624.6px");
     pointer("pointerup", 377);
-    expect(sheet.style.height).toBe("501.6px");
+    expect(sheet.style.height).toBe("624.6px");
     fireEvent.click(button, { detail: 1 });
-    expect(sheet.style.height).toBe("501.6px");
+    expect(sheet.style.height).toBe("624.6px");
     pointer("pointerdown", 377); pointer("pointermove", 277); pointer("pointercancel", 277);
+    expect(sheet.style.height).toBe("624.6px");
+    fireEvent.click(button);
+    expect(sheet.style.height).toBe("760px");
+    fireEvent.click(button);
+    expect(sheet.style.height).toBe("240px");
+    fireEvent.click(button);
     expect(sheet.style.height).toBe("501.6px");
     pointer("pointerdown", 200); pointer("pointermove", 900); pointer("pointerup",900);
     expect(dismiss).toHaveBeenCalledOnce();

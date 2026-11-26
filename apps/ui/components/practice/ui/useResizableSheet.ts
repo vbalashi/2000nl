@@ -19,6 +19,7 @@ export function clampSheetHeight(
 export function useResizableSheet(
   resetKey: string | null,
   onDismiss?: () => void,
+  { snapOnDrag = true }: { snapOnDrag?: boolean } = {},
 ) {
   const ref = React.useRef<HTMLElement>(null);
   const [height, setHeight] = React.useState<number>();
@@ -80,6 +81,7 @@ export function useResizableSheet(
     else if (current.moved) {
       const limits = bounds();
       if (current.currentHeight < limits.min * 0.62 && onDismiss) onDismiss();
+      else if (!snapOnDrag) update(current.currentHeight);
       else {
         const stops = [limits.min, Math.max(limits.min, limits.max * 0.66), limits.max];
         update(

@@ -1089,8 +1089,14 @@ export function DictionarySearchTab({
     }
   }
 
+  function closePersonalDraft() {
+    setDraftClosed(true);
+    setAssistantOpen(false);
+    updateSearchState({mobileDetailOpen:false});
+  }
+
   const draftEditor = personalEditing && personalDraft && (
-    <PersonalDictionaryEntryDraft assistantAvailable={assistantAvailable} key={personalDraft.sessionKey ?? "new"}
+    <PersonalDictionaryEntryDraft mobile={mobile} assistantAvailable={assistantAvailable} key={personalDraft.sessionKey ?? "new"}
       anchorEntryId={personalDraft.anchorEntryId} initialSenses={personalDraft.initialSenses} initialPart={personalDraft.partOfSpeech} initialArticle={personalDraft.article} initialKind={personalDraft.kind}
       initiallyDirty={personalDraft.dirty} initialHeaderDirty={personalDraft.headerDirty}
       onDraftChange={(initialSenses,partOfSpeech,headerDirty,header) => draftShelf.update(personalDraft.sessionKey,{...header,initialSenses,partOfSpeech,dirty:true,headerDirty})}
@@ -1101,7 +1107,11 @@ export function DictionarySearchTab({
       assistantHost={mobile ? null : assistantHost} onAssistantOpenChange={setAssistantOpen} translationLanguage={translationLang}
       word={personalDraft.word} definition={personalDraft.definition} languageCode={searchLanguage} interfaceLanguage={interfaceLanguage}
       onChange={patch => draftShelf.update(personalDraft.sessionKey,patch)}
-      onClose={() => {setDraftClosed(true);setAssistantOpen(false);updateSearchState({mobileDetailOpen:false});}}
+      onClose={closePersonalDraft}
+      onDeleteDraft={personalDraft.anchorEntryId ? undefined : () => {
+        draftShelf.remove(personalDraft.sessionKey);
+        closePersonalDraft();
+      }}
       onRead={entryId => {
         editingRef.current=false;
         setDraftClosed(true);

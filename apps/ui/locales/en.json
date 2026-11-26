@@ -245,7 +245,8 @@
     "vw": "conjunction",
     "vz": "preposition",
     "ww": "verb",
-    "zn": "noun"
+    "zn": "noun",
+    "other": "Other"
   },
   "ui": {
     "maintenance": {
@@ -2083,7 +2084,7 @@
       "source": "My dictionary",
       "word": "Word or expression",
       "definition": "Simple definition",
-      "unset": "Part of speech not specified",
+      "unset": "Not specified",
       "draft": "Draft",
       "article": "Article",
       "noArticle": "No article",
@@ -2118,7 +2119,8 @@
       "removeMeaning": "Remove meaning",
       "addWord": "Add your own word",
       "drafts": "Drafts",
-      "editCard": "Edit card"
+      "editCard": "Edit card",
+      "deleteDraft": "Delete draft"
     },
     "personalAssistant": {
       "context": "Article context",

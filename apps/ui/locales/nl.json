@@ -245,7 +245,8 @@
     "vw": "voegwoord",
     "vz": "voorzetsel",
     "ww": "werkwoord",
-    "zn": "zelfstandig naamwoord"
+    "zn": "zelfstandig naamwoord",
+    "other": "Overig"
   },
   "ui": {
     "maintenance": {
@@ -2083,7 +2084,7 @@
       "source": "Mijn woordenboek",
       "word": "Woord of uitdrukking",
       "definition": "Eenvoudige omschrijving",
-      "unset": "Woordsoort niet opgegeven",
+      "unset": "Niet opgegeven",
       "draft": "Concept",
       "article": "Lidwoord",
       "noArticle": "Geen lidwoord",
@@ -2118,7 +2119,8 @@
       "removeMeaning": "Betekenis verwijderen",
       "addWord": "Eigen woord toevoegen",
       "drafts": "Concepten",
-      "editCard": "Kaart bewerken"
+      "editCard": "Kaart bewerken",
+      "deleteDraft": "Concept verwijderen"
     },
     "personalAssistant": {
       "context": "Artikelcontext",
