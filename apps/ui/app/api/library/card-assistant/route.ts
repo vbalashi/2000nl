@@ -1,10 +1,9 @@
+import { readAssistantAccess, requireAssistantAccess } from "@/lib/platform/assistantAccess";
 import { NextRequest } from "next/server";
 import { readBoundedJson } from "@/lib/http/readBoundedJson";
 import {
-  getAuthenticatedSupabase,
   getPlatformServiceSupabase,
   jsonNoStore,
-  requirePlatformScope,
 } from "@/lib/platform/serverSupabase";
 import { loadPromptText } from "@/lib/translation/prompts/promptLoader";
 import { loadTranslationConfigFromEnv } from "@/lib/translation/translationProvider";
@@ -101,14 +100,8 @@ function readArticle(raw: unknown) {
   };
 }
 export async function POST(request: NextRequest) {
-  if (process.env.NODE_ENV !== "development")
-    return jsonNoStore({ error: "not_available" }, 404);
-  const auth = await getAuthenticatedSupabase(request);
+  const auth = await requireAssistantAccess(request);
   if (auth instanceof Response) return auth;
-  if (auth.principal.authKind !== "first_party")
-    return jsonNoStore({ error: "first_party_required" }, 403);
-  const denied = requirePlatformScope(auth, "platform:read");
-  if (denied) return denied;
   const parsed = await readBoundedJson(request, 320 * 1024);
   if ("error" in parsed) return jsonNoStore({ error: "invalid_request" }, 400);
   const body = record(parsed.body),
@@ -440,4 +433,10 @@ export async function POST(request: NextRequest) {
       502,
     );
   }
+}
+
+export async function GET(request: NextRequest) {
+  const access = await readAssistantAccess(request);
+  if (access instanceof Response) return access;
+  return jsonNoStore({ allowed: access.allowed, userId: access.auth.user.id });
 }

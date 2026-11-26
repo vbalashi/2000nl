@@ -3,6 +3,7 @@ import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import {ActionButton} from "@/components/practice/ui/ActionButton";
 import {vocabularySelectionActive} from "@/lib/vocabulary/selection";
 import {openSearchChat,type SearchChat} from "./lastSearchChat";
+import { useAssistantAccess } from "./useAssistantAccess";
 import {PersonalCardAssistant} from "./PersonalCardAssistant";
 import {searchRecoveryCopy} from "./searchRecoveryCopy";
 import {ChoiceSelect} from "@/components/library/organization/ChoiceSelect";
@@ -682,7 +683,8 @@ export function DictionarySearchTab({
   const [discoveryKey,setDiscoveryKey] = useState<string|null>(null);
   const category = searchState.searchCategory ?? "headwords";
   const discoveryScope = JSON.stringify([userId,searchLanguage,query,category,dictionaryId,categoryMaterial,searchState.entryFilters]);
-  const discoveryOpen = discoveryKey===discoveryScope;
+  const assistantAvailable = useAssistantAccess(userId);
+  const discoveryOpen = assistantAvailable && discoveryKey===discoveryScope;
   const [discoveryStart,setDiscoveryStart] = useState(false);
   const [chatContext,setChatContext] = useState<SearchChat|null>(null);
   const chatStorageKey = "2000nl.last-search-chat.v1." + userId;
@@ -710,7 +712,7 @@ export function DictionarySearchTab({
     {restricted && <p>{recovery.hint}</p>}
     <div>
       {restricted && <ActionButton variant="primary" onClick={broadenSearch}><BookOpen size={15}/>{scoped ? recovery.all : recovery.clear}</ActionButton>}
-      {process.env.NODE_ENV==="development" && <ActionButton onClick={()=>openDiscovery(true)}><Sparkles size={15}/>{recovery.help}</ActionButton>}
+      {assistantAvailable && <ActionButton onClick={()=>openDiscovery(true)}><Sparkles size={15}/>{recovery.help}</ActionButton>}
     </div>
   </div>;
   const closeDiscovery = () => {setDiscoveryKey(null);updateSearchState({mobileDetailOpen:false});};
@@ -821,7 +823,7 @@ export function DictionarySearchTab({
             ...(materialEnabled ? [{id:"filters",label:copy.filters,icon:<SlidersHorizontal size={14}/>,disabled:!searchMaterialReady,onSelect:()=>{setScopeAnchor(null);setFiltersOpen(true);}}] : []),
             {id:"reset",label:copy.resetFilters,icon:<RotateCcw size={14}/>,onSelect:()=>{setScopeAnchor(null);updateSearchState({labelId:null,labelName:null,dictionaryId:null,applyListFilter:false,collectionId:null,collectionOwnership:null,entryFilters:{...EMPTY_LIBRARY_ENTRY_FILTERS,sort:searchState.entryFilters?.sort},page:1,groupPageCursors:[null],groupHasMore:false,groupTotal:null,meaningTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});refreshSearch();}},
             ...historyChoices.map((item,index)=>({id:`recent-${index}`,label:item.query || historySource(item),description:historyDescription(item),icon:<History size={14}/>,onSelect:()=>restoreHistory(item)})),
-            ...(process.env.NODE_ENV==="development" ? [{id:"ai-chat",label:recovery.chat,icon:<Sparkles size={14}/>,onSelect:()=>openDiscovery(false)}] : []),
+            ...(assistantAvailable ? [{id:"ai-chat",label:recovery.chat,icon:<Sparkles size={14}/>,onSelect:()=>openDiscovery(false)}] : []),
           ]}/>}
           {!unresolvedSource && categorySearchActive && (!categoryAwaitingAuthorization && ((onTrainSelection && searchMaterialReady) || canBulk) ? <button type="button" className={`${workspace.scope} ${workspace.countTrigger}`} aria-label={bulkCountLabel || categoryCountText || copy.entries} aria-haspopup="menu" aria-expanded={Boolean(countAnchor)} onClick={event=>{setBulkNotice(null);setCountAnchor(countAnchor ? null : event.currentTarget);}}><span ref={setCategoryCountHost} className={`${workspace.categoryCountContent} ${bulkCountLabel ? 'sr-only' : ''}`}/>{bulkCountLabel}</button> : <span ref={setCategoryCountHost} className={workspace.scope}/>)}
 
@@ -1088,7 +1090,7 @@ export function DictionarySearchTab({
   }
 
   const draftEditor = personalEditing && personalDraft && (
-    <PersonalDictionaryEntryDraft key={personalDraft.sessionKey ?? "new"}
+    <PersonalDictionaryEntryDraft assistantAvailable={assistantAvailable} key={personalDraft.sessionKey ?? "new"}
       anchorEntryId={personalDraft.anchorEntryId} initialSenses={personalDraft.initialSenses} initialPart={personalDraft.partOfSpeech} initialArticle={personalDraft.article} initialKind={personalDraft.kind}
       initiallyDirty={personalDraft.dirty} initialHeaderDirty={personalDraft.headerDirty}
       onDraftChange={(initialSenses,partOfSpeech,headerDirty,header) => draftShelf.update(personalDraft.sessionKey,{...header,initialSenses,partOfSpeech,dirty:true,headerDirty})}

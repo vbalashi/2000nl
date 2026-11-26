@@ -1,8 +1,7 @@
+import { requireAssistantAccess } from "@/lib/platform/assistantAccess";
 import { NextRequest } from "next/server";
 import {
-  getAuthenticatedSupabase,
   jsonNoStore,
-  requirePlatformScope,
 } from "@/lib/platform/serverSupabase";
 
 export const dynamic = "force-dynamic";
@@ -29,14 +28,8 @@ function validWav(wav: Buffer) {
   );
 }
 export async function POST(request: NextRequest) {
-  if (process.env.NODE_ENV !== "development")
-    return jsonNoStore({ error: "not_available" }, 404);
-  const auth = await getAuthenticatedSupabase(request);
+  const auth = await requireAssistantAccess(request);
   if (auth instanceof Response) return auth;
-  if (auth.principal.authKind !== "first_party")
-    return jsonNoStore({ error: "first_party_required" }, 403);
-  const denied = requirePlatformScope(auth, "platform:read");
-  if (denied) return denied;
   const key = process.env.AZURE_SPEECH_KEY,
     region = process.env.AZURE_SPEECH_REGION?.trim();
   if (!key || !region || !/^[a-z0-9]+$/.test(region))
