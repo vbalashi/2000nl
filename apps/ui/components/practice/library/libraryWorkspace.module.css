@@ -282,17 +282,33 @@
   }
 }
 
-.scopeRow { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
-.scopeSummary { display:flex; align-items:center; gap:6px; min-width:0; }
-.scopeSummary > .scope { min-width:0; overflow-wrap:anywhere; }
-.scopeRow > .scope { flex:0 1 auto; max-width:100%; overflow-wrap:anywhere; }
+.scopeRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) fit-content(45%);
+  align-items: center;
+  gap: 8px;
+}
+.scopeSummary {
+  min-width: 0;
+}
+.scopeSummary > .scope {
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+.scopeRow > .scope {
+  min-width: 0;
+  max-width: 100%;
+  justify-self: end;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
 .trainSelection { width:28px; height:28px; padding:0; border:0; border-radius:8px; background:transparent; color:var(--practice-text-muted); }
 .trainSelection:hover { background:var(--practice-surface-hover); color:var(--practice-text-secondary); }
 
 .countTrigger { border:0; padding:4px 0; background:transparent; color:inherit; cursor:pointer; text-decoration:underline; text-decoration-color:var(--practice-border); text-underline-offset:3px; }
 .countTrigger:focus-visible { outline:2px solid var(--practice-focus); outline-offset:2px; border-radius:4px; }
 
-.scopeButton { text-align:left; }
+.scopeButton { text-align:start; }
 
 /* The count is rendered through a portal; pointer events belong to its trigger. */
 .categoryCountContent { pointer-events:none; }

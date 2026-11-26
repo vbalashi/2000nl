@@ -2,7 +2,7 @@
 
 import React from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronDown, Sparkles, X } from "lucide-react";
+import { Check, ChevronDown, Sparkles, Trash2, X } from "lucide-react";
 import { ActionMenu } from "@/components/practice/ui/ActionMenu";
 import { AddAction } from "@/components/practice/ui/AddAction";
 import { ProductionArticleReading } from "@/components/practice/article/ProductionArticleReading";
@@ -11,6 +11,7 @@ import {
   SenseCardTranslateIcon,
   SenseCardHeadwordLockup,
 } from "../SenseCardChrome";
+import { languageDisplayName } from "@/lib/languages/languageDisplayName";
 import { getPartOfSpeechLabel } from "@/lib/uiMessages";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import {
@@ -89,10 +90,12 @@ type Props = {
   initiallyDirty?: boolean;
   initialHeaderDirty?: boolean;
   onPartialSave?: (entry: SavedSense, senses: InitialPersonalSense[]) => void;
+  mobile: boolean;
   assistantAvailable: boolean;
   assistantHost?: HTMLElement | null;
   onAssistantOpenChange?: (open: boolean) => void;
   onClose: () => void;
+  onDeleteDraft?: () => void;
   onRead: (entryId: string) => void;
   onSaved: (entry: SavedSense) => void;
 };
@@ -147,12 +150,15 @@ export function PersonalDictionaryEntryDraft({
   onDraftChange,
   anchorEntryId,
   onClose,
+  onDeleteDraft,
   onSaved,
+  mobile,
   assistantAvailable,
   assistantHost,
   onAssistantOpenChange,
 }: Props) {
   const copy = personalCardCopy(interfaceLanguage);
+  const dictionaryLabel = `${copy.source} · ${languageDisplayName(interfaceLanguage, languageCode)}`;
   const [senses, setSenses] = React.useState(() =>
     (initialSenses?.length ? initialSenses : [{ definition }]).map(draftSense),
   );
@@ -342,22 +348,30 @@ export function PersonalDictionaryEntryDraft({
     (assistant &&
       root.current?.closest<HTMLElement>("[data-practice-palette]")) ??
     null;
+  const deleteDraft = !anchor && onDeleteDraft && (
+    <button type="button" className={s.deleteDraft} onClick={onDeleteDraft}>
+      <Trash2 size={16} aria-hidden="true" />
+      {copy.deleteDraft}
+    </button>
+  );
   return (
     <section
       ref={root}
+      data-mobile-editor={mobile || undefined}
       className={`${surfaces.group} ${s.editor}`}
       aria-label={copy.source}
     >
       <fieldset className={s.fieldset} disabled={busy}>
+        <div className={s.editorContent}>
         <header
-          className={`shrink-0 px-4 pb-5 pt-4 sm:px-7 ${surfaces.header}`}
+          className={`shrink-0 px-4 pb-5 pt-4 sm:px-7 ${surfaces.header} ${s.editorHeader}`}
         >
           <SenseCardHeadwordLockup
             headword={word || copy.word}
             interfaceLanguage={interfaceLanguage}
             variant="article"
             tone="light"
-            dictionaryLabel={copy.source}
+            dictionaryLabel={dictionaryLabel}
             article={showArticle ? article : null}
             articleContent={showArticle && (
               <button type="button" className={s.articlePicker} aria-label={copy.article}
@@ -372,6 +386,7 @@ export function PersonalDictionaryEntryDraft({
                 aria-haspopup="menu"
                 aria-expanded={!!posAnchor}
                 className={s.pos}
+                title={copy.pos}
                 onClick={(e) => setPosAnchor(e.currentTarget)}
               >
                 <span
@@ -401,7 +416,9 @@ export function PersonalDictionaryEntryDraft({
                 >
                   <SenseCardTranslateIcon />
                 </SenseCardHeaderAction>
-                <span data-card-header-close="" data-onboarding="details-close" className={surfaces.closeAction}>
+                {!mobile && deleteDraft}
+                <span data-card-header-close="" data-onboarding="details-close"
+                  className={deleteDraft && !mobile ? s.closeNextToDelete : surfaces.closeAction}>
                   <SenseCardHeaderAction
                     label={copy.close}
                     onClick={() => {
@@ -446,7 +463,10 @@ export function PersonalDictionaryEntryDraft({
                 {id:"expression", label:copy.expression, checked:kind === "expression",
                   onSelect:() => {edit(); setHeaderDirty(true); setKind("expression"); setPart(null); setArticle(null); setPosAnchor(null); posAnchor.focus();}},
                 ...[{ code: null, label: copy.unset },
-                  ...VOCABULARY_PARTS.map((p) => ({code:p.code,label:getPartOfSpeechLabel(interfaceLanguage,p.code) ?? p.id})),
+                  ...[...VOCABULARY_PARTS, { code: "other", id: "other" }].map((part) => ({
+                    code: part.code,
+                    label: getPartOfSpeechLabel(interfaceLanguage, part.code) ?? part.id,
+                  })),
                 ].map(({code,label}) => ({
                   id:code ?? "none", label, separatorBefore:code === null,
                   checked:kind === "word" && part === code,
@@ -637,6 +657,10 @@ export function PersonalDictionaryEntryDraft({
             </p>
           )}
         </div>
+        </div>
+        {mobile && deleteDraft && (
+          <footer className={s.draftFooter}>{deleteDraft}</footer>
+        )}
       </fieldset>
       {moveTarget?.entryId && (
         <PersonalMoveDialog

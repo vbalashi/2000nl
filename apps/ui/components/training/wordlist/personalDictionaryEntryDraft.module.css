@@ -214,3 +214,68 @@
 
 .articlePicker { display:inline-flex; align-items:center; gap:.18em; font:inherit; color:inherit; cursor:pointer; background:transparent; border:0; padding:0; }
 .articlePicker:focus-visible { outline:2px solid var(--practice-focus); outline-offset:2px; }
+
+.deleteDraft,
+.editor [data-testid="sense-card-header-actions"] .deleteDraft {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  height: auto;
+  min-height: 36px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  color: var(--practice-danger);
+  font-size: var(--practice-text-label);
+  text-align: start;
+}
+.deleteDraft svg {
+  flex: none;
+}
+.deleteDraft:hover {
+  background: var(--practice-danger-soft);
+}
+.deleteDraft:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}
+.closeNextToDelete {
+  display: inline-flex;
+}
+@container (max-width: 400px) {
+  .editor [data-testid="sense-card-header-row"]:has(.deleteDraft) {
+    flex-wrap: wrap;
+    gap: 4px 8px;
+  }
+  .editor [data-testid="sense-card-header-actions"]:has(.deleteDraft) {
+    margin-inline-start: auto;
+    max-width: 100%;
+  }
+}
+
+.editorContent {
+  display: contents;
+}
+.editor[data-mobile-editor] .editorContent {
+  display: block;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+.editor[data-mobile-editor] .editorHeader {
+  max-height: none;
+  overflow: visible;
+}
+.editor[data-mobile-editor] .scroll {
+  overflow: visible;
+}
+.draftFooter {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  padding: 0 12px 12px;
+}
+.draftFooter .deleteDraft {
+  min-height: 32px;
+}
