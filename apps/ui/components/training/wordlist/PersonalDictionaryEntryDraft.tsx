@@ -89,6 +89,7 @@ type Props = {
   initiallyDirty?: boolean;
   initialHeaderDirty?: boolean;
   onPartialSave?: (entry: SavedSense, senses: InitialPersonalSense[]) => void;
+  assistantAvailable: boolean;
   assistantHost?: HTMLElement | null;
   onAssistantOpenChange?: (open: boolean) => void;
   onClose: () => void;
@@ -147,6 +148,7 @@ export function PersonalDictionaryEntryDraft({
   anchorEntryId,
   onClose,
   onSaved,
+  assistantAvailable,
   assistantHost,
   onAssistantOpenChange,
 }: Props) {
@@ -295,7 +297,7 @@ export function PersonalDictionaryEntryDraft({
     setPosAnchor(null);
     posAnchor?.focus();
   }
-  const assistantPanel = chosen && (
+  const assistantPanel = assistantAvailable && chosen && (
     <aside data-personal-assistant="" className={s.assistant}>
       <PersonalCardAssistant
         key={chosen.key}
@@ -563,7 +565,7 @@ export function PersonalDictionaryEntryDraft({
                   >
                     {busy ? copy.saving : copy.save}
                   </button>}
-                  {process.env.NODE_ENV === "development" && <button
+                  {assistantAvailable && <button
                     type="button"
                     className={actions.primary}
                     onClick={(e) => {
