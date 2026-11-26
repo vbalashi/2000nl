@@ -63,3 +63,7 @@
 .closeHost:has([data-card-header-close]) > .fallbackClose { display:none; }
 
 .librarySheet[data-dragging=true] { transition:none; }
+
+/* Continue the bottom sheet behind browser controls and the keyboard. */
+.keyboardFill { position:fixed;inset:auto 8px 0;z-index:34;background:var(--practice-canvas);border-inline:1px solid var(--practice-border);pointer-events:none; }
+.librarySheet[data-keyboard=true] { border-bottom:0;border-radius:22px 22px 0 0; }

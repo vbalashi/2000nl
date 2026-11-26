@@ -272,7 +272,6 @@
 }
 .draftFooter {
   display: flex;
-  flex: none;
   justify-content: flex-end;
   padding: 0 12px 12px;
 }

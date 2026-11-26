@@ -203,6 +203,7 @@
 
 @media (max-width: 700px) {
   .tabBar { display: block; }
+  .frame[data-keyboard-open="true"] > .tabBar { visibility: hidden; }
   .frame[data-immersive="true"] > .header,
   .frame[data-immersive="true"] > .tabBar { display: none; }
   .desktopNav {

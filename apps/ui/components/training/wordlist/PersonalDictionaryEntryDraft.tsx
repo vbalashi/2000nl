@@ -659,10 +659,10 @@ export function PersonalDictionaryEntryDraft({
             </p>
           )}
         </div>
-        </div>
         {mobile && deleteDraft && (
           <footer className={s.draftFooter}>{deleteDraft}</footer>
         )}
+        </div>
       </fieldset>
       {moveTarget?.entryId && (
         <PersonalMoveDialog
