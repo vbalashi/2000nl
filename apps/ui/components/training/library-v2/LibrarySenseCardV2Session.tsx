@@ -1,5 +1,6 @@
 "use client";
-import {beginProviderAction, type FinishProviderAction} from "@/lib/diagnostics/client";
+import {beginLibraryRefresh, beginProviderAction, type FinishProviderAction} from "@/lib/diagnostics/client";
+import { useLibraryCardRefresh } from "./useLibraryCardRefresh";
 import { useCardLoadDiagnostics } from "@/lib/diagnostics/useCardLoadDiagnostics";
 import {useCollectionComposition} from '@/components/library/sharing/useCollectionComposition';
 import {CollectionAdditionRecovery, CollectionCompositionConfirmation} from '@/components/library/sharing/CollectionCompositionConfirmation';
@@ -175,6 +176,8 @@ function SenseCardV2Session({
   const translationRequests = React.useRef(new Map<string, AbortController>());
   const translationSession = React.useRef(0);
   const groupRequestSequence = React.useRef(0);
+  const foregroundRead = React.useRef<number | null>(null);
+  const noteInvalidation = React.useRef(0);
   const actionGeneration = React.useRef(0);
   const pendingActions = React.useRef(new Set<string>());
   const membershipGeneration = React.useRef(0);
@@ -237,6 +240,7 @@ function SenseCardV2Session({
       signal?: AbortSignal,
       expectedTranslationSession?: number,
       expectedDetailIdentity?: string,
+      background = false,
     ) => {
       if (
         expectedDetailIdentity &&
@@ -246,7 +250,11 @@ function SenseCardV2Session({
       }
       const copyReviewAtStart = copyReviewGeneration.current;
       const requestSequence = ++groupRequestSequence.current;
-      setLoading(true);
+      const noteVersion = noteInvalidation.current;
+      if (!background) {
+        foregroundRead.current = requestSequence;
+        setLoading(true);
+      }
       try {
       const readArticle = async () => {
         // Normal Library authorization owns the whole article, including siblings.
@@ -294,19 +302,22 @@ function SenseCardV2Session({
         return null;
       }
       setGroup(next);
-      setNoteAuthority(next?{scope:detailIdentity,group:next}:null);
+      setNoteAuthority(next && noteVersion === noteInvalidation.current ? {scope:detailIdentity,group:next} : null);
       if (next && copyReviewGeneration.current === copyReviewAtStart) setCopyReviewRequired(false);
-      if (!next) setLookupError("unavailable");
-      setLoading(false);
+      setLookupError(next ? null : "unavailable");
       return next;
       } catch (error) {
         if (!signal?.aborted && requestSequence === groupRequestSequence.current &&
             (expectedTranslationSession == null || expectedTranslationSession === translationSession.current) &&
             (!expectedDetailIdentity || expectedDetailIdentity === detailIdentityRef.current)) {
-          setLoading(false);
           if (!(error && typeof error === "object" && "name" in error && error.name === "AbortError")) { setGroup(null); setNoteAuthority(null); setLookupError("unavailable"); }
         }
         throw error;
+      } finally {
+        if (foregroundRead.current === requestSequence) {
+          foregroundRead.current = null;
+          if (!signal?.aborted) setLoading(false);
+        }
       }
     },
     [
@@ -465,18 +476,51 @@ function SenseCardV2Session({
     void loadMemberships(ids,detailIdentity);
   }, [detailIdentity, loadMemberships, membershipEntryIdsKey]);
 
-  const materialReadController=React.useRef<AbortController|null>(null);
-  React.useEffect(()=>()=>{materialReadController.current?.abort();},[detailIdentity]);
-  const flushCollectionHints = useUserEventHints(userId, ["collections.changed","notes.changed"], async (actualChange = true) => {
-    materialReadController.current?.abort();
-    const controller=new AbortController();materialReadController.current=controller;
-    // Rejoining the channel also requests a read. Keep the current reader's own
-    // note mounted during that check. Shared notes always need fresh authority.
-    setNoteAuthority(current => actualChange || !current ? null : {...current, ownOnly:true});
-    await Promise.allSettled([
-      model?loadMemberships(model.meanings.map(meaning=>meaning.entryId),detailIdentity,true):Promise.resolve(),
-      load(controller.signal,undefined,detailIdentity),
-    ]);
+  const refreshCard = useLibraryCardRefresh(detailIdentity, async (hint, signal) => {
+    if (foregroundRead.current !== null) return null;
+    const expected = translationSession.current;
+    const sequence = groupRequestSequence.current + 1;
+    const failed = beginLibraryRefresh();
+    const isCurrent = () => !signal.aborted && detailIdentity === detailIdentityRef.current &&
+      sequence === groupRequestSequence.current;
+    if (hint.memberships) {
+      if (!hint.changed) setNoteAuthority(current => current && {...current, ownOnly:true});
+      if (model) void loadMemberships(model.meanings.map(meaning => meaning.entryId), detailIdentity, true);
+    }
+    const groupRead = load(signal, expected, detailIdentity, true);
+    let next;
+    try {
+      next = await groupRead;
+    } catch {
+      if (!isCurrent()) return null;
+      failed();
+      return false;
+    }
+    if (!isCurrent()) return null;
+    if (!next) {
+      failed();
+      return false;
+    }
+    const visible = visibleMeaningRef.current;
+    if (hint.translation && expected === translationSession.current && visible.revealActiveMeaning &&
+        visible.activeMeaningId === activeMeaningId && visible.translationLanguage === translationLanguage) {
+      const entry = next.entries.find(item => item.kind === "sense-card" && item.entryId === activeMeaningId);
+      if (entry?.kind === "sense-card" && entry.capabilities.some(cap =>
+        cap.actionId === "request-translation" && cap.targetLanguageCode === translationLanguage)) {
+        void handleRequestTranslation(entry.entryId, entry.card?.cardTypeId ?? cardTypeId, false, expected);
+      }
+    }
+    return true;
+  });
+
+  const flushCollectionHints = useUserEventHints(userId, ["collections.changed","notes.changed"], (actualChange = true) => {
+    // Revoke old shared note authority before an invalidation can wait behind a read.
+    // An idle reconcile can keep the reader's own note mounted.
+    if (actualChange) {
+      noteInvalidation.current += 1;
+      setNoteAuthority(null);
+    }
+    return refreshCard({ memberships: true, changed: actualChange });
   }, () => pendingCollectionWrites.current > 0 || pendingActions.current.has(detailIdentityRef.current));
 
   const handleAction = async (capability: LibraryMutationCapability) => {
@@ -725,7 +769,8 @@ function SenseCardV2Session({
         if (controller.signal.aborted || expectedTranslationSession !== translationSession.current) { finish?.("cancelled"); return; }
         if (status === "ready") {
           finish?.("ready");
-          await load(undefined, expectedTranslationSession);
+          if (observation) await load(undefined, expectedTranslationSession);
+          else await refreshCard({ changed: true });
           if (expectedTranslationSession !== translationSession.current) return;
           setTranslationStates((current) => {
             const next = { ...current };
@@ -762,7 +807,7 @@ function SenseCardV2Session({
         if (translationRequests.current.get(meaningEntryId) === controller) translationRequests.current.delete(meaningEntryId);
       }
     },
-    [load, translationLanguage, entryId, permittedCurrentCard],
+    [load, refreshCard, translationLanguage, entryId, permittedCurrentCard],
   );
 
   const automaticallyPrepared = React.useRef(new Set<string>());
@@ -779,50 +824,27 @@ function SenseCardV2Session({
     void handleRequestTranslation(entry.entryId, entry.card?.cardTypeId ?? cardTypeId);
   }, [activeMeaningId, cardTypeId, detailIdentity, group, handleRequestTranslation, loading, revealActiveMeaning, translationLanguage]);
 
-  React.useEffect(() => onDictionaryTranslationRevalidate(() => {
-    if (!translationLanguage || translationRequests.current.size || loading) return;
-    const expected=translationSession.current;
-    void load(undefined,expected,detailIdentity).then(next=>{
-      if(expected!==translationSession.current||detailIdentity!==detailIdentityRef.current)return;
-      if(!visibleMeaningRef.current.revealActiveMeaning||visibleMeaningRef.current.activeMeaningId!==activeMeaningId||visibleMeaningRef.current.translationLanguage!==translationLanguage)return;
-      const entry=next?.entries.find(item=>item.kind==="sense-card"&&item.entryId===activeMeaningId);
-      if(entry?.kind==="sense-card"&&entry.capabilities.some(cap=>cap.actionId==="request-translation"&&cap.targetLanguageCode===translationLanguage))void handleRequestTranslation(entry.entryId,entry.card?.cardTypeId??cardTypeId,false,expected);
-    }).catch(() => { /* load exposes retry. */ });
-  }, activeMeaningId && translationLanguage && translationLanguage !== "off" ? { entryId: activeMeaningId, targetLanguageCode: translationLanguage } : undefined), [activeMeaningId,cardTypeId,detailIdentity,handleRequestTranslation,load,loading,translationLanguage]);
+  React.useEffect(() => {
+    if (!translationLanguage) return;
+    return onDictionaryTranslationRevalidate(() => {
+      if (!translationRequests.current.size) void refreshCard({ translation: true });
+    }, { entryId: activeMeaningId, targetLanguageCode: translationLanguage });
+  }, [activeMeaningId, refreshCard, translationLanguage]);
 
-  // A previous article may even contain the newly selected sibling meaning.
-  // Subscribe only after this exact detail selection has been revalidated.
+  // Subscribe only after the exact detail selection has been revalidated.
   const translationEntryIdsKey = JSON.stringify(noteAuthority?.scope === detailIdentity && noteAuthority.group === group
     ? group?.entries.filter(entry => entry.kind === "sense-card").map(entry => entry.entryId).sort() ?? []
     : []);
   React.useEffect(() => {
-    if (!translationLanguage || translationLanguage === "off") return;
+    if (!translationLanguage) return;
     const entryIds = JSON.parse(translationEntryIdsKey) as string[];
-    const controller = new AbortController();
-    let reading = false, dirty = false;
-    const refresh = async () => {
-      if (controller.signal.aborted) return;
-      dirty = true;
-      if (reading) return;
-      reading = true;
-      // First-join hints for several meanings share one group projection read.
-      await Promise.resolve();
-      try {
-        if (controller.signal.aborted) return;
-        do {
-          dirty = false;
-          try { await load(controller.signal, undefined, detailIdentity); }
-          catch { /* A newer hint still gets its follow-up after a failed read. */ }
-        } while (dirty && !controller.signal.aborted);
-      } catch { /* load retains the visible card and exposes lookup retry. */ }
-      finally { reading = false; }
-    };
     const stops = entryIds.map(entryId => onDictionaryTranslationReady(translation => {
-      if (translation.entryId !== entryId || translation.targetLanguageCode !== translationLanguage) return;
-      void refresh();
+      if (translation.entryId === entryId && translation.targetLanguageCode === translationLanguage) {
+        void refreshCard({ changed: true });
+      }
     }, { entryId, targetLanguageCode: translationLanguage }));
-    return () => { controller.abort(); stops.forEach(stop => stop()); };
-  }, [detailIdentity, translationEntryIdsKey, load, translationLanguage]);
+    return () => stops.forEach(stop => stop());
+  }, [detailIdentity, translationEntryIdsKey, refreshCard, translationLanguage]);
 
   React.useEffect(() => {
     if (!model) return;
