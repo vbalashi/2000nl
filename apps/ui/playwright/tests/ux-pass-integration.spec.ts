@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 import { multiSenseBankGroup } from "../../tests/platformV2LibraryFixture";
 import { shiftDate } from "../../lib/training/activity/model";
-test("@pilot Library sheet follows mouse and touch and snaps to shared stops in the real navigation", async ({ page }, testInfo) => {
+test("@pilot Library sheet keeps the dragged height and cycles preset heights on tap", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 610, height: 900 });
   await setupAuthenticatedTrainingAttributionPage(page, 0, { visualProfile: "answer", devTestLogin: process.env.TRAINING_RELIABILITY_DEV_LOGIN === "true" });
   const respond = async (route: import('@playwright/test').Route) => {
@@ -30,15 +30,15 @@ test("@pilot Library sheet follows mouse and touch and snaps to shared stops in 
   await page.mouse.move(box.x + 80, box.y - 109, { steps: 8 });
   await expect.poll(height).toBeCloseTo(initial + 123, 0);
   await page.mouse.up();
-  await expect.poll(height).toBeCloseTo(initial, 0);
+  await expect.poll(height).toBeCloseTo(initial + 123, 0);
   const mouse = await height();
   box = (await handle.boundingBox())!;
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: box.x + 80, y: box.y + 14 }] });
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: box.x + 80, y: box.y - 276 }] });
-  await expect.poll(height).toBeCloseTo(820, 0);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: box.x + 80, y: box.y + 105 }] });
+  await expect.poll(height).toBeCloseTo(mouse - 91, 0);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await expect.poll(height).toBeCloseTo(820, 0);
+  await expect.poll(height).toBeCloseTo(mouse - 91, 0);
   const touch = await height();
   await handle.press('Home'); await expect.poll(height).toBeCloseTo(300, 0);
   await handle.click(); await expect.poll(height).toBeCloseTo(initial, 0);
