@@ -33,9 +33,11 @@ import type {
   PlatformHeadwordGroupV2,
   PlatformSenseCardCapabilityV2,
 } from "../../../packages/shared/types/platformV2";
+import { startTrainingDiagnostics } from "@/lib/diagnostics/client";
+import { parseTrainingDiagnostics } from "@/lib/diagnostics/contract";
 import type { EntryLearningListMembership } from "@/lib/types";
 
-import { publishDictionaryTranslationReady } from "@/lib/translation/dictionaryTranslationEvents";
+import { onDictionaryTranslationRevalidate, publishDictionaryTranslationReady } from "@/lib/translation/dictionaryTranslationEvents";
 
 const firstJoin = vi.hoisted(() => ({ enabled: false, subscriptions: 0, scopes: [] as string[] }));
 vi.mock("@/lib/translation/dictionaryTranslationEvents", async importOriginal => {
@@ -302,7 +304,7 @@ describe("LibrarySenseCardV2Session", () => {
     const mine = await screen.findByText("My reminder");
     const next = deferred<PlatformHeadwordGroupV2>(); fetchGroup.mockReturnValueOnce(next.promise);
     let pending:Promise<unknown>;
-    act(()=>{pending=Promise.resolve(noteHintRead.refresh!(false));});
+    await act(async()=>{pending=Promise.resolve(noteHintRead.refresh!(false));});
     expect(screen.getByText("My reminder")).toBe(mine);
     expect(screen.queryByText("Author reminder")).not.toBeInTheDocument();
     await act(async()=>{next.resolve(group);await pending;});
@@ -329,7 +331,7 @@ describe("LibrarySenseCardV2Session", () => {
     const view=render(<LibrarySenseCardV2Session {...props} userId="first-reader"/>);
     await screen.findByText("First account note");
     const late=deferred<PlatformHeadwordGroupV2>();fetchGroup.mockReturnValueOnce(late.promise);
-    let pending:Promise<unknown>;act(()=>{pending=Promise.resolve(noteHintRead.refresh!());});
+    let pending:Promise<unknown>;await act(async()=>{pending=Promise.resolve(noteHintRead.refresh!());});
     const fresh=deferred<PlatformHeadwordGroupV2>();fetchGroup.mockReturnValueOnce(fresh.promise);
     view.rerender(<LibrarySenseCardV2Session {...props} userId="second-reader"/>);
     expect(screen.queryByText("First account note")).not.toBeInTheDocument();
@@ -2013,4 +2015,64 @@ describe("Library entry audio",()=>{
     }finally{play.mockRestore();}
   });
 
+});
+
+
+test("idle card with disconnected subscriptions shares reads, backs off and reports refresh failures separately", async () => {
+  vi.useFakeTimers();
+  vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+  const base = Date.now();
+  const reads: number[] = [];
+  fetchGroup.mockReset().mockImplementation(() => {
+    reads.push(Date.now() - base);
+    const group = reads.length === 1 ? multiSenseBankGroup : null;
+    return new Promise(resolve => setTimeout(() => resolve(group), 125));
+  });
+  fetchMemberships.mockResolvedValue(new Map());
+  const events: NonNullable<ReturnType<typeof parseTrainingDiagnostics>> = [];
+  const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (_, init) => {
+    if (init?.method === "GET") {
+      return Response.json({ enabled: true, detailed: false, successSampleRate: 0, validUntil: Date.now() + 60_000 });
+    }
+    const batch = parseTrainingDiagnostics(JSON.parse(String(init?.body)));
+    expect(batch).not.toBeNull();
+    events.push(...batch!);
+    return new Response(null, { status: 202 });
+  });
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const stopDiagnostics = startTrainingDiagnostics(userId, async () => ({}));
+  // The shared translation timer is already running when the card mounts.
+  const stopTranslation = onDictionaryTranslationRevalidate(() => {});
+  let view: ReturnType<typeof render> | undefined;
+  const advance = async (ms: number) => {
+    for (let elapsed = 0; elapsed < ms; elapsed += 100) {
+      await act(async () => { await vi.advanceTimersByTimeAsync(100); });
+    }
+  };
+  try {
+    await advance(4_000);
+    view = render(<LibrarySenseCardV2Session userId={userId}
+      entryId={financeEntry.entryId} headword="bank" contentLanguageCode="nl"
+      translationTargetLanguageCode="en" interfaceLanguage="en" />);
+    await advance(596_000);
+
+    // Baseline reads were at 60/64s, 120/124s and so on. The first
+    // two failures now postpone the next read for at least 2 and 4 minutes.
+    expect(reads).toEqual([4_000, 60_000, 184_001, 480_000]);
+    expect(events.map(({ kind, operation }) => [kind, operation])).toEqual(
+      Array.from({ length: 3 }, () => ["library_refresh_failed", "library_refresh"]),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await advance(1_000);
+    expect(reads.at(-1)).toBe(600_000);
+    expect(events.at(-1)).toMatchObject({ kind: "load_failed", operation: "display" });
+  } finally {
+    view?.unmount();
+    stopTranslation();
+    stopDiagnostics();
+    fetchMock.mockRestore();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  }
 });

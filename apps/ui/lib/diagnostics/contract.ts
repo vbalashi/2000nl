@@ -7,6 +7,7 @@ export type ProviderAction = keyof typeof providerActionEvents;
 export const diagnosticKinds = [
   ...Object.values(providerActionEvents.audio_playback),
   ...Object.values(providerActionEvents.dictionary_translation),
+  "library_refresh_failed",
   "load_started",
   "load_ready",
   "load_failed",
@@ -20,7 +21,7 @@ export type DiagnosticKind = (typeof diagnosticKinds)[number];
 export type TrainingDiagnostic = {
   eventId: string;
   kind: DiagnosticKind;
-  operation: "transition" | "display" | "lookup" | "request" | ProviderAction;
+  operation: "transition" | "display" | "lookup" | "request" | ProviderAction | "library_refresh";
   transitionId?: string;
   requestId?: string;
   displayId?: string;
@@ -57,8 +58,9 @@ export function parseTrainingDiagnostics(
       Object.keys(e).some((k) => !allowed.has(k)) ||
       !diagnosticId(e.eventId) ||
       !diagnosticKinds.includes(e.kind) ||
-      !["transition", "display", "lookup", "request", ...Object.keys(providerActionEvents)].includes(e.operation) ||
+      !["transition", "display", "lookup", "request", "library_refresh", ...Object.keys(providerActionEvents)].includes(e.operation) ||
       !validProviderPair(e) ||
+      ((e.kind === "library_refresh_failed") !== (e.operation === "library_refresh")) ||
       (e.transitionId !== undefined && !diagnosticId(e.transitionId)) ||
       (e.requestId !== undefined && !diagnosticId(e.requestId)) ||
       (e.displayId !== undefined && !diagnosticId(e.displayId)) ||
