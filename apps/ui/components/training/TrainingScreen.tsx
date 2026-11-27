@@ -117,6 +117,7 @@ import type { FooterStatsProps } from "./FooterStats";
 import { HotkeyDialog } from "./HotkeyDialog";
 import { areTrainingHotkeysSuspended } from "./trainingHotkeys";
 import { AppFrame } from "@/components/navigation/AppFrame";
+import { DevDatabaseWarning } from "@/components/DevDatabaseWarning";
 import { LibraryDestination } from "@/components/navigation/LibraryDestination";
 import { AppReleaseContext } from "@/components/releases/AppReleaseContext";
 import { useAppRelease } from "@/components/releases/useAppRelease";
@@ -2287,6 +2288,7 @@ function TrainingScreenContent({
     >
     <AppReleaseContext.Provider value={appRelease}>
     <AppFrame
+      diagnostics={process.env.NODE_ENV === "development" ? <DevDatabaseWarning /> : undefined}
       activeDestination={destination}
       interfaceLanguage={onboardingLang}
       themePreference={themePreference}

@@ -10,7 +10,6 @@ import type { AppDestination } from "./appDestination";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { getUiMessages, formatUiMessage } from "@/lib/uiMessages";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
-import { DevDatabaseWarning } from "@/components/DevDatabaseWarning";
 import styles from "./AppFrame.module.css";
 
 export type AppFrameProps = {
@@ -27,10 +26,11 @@ export type AppFrameProps = {
   onCycleTheme: AppUtilityNavProps["onCycleTheme"];
   onOpenSettings: AppUtilityNavProps["onOpenSettings"];
   children: React.ReactNode;
+  diagnostics?: React.ReactNode;
   className?: string;
 };
 
-type AppHeaderProps = Omit<AppFrameProps, "children" | "className" | "immersive" | "blockedByOverlay">;
+type AppHeaderProps = Omit<AppFrameProps, "children" | "diagnostics" | "className" | "immersive" | "blockedByOverlay">;
 
 const primaryDestination = (destination: AppDestination) =>
   destination === "training" || destination === "library" || destination === "statistics"
@@ -90,6 +90,7 @@ function AppHeader({
 export function AppFrame({
   className,
   children,
+  diagnostics,
   immersive = false,
   blockedByOverlay = false,
   ...headerProps
@@ -126,7 +127,7 @@ export function AppFrame({
       data-keyboard-open={keyboardOpen ? "true" : undefined}
       data-immersive={immersive ? "true" : undefined}
     >
-      {process.env.NODE_ENV === "development" && <DevDatabaseWarning />}
+      {diagnostics}
       <AppHeader
         {...headerProps}
         onNavigate={onNavigate}
