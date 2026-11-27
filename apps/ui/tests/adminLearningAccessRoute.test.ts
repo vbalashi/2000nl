@@ -39,7 +39,9 @@ beforeEach(() => {
 it("reads current access under the authenticated operator and projects only known fields", async () => {
   mocks.rpc.mockResolvedValue({ data: { ...access, groups: [{ ...access.groups[0], private: true }], staff: true }, error: null });
   const result = await GET(new Request(url), context);
-  expect(await result.json()).toEqual(access);
+  expect(await result.json()).toEqual({ ...access, groups: [] });
+  mocks.requireAdmin.mockResolvedValue({ userId: operatorId, requestId: readId, permissions: ["users.read", "entitlements.manage"] });
+  expect(await (await GET(new Request(url), context)).json()).toEqual(access);
   expect(result.headers.get("cache-control")).toContain("no-store");
   expect(mocks.requireAdmin).toHaveBeenCalledWith(expect.any(Request), "users.read");
   expect(mocks.rpc).toHaveBeenCalledWith("admin_assistant_allowances_v1", {
@@ -79,4 +81,6 @@ it("grants timed Premium independently of credits and relays a conflicting reque
   });
   mocks.rpc.mockResolvedValueOnce({ data: { error: "request_conflict" }, error: null });
   expect((await post({ ...grant, reason: "Different" })).status).toBe(409);
+  mocks.rpc.mockResolvedValueOnce({ data: { manualUntil: null, replayed: true }, error: null });
+  expect(await (await post(grant)).json()).toEqual({ manualUntil: null, replayed: true });
 });

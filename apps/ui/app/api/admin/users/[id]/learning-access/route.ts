@@ -54,9 +54,10 @@ export async function GET(request: Request, context: Context) {
         groups.some(group => !isUUID(group?.id) || typeof group.name !== "string")) {
       return reply({ error: "unavailable" }, 503);
     }
+    const canManage = principal.permissions.includes("owner") || principal.permissions.includes("entitlements.manage");
     return reply({
       premium, manualUntil, aiRepliesRemaining, dictationsRemaining,
-      groups: groups.map(({ id, name }) => ({ id, name })),
+      groups: canManage ? groups.map(({ id, name }) => ({ id, name })) : [],
     });
   } catch (error) {
     return adminErrorResponse(error);
@@ -106,7 +107,7 @@ export async function POST(request: Request, context: Context) {
       });
       const failure = rpcFailure(data, error);
       if (failure) return failure;
-      return isDate(data.manualUntil) && typeof data.replayed === "boolean"
+      return typeof data.replayed === "boolean" && (isDate(data.manualUntil) || (data.replayed && data.manualUntil === null))
         ? reply({ manualUntil: data.manualUntil, replayed: data.replayed })
         : reply({ error: "unavailable" }, 503);
     }
