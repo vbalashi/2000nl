@@ -149,8 +149,12 @@ for(const device of [{width:393,height:852,size:'largest'},{width:320,height:568
   await expect(offer.getByText("vooruitgang", { exact: true })).toBeVisible();
   await expect(offer.getByText("€60.00", { exact: true })).toBeVisible();
   await expect(offer.getByRole("button", { name: "Закрыть", exact: true })).toHaveCount(0);
+  const continueFree = offer.getByRole("button", { name: "Продолжить с Free", exact: true });
+  await expect(continueFree).toBeInViewport({ ratio: 1 });
+  const action = await continueFree.boundingBox();
+  expect(action && action.y + action.height).toBeLessThanOrEqual(device.height - 20);
   await page.screenshot({ path: testInfo.outputPath("onboarding-premium.png") });
-  await offer.getByRole("button", { name: "Продолжить с Free", exact: true }).click();
+  await continueFree.click();
   await expect(offer).toHaveCount(0);
   await expect(page).toHaveURL(url);
   await expect(page.locator('[data-onboarding="launch"]')).toBeVisible();

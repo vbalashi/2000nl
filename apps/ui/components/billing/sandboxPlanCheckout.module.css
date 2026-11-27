@@ -28,12 +28,12 @@
   padding: clamp(10px, 3vw, 16px);
   border: 1px solid var(--practice-border);
   border-radius: var(--practice-radius-control);
-  background: var(--practice-surface-subtle);
+  background: var(--practice-surface);
   cursor: pointer;
 }
 
 .plan[data-selected="true"] {
-  background: var(--practice-selected);
+  background: color-mix(in srgb, var(--practice-selected) 88%, var(--practice-surface));
   color: var(--practice-selected-text);
   border-color: var(--practice-accent);
 }
@@ -44,6 +44,8 @@
   gap: 7px;
   overflow-wrap: anywhere;
   font-size: var(--practice-text-caption);
+  font-weight: 650;
+  text-transform: uppercase;
 }
 
 .plan input {
@@ -53,6 +55,7 @@
 }
 
 .plan strong {
+  color: var(--practice-text);
   font-size: var(--practice-text-lead);
   overflow-wrap: anywhere;
 }
@@ -69,7 +72,7 @@
   min-height: 44px;
   margin-top: 8px;
   padding: 8px 12px;
-  border: 1px solid var(--practice-control-border);
+  border: 1px solid transparent;
   border-radius: var(--practice-radius-control);
   background: var(--practice-accent);
   color: var(--practice-on-accent);
@@ -102,4 +105,26 @@
 .offer :is(button, input):focus-visible {
   outline: 2px solid var(--practice-focus);
   outline-offset: 3px;
+}
+
+@media (max-width: 700px) {
+  .plans legend {
+    margin-bottom: 8px;
+  }
+
+  .plan {
+    gap: 5px;
+  }
+
+  .terms {
+    margin-block: 10px;
+  }
+
+  .primary {
+    margin-top: 2px;
+  }
+
+  .notice {
+    margin-top: 6px;
+  }
 }

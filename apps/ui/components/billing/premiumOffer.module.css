@@ -1,8 +1,9 @@
 .screen {
   --offer-word-size: calc(var(--practice-text-display) * 1.5);
   --offer-title-size: var(--practice-text-display);
+  --offer-story-size: var(--practice-text-body-lg);
   min-height: 100dvh;
-  background: var(--practice-canvas);
+  background: color-mix(in srgb, var(--practice-canvas) 94%, var(--practice-surface));
   color: var(--practice-text);
   font-family: var(--practice-font-ui);
 }
@@ -43,7 +44,7 @@
   padding: 0 4px;
   border: 0;
   background: transparent;
-  color: var(--practice-selected-text);
+  color: var(--practice-accent);
   cursor: pointer;
 }
 
@@ -75,7 +76,7 @@
 
 .tagline {
   margin: 0 0 18px;
-  color: var(--practice-selected-text);
+  color: var(--practice-accent);
   font-size: var(--practice-text-label);
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -94,7 +95,7 @@
 .benefits {
   margin: 9px 0 0;
   color: var(--practice-text-secondary);
-  font-size: var(--practice-text-body-lg);
+  font-size: var(--offer-story-size);
   line-height: 1.5;
 }
 
@@ -116,23 +117,44 @@
 }
 
 @media (max-width: 700px) {
-  .content {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 34px;
-    max-width: 475px;
-    margin-top: 24px;
+  .screen {
+    --offer-word-size: var(--practice-text-display);
+    --offer-title-size: var(--practice-text-page);
+    --offer-story-size: var(--practice-text-body);
   }
 
-  .screen {
-    --offer-word-size: calc(var(--practice-text-display) * 1.13);
-    --offer-title-size: calc(var(--practice-text-display) * 0.82);
+  .header {
+    min-height: 54px;
+    padding-top: max(8px, env(safe-area-inset-top));
+  }
+
+  .content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(16px, 3vh, 24px);
+    max-width: 475px;
+    margin-top: clamp(10px, 2vh, 18px);
+    padding-bottom: calc(22px + env(safe-area-inset-bottom));
+  }
+
+  .tagline {
+    margin-bottom: 10px;
+  }
+
+  .meaning,
+  .benefits {
+    margin-top: 5px;
+    line-height: 1.42;
   }
 
   .story h1 {
-    margin-top: 24px;
+    margin: 16px 0 8px;
   }
 
   .purchase {
     padding-top: 0;
+  }
+
+  .continueFree {
+    margin-top: 4px;
   }
 }
