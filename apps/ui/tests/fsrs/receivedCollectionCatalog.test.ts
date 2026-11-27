@@ -75,6 +75,8 @@ async function denied(c:PoolClient,action:()=>Promise<unknown>,message:string){a
  test('overlapping collections use a semi-join rather than multiplying membership pairs',async()=>{
   try { await withTransaction(pool,async c=>{
   const f=await fixture(c);await principal(c,f.owner);await c.query("set local statement_timeout='30s'");
+  // The performance fixture needs 102 owned meanings on one account.
+  await c.query("update user_settings set subscription_tier='premium' where user_id=$1",[f.owner]);
   const dictionary=(await c.query('select dictionary_id from word_entries where id=$1',[f.entries[0]])).rows[0].dictionary_id;
   const entries=(await c.query("insert into word_entries(dictionary_id,language_code,headword,meaning_id,raw) select $1,'nl','overlap-'||gen_random_uuid(),1,jsonb_build_object('definition','overlap') from generate_series(1,100) returning id",[dictionary])).rows.map(r=>r.id);
   const lists=(await c.query("insert into user_word_lists(user_id,name) select $1,'overlap '||n from generate_series(1,100) n returning id",[f.owner])).rows.map(r=>r.id);
