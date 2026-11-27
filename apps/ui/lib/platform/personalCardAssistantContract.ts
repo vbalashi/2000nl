@@ -32,6 +32,7 @@ export type AssistantReply = {
   sources?: SourceHit[];
   searched?: boolean;
   cardDraft?: boolean;
+  outOfScope?: boolean;
 };
 export type AssistantTurn = { role: "user" | "assistant"; text: string };
 export function assistantLabels(language: string) {

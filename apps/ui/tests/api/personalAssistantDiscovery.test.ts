@@ -142,3 +142,34 @@ it("binds an example replacement to the example present in the draft", async () 
     { kind: "example", text: "New second example", replaces: { ordinal: 2, text: "Second example" } },
   ] });
 });
+
+it.each([
+  ["find-meaning", "I can help you find a word or expression or explain its meaning. What would you like to look up?"],
+  [undefined, "I can help with this card. Which word, meaning or example would you like to work on?"],
+])("replies with a localized redirect when the model marks an off-topic request (%s)", async (intent, message) => {
+  const provider = vi.fn().mockResolvedValue(Response.json({
+    choices: [{ message: { content: JSON.stringify({
+      outOfScope: true,
+      message: "Here is how to solve the equation.",
+      cardDraft: true,
+      suggestions: [{ kind: "definition", text: "Unrelated text" }],
+    }) } }],
+  }));
+  vi.stubGlobal("fetch", provider);
+  const response = await POST(new NextRequest("http://localhost/api/library/card-assistant", {
+    method: "POST",
+    body: JSON.stringify({
+      word: "Explain this equation",
+      definition: "",
+      question: "Solve 3x + 5 = 23.",
+      languageCode: "nl",
+      interfaceLanguage: "en",
+      intent,
+    }),
+  }));
+
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual({ mode: "provider", outOfScope: true, message, suggestions: [] });
+  expect(provider).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(provider.mock.calls[0][1].body)).not.toHaveProperty("tool_choice");
+});

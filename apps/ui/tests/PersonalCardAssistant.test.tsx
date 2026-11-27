@@ -158,3 +158,24 @@ it("emphasizes model-selected phrases and known words while rendering other text
   expect(screen.getByText(/<script>ignored<\/script>/)).toBeInTheDocument();
   expect(screen.getByRole("log").querySelector("script")).toBeNull();
 });
+
+it("keeps the search composer available after an off-topic reply without offering a card", async () => {
+  const message = "What word would you like to look up?";
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({
+    mode: "provider", message, outOfScope: true, suggestions: [],
+  })));
+  const chat = { id: "scope", word: "", category: "headwords", scope: "", language: "nl", turns: [], draft: "" };
+  render(<PersonalCardAssistant
+    word="" definition="" languageCode="nl" interfaceLanguage="en" senseKey={chat.id} ordinal={1}
+    discovery={{ chat, storageKey: "scope", startSearch: false, category: "headwords", scope: "",
+      onClear: vi.fn(), onSelect: vi.fn(), onDraft: vi.fn() }}
+    onClose={() => {}} onApply={() => {}}
+  />);
+
+  const composer = screen.getByRole("textbox", { name: "Message to the assistant" });
+  fireEvent.change(composer, { target: { value: "Solve an equation." } });
+  fireEvent.click(screen.getByRole("button", { name: "Send" }));
+  await screen.findByText(message);
+  expect(screen.queryByRole("button", { name: "Suggest a card for the meaning we discussed" })).toBeNull();
+  expect(composer).toBeEnabled();
+});

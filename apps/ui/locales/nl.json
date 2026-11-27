@@ -2171,7 +2171,9 @@
       "quote": "Citeren",
       "searchHistory": "Zoekgesprek",
       "expandChat": "Chat vergroten",
-      "collapseChat": "Chat verkleinen"
+      "collapseChat": "Chat verkleinen",
+      "searchRedirect": "Ik kan je helpen een woord of uitdrukking te vinden of de betekenis uit te leggen. Wat wil je opzoeken?",
+      "draftRedirect": "Ik kan je helpen met deze kaart. Aan welk woord, welke betekenis of welk voorbeeld wil je werken?"
     },
     "dictation": {
       "stop": "Dicteren stoppen",

@@ -307,7 +307,7 @@ function Conversation({
               ))}
             </div>
           )}
-          {discovery && turn.reply.mode === "provider" && i === turns.length - 1 && (
+          {discovery && turn.reply.mode === "provider" && !turn.reply.outOfScope && i === turns.length - 1 && (
             turn.reply.cardDraft && turn.reply.suggestions.length > 0
               ? <button type="button" className={s.draftLink}
                   onClick={() => discovery.onDraft({turns, draft: "", searchTurnCount: i})}>

@@ -227,7 +227,7 @@ export async function POST(request: NextRequest) {
     }
     return matches;
   }
-  const originalHits = discovery ? await lookup(word, originalGroup, false) : [];
+  const originalHits = discovery && word && word.length <= 200 ? await lookup(word, originalGroup, false) : [];
   if (originalHits instanceof Response) return originalHits;
   if (discovery && !apiKey) {
     return jsonNoStore({mode:"dictionary", message:originalHits.length ? labels.results : labels.none, sources:originalHits, suggestions:[]});
@@ -369,7 +369,6 @@ export async function POST(request: NextRequest) {
                   },
                 },
               ],
-              ...(discovery && !messages.some(message=>message.role==="tool") ? {tool_choice:{type:"function",function:{name:"search_library"}}} : {}),
               parallel_tool_calls: false,
             }
           : {}),
@@ -422,8 +421,16 @@ export async function POST(request: NextRequest) {
       if (!res.ok) return jsonNoStore({ error: "provider_failed" }, 502);
       answer = (await res.json()).choices?.[0]?.message;
     }
-    const reply = record(JSON.parse(answer.content)),
-      message = bounded(reply.message, 6000);
+    const reply = record(JSON.parse(answer.content));
+    if (reply.outOfScope === true) {
+      return jsonNoStore({
+        mode: "provider",
+        message: discovery ? labels.searchRedirect : labels.draftRedirect,
+        suggestions: [],
+        outOfScope: true,
+      });
+    }
+    const message = bounded(reply.message, 6000);
     if (!message || (discovery && !Array.isArray(reply.matches)))
       return jsonNoStore({ error: "invalid_answer" }, 502);
     const examples = article.senses[selectedOrdinal - 1].fields

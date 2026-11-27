@@ -1950,5 +1950,7 @@
   "features.personalAssistant.quote": {"source":"Quote","translationHash":"378ca6b78dda9232ba35a893c118ebe90a9ec6c0416ad0bcbc918239626d28e8"},
   "features.personalAssistant.searchHistory": {"source":"Search history","translationHash":"db339ddab409f6cc826db33b56a6348cadf6092020118b16cf0db4f68fafe450"},
   "features.personalAssistant.expandChat": {"source":"Expand chat","translationHash":"6d9bfad6646bb7e0aca47adf60e3c082fab4a6589340ac7e0d877b378de99c7d"},
-  "features.personalAssistant.collapseChat": {"source":"Collapse chat","translationHash":"a62ab0f3f0f8aef501679ceb58b81dbdb6a0289d038c9c25a4ebce46d1e8a90a"}
+  "features.personalAssistant.collapseChat": {"source":"Collapse chat","translationHash":"a62ab0f3f0f8aef501679ceb58b81dbdb6a0289d038c9c25a4ebce46d1e8a90a"},
+  "features.personalAssistant.searchRedirect": {"source":"I can help you find a word or expression or explain its meaning. What would you like to look up?","translationHash":"003ef35b453ecb8fa6b0d1f33b8d90d311b989046ea00e6986344da87c49f875"},
+  "features.personalAssistant.draftRedirect": {"source":"I can help with this card. Which word, meaning or example would you like to work on?","translationHash":"2d12a076566a8c90a0c80157b967b3c0539f7983364fa51d14c35a468291465c"}
 }
