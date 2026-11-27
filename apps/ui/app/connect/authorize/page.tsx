@@ -1,4 +1,5 @@
 "use client";
+import { TermsGate } from "@/components/legal/ManagedTerms";
 import {InterfaceCatalogBoundary} from "@/components/system/InterfaceCatalogBoundary";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -175,7 +176,7 @@ function ConnectAuthorizePageContent() {
   const { metadata, user } = pageState;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background-light px-4 py-8 text-slate-900 dark:bg-background-dark dark:text-white">
+    <TermsGate><main className="flex min-h-screen items-center justify-center bg-background-light px-4 py-8 text-slate-900 dark:bg-background-dark dark:text-white">
       <section className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
         <div className="mb-6 flex items-center justify-between gap-4">
           <BrandLogo className="h-8 w-auto" />
@@ -234,7 +235,7 @@ function ConnectAuthorizePageContent() {
           </button>
         </div>
       </section>
-    </main>
+    </main></TermsGate>
   );
 }
 

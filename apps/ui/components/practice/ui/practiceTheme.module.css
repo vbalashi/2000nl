@@ -6,7 +6,7 @@
  --practice-brand-size-compact: 22px;
  --practice-headword-article-size: .55em;
  --practice-literal-translation-size: .85em;
- --practice-recall-target-size: calc(var(--practice-text-title) * 1.5);
+ --practice-recall-target-size: calc(var(--practice-text-title) * 0.95);
  --practice-face-context-size: calc(var(--practice-text-title) * 1.2);
  --practice-font-reading: var(--font-sense-serif), Newsreader, Georgia, serif;
  --practice-text-label: var(--account-practice-text-label, 11px);

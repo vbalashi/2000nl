@@ -113,8 +113,8 @@ export function WordDetailDrawer({
       // Releasing a drag or losing capture can retarget its click outside the sheet.
       if (expanded || (event.detail !== 0 && pointerStartedInside.current)) return;
       if (!panel?.getClientRects().length || !(target instanceof Element) || panel.contains(target)) return;
-      // Menus and dialogs opened by the card may render through a portal.
-      if (target.closest('dialog,[role="dialog"],[role="menu"],[role="listbox"],[popover]')) return;
+      // The assistant, menus and dialogs opened by the card may render through a portal.
+      if (target.closest('[data-personal-assistant],dialog,[role="dialog"],[role="menu"],[role="listbox"],[popover]')) return;
       onClose();
     };
     document.addEventListener("pointerdown", trackPointerStart, true);

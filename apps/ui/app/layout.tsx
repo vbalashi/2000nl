@@ -1,3 +1,5 @@
+import { ManagedTerms } from "@/components/legal/ManagedTerms";
+import { managedTermsEnabled } from "@/lib/legal/managedTerms";
 import {getRequestInterfaceSnapshot,interfaceSnapshotScript} from "@/lib/i18n/serverSnapshot";
 import {InterfaceCatalogBoundary} from "@/components/system/InterfaceCatalogBoundary";
 import "../styles/globals.css";
@@ -119,7 +121,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <SystemThemeEffect />
         <OfflineBanner /></InterfaceCatalogBoundary>
         <DiagnosticReportOutboxBootstrap />
-        <MaintenanceBoundary>{children}</MaintenanceBoundary>
+        <MaintenanceBoundary><ManagedTerms enabled={managedTermsEnabled()}>{children}</ManagedTerms></MaintenanceBoundary>
       </body>
     </html>
   );

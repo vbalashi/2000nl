@@ -1,4 +1,5 @@
 "use client";
+import { LegalLinks } from "@/components/legal/LegalLinks";
 import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import { interfaceLanguages } from "@/lib/i18n/registry";
 
@@ -26,6 +27,7 @@ import { ActionMenu } from "@/components/practice/ui/ActionMenu";
 import {SegmentedControl} from "@/components/practice/ui/SegmentedControl";
 import s from "@/components/practice/settings/settings.module.css";
 import {SettingsHelp} from "@/components/practice/settings/SettingsHelp";
+import { SandboxBillingSection } from "./SandboxBillingSection";
 const TranslationLanguagePicker = React.lazy(() =>
   import("@/components/practice/settings/LanguagePicker").then((module) => ({
     default: module.LanguagePicker,
@@ -72,7 +74,7 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
     >
       {(section, visible) => {
         if (section === "onboarding") return props.onboarding?.content;
-        if (section === "updates") return <ReleaseUpdatesSection language={props.interfaceLanguage} visible={visible} />;
+        if (section === "updates") return <><ReleaseUpdatesSection language={props.interfaceLanguage} visible={visible} /><LegalLinks /></>;
         if (section === "languages")
           return (
             <>
@@ -158,10 +160,7 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
             </>
           );
         if (section === "billing")
-          return <>
-            <SettingsPanel title={copy.subscription}><p className={s.hint}>{copy.subscriptionsUnavailable}</p></SettingsPanel>
-            <SettingsPanel title={copy.billingDetails}><p className={s.hint}>{copy.billingUnavailable}</p></SettingsPanel>
-          </>;
+          return visible && <SandboxBillingSection language={props.interfaceLanguage} />;
         if (section === "shortcuts")
           return (
             <SettingsPanel title={copy.trainingShortcuts}>

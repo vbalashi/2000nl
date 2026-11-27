@@ -1,7 +1,7 @@
 "use client";
 import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import React from "react";
-import { ArrowLeft, ArrowRight, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { DirectionCard } from "@/components/practice/builder/DirectionCard";
 import { getUiMessages } from "@/lib/uiMessages";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
@@ -81,17 +81,18 @@ export function TrainingKnownChoice({entryId, sessionId, direction, headword, de
             knownLabel={t.known} learningLabel={t.learning} actionLabel={isKnown?t.returnToLearning:t.markKnown}
             disabled={busy||disabled||Boolean(frozen.current)}
             onToggle={()=>setKnown(current=>isKnown?current.filter(value=>value!==d):[...current,d])}>
-            <DirectionCard label={label} labelIcon={direct?<ArrowRight size={14} aria-hidden="true"/>:<ArrowLeft size={14} aria-hidden="true"/>} selected={false} prompt={direct?headword:definition} answer={direct?definition:headword} promptLanguage={contentLanguage} answerLanguage={contentLanguage}
-              classes={{card:s.preview,heading:`${builder.directionHeading} ${s.heading}`,headingLabel:builder.directionHeadingLabel,check:"hidden",prompt:builder.prompt,arrow:builder.directionArrow,answer:builder.answer}}/>
+            <DirectionCard label={label} selected={false} prompt={direct?headword:definition} answer={direct?definition:headword} promptLanguage={contentLanguage} answerLanguage={contentLanguage}
+              classes={{card:s.preview,heading:`${builder.directionHeading} ${s.heading}`,headingLabel:builder.directionHeadingLabel,check:"hidden",prompt:builder.prompt,arrow:`${builder.directionArrow} ${s.arrow}`,answer:builder.answer}}/>
           </TrainingKnownDirection>;
         })}</div>:null}
         {error?<p role="alert" className={s.error}>{t[error]}</p>:null}
         </div>
-        <button type="button" className={`${s.link} ${s.back}`} disabled={busy||disabled||frozenUncertain||accepted.current} onClick={onBack}>{t.back}</button>
       </KnownChoiceBody>
     </TrainingCardShell>
-    <footer data-testid="training-sense-card-dock" className="shrink-0" style={{height:dockHeight}}>
-      <button type="button" ref={nextRef} className={`${approved.primary} ${s.next}`} disabled={!progress||busy||handedOff||disabled||error==="conflict"} onClick={()=>void submit()}>{busy?t.saving:t.next}</button>
+    <footer data-testid="training-sense-card-dock" className={s.dock}>
+      <div className={s.dockPrimary} style={{height:dockHeight}}>
+      <button type="button" ref={nextRef} className={`${approved.primary} ${s.next}`} disabled={!progress||busy||handedOff||disabled||error==="conflict"} onClick={()=>void submit()}>{busy?t.saving:t.next}</button></div>
+      <button type="button" className={`${s.link} ${s.back}`} disabled={busy||disabled||frozenUncertain||accepted.current} onClick={onBack}>{t.back}</button>
     </footer>
   </section>;
 }

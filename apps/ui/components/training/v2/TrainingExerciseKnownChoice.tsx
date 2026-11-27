@@ -32,11 +32,11 @@ export function TrainingExerciseKnownChoice(p:Props){
      knownLabel={t.known} learningLabel={t.learning} actionLabel={isKnown?t.returnToLearning:t.markKnown}
      disabled={busy||Boolean(p.disabled)||Boolean(frozen.current)}
      onToggle={()=>setKnown(current=>isKnown?current.filter(v=>v!==d):[...current,d])}>
-     <DirectionCard label={label} labelIcon={reverse?<ArrowLeft size={14}/>:<ArrowRight size={14}/>} selected={false} prompt={reverse?p.answer:p.prompt} answer={reverse?p.prompt:p.answer} promptLanguage={p.family==='translation'?p.translationLanguage:p.contentLanguage} answerLanguage={p.contentLanguage} classes={{card:s.preview,heading:`${builder.directionHeading} ${s.heading}`,headingLabel:builder.directionHeadingLabel,check:'hidden',prompt:builder.prompt,arrow:builder.directionArrow,answer:builder.answer}}/>
+     <DirectionCard label={label} labelIcon={reverse?<ArrowLeft size={14}/>:<ArrowRight size={14}/>} selected={false} prompt={reverse?p.answer:p.prompt} answer={reverse?p.prompt:p.answer} promptLanguage={p.family==='translation'?p.translationLanguage:p.contentLanguage} answerLanguage={p.contentLanguage} classes={{card:s.preview,heading:`${builder.directionHeading} ${s.heading}`,headingLabel:builder.directionHeadingLabel,check:'hidden',prompt:builder.prompt,arrow:`${builder.directionArrow} ${s.arrow}`,answer:builder.answer}}/>
     </TrainingKnownDirection>;
    })}</div>:null}
    {error?<p role="alert" className={s.error}>{t[error]}</p>:null}</div>
-   <button type="button" className={`${s.link} ${s.back}`} disabled={busy||p.disabled||(Boolean(frozen.current)&&error!=='conflict')||accepted.current} onClick={p.onBack}>{t.back}</button></div></TrainingCardShell>
-  <footer data-testid="training-sense-card-dock" className="shrink-0" style={{height:76}}><button ref={next} type="button" className={`${approved.primary} ${s.next}`} disabled={!snapshot||busy||done||p.disabled||error==='conflict'} onClick={()=>void submit()}>{busy?t.saving:t.next}</button></footer>
+   </div></TrainingCardShell>
+  <footer data-testid="training-sense-card-dock" className={s.dock}><div className={s.dockPrimary} style={{height:76}}><button ref={next} type="button" className={`${approved.primary} ${s.next}`} disabled={!snapshot||busy||done||p.disabled||error==='conflict'} onClick={()=>void submit()}>{busy?t.saving:t.next}</button></div><button type="button" className={`${s.link} ${s.back}`} disabled={busy||p.disabled||(Boolean(frozen.current)&&error!=='conflict')||accepted.current} onClick={p.onBack}>{t.back}</button></footer>
  </section>;
 }
