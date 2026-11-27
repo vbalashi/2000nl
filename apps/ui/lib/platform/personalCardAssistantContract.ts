@@ -1,6 +1,7 @@
 import { getInterfaceCatalog } from "@/lib/i18n/catalog";
 import type { PersonalField } from "@/lib/training/personalArticleClient";
 export const kinds = [
+  "headword",
   "definition",
   "example",
   "note",

@@ -1,7 +1,25 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { PersonalCardAssistant } from "@/components/training/wordlist/PersonalCardAssistant";
+
+import { PersonalDictionaryEntryDraft } from "@/components/training/wordlist/PersonalDictionaryEntryDraft";
+import { savePersonalArticle } from "@/lib/training/personalArticleClient";
+
+const transcript = "What is a Dutch verb for postponing a meeting?";
+
+vi.mock("@/components/training/wordlist/DraftWordAudio", () => ({ DraftWordAudio: () => null }));
+
+vi.mock("@/lib/audio/useAzureDictation", () => ({
+  useAzureDictation: (onText: (text: string) => void) => ({
+    status: "idle", supported: true, toggle: () => onText(transcript),
+  }),
+}));
+
+vi.mock("@/lib/training/personalArticleClient", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/training/personalArticleClient")>()),
+  savePersonalArticle: vi.fn(),
+}));
 
 vi.mock("@/lib/platform/platformV2Http", () => ({
   authenticatedJsonHeaders: async () => ({}),
@@ -36,4 +54,43 @@ it("retries the failed turn with its original intent and keeps the next draft", 
   expect(screen.getAllByText("Suggest a definition")).toHaveLength(1);
   expect(composer).toHaveValue("My next question");
   expect(screen.queryByRole("alert")).toBeNull();
+});
+
+it("applies a headword to an empty card and saves it with the suggested definition", async () => {
+  vi.mocked(savePersonalArticle).mockResolvedValue(["saved-id"]);
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({
+    mode: "provider", message: "Here is a draft.",
+    suggestions: [
+      { kind: "headword", text: "uitstellen" },
+      { kind: "headword", text: "opschuiven" },
+      { kind: "definition", text: "iets op een later moment laten gebeuren" },
+    ],
+  })));
+
+  function EmptyDraft() {
+    const [draft, setDraft] = React.useState({ word: "", definition: "" });
+    return <PersonalDictionaryEntryDraft
+      {...draft} onChange={(patch) => setDraft((previous) => ({...previous, ...patch}))}
+      languageCode="nl" interfaceLanguage="en" mobile={false} assistantAvailable
+      onClose={() => {}} onRead={() => {}} onSaved={() => {}}
+    />;
+  }
+
+  render(<EmptyDraft />);
+  fireEvent.click(screen.getByRole("button", { name: "Ask AI" }));
+  const composer = screen.getByRole("textbox", { name: "Ask about this meaning…" });
+  fireEvent.click(screen.getByRole("button", { name: "Dictate" }));
+  expect(composer).toHaveValue(transcript);
+  fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+  const [applyWord, applyAlternative, applyDefinition] = await screen.findAllByRole("button", { name: "Use" });
+  fireEvent.click(applyWord);
+  expect(applyAlternative).toBeDisabled();
+  fireEvent.click(applyDefinition);
+  fireEvent.click(screen.getByRole("button", { name: "Save meaning" }));
+
+  await waitFor(() => expect(savePersonalArticle).toHaveBeenCalledWith(expect.objectContaining({
+    headword: "uitstellen",
+    senses: [expect.objectContaining({ definition: "iets op een later moment laten gebeuren" })],
+  })));
 });

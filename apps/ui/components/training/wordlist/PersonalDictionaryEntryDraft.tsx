@@ -205,6 +205,11 @@ export function PersonalDictionaryEntryDraft({
     setFailed(false);
     setTranslated(false);
   }
+  function changeHeadword(value: string) {
+    edit();
+    setHeaderDirty(true);
+    onChange({ word: value });
+  }
   function changeSense(key: string, patch: Partial<DraftSense>) {
     edit();
     setSenses((current) =>
@@ -328,7 +333,9 @@ export function PersonalDictionaryEntryDraft({
         onApply={(suggestion, key) => {
           const target = senses.find((s) => s.key === key);
           if (!target || target.key !== assistant) return;
-          if (suggestion.kind === "definition")
+          if (suggestion.kind === "headword") {
+            if (!word.trim()) changeHeadword(suggestion.text);
+          } else if (suggestion.kind === "definition")
             changeSense(key, { definition: suggestion.text });
           else if (suggestion.kind === "partOfSpeech") {
             const id = partId(suggestion.text);
@@ -437,11 +444,7 @@ export function PersonalDictionaryEntryDraft({
                 value={word}
                 placeholder={copy.word}
                 label={copy.editWord}
-                onChange={(word) => {
-                  edit();
-                  setHeaderDirty(true);
-                  onChange({ word });
-                }}
+                onChange={changeHeadword}
               />
             }
           />

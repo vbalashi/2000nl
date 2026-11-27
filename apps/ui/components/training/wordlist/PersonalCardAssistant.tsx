@@ -349,7 +349,7 @@ function Conversation({
                           : proposal.text;
                       return (
                         <section className={s.proposal} key={j}>
-                          <small>{t[proposal.kind]}</small>
+                          <small>{proposal.kind === "headword" ? catalog.features.personalCard.word : t[proposal.kind]}</small>
                           <p
                             id={"assistant-copy-" + i + "-" + j}
                             lang={
@@ -361,7 +361,7 @@ function Conversation({
                             {text}
                           </p>
                           <ActionButton
-                            disabled={turn.applied?.includes(j)}
+                            disabled={turn.applied?.includes(j) || (proposal.kind === "headword" && !!word.trim())}
                             onClick={() => {
                               onApply(proposal, senseKey);
                               setTurns((old) =>

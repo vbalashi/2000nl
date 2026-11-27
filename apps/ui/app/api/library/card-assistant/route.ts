@@ -26,12 +26,13 @@ const record = (value: unknown): Record<string, unknown> =>
 function bounded(value: unknown, max: number) {
   return typeof value === "string" && value.length <= max ? value.trim() : null;
 }
-function extract(value: unknown): Suggestion[] {
+function extract(value: unknown, allowHeadword: boolean): Suggestion[] {
   if (!Array.isArray(value)) return [];
   return value.slice(0, 8).flatMap((item) => {
     const { kind, text } = record(item),
-      trimmed = bounded(text, 1500);
+      trimmed = bounded(text, kind === "headword" ? 300 : 1500);
     if (!trimmed || !kinds.includes(kind as Suggestion["kind"])) return [];
+    if (kind === "headword" && (!allowHeadword || /[\r\n\u2028\u2029]/.test(trimmed))) return [];
     if (
       kind === "partOfSpeech" &&
       !VOCABULARY_PARTS.some((item) => item.code === trimmed)
@@ -426,7 +427,7 @@ export async function POST(request: NextRequest) {
       sources: discovery
         ? sourcesForMatches(reply.matches, sources)
         : sources,
-      suggestions: compare || discovery ? [] : extract(reply.suggestions),
+      suggestions: compare || discovery ? [] : extract(reply.suggestions, !word),
     });
   } catch (error) {
     return jsonNoStore(

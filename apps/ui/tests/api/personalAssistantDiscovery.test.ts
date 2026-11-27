@@ -26,7 +26,10 @@ vi.mock("@/lib/platform/serverSupabase", () => ({
 beforeEach(() => {
   vi.stubEnv("AZURE_OPENAI_API_KEY", "");
   vi.stubEnv("OPENAI_API_KEY", "test");
-  vi.stubEnv("TRANSLATION_PROMPTS_JSON", JSON.stringify({ "personal_card_search_v1.txt": "Return matched IDs as JSON." }));
+  vi.stubEnv("TRANSLATION_PROMPTS_JSON", JSON.stringify({
+    "personal_card_search_v1.txt": "Return matched IDs as JSON.",
+    "personal_card_editor_v1.txt": "Return draft suggestions as JSON.",
+  }));
 });
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -69,4 +72,32 @@ it("returns confirmed matches without adding unselected or fabricated sources", 
 
 it("preserves a valid empty match list", async () => {
   expect((await (await discover([])).json()).sources).toEqual([]);
+});
+
+it.each(["", "eigen keuze"])("only returns a valid headword for an empty draft (headword=%j)", async (word) => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({
+    choices: [{ message: { content: JSON.stringify({
+      message: "Here is a draft.",
+      suggestions: [
+        { kind: "headword", text: "  op de hoogte houden  " },
+        { kind: "headword", text: "line one\nline two" },
+        { kind: "headword", text: "x".repeat(301) },
+        { kind: "definition", text: "iemand blijven informeren" },
+      ],
+    }) } }],
+  })));
+  const response = await POST(new NextRequest("http://localhost/api/library/card-assistant", {
+    method: "POST",
+    body: JSON.stringify({
+      word, definition: "", question: "Help me draft an expression for keeping someone informed.",
+      languageCode: "nl", interfaceLanguage: "en",
+    }),
+  }));
+
+  expect(response.status).toBe(200);
+  const { suggestions } = await response.json();
+  expect(suggestions).toEqual([
+    ...(word ? [] : [{ kind: "headword", text: "op de hoogte houden" }]),
+    { kind: "definition", text: "iemand blijven informeren" },
+  ]);
 });
