@@ -4,6 +4,7 @@ import { localizedField } from "@/lib/i18n/catalog";
 import { dictionarySourceProfile } from "@/lib/dictionary/sourceProfile";
 import {CollectionSelectionContext} from "@/components/library/sharing/CollectionSelectionContext";
 
+import type { AssistantAllowanceKind } from "@/lib/platform/assistantAllowanceContract";
 import React, { useEffect, useMemo, useState } from "react";
 import { Folders, List, Share2 } from "lucide-react";
 import {SharedCollectionsWorkspace} from '@/components/library/sharing/SharedCollectionsWorkspace';
@@ -38,7 +39,8 @@ type Props = {
   onInvitationConsumed?:()=>void;
   meaningIntent?: LibraryMeaningIntent | null;
   premiumOfferOpen?: boolean;
-  onExplorePremium?: (opener: HTMLButtonElement) => void;
+  onExplorePremium?: (opener?: HTMLElement, feature?: AssistantAllowanceKind) => void;
+  onExplorePersonalMeanings?: (opener?: HTMLElement) => void;
   open: boolean;
   userId: string;
   language: string;
@@ -72,6 +74,7 @@ function LibraryDestinationSession({
   meaningIntent,
   premiumOfferOpen,
   onExplorePremium,
+  onExplorePersonalMeanings,
   onboardingSearch,
 }: Props) {
   const [searchState, setSearchState] = useState<DictionarySearchTabState>(() =>
@@ -164,6 +167,7 @@ function LibraryDestinationSession({
               interfaceLanguage={interfaceLanguage}
               premiumOfferOpen={premiumOfferOpen}
               onExplorePremium={onExplorePremium}
+              onExplorePersonalMeanings={onExplorePersonalMeanings}
               userLists={userLists}
               collections={receivedSource?[...sourceLists.filter(list=>list.id!==receivedSource.id),receivedSource]:selectedReceivedId?sourceLists.filter(list=>list.id!==selectedReceivedId):sourceLists}
               collectionSourceRead={selectedReceivedId?{collectionId:selectedReceivedId,type:'user',status:receivedRead.status==='ready'?(receivedSource?'ready':'unavailable'):receivedRead.status==='error'?'error':'loading',onRetry:()=>void receivedRead.refresh()}:ownChoice&&!lists.some(row=>row.id===ownChoice.row.id)?{collectionId:ownChoice.row.id,type:'user',status:ownChoice.pending?'loading':ownChoice.error?'error':'unavailable',onRetry:()=>refreshOwnChoice(ownChoice)}:undefined}

@@ -5,5 +5,5 @@ import nl from "@/locales/nl.json";
 import uk from "@/locales/uk.json";
 import type { InterfaceLanguage } from "./registry";
 export type MessageCatalog = typeof en;
-export const interfaceCatalogContract = "008901e3a207d47b7385911f36fa9b1ef0e8d301a4a08689d38743bbab46e1da";
+export const interfaceCatalogContract = "fa7e3bc15c95cc39cd293c0e09e75d7b05985ddebccab24c59659445309fc0d1";
 export const interfaceCatalogs = { en, ru, nl, uk } satisfies Record<InterfaceLanguage, MessageCatalog>;

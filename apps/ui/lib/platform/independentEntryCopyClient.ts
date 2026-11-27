@@ -44,7 +44,7 @@ export type EntryCopyResult =
       headword: string;
       languageCode: string;
     }
-  | { status: "changed" | "rejected" | "uncertain" };
+  | { status: "changed" | "rejected" | "uncertain" | "personal-meaning-limit" };
 /** Keep the same client intent UUID until the outcome has been resolved. */
 export async function submitEntryCopy(
   command: EntryCopyCommand,
@@ -73,6 +73,8 @@ export async function submitEntryCopy(
       };
     if (response.status === 409 && data?.error === "copy_source_changed")
       return { status: "changed" };
+    if (response.status === 403 && data?.error === "personal_meaning_allowance_exhausted")
+      return { status: "personal-meaning-limit" };
     if (response.status >= 400 && response.status < 500)
       return { status: "rejected" };
   } catch {

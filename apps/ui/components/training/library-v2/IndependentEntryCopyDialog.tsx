@@ -198,7 +198,9 @@ export function IndependentEntryCopyDialog({
             ? copy.changed
             : result.status === "uncertain"
               ? copy.uncertain
-              : copy.failed}
+              : result.status === "personal-meaning-limit"
+                ? getUiMessages(language).settings.premiumOffer.personalMeaningsPremium
+                : copy.failed}
         </p>
       ) : null}
       <div className={s.actions}>

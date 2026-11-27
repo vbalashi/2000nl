@@ -305,3 +305,8 @@
     background: var(--practice-accent-hover);
   }
 }
+
+.allowanceNote {
+  color: var(--practice-text-secondary);
+  font-size: var(--practice-text-caption);
+}

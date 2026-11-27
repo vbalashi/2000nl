@@ -5,7 +5,7 @@ import { POST } from "@/app/api/library/card-assistant/route";
 
 vi.mock("@/lib/platform/assistantAccess", () => ({
   readAssistantAccess: vi.fn(),
-  requireAssistantAccess: async () => ({ principal: { userId: "test-user" } }),
+  withAssistantAllowance: async (_: Request, __: string, work: (auth: unknown) => Promise<Response>) => work({ principal: { userId: "test-user" } }),
 }));
 vi.mock("@/lib/platform/serverSupabase", () => ({
   jsonNoStore: (body: unknown, status = 200) => Response.json(body, { status }),

@@ -25,6 +25,8 @@ export function independentCopyFailure(error: {
   code?: string;
   message?: string;
 }) {
+  if (error.message === "personal_meaning_allowance_exhausted")
+    return jsonNoStore({ error: error.message }, 403);
   const known = [
     "copy_source_changed",
     "copy_collection_changed",

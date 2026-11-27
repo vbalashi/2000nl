@@ -182,3 +182,29 @@
   outline: 2px solid var(--practice-focus);
   outline-offset: 3px;
 }
+
+.allowances {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.allowances > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--practice-border);
+}
+
+.allowances dt {
+  color: var(--practice-text-secondary);
+}
+
+.allowances dd {
+  margin: 0;
+  color: var(--practice-text);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: end;
+}

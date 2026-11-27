@@ -270,3 +270,9 @@
 .draftFooter .deleteDraft {
   min-height: 32px;
 }
+
+.allowanceNote {
+  margin: 0;
+  color: var(--practice-text-secondary);
+  font-size: var(--practice-text-caption);
+}

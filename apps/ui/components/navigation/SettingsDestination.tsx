@@ -24,6 +24,7 @@ export type SettingsDestinationProps = {
   ) => void | Promise<void>;
   onTranslationLanguageChange: (language: string | null) => void;
   userEmail: string;
+  userId?: string;
   onSignOut: () => void | Promise<void>;
 };
 

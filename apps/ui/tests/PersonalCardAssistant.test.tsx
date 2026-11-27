@@ -179,3 +179,22 @@ it("keeps the search composer available after an off-topic reply without offerin
   expect(screen.queryByRole("button", { name: "Suggest a card for the meaning we discussed" })).toBeNull();
   expect(composer).toBeEnabled();
 });
+
+it("reuses a lost reply's operation id and disables another retry after replay", async () => {
+  const transport = vi.fn()
+    .mockRejectedValueOnce(new TypeError("network interrupted"))
+    .mockResolvedValueOnce(Response.json({ error: "assistant_operation_already_used" }, { status: 409 }));
+  render(<PersonalCardAssistant
+    word="afspraak" definition="" languageCode="nl" interfaceLanguage="en"
+    senseKey="replay" ordinal={1} requestReply={transport} onClose={() => {}} onApply={() => {}}
+  />);
+  fireEvent.click(screen.getByRole("button", { name: "Suggest a definition" }));
+  await screen.findByRole("alert");
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+  await screen.findByText("This request was already processed. The reply could not be shown here.");
+  expect(transport).toHaveBeenCalledTimes(2);
+  const first = new Headers(transport.mock.calls[0][0].headers).get("X-Dilum-Operation-Id");
+  expect(first).toBeTruthy();
+  expect(new Headers(transport.mock.calls[1][0].headers).get("X-Dilum-Operation-Id")).toBe(first);
+  expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+});

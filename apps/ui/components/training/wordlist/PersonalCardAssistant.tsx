@@ -30,7 +30,8 @@ import {
   type AssistantReply,
 } from "@/lib/platform/personalCardAssistantContract";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
-import { getPartOfSpeechLabel } from "@/lib/uiMessages";
+import { allowanceOperationHeader, type AssistantAllowanceKind, type AssistantAllowances } from "@/lib/platform/assistantAllowanceContract";
+import { formatUiMessage, getPartOfSpeechLabel } from "@/lib/uiMessages";
 import {saveSearchChat,type SearchChat} from "./lastSearchChat";
 import { getInterfaceCatalog } from "@/lib/i18n/catalog";
 import {searchRecoveryCopy} from "./searchRecoveryCopy";
@@ -55,6 +56,10 @@ type Props = {
   article?: AssistantArticle;
   session?: AssistantSession;
   onClose: () => void;
+  allowances?: AssistantAllowances | null;
+  onAllowancesChanged?: () => void;
+  onPremiumRequired?: (opener?: HTMLElement, feature?: AssistantAllowanceKind) => void;
+  requestReply?: (request: RequestInit) => Promise<Response>;
   onApply: (suggestions: Suggestion[], senseKey: string) => void;
 };
 type Exchange = {
@@ -62,6 +67,8 @@ type Exchange = {
   intent?: string;
   reply?: AssistantReply;
   error?: boolean;
+  alreadyProcessed?: boolean;
+  retryOperationId?: string;
   applied?: number[];
   feedbackVote?: AssistantFeedbackVote;
 };
@@ -96,6 +103,10 @@ function Conversation({
   onClose,
   onApply,
   discovery,
+  allowances,
+  onAllowancesChanged,
+  onPremiumRequired,
+  requestReply,
 }: Props) {
   const t = assistantLabels(interfaceLanguage);
   const recovery = searchRecoveryCopy(interfaceLanguage);
@@ -112,9 +123,18 @@ function Conversation({
   const [searchTurnCount] = useState(restored?.searchTurnCount ?? 0);
   const catalog = getInterfaceCatalog(interfaceLanguage);
   const speech = catalog.features.dictation;
+  const payment = catalog.ui.settings.premiumOffer;
+  const free = allowances?.premium === false ? allowances : null;
+  const readNumber = new Intl.NumberFormat(interfaceLanguage);
+  const openPremium = (feature: AssistantAllowanceKind = "ai_reply") =>
+    onPremiumRequired?.(document.activeElement instanceof HTMLElement ? document.activeElement : undefined, feature);
   const mic = useAzureDictation((text) => {
     setDraftIntent(undefined);
     setDraft(current => (current + (!current || /\s$/.test(current) ? "" : " ") + text).slice(0, 1500));
+    onAllowancesChanged?.();
+  }, () => {
+    onAllowancesChanged?.();
+    openPremium("dictation");
   });
   const [edges, setEdges] = useState({ top: false, bottom: false });
   const history = useRef<HTMLDivElement>(null),
@@ -172,6 +192,12 @@ function Conversation({
   const ask = async (value: string, intent?: string, retry = false) => {
     const question = value.trim();
     if (!question || request.current || mic.status !== "idle") return;
+    if (free?.aiRepliesRemaining === 0) {
+      openPremium();
+      return;
+    }
+    const operation = (retry && turns.at(-1)?.retryOperationId) || crypto.randomUUID();
+    let responseUncertain = false;
     const controller = new AbortController();
     request.current = controller;
     follow.current = true;
@@ -198,9 +224,11 @@ function Conversation({
     }
     setPending(true);
     try {
-      const response = await fetch("/api/library/card-assistant", {
+      const headers = new Headers(requestReply ? undefined : await authenticatedJsonHeaders());
+      headers.set(allowanceOperationHeader, operation);
+      const init = {
         method: "POST",
-        headers: await authenticatedJsonHeaders(),
+        headers,
         signal: controller.signal,
         body: JSON.stringify({
           word:discovery && !word ? question.slice(0,300) : word,
@@ -217,9 +245,31 @@ function Conversation({
             .slice(-8)
             .map((t) => ({ ...t, text: t.text.slice(0, 1500) })),
         }),
-      });
-      if (!response.ok) throw new Error("request_failed");
+      } satisfies RequestInit;
+      responseUncertain = true;
+      const response = requestReply ? await requestReply(init) : await fetch("/api/library/card-assistant", init);
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        if (error?.error === "assistant_operation_already_used") {
+          setTurns(old => old.map((turn, i) => i === old.length - 1
+            ? { ...turn, error: true, alreadyProcessed: true } : turn));
+          onAllowancesChanged?.();
+          return;
+        }
+        responseUncertain = error?.error === "assistant_operation_unconfirmed";
+        if (error?.error === "assistant_allowance_exhausted") {
+          setTurns(old => old.slice(0, -1));
+          setDraft(question);
+          setDraftIntent(intent);
+          onAllowancesChanged?.();
+          openPremium();
+          return;
+        }
+        throw new Error("request_failed");
+      }
       const reply: AssistantReply = await response.json();
+      responseUncertain = false;
+      onAllowancesChanged?.();
       setTurns((old) =>
         old.map((turn, i) =>
           i === old.length - 1 ? { ...turn, reply } : turn,
@@ -229,7 +279,7 @@ function Conversation({
       if (!controller.signal.aborted)
         setTurns((old) =>
           old.map((turn, i) =>
-            i === old.length - 1 ? { ...turn, error: true } : turn,
+            i === old.length - 1 ? { ...turn, error: true, retryOperationId: responseUncertain ? operation : undefined } : turn,
           ),
         );
     } finally {
@@ -395,8 +445,8 @@ function Conversation({
       )}
       {turn.error && (
         <>
-          <p role="alert">{t.error}</p>
-          {i === turns.length - 1 && (
+          <p role="alert">{turn.alreadyProcessed ? payment.operationAlreadyProcessed : t.error}</p>
+          {i === turns.length - 1 && !turn.alreadyProcessed && (
             <ActionButton
               disabled={pending || mic.status !== "idle"}
               onClick={() => void ask(turn.question, turn.intent, true)}
@@ -529,6 +579,9 @@ function Conversation({
           void ask(draft, draftIntent);
         }}
       >
+        {free && <small role="status" className={s.allowanceNote}>{formatUiMessage(payment.assistantAllowanceNote, {
+          replies: readNumber.format(free.aiRepliesRemaining), dictations: readNumber.format(free.dictationsRemaining),
+        })}</small>}
         {(mic.issue || mic.status !== "idle") && (
           <small role="status" className={mic.issue ? undefined : "sr-only"}>
             {mic.issue
@@ -641,8 +694,8 @@ function Conversation({
               <IconAction
                 label={t.mic}
                 title={t.mic}
-                disabled={!mic.supported || pending}
-                onClick={() => void mic.toggle()}
+                disabled={(!mic.supported && free?.dictationsRemaining !== 0) || pending}
+                onClick={() => free?.dictationsRemaining === 0 ? openPremium("dictation") : void mic.toggle()}
               >
                 <Mic size={17} />
               </IconAction>
@@ -650,7 +703,8 @@ function Conversation({
                 className={s.send}
                 type="submit"
                 aria-label={t.send}
-                disabled={pending || mic.status !== "idle" || !draft.trim()}
+                disabled={pending || mic.status !== "idle" || (!draft.trim() && free?.aiRepliesRemaining !== 0)}
+                onClick={() => { if (free?.aiRepliesRemaining === 0 && !draft.trim()) openPremium(); }}
               >
                 <ArrowUp size={18} />
               </button>

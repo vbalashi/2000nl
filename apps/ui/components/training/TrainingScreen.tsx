@@ -2207,7 +2207,7 @@ function TrainingScreenContent({
         : null;
   const appRelease = useAppRelease(user.id, navigationBlocked || (hasResumableSession && v2SessionLayoutVisible) || trainingPilot.status === "preparing", onboardingLang);
   const studyTimeEnabled = destination === "training" && !detailsOpen && !showHotkeys && !showLanguageSelection && !navigationBlocked && !loadingWord && !sessionAuthorityChecking;
-  const [premiumEntry, setPremiumEntry] = useState<"checking" | "onboarding" | "settings" | "assistant" | null>(null);
+  const [premiumEntry, setPremiumEntry] = useState<"checking" | "onboarding" | "settings" | "assistant" | "dictation" | "personalMeanings" | null>(null);
   const sawOnboardingOffer = useRef(false);
   const premiumOpener = useRef<HTMLElement | null>(null);
 
@@ -2218,12 +2218,19 @@ function TrainingScreenContent({
       try {
         const catalog = await fetchSandboxCatalog(controller.signal);
         if (!catalog.checkoutReady || controller.signal.aborted) return;
-        const response = await fetch("/api/billing/sandbox/access", {
-          headers: await authenticatedJsonHeaders(user.id), signal: controller.signal, cache: "no-store",
-        });
+        const options = {
+          headers: await authenticatedJsonHeaders(user.id), signal: controller.signal, cache: "no-store" as const,
+        };
+        const [response, assistant] = await Promise.all([
+          fetch("/api/billing/sandbox/access", options),
+          fetch("/api/library/card-assistant", options).catch(() => null),
+        ]);
         if (!response.ok) return;
         const { access } = await response.json() as { access: SandboxAccess };
-        if (!controller.signal.aborted && access.active === false) setPremiumEntry("onboarding");
+        const learner = assistant?.ok ? await assistant.json() : null;
+        if (!controller.signal.aborted && access.active === false && learner?.allowances?.premium !== true) {
+          setPremiumEntry("onboarding");
+        }
       } catch {
         // Access to the app does not depend on billing availability.
       } finally {
@@ -2234,7 +2241,7 @@ function TrainingScreenContent({
     return () => controller.abort();
   }, [premiumEntry, user.id]);
 
-  const premiumOpen = premiumEntry === "onboarding" || premiumEntry === "settings" || premiumEntry === "assistant";
+  const premiumOpen = premiumEntry === "onboarding" || premiumEntry === "settings" || premiumEntry === "assistant" || premiumEntry === "dictation" || premiumEntry === "personalMeanings";
   useEffect(() => {
     if (!premiumOpen) {
       premiumOpener.current?.focus({ preventScroll: true });
@@ -2539,10 +2546,14 @@ function TrainingScreenContent({
         />
       )}
       <LibraryDestination
-        premiumOfferOpen={premiumEntry === "assistant"}
-        onExplorePremium={opener => {
-          premiumOpener.current = opener;
-          setPremiumEntry("assistant");
+        premiumOfferOpen={premiumEntry === "assistant" || premiumEntry === "dictation" || premiumEntry === "personalMeanings"}
+        onExplorePremium={(opener, feature) => {
+          premiumOpener.current = opener ?? null;
+          setPremiumEntry(feature === "dictation" ? "dictation" : "assistant");
+        }}
+        onExplorePersonalMeanings={opener => {
+          premiumOpener.current = opener ?? null;
+          setPremiumEntry("personalMeanings");
         }}
         onTrainSelection={({languageCode,material})=>{trainingPilot.returnToToday();setStatisticsMaterialIntent({key:Date.now(),userId:user.id,languageCode,material});onRequestDestination("training");}}
         invitationCode={invitationCode}
@@ -2608,6 +2619,7 @@ function TrainingScreenContent({
         onInterfaceLanguageChange={saveOnboardingLanguageChoice}
         onTranslationLanguageChange={setTranslationLang}
         userEmail={user.email ?? ""}
+        userId={user.id}
         onSignOut={handleSignOut}
       />
     </AppFrame>

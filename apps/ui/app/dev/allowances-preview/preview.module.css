@@ -1,0 +1,74 @@
+.page {
+  min-height: 100dvh;
+  background: var(--practice-canvas);
+}
+
+.shell {
+  width: min(100% - 36px, 940px);
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.header,
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: var(--practice-text-title);
+}
+
+.notice {
+  color: var(--practice-text-secondary);
+}
+
+.toolbar {
+  justify-content: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--practice-border);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 32px;
+  padding-top: 26px;
+}
+
+.sections {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+
+.sections button {
+  justify-content: flex-start;
+  text-align: start;
+}
+
+.sections button[aria-pressed="true"] {
+  background: var(--practice-selected);
+  color: var(--practice-selected-text);
+}
+
+.content {
+  min-width: 0;
+  min-height: 420px;
+}
+
+@media (max-width: 640px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .sections {
+    display: flex;
+    flex-wrap: wrap;
+  }
+}
