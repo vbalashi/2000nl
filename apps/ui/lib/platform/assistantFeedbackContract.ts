@@ -7,3 +7,9 @@ export const assistantFeedbackReasons = {
 } as const;
 
 export type AssistantFeedbackReason = typeof assistantFeedbackReasons[AssistantFeedbackJourney][number];
+
+export const assistantFeedbackHistoryLimit = 8;
+export const assistantFeedbackQuestionLimit = 1500;
+export const assistantFeedbackAnswerLimit = 6000;
+
+export type AssistantFeedbackExchange = { question: string; answer: string };

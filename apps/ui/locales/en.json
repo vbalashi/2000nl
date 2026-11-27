@@ -2236,10 +2236,12 @@
         "save": "Could not save",
         "comment": "Add a comment (optional)",
         "submit": "Send feedback",
-        "includeExcerpt": "Include this question and answer",
         "excerptQuestion": "Question",
         "excerptAnswer": "Answer",
-        "failed": "Feedback could not be saved. Try again."
+        "failed": "Feedback could not be saved. Try again.",
+        "includeHistory": "Attach chat history to this feedback",
+        "historyScope": "Messages through the response you rated.",
+        "shortenedHistory": "This preview shows a shortened history through the response you rated."
       }
     },
     "dictation": {

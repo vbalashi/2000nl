@@ -1,6 +1,6 @@
 import { readBoundedJson } from "@/lib/http/readBoundedJson";
 import { consumeAudioRateLimit } from "@/lib/audio/audioRateLimit";
-import { assistantFeedbackReasons } from "@/lib/platform/assistantFeedbackContract";
+import { assistantFeedbackAnswerLimit, assistantFeedbackHistoryLimit, assistantFeedbackQuestionLimit, assistantFeedbackReasons } from "@/lib/platform/assistantFeedbackContract";
 import { readAssistantFeedbackRef } from "@/lib/platform/assistantFeedbackRef";
 import { getAuthenticatedSupabase, getPlatformServiceSupabase, jsonNoStore } from "@/lib/platform/serverSupabase";
 
@@ -11,6 +11,18 @@ function text(value: unknown, max: number) {
   return typeof value === "string" && value.length <= max ? value.trim() || null : null;
 }
 
+function readHistory(value: unknown) {
+  if (!Array.isArray(value) || !value.length || value.length > assistantFeedbackHistoryLimit) return null;
+  const exchanges = [];
+  for (const exchange of value) {
+    const question = text(exchange?.question, assistantFeedbackQuestionLimit);
+    const answer = text(exchange?.answer, assistantFeedbackAnswerLimit);
+    if (!question || !answer) return null;
+    exchanges.push({ question, answer });
+  }
+  return exchanges;
+}
+
 export async function POST(request: Request) {
   const auth = await getAuthenticatedSupabase(request);
   if (auth instanceof Response) return auth;
@@ -19,7 +31,7 @@ export async function POST(request: Request) {
   const rate = consumeAudioRateLimit("assistant-feedback:" + account);
   if (!rate.allowed) return jsonNoStore({ error: "rate_limited" }, 429);
 
-  const parsed = await readBoundedJson(request, 64 * 1024);
+  const parsed = await readBoundedJson(request, 384 * 1024);
   if ("error" in parsed || !parsed.body || typeof parsed.body !== "object") {
     return jsonNoStore({ error: "invalid_feedback" }, 400);
   }
@@ -31,16 +43,15 @@ export async function POST(request: Request) {
   const reasons: readonly string[] = assistantFeedbackReasons[reply.journey];
   const reason = vote === "down" && typeof input.reason === "string" && reasons.includes(input.reason) ? input.reason : null;
   const comment = vote === "down" ? text(input.comment, 1000) : null;
-  const includeExcerpt = vote === "down" && input.includeExcerpt === true;
-  const question = includeExcerpt ? text(input.question, 1500) : null;
-  const answer = includeExcerpt ? text(input.answer, 6000) : null;
-  if (includeExcerpt && (!question || !answer)) return jsonNoStore({ error: "invalid_excerpt" }, 400);
+  const includeHistory = vote === "down" && input.includeHistory === true;
+  const history = includeHistory ? readHistory(input.history) : null;
+  if (includeHistory && !history) return jsonNoStore({ error: "invalid_history" }, 400);
 
   const service = getPlatformServiceSupabase();
   if (service instanceof Response) return service;
   const { error } = await service.supabase.from("assistant_reply_feedback").upsert({
     reply_id: reply.id, user_id: account, journey: reply.journey, language_code: reply.language,
-    vote, reason, comment, excerpt_question: question, excerpt_answer: answer,
+    vote, reason, comment, chat_history: history, excerpt_question: null, excerpt_answer: null,
     updated_at: new Date().toISOString(),
   }, { onConflict: "reply_id" });
   return error ? jsonNoStore({ error: "feedback_unavailable" }, 503) : jsonNoStore({ saved: true });

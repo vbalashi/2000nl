@@ -35,6 +35,11 @@ import {saveSearchChat,type SearchChat} from "./lastSearchChat";
 import { getInterfaceCatalog } from "@/lib/i18n/catalog";
 import {searchRecoveryCopy} from "./searchRecoveryCopy";
 import { AssistantReplyFeedback } from "./AssistantReplyFeedback";
+import {
+  assistantFeedbackAnswerLimit,
+  assistantFeedbackHistoryLimit,
+  assistantFeedbackQuestionLimit,
+} from "@/lib/platform/assistantFeedbackContract";
 import type { AssistantFeedbackVote } from "@/lib/platform/assistantFeedbackContract";
 import reading from "@/components/practice/article/articleContent.module.css";
 import s from "./personalCardAssistant.module.css";
@@ -365,8 +370,24 @@ function Conversation({
       )}
       {turn.reply?.feedback && (
         <AssistantReplyFeedback replyRef={turn.reply.feedback.ref} journey={turn.reply.feedback.journey}
-          locale={interfaceLanguage} question={turn.question} savedVote={turn.feedbackVote}
-          answer={[turn.reply.message.replace(/\*\*([^*\r\n]+)\*\*/g, "$1"), ...proposals.map(item => item.text)].join("\n\n").slice(0, 6000)}
+          locale={interfaceLanguage} savedVote={turn.feedbackVote}
+          getHistory={() => {
+            const exchanges = turns.slice(0, i + 1).flatMap(item => {
+              if (!item.reply) return [];
+              const answer = [item.reply.message.replace(/\*\*([^*\r\n]+)\*\*/g, "$1"),
+                ...(!discovery || item.reply.cardDraft ? item.reply.suggestions.map(proposal => proposal.text) : []),
+              ].join("\n\n").trim();
+              return [{ question: item.question, answer }];
+            });
+            const latest = exchanges.slice(-assistantFeedbackHistoryLimit);
+            const shortened = latest.length < exchanges.length || latest.some(item =>
+              item.question.length > assistantFeedbackQuestionLimit || item.answer.length > assistantFeedbackAnswerLimit);
+            const clip = (value: string, limit: number) => value.length <= limit ? value : value.slice(0, limit - 1).trimEnd() + "…";
+            return { shortened, exchanges: latest.map(item => ({
+              question: clip(item.question, assistantFeedbackQuestionLimit),
+              answer: clip(item.answer, assistantFeedbackAnswerLimit),
+            })) };
+          }}
           onVoted={vote => {
             if (vote === "down") follow.current = false;
             setTurns(old => old.map((item, index) => index === i ? { ...item, feedbackVote: vote } : item));

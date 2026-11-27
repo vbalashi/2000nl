@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-399",
+  "contractId": "2000nl-db-400",
   "rollout": {
     "status": "hold",
     "coordinationIssue": 229,
-    "requiredMigrationId": 399
+    "requiredMigrationId": 400
   },
   "baseline": {
     "migrationId": 287,
@@ -527,11 +527,16 @@
       "migrationId": 399,
       "file": "db/migrations/399_assistant_reply_feedback.sql",
       "sha256": "11da5a592ead93406ccdf359216ddd973bc02a2f11bf4afcaf8a228588d0a1dc"
+    },
+    {
+      "migrationId": 400,
+      "file": "db/migrations/400_assistant_feedback_chat_history.sql",
+      "sha256": "278e5f8d37dd8f9cf22b43328afbecd21ed6e799c218b52cb689115e88df9896"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-399.sql",
+  "postflightProbe": "db/deploy-contract/postflight-400.sql",
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-399.sql",
-    "sha256": "da8afe8d7050a2e1cbb1a083ae98c8e52533cfde374a26c789f1e5e043cdf2e5"
+    "file": "db/deploy-contract/read-only-postflight-400.sql",
+    "sha256": "547ec77ae9f946dd851b9ea28a42043a73dcb7377384870470c0edef372372a4"
   }
 }

@@ -2020,8 +2020,10 @@
   "features.personalAssistant.feedback.save": {"source":"Could not save","translationHash":"af9fc5cf4a7ef8de1694aa3f5f7d2b84e7eef72f0c0b7573c80a11bac8bd9c3d"},
   "features.personalAssistant.feedback.comment": {"source":"Add a comment (optional)","translationHash":"da1b8f3568a3b3646a2073ed045de1384cd224b65ea7fc65890690ee9b5db883"},
   "features.personalAssistant.feedback.submit": {"source":"Send feedback","translationHash":"af45970b7936257f0fa1fa8b82ebaa70dc8be85adc21d44686f124b1a48fe34d"},
-  "features.personalAssistant.feedback.includeExcerpt": {"source":"Include this question and answer","translationHash":"4c9e070e9affecdd3eb640b7e0cf032d4787f4fd0e187abb35d9cf0938320099"},
   "features.personalAssistant.feedback.excerptQuestion": {"source":"Question","translationHash":"d1fec78344a8f000310b2d043a53269fd3252bd3f2708e9af12106b94f6d90e7"},
   "features.personalAssistant.feedback.excerptAnswer": {"source":"Answer","translationHash":"e62d188900d6afb8281378b17d5fc40d9fffa9f787137dff10dfe1d7fe207585"},
-  "features.personalAssistant.feedback.failed": {"source":"Feedback could not be saved. Try again.","translationHash":"e2c46e78d3d5b293dc122a5dc76ce8ec6751f0062832cf1bbfdd929002f2a904"}
+  "features.personalAssistant.feedback.failed": {"source":"Feedback could not be saved. Try again.","translationHash":"e2c46e78d3d5b293dc122a5dc76ce8ec6751f0062832cf1bbfdd929002f2a904"},
+  "features.personalAssistant.feedback.includeHistory": {"source":"Attach chat history to this feedback","translationHash":"ef5ac4e3153eb0bd52007778f2b64fb61d8dc7b332774dd603d2c31c60b0ce30"},
+  "features.personalAssistant.feedback.historyScope": {"source":"Messages through the response you rated.","translationHash":"0552a5617b7232d48488bd1a7bc85006b6c0ae783b47c50fe7a5bf36645dd7bf"},
+  "features.personalAssistant.feedback.shortenedHistory": {"source":"This preview shows a shortened history through the response you rated.","translationHash":"320f0a824aafdc3a71446d7b00a26a37f9325b8da809d72777ec530cee4dc3a1"}
 }

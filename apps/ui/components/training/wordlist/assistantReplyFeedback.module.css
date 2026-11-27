@@ -80,8 +80,13 @@
 .consent input {
   accent-color: var(--practice-accent);
 }
+.previewHint {
+  color: var(--practice-text-muted);
+  font-size: var(--practice-text-caption);
+  margin: 0 0 6px;
+}
 .preview {
-  max-height: 140px;
+  max-height: min(240px, 30dvh);
   overflow: auto;
   padding: 6px 8px;
   margin: 0;
@@ -95,6 +100,7 @@
 .preview dd {
   margin: 2px 0 7px;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .actions {
   display: flex;

@@ -2236,10 +2236,12 @@
         "save": "Opslaan is mislukt",
         "comment": "Opmerking toevoegen (optioneel)",
         "submit": "Feedback versturen",
-        "includeExcerpt": "Dit verzoek en antwoord meesturen",
         "excerptQuestion": "Verzoek",
         "excerptAnswer": "Antwoord",
-        "failed": "Feedback opslaan is mislukt. Probeer het opnieuw."
+        "failed": "Feedback opslaan is mislukt. Probeer het opnieuw.",
+        "includeHistory": "Chatgeschiedenis bij deze feedback voegen",
+        "historyScope": "Berichten tot en met het antwoord dat je beoordeelt.",
+        "shortenedHistory": "Je ziet een verkorte geschiedenis tot en met het antwoord dat je beoordeelt."
       }
     },
     "dictation": {

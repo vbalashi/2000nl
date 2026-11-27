@@ -32,29 +32,46 @@ function feedback(replyRef: string | undefined, fields: Record<string, unknown>)
   }));
 }
 
-const excerpt = { question: "Which word fits?", answer: "Wandlamp." };
+const history = [
+  { question: "Which word fits?", answer: "Wandlamp." },
+  { question: "Is this also a sconce?", answer: "Yes, it can be." },
+];
 
-it.each([{}, { includeExcerpt: "true" }])("drops excerpt without an explicit boolean opt-in (%j)", async flags => {
+it.each([{}, { includeHistory: "true" }])("drops chat history without boolean opt-in (%j)", async flags => {
   const ref = issueAssistantFeedbackRef("account", "search", "nl");
-  expect((await feedback(ref, { ...excerpt, ...flags })).status).toBe(200);
+  expect((await feedback(ref, { history, ...flags })).status).toBe(200);
   expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
-    user_id: "account", journey: "search", excerpt_question: null, excerpt_answer: null,
+    user_id: "account", journey: "search", chat_history: null, excerpt_question: null, excerpt_answer: null,
   }), { onConflict: "reply_id" });
 });
 
-it("attaches only a complete opted-in excerpt", async () => {
+it.each([
+  { invalid: [] },
+  { invalid: [...history, { question: "Incomplete" }] },
+  { invalid: Array(9).fill(history[0]) },
+])(
+  "rejects malformed or oversized opted-in history (%j)", async ({ invalid }) => {
+    const ref = issueAssistantFeedbackRef("account", "draft", "nl");
+    expect((await feedback(ref, { history: invalid, includeHistory: true })).status).toBe(400);
+    expect(upsert).not.toHaveBeenCalled();
+  },
+);
+
+it("attaches ordered messages only to an opted-in downvote", async () => {
   const ref = issueAssistantFeedbackRef("account", "draft", "nl");
-  expect((await feedback(ref, { question: excerpt.question, includeExcerpt: true })).status).toBe(400);
-  expect(upsert).not.toHaveBeenCalled();
-  expect((await feedback(ref, { ...excerpt, includeExcerpt: true, reason: "example", comment: "Too formal." })).status).toBe(200);
-  expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
-    journey: "draft", reason: "example", comment: "Too formal.",
-    excerpt_question: excerpt.question, excerpt_answer: excerpt.answer,
+  expect((await feedback(ref, { history, includeHistory: true, reason: "example", comment: "Too formal." })).status).toBe(200);
+  expect(upsert).toHaveBeenLastCalledWith(expect.objectContaining({
+    journey: "draft", reason: "example", comment: "Too formal.", chat_history: history,
+  }), { onConflict: "reply_id" });
+
+  expect((await feedback(ref, { history, includeHistory: true, vote: "up" })).status).toBe(200);
+  expect(upsert).toHaveBeenLastCalledWith(expect.objectContaining({
+    vote: "up", reason: null, comment: null, chat_history: null,
   }), { onConflict: "reply_id" });
 });
 
 it("rejects a reply reference belonging to another account", async () => {
   const ref = issueAssistantFeedbackRef("another-account", "search", "nl");
-  expect((await feedback(ref, {})).status).toBe(400);
+  expect((await feedback(ref, { history, includeHistory: true })).status).toBe(400);
   expect(upsert).not.toHaveBeenCalled();
 });

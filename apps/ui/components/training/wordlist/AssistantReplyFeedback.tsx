@@ -8,6 +8,7 @@ import { getInterfaceCatalog } from "@/lib/i18n/catalog";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import {
   assistantFeedbackReasons,
+  type AssistantFeedbackExchange,
   type AssistantFeedbackJourney,
   type AssistantFeedbackReason,
   type AssistantFeedbackVote,
@@ -16,13 +17,12 @@ import { authenticatedJsonHeaders } from "@/lib/platform/platformV2Http";
 import s from "./assistantReplyFeedback.module.css";
 
 export function AssistantReplyFeedback({
-  replyRef, journey, locale, question, answer, savedVote, onVoted,
+  replyRef, journey, locale, getHistory, savedVote, onVoted,
 }: {
   replyRef: string;
   journey: AssistantFeedbackJourney;
   locale: OnboardingLanguage;
-  question: string;
-  answer: string;
+  getHistory: () => { exchanges: AssistantFeedbackExchange[]; shortened: boolean };
   savedVote?: AssistantFeedbackVote;
   onVoted: (vote: AssistantFeedbackVote) => void;
 }) {
@@ -31,7 +31,7 @@ export function AssistantReplyFeedback({
   const [formOpen, setFormOpen] = useState(false);
   const [reason, setReason] = useState<AssistantFeedbackReason>();
   const [comment, setComment] = useState("");
-  const [includeExcerpt, setIncludeExcerpt] = useState(false);
+  const [history, setHistory] = useState<ReturnType<typeof getHistory>>();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const detailsForm = useRef<HTMLFormElement>(null);
@@ -50,12 +50,15 @@ export function AssistantReplyFeedback({
         body: JSON.stringify({
           vote, replyRef,
           ...(details ? { reason, comment } : {}),
-          ...(details && includeExcerpt ? { includeExcerpt: true, question, answer } : {}),
+          ...(details && history ? { includeHistory: true, history: history.exchanges } : {}),
         }),
       });
       if (!response.ok) throw new Error("feedback_failed");
       onVoted(vote);
-      if (details || vote === "up") setFormOpen(false);
+      if (details || vote === "up") {
+        setFormOpen(false);
+        setHistory(undefined);
+      }
     } catch {
       setFailed(true);
     } finally {
@@ -65,10 +68,10 @@ export function AssistantReplyFeedback({
 
   function rate(vote: AssistantFeedbackVote) {
     setFormOpen(vote === "down");
+    setHistory(undefined);
     if (vote === savedVote) return;
     setReason(undefined);
     setComment("");
-    setIncludeExcerpt(false);
     void send(vote);
   }
 
@@ -100,17 +103,24 @@ export function AssistantReplyFeedback({
               aria-label={t.comment} placeholder={t.comment} value={comment}
               onChange={event => setComment(event.target.value)} />
             <label className={s.consent}>
-              <input type="checkbox" checked={includeExcerpt} onChange={event => setIncludeExcerpt(event.target.checked)} />
-              <span>{t.includeExcerpt}</span>
+              <input type="checkbox" checked={Boolean(history)} onChange={event => setHistory(event.target.checked ? getHistory() : undefined)} />
+              <span>{t.includeHistory}</span>
             </label>
-            {includeExcerpt && (
-              <dl className={s.preview}>
-                <dt>{t.excerptQuestion}</dt><dd>{question}</dd>
-                <dt>{t.excerptAnswer}</dt><dd>{answer}</dd>
-              </dl>
+            {history && (
+              <>
+                <p className={s.previewHint}>{history.shortened ? t.shortenedHistory : t.historyScope}</p>
+                <dl className={s.preview}>
+                  {history.exchanges.map((exchange, index) => (
+                    <React.Fragment key={index}>
+                      <dt>{t.excerptQuestion}</dt><dd dir="auto">{exchange.question}</dd>
+                      <dt>{t.excerptAnswer}</dt><dd dir="auto">{exchange.answer}</dd>
+                    </React.Fragment>
+                  ))}
+                </dl>
+              </>
             )}
             <div className={s.actions}>
-              <ActionButton onClick={() => setFormOpen(false)}>{catalog.common.close}</ActionButton>
+              <ActionButton onClick={() => { setFormOpen(false); setHistory(undefined); }}>{catalog.common.close}</ActionButton>
               <ActionButton type="submit" variant="primary">{t.submit}</ActionButton>
             </div>
           </fieldset>
