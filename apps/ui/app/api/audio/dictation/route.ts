@@ -1,4 +1,4 @@
-import { requireAssistantAccess } from "@/lib/platform/assistantAccess";
+import { withAssistantAllowance } from "@/lib/platform/assistantAccess";
 import { NextRequest } from "next/server";
 import {
   jsonNoStore,
@@ -28,8 +28,10 @@ function validWav(wav: Buffer) {
   );
 }
 export async function POST(request: NextRequest) {
-  const auth = await requireAssistantAccess(request);
-  if (auth instanceof Response) return auth;
+  return withAssistantAllowance(request, "dictation", () => transcribe(request));
+}
+
+async function transcribe(request: NextRequest) {
   const key = process.env.AZURE_SPEECH_KEY,
     region = process.env.AZURE_SPEECH_REGION?.trim();
   if (!key || !region || !/^[a-z0-9]+$/.test(region))

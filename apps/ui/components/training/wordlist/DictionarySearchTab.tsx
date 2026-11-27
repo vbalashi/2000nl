@@ -31,6 +31,7 @@ import {
   getUiMessages,
 } from "@/lib/uiMessages";
 
+import type { AssistantAllowanceKind } from "@/lib/platform/assistantAllowanceContract";
 import React from "react";
 import { LibraryCategoryResults } from "./LibraryCategoryResults";
 import type { LibraryMaterialScope } from "@/lib/platform/librarySearchScope";
@@ -102,7 +103,8 @@ type Props = {
   onTrainWord?: (wordId: string) => void;
   autoFocusQuery?: boolean;
   premiumOfferOpen?: boolean;
-  onExplorePremium?: (opener: HTMLButtonElement) => void;
+  onExplorePremium?: (opener?: HTMLElement, feature?: AssistantAllowanceKind) => void;
+  onExplorePersonalMeanings?: (opener?: HTMLElement) => void;
   searchState: DictionarySearchTabState;
   onSearchStateChange: React.Dispatch<
     React.SetStateAction<DictionarySearchTabState>
@@ -172,6 +174,7 @@ export function DictionarySearchTab({
   autoFocusQuery,
   premiumOfferOpen,
   onExplorePremium,
+  onExplorePersonalMeanings,
   searchState,
   onSearchStateChange,
 }: Props) {
@@ -688,14 +691,25 @@ export function DictionarySearchTab({
   const category = searchState.searchCategory ?? "headwords";
   const discoveryScope = JSON.stringify([userId,searchLanguage,query,category,dictionaryId,categoryMaterial,searchState.entryFilters]);
   const assistantAccess = useAssistantAccess(userId, open && !premiumOfferOpen);
-  const assistantAvailable = assistantAccess === true;
-  const discoveryOpen = assistantAvailable && discoveryKey===discoveryScope;
+  const { allowed, allowances, refresh: refreshAllowances } = assistantAccess;
+  const assistantAvailable = allowed === true;
+  const assistantOfferAvailable = allowed === false && Boolean(onExplorePremium);
+  const discoveryOpen = discoveryKey===discoveryScope;
   const [discoveryStart,setDiscoveryStart] = useState(false);
   const [chatContext,setChatContext] = useState<SearchChat|null>(null);
   const [transferredChat,setTransferredChat] = useState<{key:string;snapshot:AssistantSnapshot}|null>(null);
   const chatStorageKey = "2000nl.last-search-chat.v1." + userId;
-  function openDiscovery(startSearch:boolean) {
-    setChatContext(openSearchChat(chatStorageKey,userId,{word:query.trim(),scope:resultScopeLabel,category,language:searchLanguage},startSearch));
+  function openDiscovery(startSearch: boolean, opener?: HTMLElement) {
+    const blocked = !assistantAvailable || (startSearch && allowances?.premium === false && allowances.aiRepliesRemaining === 0);
+    const chat = !blocked || !startSearch
+      ? openSearchChat(chatStorageKey, userId, { word: query.trim(), scope: resultScopeLabel, category, language: searchLanguage }, startSearch)
+      : null;
+    if (!chat || (blocked && !chat.turns.length && !chat.draft)) {
+      setScopeAnchor(null);
+      onExplorePremium?.(opener);
+      return;
+    }
+    setChatContext(chat);
     setDiscoveryStart(startSearch);
     setScopeAnchor(null);
     setDraftClosed(true);
@@ -718,12 +732,14 @@ export function DictionarySearchTab({
     {restricted && <p>{recovery.hint}</p>}
     <div>
       {restricted && <ActionButton variant="primary" onClick={broadenSearch}><BookOpen size={15}/>{scoped ? recovery.all : recovery.clear}</ActionButton>}
-      {assistantAvailable && <ActionButton onClick={()=>openDiscovery(true)}><Sparkles size={15}/>{recovery.help}</ActionButton>}
+      {(assistantAvailable || assistantOfferAvailable) && <ActionButton onClick={event=>openDiscovery(true,event.currentTarget)}><Sparkles size={15}/>{recovery.help}</ActionButton>}
     </div>
   </div>;
   const closeDiscovery = () => {setDiscoveryKey(null);updateSearchState({mobileDetailOpen:false});};
   const discoveryPanel = discoveryOpen && chatContext && <PersonalCardAssistant key={chatContext.id} senseKey={chatContext.id}
+    userId={userId}
     word={chatContext.word} languageCode={chatContext.language} definition="" ordinal={1} interfaceLanguage={interfaceLanguage}
+    allowances={allowances} onAllowancesChanged={refreshAllowances} onPremiumRequired={onExplorePremium}
     discovery={{chat:chatContext,storageKey:chatStorageKey,startSearch:discoveryStart,category:chatContext.category,scope:chatContext.scope,onClear:()=>{
       setDiscoveryStart(false);
       setChatContext(openSearchChat(chatStorageKey,userId,{word:"",scope:resultScopeLabel,category,language:searchLanguage},true));
@@ -834,7 +850,7 @@ export function DictionarySearchTab({
             ...(materialEnabled ? [{id:"filters",label:copy.filters,icon:<SlidersHorizontal size={14}/>,disabled:!searchMaterialReady,onSelect:()=>{setScopeAnchor(null);setFiltersOpen(true);}}] : []),
             {id:"reset",label:copy.resetFilters,icon:<RotateCcw size={14}/>,onSelect:()=>{setScopeAnchor(null);updateSearchState({labelId:null,labelName:null,dictionaryId:null,applyListFilter:false,collectionId:null,collectionOwnership:null,entryFilters:{...EMPTY_LIBRARY_ENTRY_FILTERS,sort:searchState.entryFilters?.sort},page:1,groupPageCursors:[null],groupHasMore:false,groupTotal:null,meaningTotal:null,groupResults:[],wordTotal:0,selectedHeadwordGroupId:null,detailSelection:null,mobileDetailOpen:false});refreshSearch();}},
             ...historyChoices.map((item,index)=>({id:`recent-${index}`,label:item.query || historySource(item),description:historyDescription(item),icon:<History size={14}/>,onSelect:()=>restoreHistory(item)})),
-            ...(assistantAvailable ? [{id:"ai-chat",label:recovery.chat,icon:<Sparkles size={14}/>,onSelect:()=>openDiscovery(false)}] : []),
+            ...((assistantAvailable || assistantOfferAvailable) ? [{id:"ai-chat",label:recovery.chat,icon:<Sparkles size={14}/>,onSelect:()=>openDiscovery(false,scopeAnchor)}] : []),
           ]}/>}
           {!unresolvedSource && categorySearchActive && (!categoryAwaitingAuthorization && ((onTrainSelection && searchMaterialReady) || canBulk) ? <button type="button" className={`${workspace.scope} ${workspace.countTrigger}`} aria-label={bulkCountLabel || categoryCountText || copy.entries} aria-haspopup="menu" aria-expanded={Boolean(countAnchor)} onClick={event=>{setBulkNotice(null);setCountAnchor(countAnchor ? null : event.currentTarget);}}><span ref={setCategoryCountHost} className={`${workspace.categoryCountContent} ${bulkCountLabel ? 'sr-only' : ''}`}/>{bulkCountLabel}</button> : <span ref={setCategoryCountHost} className={workspace.scope}/>)}
 
@@ -1080,6 +1096,7 @@ export function DictionarySearchTab({
   };
 
   const handleArchived = () => {
+    refreshAllowances();
     closeAfterArchive.current = true;
     material?.reload();
     updateSearchState({ detailSelection: null, selectedHeadwordGroupId: null, mobileDetailOpen: false,
@@ -1107,8 +1124,10 @@ export function DictionarySearchTab({
   }
 
   const draftEditor = personalEditing && personalDraft && (
-    <PersonalDictionaryEntryDraft mobile={mobile} assistantAvailable={assistantAvailable}
-      onExplorePremium={assistantAccess === false ? onExplorePremium : undefined} key={personalDraft.sessionKey ?? "new"}
+    <PersonalDictionaryEntryDraft userId={userId} mobile={mobile} assistantAvailable={assistantAvailable}
+      onExplorePremium={allowed !== null ? onExplorePremium : undefined}
+      onExplorePersonalMeanings={onExplorePersonalMeanings} allowances={allowances} onAllowancesChanged={refreshAllowances}
+      key={personalDraft.sessionKey ?? "new"}
       anchorEntryId={personalDraft.anchorEntryId} initialSenses={personalDraft.initialSenses} initialPart={personalDraft.partOfSpeech} initialArticle={personalDraft.article} initialKind={personalDraft.kind}
       initiallyDirty={personalDraft.dirty} initialHeaderDirty={personalDraft.headerDirty}
       onDraftChange={(initialSenses,partOfSpeech,headerDirty,header) => draftShelf.update(personalDraft.sessionKey,{...header,initialSenses,partOfSpeech,dirty:true,headerDirty})}

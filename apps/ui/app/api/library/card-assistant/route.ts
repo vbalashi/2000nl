@@ -1,4 +1,4 @@
-import { readAssistantAccess, requireAssistantAccess } from "@/lib/platform/assistantAccess";
+import { readAssistantAccess, withAssistantAllowance } from "@/lib/platform/assistantAccess";
 import { issueAssistantFeedbackRef } from "@/lib/platform/assistantFeedbackRef";
 import { NextRequest } from "next/server";
 import { readBoundedJson } from "@/lib/http/readBoundedJson";
@@ -114,8 +114,10 @@ function readArticle(raw: unknown) {
   };
 }
 export async function POST(request: NextRequest) {
-  const auth = await requireAssistantAccess(request);
-  if (auth instanceof Response) return auth;
+  return withAssistantAllowance(request, "ai_reply", auth => replyToAssistant(request, auth.principal.userId));
+}
+
+async function replyToAssistant(request: NextRequest, accountId: string) {
   const parsed = await readBoundedJson(request, 320 * 1024);
   if ("error" in parsed) return jsonNoStore({ error: "invalid_request" }, 400);
   const body = record(parsed.body),
@@ -173,7 +175,6 @@ export async function POST(request: NextRequest) {
   const discovery = body.intent === "find-meaning" || draftFromSearch;
   const originalGroup = body.searchCategory === "examples" || body.searchCategory === "definitions" ? body.searchCategory : "headwords";
   const search = body.intent === "search" || similar;
-  const accountId = auth.principal.userId;
   const feedbackJourney = discovery ? "search" : "draft";
   const withFeedback = (reply: AssistantReply) => {
     const ref = issueAssistantFeedbackRef(accountId, feedbackJourney, language);
@@ -475,5 +476,9 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const access = await readAssistantAccess(request);
   if (access instanceof Response) return access;
-  return jsonNoStore({ allowed: access.allowed, userId: access.auth.user.id });
+  return jsonNoStore({
+    allowed: access.allowances.premium || access.allowances.aiRepliesRemaining > 0 || access.allowances.dictationsRemaining > 0,
+    allowances: access.allowances,
+    userId: access.auth.user.id,
+  });
 }

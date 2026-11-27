@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { authenticatedJsonHeaders } from "@/lib/platform/platformV2Http";
+import { allowanceOperationHeader } from "@/lib/platform/assistantAllowanceContract";
 type Status = "idle" | "requesting" | "recording" | "transcribing";
 type Issue = "permission" | "noSpeech" | "unavailable" | "failed";
 type Capture = {
@@ -59,15 +60,16 @@ function release(capture: Capture) {
   capture.stream?.getTracks().forEach((track) => track.stop());
 }
 /** The caller owns the editable input. A finished utterance is never sent as a chat message. */
-export function useAzureDictation(onText: (text: string) => void) {
+export function useAzureDictation(onText: (text: string) => void, onExhausted?: () => void) {
   const [status, setStatus] = useState<Status>("idle"),
     [issue, setIssue] = useState<Issue | null>(null),
     [supported, setSupported] = useState(false);
   const active = useRef<Capture | null>(null),
-    write = useRef(onText);
+    write = useRef(onText), exhausted = useRef(onExhausted);
   useEffect(() => {
     write.current = onText;
-  }, [onText]);
+    exhausted.current = onExhausted;
+  }, [onText, onExhausted]);
   useEffect(() => {
     setSupported(
       Boolean(
@@ -100,6 +102,7 @@ export function useAzureDictation(onText: (text: string) => void) {
     }
     if (!supported) return;
     const capture: Capture = { controller: new AbortController() };
+    const operationId = crypto.randomUUID();
     active.current = capture;
     setStatus("requesting");
     setIssue(null);
@@ -149,6 +152,7 @@ export function useAzureDictation(onText: (text: string) => void) {
           );
           const headers = new Headers(await authenticatedJsonHeaders());
           headers.set("Content-Type", "audio/wav");
+          headers.set(allowanceOperationHeader, operationId);
           const response = await fetch("/api/audio/dictation", {
             method: "POST",
             headers,
@@ -158,6 +162,11 @@ export function useAzureDictation(onText: (text: string) => void) {
           });
           const data = await response.json();
           if (active.current !== capture) return;
+          if (data.error === "assistant_allowance_exhausted") {
+            finish();
+            exhausted.current?.();
+            return;
+          }
           if (!response.ok || typeof data.text !== "string")
             return finish(
               data.error === "no_speech"

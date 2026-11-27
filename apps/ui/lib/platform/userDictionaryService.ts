@@ -284,6 +284,7 @@ export function mapUserEntryRpcError(
       ? String((error as { message?: string }).message ?? error)
       : String(error);
 
+  if (detail === "personal_meaning_allowance_exhausted") return { payload: { error: detail }, status: 403 };
   if (detail.includes("entry_not_found")) {
     return { payload: { error: "entry_not_found" }, status: 404 };
   }

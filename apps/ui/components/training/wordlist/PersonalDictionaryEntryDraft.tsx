@@ -25,6 +25,8 @@ import {
   savePersonalArticle,
   type PersonalField,
 } from "@/lib/training/personalArticleClient";
+import { formatUiMessage, getUiMessages } from "@/lib/uiMessages";
+import type { AssistantAllowanceKind, AssistantAllowances } from "@/lib/platform/assistantAllowanceContract";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import {
   PersonalCardAssistant,
@@ -73,6 +75,7 @@ type SavedSense = PersonalHeader & {
   partOfSpeech: string | null;
 };
 type Props = {
+  userId?: string;
   word: string;
   definition: string;
   onChange: (patch: { word?: string; definition?: string }) => void;
@@ -95,7 +98,11 @@ type Props = {
   onPartialSave?: (entry: SavedSense, senses: InitialPersonalSense[]) => void;
   mobile: boolean;
   assistantAvailable: boolean;
-  onExplorePremium?: (opener: HTMLButtonElement) => void;
+  onExplorePremium?: (opener?: HTMLElement, feature?: AssistantAllowanceKind) => void;
+  onExplorePersonalMeanings?: (opener?: HTMLElement) => void;
+  allowances?: AssistantAllowances | null;
+  onAllowancesChanged?: () => void;
+  saveArticle?: typeof savePersonalArticle;
   assistantHost?: HTMLElement | null;
   initialConversation?: AssistantSnapshot;
   onAssistantOpenChange?: (open: boolean) => void;
@@ -160,11 +167,18 @@ export function PersonalDictionaryEntryDraft({
   mobile,
   assistantAvailable,
   onExplorePremium,
+  onExplorePersonalMeanings,
+  allowances,
+  onAllowancesChanged,
+  saveArticle = savePersonalArticle,
   assistantHost,
+  userId,
   initialConversation,
   onAssistantOpenChange,
 }: Props) {
   const copy = personalCardCopy(interfaceLanguage);
+  const offerCopy = getUiMessages(interfaceLanguage).settings.premiumOffer;
+  const remainingMeanings = allowances?.premium === false ? allowances.personalMeaningsRemaining : null;
   const dictionaryLabel = `${copy.source} · ${languageDisplayName(interfaceLanguage, languageCode)}`;
   const [senses, setSenses] = React.useState(() =>
     (initialSenses?.length ? initialSenses : [{ definition }]).map(draftSense),
@@ -238,8 +252,12 @@ export function PersonalDictionaryEntryDraft({
     onAssistantOpenChange?.(!!key);
     if (!key) askButton.current?.focus({ preventScroll: true });
   }
-  async function save(sense: DraftSense) {
+  async function save(sense: DraftSense, opener: HTMLButtonElement) {
     if (lock.current || !ready(sense)) return;
+    if (!sense.entryId && remainingMeanings === 0 && onExplorePersonalMeanings) {
+      onExplorePersonalMeanings(opener);
+      return;
+    }
     lock.current = true;
     setBusy(true);
     setFailed(false);
@@ -247,7 +265,7 @@ export function PersonalDictionaryEntryDraft({
       const populatedFields = sense.fields.filter(field => field.text.trim()).map(field => ({
         ...field, children:field.children?.filter(child => child.text.trim()),
       }));
-      const [id] = await savePersonalArticle({
+      const [id] = await saveArticle({
         languageCode,
         headword: word.trim(),
         partOfSpeech: part,
@@ -262,6 +280,7 @@ export function PersonalDictionaryEntryDraft({
           },
         ],
       });
+      onAllowancesChanged?.();
       const next = senses.map((value) =>
         value.key === sense.key
           ? { ...value, entryId: id, dirty: false, fields:populatedFields }
@@ -283,8 +302,11 @@ export function PersonalDictionaryEntryDraft({
         toggleAssistant(null);
         onSaved(saved);
       }
-    } catch {
-      setFailed(true);
+    } catch (error) {
+      if (error instanceof Error && error.message === "personal_meaning_allowance_exhausted" && onExplorePersonalMeanings) {
+        onAllowancesChanged?.();
+        onExplorePersonalMeanings(opener);
+      } else setFailed(true);
     } finally {
       lock.current = false;
       setBusy(false);
@@ -348,7 +370,7 @@ export function PersonalDictionaryEntryDraft({
     if (fields !== target.fields) patch.fields = fields;
     if (patch.definition !== undefined || patch.fields) changeSense(key, patch);
   }
-  const assistantPanel = assistantAvailable && chosen && (
+  const assistantPanel = chosen && (
     <aside data-personal-assistant="" className={s.assistant}>
       <PersonalCardAssistant
         key={chosen.key}
@@ -368,6 +390,10 @@ export function PersonalDictionaryEntryDraft({
         interfaceLanguage={interfaceLanguage}
         senseKey={chosen.key}
         ordinal={senses.indexOf(chosen) + 1}
+        userId={userId}
+        allowances={allowances}
+        onAllowancesChanged={onAllowancesChanged}
+        onPremiumRequired={(opener, feature) => onExplorePremium?.(opener ?? askButton.current ?? undefined, feature)}
         onClose={() => toggleAssistant(null)}
         onApply={(suggestions, key) => applySuggestions(suggestions, key)}
       />
@@ -599,6 +625,9 @@ export function PersonalDictionaryEntryDraft({
                     );
                   })}
                 </ProductionArticleReading>
+                {!sense.entryId && remainingMeanings !== null && <p className={s.allowanceNote}>{formatUiMessage(offerCopy.personalMeaningAllowanceNote, {
+                  remaining: new Intl.NumberFormat(interfaceLanguage).format(remainingMeanings),
+                })}</p>}
                 <div className={s.actions} lang={interfaceLanguage}>
                   {sense.entryId && !sense.dirty && !headerDirty ? (
                     <button type="button" className={actions.primary} onClick={() => {toggleAssistant(null); onRead(sense.entryId!);}}>
@@ -608,7 +637,7 @@ export function PersonalDictionaryEntryDraft({
                     type="button"
                     className={actions.primary}
                     disabled={!ready(sense) || busy}
-                    onClick={() => void save(sense)}
+                    onClick={event => void save(sense, event.currentTarget)}
                   >
                     {busy ? copy.saving : copy.save}
                   </button>}
@@ -616,7 +645,7 @@ export function PersonalDictionaryEntryDraft({
                     type="button"
                     className={actions.primary}
                     onClick={(e) => {
-                      if (assistantAvailable) {
+                      if (assistantAvailable || assistantSession.get(sense.key)?.turns.length) {
                         askButton.current = e.currentTarget;
                         toggleAssistant(sense.key);
                       } else {

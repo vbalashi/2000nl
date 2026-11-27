@@ -245,6 +245,7 @@ export async function performPlatformAction(
 
     if (error) {
       const detail = error.message ?? String(error);
+      if (detail === "personal_meaning_allowance_exhausted") return { payload: { error: detail }, status: 403 };
       if (detail.includes("entry_not_found")) {
         return { payload: { error: "entry_not_found" }, status: 404 };
       }

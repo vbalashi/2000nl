@@ -14,6 +14,8 @@ export const ADMIN_AUDIT_ACTIONS = [
   "user.profile.read",
   "user.activity.read",
   "user.access.read",
+  "user.allowance.granted",
+  "user.premium.granted",
   "user.testers.added",
   "user.testers.removed",
   "user.group.added",

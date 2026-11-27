@@ -26,10 +26,11 @@ export type AppFrameProps = {
   onCycleTheme: AppUtilityNavProps["onCycleTheme"];
   onOpenSettings: AppUtilityNavProps["onOpenSettings"];
   children: React.ReactNode;
+  diagnostics?: React.ReactNode;
   className?: string;
 };
 
-type AppHeaderProps = Omit<AppFrameProps, "children" | "className" | "immersive" | "blockedByOverlay">;
+type AppHeaderProps = Omit<AppFrameProps, "children" | "diagnostics" | "className" | "immersive" | "blockedByOverlay">;
 
 const primaryDestination = (destination: AppDestination) =>
   destination === "training" || destination === "library" || destination === "statistics"
@@ -89,6 +90,7 @@ function AppHeader({
 export function AppFrame({
   className,
   children,
+  diagnostics,
   immersive = false,
   blockedByOverlay = false,
   ...headerProps
@@ -125,6 +127,7 @@ export function AppFrame({
       data-keyboard-open={keyboardOpen ? "true" : undefined}
       data-immersive={immersive ? "true" : undefined}
     >
+      {diagnostics}
       <AppHeader
         {...headerProps}
         onNavigate={onNavigate}

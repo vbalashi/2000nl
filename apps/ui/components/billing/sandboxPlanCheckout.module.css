@@ -6,12 +6,10 @@
 }
 
 .plans legend {
-  margin: 0 0 12px;
-  font-size: var(--practice-text-caption);
-  color: var(--practice-selected-text);
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  margin: 0 0 10px;
+  font-size: var(--practice-text-body);
+  color: var(--practice-text);
+  font-weight: 600;
 }
 
 .planRow {
@@ -23,9 +21,9 @@
 .plan {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
-  padding: clamp(10px, 3vw, 16px);
+  padding: 10px 12px;
   border: 1px solid var(--practice-border);
   border-radius: var(--practice-radius-control);
   background: var(--practice-surface);
@@ -42,10 +40,9 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  overflow-wrap: anywhere;
-  font-size: var(--practice-text-caption);
-  font-weight: 650;
-  text-transform: uppercase;
+  hyphens: auto;
+  font-size: var(--practice-text-small);
+  font-weight: 600;
 }
 
 .plan input {
@@ -61,7 +58,7 @@
 }
 
 .terms {
-  margin: 16px 0;
+  margin: 12px 0;
   color: var(--practice-text-secondary);
   font-size: var(--practice-text-caption);
   line-height: 1.5;
@@ -70,12 +67,13 @@
 .primary {
   width: 100%;
   min-height: 44px;
-  margin-top: 8px;
+  margin-top: 4px;
   padding: 8px 12px;
   border: 1px solid transparent;
   border-radius: var(--practice-radius-control);
   background: var(--practice-accent);
   color: var(--practice-on-accent);
+  font-size: var(--practice-text-small);
   font-weight: 600;
   cursor: pointer;
 }
@@ -139,4 +137,126 @@
     font-size: var(--practice-text-label);
     line-height: 1.4;
   }
+}
+
+.offer {
+  min-width: 0;
+}
+
+.paymentBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 12px;
+}
+
+.paymentBar h2 {
+  margin: 0;
+  font-size: var(--practice-text-body-lg);
+  font-weight: 600;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--practice-accent);
+  font-size: var(--practice-text-small);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.back:hover {
+  text-decoration: underline;
+}
+
+.summary {
+  padding: clamp(12px, 3vw, 20px);
+  border: 1px solid var(--practice-border);
+  border-radius: var(--practice-radius-control);
+  background: var(--practice-surface);
+}
+
+.summary h3 {
+  margin: 0 0 8px;
+  color: var(--practice-text-muted);
+  font-size: var(--practice-text-caption);
+  font-weight: 650;
+}
+
+.lineItem,
+.amounts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.lineItem {
+  margin: 0;
+}
+
+.summary .terms {
+  margin: 4px 0 0;
+}
+
+.amounts {
+  display: grid;
+  gap: 5px;
+  margin: 14px 0 0;
+  font-size: var(--practice-text-small);
+}
+
+.amounts dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.due {
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid var(--practice-border);
+  font-weight: 700;
+}
+
+.renewal {
+  color: var(--practice-text-secondary);
+}
+
+.paymentBody {
+  position: relative;
+  margin-top: 12px;
+  min-width: 0;
+}
+
+.checkoutFrame:not([data-ready]) {
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+}
+
+.frameStatus {
+  color: var(--practice-text-muted);
+  font-size: var(--practice-text-small);
+}
+
+
+@media (prefers-reduced-motion: no-preference) {
+  .paymentBar,
+  .summary,
+  .checkoutFrame[data-ready] {
+    animation: paymentFadeIn 160ms ease-out both;
+  }
+}
+
+@keyframes paymentFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
