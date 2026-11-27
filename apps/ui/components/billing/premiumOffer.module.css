@@ -2,8 +2,9 @@
   --offer-word-size: calc(var(--practice-text-display) * 1.5);
   --offer-title-size: var(--practice-text-display);
   --offer-story-size: var(--practice-text-body-lg);
+  --offer-canvas: color-mix(in srgb, var(--practice-canvas) 94%, var(--practice-surface));
   min-height: 100dvh;
-  background: color-mix(in srgb, var(--practice-canvas) 94%, var(--practice-surface));
+  background: var(--offer-canvas);
   color: var(--practice-text);
   font-family: var(--practice-font-ui);
 }
@@ -119,7 +120,7 @@
 @media (max-width: 700px) {
   .screen {
     --offer-word-size: var(--practice-text-display);
-    --offer-title-size: var(--practice-text-page);
+    --offer-title-size: calc(var(--practice-text-page) * 0.94);
     --offer-story-size: var(--practice-text-body);
   }
 
@@ -147,7 +148,9 @@
   }
 
   .story h1 {
-    margin: 16px 0 8px;
+    margin: 14px 0 8px;
+    font-weight: 650;
+    line-height: 1.1;
   }
 
   .purchase {
@@ -156,5 +159,48 @@
 
   .continueFree {
     margin-top: 4px;
+  }
+}
+
+@media (max-width: 700px) and (max-height: 740px) {
+  .screen {
+    --offer-word-size: calc(var(--practice-text-display) * 0.88);
+    --offer-title-size: calc(var(--practice-text-page) * 0.9);
+    --offer-story-size: var(--practice-text-small);
+  }
+
+  .screen[data-entry="onboarding"] {
+    scroll-padding-bottom: calc(68px + env(safe-area-inset-bottom));
+  }
+
+  .header {
+    min-height: 44px;
+  }
+
+  .content {
+    gap: 14px;
+    margin-top: 8px;
+  }
+
+  .story h1 {
+    margin-top: 12px;
+  }
+
+  .screen[data-entry="onboarding"] .content {
+    padding-bottom: calc(74px + env(safe-area-inset-bottom));
+  }
+
+  .freeDock {
+    position: fixed;
+    z-index: 1;
+    inset-inline: 0;
+    bottom: 0;
+    padding: 4px max(22px, 6vw) calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--practice-border);
+    background: var(--offer-canvas);
+  }
+
+  .continueFree {
+    margin-top: 0;
   }
 }

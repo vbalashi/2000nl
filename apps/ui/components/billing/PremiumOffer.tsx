@@ -26,7 +26,7 @@ export function PremiumOffer({ language, ...entry }: { language: string } & Entr
   const Root = inApp ? "section" : "main";
   return (
     <Root className={`${theme.theme} ${s.screen}`} data-colour-mode="app" lang={language}
-      data-overlay={inApp || undefined} data-training-hotkeys-suspended={inApp || undefined}
+      data-entry={entry.entry} data-overlay={inApp || undefined} data-training-hotkeys-suspended={inApp || undefined}
       role={inApp ? "dialog" : undefined} aria-modal={inApp || undefined} aria-labelledby={titleId}
       onKeyDown={event => {
         if (entry.entry === "settings" && event.key === "Escape" && !event.defaultPrevented) {
@@ -49,9 +49,11 @@ export function PremiumOffer({ language, ...entry }: { language: string } & Entr
         </div>
         <div className={s.purchase}>
           <SandboxPlanCheckout language={language} freeAction={entry.entry === "onboarding" && (
-            <button type="button" className={s.continueFree} onClick={onDismiss}>
-              {copy.continueFree}<ArrowRight size={17} aria-hidden="true" />
-            </button>
+            <div className={s.freeDock}>
+              <button type="button" className={s.continueFree} onClick={onDismiss}>
+                {copy.continueFree}<ArrowRight size={17} aria-hidden="true" />
+              </button>
+            </div>
           )} />
         </div>
       </div>

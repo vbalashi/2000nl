@@ -153,7 +153,14 @@ for(const device of [{width:393,height:852,size:'largest'},{width:320,height:568
   await expect(continueFree).toBeInViewport({ ratio: 1 });
   const action = await continueFree.boundingBox();
   expect(action && action.y + action.height).toBeLessThanOrEqual(device.height - 20);
-  await page.screenshot({ path: testInfo.outputPath("onboarding-premium.png") });
+  await page.screenshot({ path: testInfo.outputPath("onboarding-premium.png"), style: "nextjs-portal { display: none }" });
+  await page.setViewportSize({ width: 360, height: 640 });
+  await expect(continueFree).toBeInViewport({ ratio: 1 });
+  const compactAction = await continueFree.boundingBox();
+  expect(compactAction?.height).toBeGreaterThanOrEqual(44);
+  expect(compactAction && compactAction.y + compactAction.height).toBeLessThanOrEqual(628);
+  await continueFree.click({ trial: true });
+  await page.screenshot({ path: testInfo.outputPath("onboarding-premium-compact.png"), style: "nextjs-portal { display: none }" });
   await continueFree.click();
   await expect(offer).toHaveCount(0);
   await expect(page).toHaveURL(url);
