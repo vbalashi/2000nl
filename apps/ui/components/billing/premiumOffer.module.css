@@ -1,5 +1,6 @@
 .screen {
-  --offer-title-size: var(--practice-text-title);
+  --offer-title-size: calc(var(--practice-text-title) * 1.125);
+  --offer-word-max: var(--practice-text-display);
   --offer-canvas: color-mix(in srgb, var(--practice-canvas) 94%, var(--practice-surface));
   min-height: 100dvh;
   background: var(--offer-canvas);
@@ -116,7 +117,7 @@
 }
 
 .word {
-  --offer-word-size: clamp(var(--practice-text-title-sm), 11.5cqi, var(--practice-text-headword));
+  --offer-word-size: clamp(var(--practice-text-title), 13cqi, var(--offer-word-max));
   margin: 0;
   font-family: var(--practice-font-reading);
   font-size: var(--offer-word-size);
@@ -133,13 +134,13 @@
 
 .benefits {
   margin-top: 18px;
-  font-size: var(--practice-text-small);
+  font-size: var(--practice-text-body);
   line-height: 1.4;
 }
 
 .benefits h2 {
   margin: 0 0 8px;
-  font-size: inherit;
+  font-size: var(--practice-text-body-lg);
   font-weight: 650;
 }
 
@@ -185,7 +186,7 @@
 
 @media (max-width: 800px) {
   .screen {
-    --offer-title-size: var(--practice-text-title-sm);
+    --offer-title-size: var(--practice-text-title);
   }
 
   .header {
@@ -251,13 +252,32 @@
   }
 
   .continueFree {
-    margin-top: 4px;
+    margin-top: 0;
+  }
+
+  .screen[data-entry="onboarding"] {
+    scroll-padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+
+  .screen[data-entry="onboarding"] .surface {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+
+  .freeDock {
+    position: fixed;
+    z-index: 1;
+    inset-inline: 0;
+    bottom: 0;
+    padding: 4px max(22px, 6vw) calc(20px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--practice-border);
+    background: var(--offer-canvas);
   }
 }
 
 @media (max-width: 800px) and (max-height: 740px) {
-  .screen[data-entry="onboarding"] {
-    scroll-padding-bottom: calc(68px + env(safe-area-inset-bottom));
+  .screen {
+    --offer-title-size: var(--practice-text-title-sm);
+    --offer-word-max: var(--practice-text-headword);
   }
 
   .header {
@@ -273,23 +293,6 @@
     margin-top: 12px;
   }
 
-  .screen[data-entry="onboarding"] .surface {
-    padding-bottom: calc(74px + env(safe-area-inset-bottom));
-  }
-
-  .freeDock {
-    position: fixed;
-    z-index: 1;
-    inset-inline: 0;
-    bottom: 0;
-    padding: 4px max(22px, 6vw) calc(12px + env(safe-area-inset-bottom));
-    border-top: 1px solid var(--practice-border);
-    background: var(--offer-canvas);
-  }
-
-  .continueFree {
-    margin-top: 0;
-  }
 }
 
 @media (min-width: 801px) {

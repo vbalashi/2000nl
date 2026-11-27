@@ -2057,8 +2057,10 @@
   "ui.settings.premiumOffer.allowancesHelpAI": {"source":"Free starts with 2 AI replies and 10 dictations to try Premium features. Each AI reply received or successful dictation uses one attempt.","translationHash":"f531d9652ad194fce9fe237be74122cf70c7f26789ba10ab2e2e1cf44d6f54f2"},
   "ui.settings.premiumOffer.allowancesHelpMeanings": {"source":"Free includes room for up to 100 personal meanings across all languages. Each new meaning uses one slot. Editing a saved meaning keeps the same slot.","translationHash":"d7a891f21abd6bead2a3995232a3744cf5f0ec07333b5ffb52fe55c231c99acc"},
   "ui.settings.premiumOffer.assistantTrialNote": {"source":"Try Ask AI on Free.","translationHash":"9d665f4b960c8ac92a0e5e9559b5e6692c839ca9e57ef5d42a8e2e8eb8c4787a"},
-  "ui.settings.premiumOffer.benefitsTitle": {"source":"Included with Premium","translationHash":"08848c0332242ba01b92ec551693f7a9961b8f5c9303b95fb395996d615dd4c7"},
+  "ui.settings.premiumOffer.benefitsTitle": {"source":"What you get with your subscription","translationHash":"a53bdcad734efdc5007094200bd5a33c16930665d51adeb238171d22c4861c7d"},
   "ui.settings.premiumOffer.benefitAssistant": {"source":"AI assistant and voice dictation","translationHash":"7cc6eb76df07a6dc9a8f4025dde7b35da31ed7828319e2c64dd6923e414bca06"},
   "ui.settings.premiumOffer.benefitMeanings": {"source":"Unlimited personal meanings and cards","translationHash":"5918f818e39569a41e87cf90ab24d4ca7fe6a2ce3b544d2d50fd0cfe6ee8056b"},
-  "ui.settings.premiumOffer.benefitFuture": {"source":"New Premium features as they launch","translationHash":"59b290771c3eebf38f4fda29db7e800c0fdafba43763e3c46907ad1aa9636dcf"}
+  "ui.settings.premiumOffer.benefitFuture": {"source":"New Premium features as they launch","translationHash":"59b290771c3eebf38f4fda29db7e800c0fdafba43763e3c46907ad1aa9636dcf"},
+  "ui.settings.premiumOffer.benefitTranslations": {"source":"AI-assisted translations in two languages at once","translationHash":"a7253a576cea83a1678934c29a8d826b156a3506c7315b3ba7754b8e661f20ff"},
+  "ui.settings.premiumOffer.benefitDevices": {"source":"Automatic sync across phones, tablets and computers","translationHash":"e74ff70c2346bddee68885fb535e60c864ea263dedf4b2ea62b0ad16923bf29f"}
 }

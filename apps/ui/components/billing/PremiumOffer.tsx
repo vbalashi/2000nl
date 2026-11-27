@@ -15,6 +15,7 @@ type Entry = { entry: "legacy" } | { entry: "onboarding" | "settings" | "assista
 export function PremiumOffer({ language, checkoutClient, previewColourMode, ...entry }: { language: string; checkoutClient?: SandboxCheckoutClient; previewColourMode?: "light" | "dark" } & Entry) {
   const catalog = getInterfaceCatalog(language);
   const copy = catalog.ui.settings.premiumOffer;
+  const benefits = [copy.benefitAssistant, copy.benefitTranslations, copy.benefitMeanings, copy.benefitDevices, copy.benefitFuture];
   const titleId = useId();
   const title = useRef<HTMLHeadingElement>(null);
   const inApp = entry.entry !== "legacy";
@@ -66,7 +67,7 @@ export function PremiumOffer({ language, checkoutClient, previewColourMode, ...e
             <div className={s.benefits}>
               <h2>{copy.benefitsTitle}</h2>
               <ul>
-                {[copy.benefitAssistant, copy.benefitMeanings, copy.benefitFuture].map(label => (
+                {benefits.map(label => (
                   <li key={label}><Check size={15} aria-hidden="true" /><span>{label}</span></li>
                 ))}
               </ul>
