@@ -4,7 +4,7 @@ The Sandbox checkout can project verified payments into a test-only Premium enti
 
 To qualify a test instance:
 
-1. Apply `db/migrations/397_paddle_sandbox_billing.sql` to a disposable database with the application roles and Auth schema. Run `db/sandbox/paddle-billing.test.sql` on the same instance. The latter rolls back its own test data.
+1. Apply `db/migrations/397_paddle_sandbox_billing.sql` and `db/migrations/398_paddle_sandbox_portal.sql` to a disposable database with the application roles and Auth schema. Run `db/sandbox/paddle-billing.test.sql` on the same instance. The latter rolls back its own test data.
 2. Configure the Sandbox catalog and transaction credentials, `DEPLOYMENT_ENV=staging`, `PADDLE_SANDBOX_FULFILLMENT_ENABLED=true` and a Sandbox notification signature secret. The live deployment environment rejects Sandbox webhook requests.
 3. Set the notification URL to `/api/billing/sandbox/webhook` on the isolated instance. Subscribe to `transaction.completed`, `subscription.created`, `subscription.updated`, `subscription.canceled`, `adjustment.created`, and `adjustment.updated`. Find the exact checkout account and price IDs in its server configuration.
 4. Create a new checkout through the server after enabling notifications. Checkouts created earlier have no durable account binding and cannot grant this entitlement. Use a synthetic buyer and the provider's test card.
@@ -17,4 +17,4 @@ The server verifies the signature on the original body and stores a bounded set 
 
 See [Paddle signatures](https://developer.paddle.com/webhooks/signature-verification/), [renewal events](https://developer.paddle.com/webhooks/simulator/subscription-renewed/), and [refund approval events](https://developer.paddle.com/webhooks/adjustments/adjustment-updated/).
 
-In Settings → Billing & subscriptions, the configured Paddle customer portal lets customers open their billing history, update their payment method, and cancel. Pass the account’s public Sandbox portal URL as `PADDLE_SANDBOX_CUSTOMER_PORTAL_URL`. Buyers sign in using the email from checkout.
+In Settings → Billing & subscriptions, Dilum displays the verified plan and payment or end date. The provider's current subscription supplies the next billing date. Paid access still comes from signed payment events. The server uses `PADDLE_SANDBOX_PORTAL_API_KEY` with only `subscription.read` and `customer_portal_session.write`. For every action it derives the subscription from the authenticated account, retrieves the Paddle customer ID and opens a fresh, uncached Sandbox portal link. The browser supplies only the intended action. Portal links and their tokens are never persisted by Dilum. The portal handles card details, invoices and cancellation confirmation.

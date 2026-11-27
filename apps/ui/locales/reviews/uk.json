@@ -1980,5 +1980,20 @@
   "features.serviceTerms.explanation": {"source":"Please read the terms before continuing. The privacy notice explains how we use account, learning and subscription data.","translationHash":"ec69df8fc13c33b0a3398f7ead2b2211a81af4ccd2cd7d1ab8c75323a70afecb"},
   "features.serviceTerms.error": {"source":"Your acceptance could not be saved. Please try again.","translationHash":"957a78344e4a838c7bc2df01bd2b4697b37bdecb19b6e6558c3cb82ff78a9fcc"},
   "features.serviceTerms.accept": {"source":"I accept the terms of service","translationHash":"6ec8f0baec291f627a3a7cb634ef8c956936db7da75cddafa7da85970c9648ee"},
-  "features.serviceTerms.signOut": {"source":"Sign out","translationHash":"a374e0798f945b9079ac26dc6c6e5b83cda2cf0ef1c6ecd31d5bb34d355e875d"}
+  "features.serviceTerms.signOut": {"source":"Sign out","translationHash":"a374e0798f945b9079ac26dc6c6e5b83cda2cf0ef1c6ecd31d5bb34d355e875d"},
+  "ui.settings.premiumOffer.premiumName": {"source":"Premium","translationHash":"de88c121a82a06352bf1aaceba20578356408a334ba046a1084d4e50da923c5e"},
+  "ui.settings.premiumOffer.freeName": {"source":"Free","translationHash":"4f3bf9c1adb51c15a0d6ca6c00cccd63b4088a2123a9f6b8303a113de9579159"},
+  "ui.settings.premiumOffer.activeStatus": {"source":"Active","translationHash":"983ec13068146e5f02e5a2525ea41695d2c6782f81f3f3b25ea177a231de253e"},
+  "ui.settings.premiumOffer.endsAtPeriod": {"source":"Cancellation scheduled","translationHash":"1cdd963802da315d15100949e91d17d17109f8c7323d5bea3a57e5af80da9a1a"},
+  "ui.settings.premiumOffer.paymentOverdue": {"source":"Payment overdue","translationHash":"6b0002bd89e2867172eeea49842e155fbad422a32a74de44496b8d9e491e35cb"},
+  "ui.settings.premiumOffer.planLabel": {"source":"Billing period","translationHash":"2258ba4bc38f72d949cc923ccc730d72271128fe33007e923b70306cd110f425"},
+  "ui.settings.premiumOffer.nextPayment": {"source":"Next payment","translationHash":"b590dd2d35d7b77a5f0168972d53296744d765d2ab14a43720b031db6e288c7d"},
+  "ui.settings.premiumOffer.accessEnds": {"source":"Access ends","translationHash":"17aa3a1bfbd258d3b786442d16e4eda3fa5b3ea5408e0f16357afea28b6654db"},
+  "ui.settings.premiumOffer.paidThrough": {"source":"Paid through","translationHash":"fbb24b10f212f01ef5dcc07853c74acd4475997580bd6d398e8fefdf3ec08a9a"},
+  "ui.settings.premiumOffer.detailsInvoices": {"source":"Details and invoices","translationHash":"c2929c31c1c6b0688323cdf4783df139be0de240e29a83def701babbb4dd4f4a"},
+  "ui.settings.premiumOffer.changePaymentMethod": {"source":"Change payment method","translationHash":"bc1423e77814284d48d9a51157be22e0067a353b64932ad99a4bb36ecc23d4ef"},
+  "ui.settings.premiumOffer.cancelSubscription": {"source":"Cancel subscription","translationHash":"9b94686b6ccf136ab2d254c4d9dd87eb76d8f006ee6938e73f2a7e9a3ecfb5ba"},
+  "ui.settings.premiumOffer.openingPaddle": {"source":"Opening Paddle…","translationHash":"c1962f1a7b2765bf5757e4d267d7eca5f737927835b8991fd61f3b517597310a"},
+  "ui.settings.premiumOffer.managedByPaddle": {"source":"Paddle manages your payments and billing details.","translationHash":"263d4aa7844321dad41ccb7f65d1683be9f462c388c55c52e07f6decb9233827"},
+  "ui.settings.premiumOffer.paddleOpenError": {"source":"Paddle could not open. Try again.","translationHash":"bd67ed6594a723b5a7d02b34f2bb95277fbe35605227b0e03a332bae725278b1"}
 }

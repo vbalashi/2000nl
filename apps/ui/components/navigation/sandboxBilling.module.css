@@ -1,0 +1,183 @@
+.billing {
+  display: grid;
+  gap: 24px;
+  max-width: 560px;
+  padding-bottom: 20px;
+}
+
+.plan {
+  background: var(--practice-surface);
+  border: 1px solid var(--practice-control-border);
+  border-radius: var(--practice-radius-dialog);
+  padding: clamp(17px, 4vw, 25px);
+}
+
+.plan[data-premium="true"] {
+  background: color-mix(in srgb, var(--practice-accent) 8%, var(--practice-surface));
+  border-color: color-mix(in srgb, var(--practice-accent) 26%, var(--practice-border));
+}
+
+.planHeader,
+.planIdentity {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.planHeader {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+}
+
+.planIdentity {
+  min-width: 0;
+}
+
+.planIcon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--practice-surface-subtle);
+  color: var(--practice-text-secondary);
+}
+
+.plan[data-premium="true"] .planIcon {
+  background: var(--practice-surface);
+}
+
+.eyebrow,
+.testNote,
+.message,
+.facts dt {
+  margin: 0;
+  color: var(--practice-text-muted);
+  font-size: var(--practice-text-label);
+  line-height: 1.5;
+}
+
+.plan h2 {
+  margin: 1px 0 0;
+  font-size: clamp(1.35rem, 4vw, 1.65rem);
+  font-weight: 650;
+  line-height: 1.14;
+  letter-spacing: -0.035em;
+  color: var(--practice-text);
+}
+
+.badge {
+  border: 1px solid var(--practice-border);
+  border-radius: 100px;
+  padding: 3px 10px;
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+  font-size: var(--practice-text-label);
+  font-weight: 600;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px 20px;
+  padding-top: 16px;
+  margin: 19px 0 0;
+  border-top: 1px solid var(--practice-border);
+}
+
+.facts dd {
+  margin: 3px 0 0;
+  color: var(--practice-text);
+  font-weight: 600;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  margin-top: 19px;
+  border: 1px solid transparent;
+  border-radius: var(--practice-radius-control);
+  padding: 6px 13px;
+  background: var(--practice-accent);
+  color: var(--practice-on-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.cta:hover {
+  background: var(--practice-accent-hover);
+}
+
+.testNote {
+  margin-top: 13px;
+}
+
+.management h3 {
+  margin: 0 0 10px;
+  color: var(--practice-text-secondary);
+  font-size: var(--practice-text-caption);
+  font-weight: 600;
+}
+
+.actionList {
+  overflow: hidden;
+  border: 1px solid var(--practice-border);
+  border-radius: var(--practice-radius-dialog);
+  background: var(--practice-surface);
+}
+
+.actionList .portalAction {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 19px minmax(0, 1fr) 17px;
+  align-items: center;
+  gap: 13px;
+  min-height: 48px;
+  padding: 11px 15px;
+  border: 0;
+  background: transparent;
+  color: var(--practice-text);
+  text-align: start;
+  cursor: pointer;
+}
+
+.portalAction + .portalAction {
+  border-top: 1px solid var(--practice-border);
+}
+
+.portalAction[data-danger="true"],
+.error {
+  color: var(--practice-danger);
+}
+
+.portalAction:not(:disabled):hover {
+  background: var(--practice-surface-subtle);
+}
+
+.portalAction:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.portalAction:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -3px;
+}
+
+.portalAction > svg:last-child {
+  justify-self: end;
+  color: var(--practice-text-muted);
+}
+
+.management .message {
+  margin-top: 9px;
+}
+
+.error {
+  margin: 0;
+  font-size: var(--practice-text-caption);
+}

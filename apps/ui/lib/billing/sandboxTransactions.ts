@@ -48,11 +48,11 @@ function verifyReceipt(key: string, userId: string, receipt: string): Receipt | 
   }
 }
 
-async function paddleRequest(config: ServerConfig, path: string, body?: object) {
+export async function paddleSandboxRequest(apiKey: string, path: string, body?: object) {
   const response = await fetch("https://sandbox-api.paddle.com" + path, {
     method: body ? "POST" : "GET",
     headers: {
-      Authorization: "Bearer " + config.apiKey,
+      Authorization: "Bearer " + apiKey,
       "Paddle-Version": "1",
       Accept: "application/json",
       ...(body && { "Content-Type": "application/json" }),
@@ -67,7 +67,7 @@ async function paddleRequest(config: ServerConfig, path: string, body?: object) 
 }
 
 export async function createSandboxTransaction(config: ServerConfig, userId: string, plan: SandboxPlan) {
-  const result = await paddleRequest(config, "/transactions", {
+  const result = await paddleSandboxRequest(config.apiKey, "/transactions", {
     items: [{ price_id: config.prices[plan], quantity: 1 }],
     collection_mode: "automatic",
   });
@@ -88,7 +88,7 @@ export async function createSandboxTransaction(config: ServerConfig, userId: str
 export async function readSandboxTransaction(config: ServerConfig, userId: string, receipt: string) {
   const binding = verifyReceipt(config.receiptKey, userId, receipt);
   if (!binding) return null;
-  const result = await paddleRequest(config, "/transactions/" + binding.transactionId);
+  const result = await paddleSandboxRequest(config.apiKey, "/transactions/" + binding.transactionId);
   if (result?.id !== binding.transactionId || result.collection_mode !== "automatic" ||
     !Array.isArray(result.items) || result.items.length !== 1 ||
     result.items[0]?.price?.id !== config.prices[binding.plan] || result.items[0]?.quantity !== 1) {

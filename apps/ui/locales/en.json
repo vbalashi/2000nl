@@ -640,7 +640,22 @@
         "billingStatusError": "Could not check your subscription. Reopen this section to retry.",
         "manageSubscription": "Manage subscription",
         "manageSubscriptionHint": "View payments and invoices, update your payment method or cancel. Sign in with the email used at checkout.",
-        "openPaddlePortal": "Open Paddle portal"
+        "openPaddlePortal": "Open Paddle portal",
+        "premiumName": "Premium",
+        "freeName": "Free",
+        "activeStatus": "Active",
+        "endsAtPeriod": "Cancellation scheduled",
+        "paymentOverdue": "Payment overdue",
+        "planLabel": "Billing period",
+        "nextPayment": "Next payment",
+        "accessEnds": "Access ends",
+        "paidThrough": "Paid through",
+        "detailsInvoices": "Details and invoices",
+        "changePaymentMethod": "Change payment method",
+        "cancelSubscription": "Cancel subscription",
+        "openingPaddle": "Opening Paddle…",
+        "managedByPaddle": "Paddle manages your payments and billing details.",
+        "paddleOpenError": "Paddle could not open. Try again."
       },
       "cardSpacing": "Card spacing",
       "cardSpacings": {
