@@ -105,3 +105,4 @@
 \i db/migrations/398_paddle_sandbox_portal.sql
 \i db/migrations/399_assistant_reply_feedback.sql
 \i db/migrations/400_assistant_feedback_chat_history.sql
+\i db/migrations/401_assistant_allowances.sql
