@@ -11,7 +11,7 @@ import s from "./sandboxPlanCheckout.module.css";
 type Plan = "month" | "year";
 type Offer = Awaited<ReturnType<typeof prepareSandboxOffer>>;
 
-export function SandboxPlanCheckout({ language, embedded = false }: { language: string; embedded?: boolean }) {
+export function SandboxPlanCheckout({ language }: { language: string }) {
   const planGroup = useId();
   const messages = getUiMessages(language);
   const copy = messages.settings.premiumOffer;
@@ -83,9 +83,9 @@ export function SandboxPlanCheckout({ language, embedded = false }: { language: 
   }
 
   return (
-    <section className={s.offer} data-embedded={embedded}>
+    <section className={s.offer}>
       <fieldset className={s.plans} disabled={!offer || checkoutBusy || Boolean(receipt)}>
-        <legend>{embedded ? copy.premiumPlans : messages.settings.explorePlans}</legend>
+        <legend>{copy.premiumPlans}</legend>
         <div className={s.planRow}>
           {(["month", "year"] as const).map(option => (
             <label key={option} className={s.plan} data-selected={option === plan}>

@@ -656,8 +656,11 @@
         "openingPaddle": "Opening Paddle…",
         "managedByPaddle": "Paddle manages your payments and billing details.",
         "paddleOpenError": "Paddle could not open. Try again.",
-        "premiumPlans": "Premium plans",
-        "backToSubscription": "Back to subscription"
+        "premiumPlans": "Choose your plan",
+        "dictionaryGrows": "A dictionary that grows with you",
+        "meaningsAndDictionary": "Learn more meanings · Grow your own dictionary",
+        "wordCollections": "Organize your words into collections",
+        "continueFree": "Continue with Free"
       },
       "cardSpacing": "Card spacing",
       "cardSpacings": {

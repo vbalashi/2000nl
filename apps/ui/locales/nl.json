@@ -656,8 +656,11 @@
         "openingPaddle": "Paddle openen…",
         "managedByPaddle": "Paddle beheert je betalingen en factuurgegevens.",
         "paddleOpenError": "Paddle kon niet worden geopend. Probeer het opnieuw.",
-        "premiumPlans": "Premium-abonnementen",
-        "backToSubscription": "Terug naar abonnement"
+        "premiumPlans": "Kies je abonnement",
+        "dictionaryGrows": "Een woordenboek dat met je meegroeit",
+        "meaningsAndDictionary": "Leer meer betekenissen · Bouw je eigen woordenboek",
+        "wordCollections": "Orden je woorden in collecties",
+        "continueFree": "Verder met Free"
       },
       "cardSpacing": "Kaartafstand",
       "cardSpacings": {

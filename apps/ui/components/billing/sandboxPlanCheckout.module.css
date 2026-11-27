@@ -1,11 +1,3 @@
-.offer {
-  padding-top: 40px;
-}
-
-.offer[data-embedded="true"] {
-  padding-top: 0;
-}
-
 .plans {
   padding: 0;
   margin: 0;
@@ -15,17 +7,11 @@
 
 .plans legend {
   margin: 0 0 12px;
-  color: var(--practice-text-secondary);
   font-size: var(--practice-text-caption);
-  font-weight: 600;
-}
-
-.offer[data-embedded="true"] legend {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
+  color: var(--practice-selected-text);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .planRow {
@@ -91,10 +77,6 @@
   cursor: pointer;
 }
 
-.offer[data-embedded="true"] .primary {
-  width: fit-content;
-}
-
 .primary:disabled {
   opacity: 0.6;
   cursor: default;
@@ -120,10 +102,4 @@
 .offer :is(button, input):focus-visible {
   outline: 2px solid var(--practice-focus);
   outline-offset: 3px;
-}
-
-@media (max-width: 700px) {
-  .offer {
-    padding-top: 48px;
-  }
 }

@@ -10,6 +10,8 @@ export type SettingsDestinationProps = {
   initialSection?: "languages" | "appearance" | "onboarding";
   onSectionChange?: (section: string) => void;
   onExit: () => void;
+  premiumOfferOpen?: boolean;
+  onExplorePremium?: (opener: HTMLButtonElement) => void;
   open: boolean;
   interfaceLanguage: OnboardingLanguage;
   themePreference: ThemePreference;

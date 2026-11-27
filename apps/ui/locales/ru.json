@@ -656,8 +656,11 @@
         "openingPaddle": "Открываем Paddle…",
         "managedByPaddle": "Платежи и платёжные данные обрабатывает Paddle.",
         "paddleOpenError": "Не удалось открыть Paddle. Попробуйте снова.",
-        "premiumPlans": "Тарифы Premium",
-        "backToSubscription": "Назад к подписке"
+        "premiumPlans": "Выберите тариф",
+        "dictionaryGrows": "Словарь, который растёт вместе с вами",
+        "meaningsAndDictionary": "Узнавайте больше значений · Пополняйте свой словарь",
+        "wordCollections": "Собирайте слова в коллекции",
+        "continueFree": "Продолжить с Free"
       },
       "cardSpacing": "Интервалы карточки",
       "cardSpacings": {

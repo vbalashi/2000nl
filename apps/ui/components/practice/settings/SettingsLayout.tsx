@@ -23,11 +23,9 @@ export function SettingsLayout<Key extends string>({
   className = "",
   initialSection,
   onSectionChange,
-  detailBack,
 }: {
   initialSection?: Key;
   onSectionChange?: (section: Key) => void;
-  detailBack?: { label: string; onBack: () => void };
   active: boolean;
   language: OnboardingLanguage;
   items: SettingsItem<Key>[];
@@ -66,10 +64,6 @@ export function SettingsLayout<Key extends string>({
       onExit();
       return;
     }
-    if (detailBack) {
-      detailBack.onBack();
-      return;
-    }
     setMobileDetail(false);
     requestAnimationFrame(() => mobileButtons.current.get(section)?.focus());
   };
@@ -87,7 +81,7 @@ export function SettingsLayout<Key extends string>({
       <div className={s.container}>
         <header className={s.mobileHeader}>
           <IconAction
-            label={mobileDetail ? detailBack?.label ?? copy.backSettings : copy.backApp}
+            label={mobileDetail ? copy.backSettings : copy.backApp}
             onClick={back}
           >
             <ArrowLeft size={22} />

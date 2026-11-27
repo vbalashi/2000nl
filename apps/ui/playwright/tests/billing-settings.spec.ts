@@ -38,7 +38,7 @@ for (const profile of [{ width: 1050, height: 790 }, { width: 360, height: 780 }
     const mobile = profile.width < 700;
     let paid = false;
     await page.setViewportSize(profile);
-    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.emulateMedia({ reducedMotion: "reduce", colorScheme: mobile ? "dark" : "light" });
     await page.route("**/api/billing/sandbox", route => route.fulfill({ json: {
       clientToken: "test_billing", prices: { month: "monthly", year: "yearly" }, checkoutReady: true, fulfillment: true,
     } }));
@@ -86,12 +86,18 @@ for (const profile of [{ width: 1050, height: 790 }, { width: 360, height: 780 }
     await page.screenshot({ path: testInfo.outputPath("free-subscription.png") });
 
     await explore.click();
-    const plans = page.getByRole("heading", { name: "Premium plans", exact: true });
+    const plans = page.getByRole("heading", { name: "Your words. Your way.", exact: true });
     await expect(plans).toBeFocused();
+    await expect(page.getByText("vooruitgang", { exact: true })).toHaveAttribute("lang", "nl");
+    await expect(page.getByText("progress / moving forward", { exact: true })).toBeVisible();
+    await expect(page.getByText("€6.00", { exact: true })).toBeVisible();
+    await expect(page.getByText("€60.00", { exact: true })).toBeVisible();
     await expect(page.getByRole("radio", { name: /Monthly/ })).toBeEnabled();
     await expect(page).toHaveURL(entryUrl);
     await page.screenshot({ path: testInfo.outputPath("inline-premium-plans.png") });
-    await page.getByRole("button", { name: "Back to subscription", exact: true }).click();
+    const offer = page.getByRole("dialog", { name: "Your words. Your way.", exact: true });
+    await expect(offer).toBeVisible();
+    await offer.getByRole("button", { name: "Close", exact: true }).click();
     await expect(explore).toBeFocused();
     await expect(page.getByRole("heading", { name: "Free", exact: true })).toBeVisible();
 
@@ -100,7 +106,7 @@ for (const profile of [{ width: 1050, height: 790 }, { width: 360, height: 780 }
     await page.getByRole("button", { name: "Continue to test checkout" }).click();
     await page.getByRole("button", { name: "Check test payment" }).click();
     await expect(page.getByRole("status").filter({ hasText: /Paddle confirmed the test payment/ })).toBeVisible();
-    await page.getByRole("button", { name: "Back to subscription", exact: true }).click();
+    await offer.getByRole("button", { name: "Close", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Premium", exact: true })).toBeVisible();
     await expect(page).toHaveURL(entryUrl);
     expect(documentRequests).toEqual([]);

@@ -1,0 +1,138 @@
+.screen {
+  --offer-word-size: calc(var(--practice-text-display) * 1.5);
+  --offer-title-size: var(--practice-text-display);
+  min-height: 100dvh;
+  background: var(--practice-canvas);
+  color: var(--practice-text);
+  font-family: var(--practice-font-ui);
+}
+
+.screen[data-overlay="true"] {
+  position: fixed;
+  z-index: 1200;
+  inset: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1280px;
+  padding: max(16px, env(safe-area-inset-top)) clamp(20px, 5vw, 54px) 0;
+  margin-inline: auto;
+}
+
+.brand {
+  font-size: var(--practice-brand-size);
+  letter-spacing: -0.04em;
+}
+
+.brandAccent {
+  color: var(--practice-accent);
+}
+
+.close,
+.continueFree {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--practice-selected-text);
+  cursor: pointer;
+}
+
+.close:hover,
+.continueFree:hover {
+  text-decoration: underline;
+}
+
+.continueFree {
+  margin-top: 10px;
+  padding-inline: 0;
+  font-weight: 650;
+}
+
+.close:focus-visible,
+.continueFree:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.86fr);
+  gap: clamp(36px, 8vw, 112px);
+  max-width: 1110px;
+  margin: clamp(52px, 9vh, 105px) auto 0;
+  padding: 0 clamp(22px, 6vw, 68px) max(48px, env(safe-area-inset-bottom));
+}
+
+.tagline {
+  margin: 0 0 18px;
+  color: var(--practice-selected-text);
+  font-size: var(--practice-text-label);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.word {
+  margin: 0;
+  font-family: var(--practice-font-reading);
+  font-size: var(--offer-word-size);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.meaning,
+.benefits {
+  margin: 9px 0 0;
+  color: var(--practice-text-secondary);
+  font-size: var(--practice-text-body-lg);
+  line-height: 1.5;
+}
+
+.story h1 {
+  max-width: 12ch;
+  margin: 36px 0 14px;
+  font-size: var(--offer-title-size);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+}
+
+.story h1:focus {
+  outline: 0;
+}
+
+.purchase {
+  padding-top: 32px;
+}
+
+@media (max-width: 700px) {
+  .content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 34px;
+    max-width: 475px;
+    margin-top: 24px;
+  }
+
+  .screen {
+    --offer-word-size: calc(var(--practice-text-display) * 1.13);
+    --offer-title-size: calc(var(--practice-text-display) * 0.82);
+  }
+
+  .story h1 {
+    margin-top: 24px;
+  }
+
+  .purchase {
+    padding-top: 0;
+  }
+}

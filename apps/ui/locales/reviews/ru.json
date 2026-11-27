@@ -1996,6 +1996,9 @@
   "ui.settings.premiumOffer.openingPaddle": {"source":"Opening Paddle…","translationHash":"f414595c3b48cb48adbfd0a03254a980f4ba4d4e57d9d1e7ed003b64ad58a365"},
   "ui.settings.premiumOffer.managedByPaddle": {"source":"Paddle manages your payments and billing details.","translationHash":"c177e901a25f3c3f7fb8fe7c46c1e7b3c7e857ecafacb58205e9da6a6155cb37"},
   "ui.settings.premiumOffer.paddleOpenError": {"source":"Paddle could not open. Try again.","translationHash":"8e2dc05d248e67311e9758850a220ad93dc14acfbc220a09b75be868b7ca1c87"},
-  "ui.settings.premiumOffer.premiumPlans": {"source":"Premium plans","translationHash":"e8d2653a322b61aecd5cd1dde44624c37251f2b58610b8fc02d87e915641721e"},
-  "ui.settings.premiumOffer.backToSubscription": {"source":"Back to subscription","translationHash":"b20500bbb38d9b74dc05deaf50540c0cf3d3461555e6098ea494ea38a165c46b"}
+  "ui.settings.premiumOffer.premiumPlans": {"source":"Choose your plan","translationHash":"8121887710255d396e37db2ca6343d39bba1f32ff58cdab520de007b8f3ce23c"},
+  "ui.settings.premiumOffer.dictionaryGrows": {"source":"A dictionary that grows with you","translationHash":"0ba38eae9a9a52976c2e10a0fcd4ac4d10ae628fdf695b5954a90d0643f810bb"},
+  "ui.settings.premiumOffer.meaningsAndDictionary": {"source":"Learn more meanings · Grow your own dictionary","translationHash":"42eedbc88627455cf71238d2ab73696a2d43871e97150f3b1ba6003a9e895246"},
+  "ui.settings.premiumOffer.wordCollections": {"source":"Organize your words into collections","translationHash":"d7bea3400691205974fce93503991ee1b87ed10222843c9bc13fa7f311c65986"},
+  "ui.settings.premiumOffer.continueFree": {"source":"Continue with Free","translationHash":"69ac8f73211a5169ce5dbea89cc9d752e0dde9e7b0917a9bc73f0df9129f2519"}
 }
