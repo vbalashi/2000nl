@@ -307,6 +307,26 @@
 }
 
 .allowanceNote {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 6px 8px 10px;
+  border-radius: var(--practice-radius-control);
+  background: var(--practice-surface-subtle);
   color: var(--practice-text-secondary);
   font-size: var(--practice-text-caption);
+  line-height: 1.4;
+}
+
+.allowanceNote strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--practice-text);
+  font-weight: 600;
+}
+
+.allowanceNote .dismissAllowance {
+  margin-block: -4px;
 }

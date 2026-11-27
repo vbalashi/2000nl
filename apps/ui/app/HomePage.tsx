@@ -9,7 +9,6 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { AuthScreen } from "@/components/auth/AuthScreen";
 import { TrainingLibraryShell } from "@/components/navigation/TrainingLibraryShell";
-import { DevDatabaseWarning } from "@/components/DevDatabaseWarning";
 import { TrainingBootstrapShell } from "@/components/training/pilot/TrainingBootstrapShell";
 import {
   detectOnboardingLanguage,
@@ -195,7 +194,6 @@ export default function HomePage({invitationCode}:{invitationCode?:string|null}=
 
   return (
     <TermsGate>
-      <DevDatabaseWarning />
       <TrainingLibraryShell
         key={user.id}
         user={user}

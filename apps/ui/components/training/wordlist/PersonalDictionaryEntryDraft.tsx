@@ -75,6 +75,7 @@ type SavedSense = PersonalHeader & {
   partOfSpeech: string | null;
 };
 type Props = {
+  userId?: string;
   word: string;
   definition: string;
   onChange: (patch: { word?: string; definition?: string }) => void;
@@ -171,6 +172,7 @@ export function PersonalDictionaryEntryDraft({
   onAllowancesChanged,
   saveArticle = savePersonalArticle,
   assistantHost,
+  userId,
   initialConversation,
   onAssistantOpenChange,
 }: Props) {
@@ -388,6 +390,7 @@ export function PersonalDictionaryEntryDraft({
         interfaceLanguage={interfaceLanguage}
         senseKey={chosen.key}
         ordinal={senses.indexOf(chosen) + 1}
+        userId={userId}
         allowances={allowances}
         onAllowancesChanged={onAllowancesChanged}
         onPremiumRequired={(opener, feature) => onExplorePremium?.(opener ?? askButton.current ?? undefined, feature)}

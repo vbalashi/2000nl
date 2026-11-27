@@ -43,7 +43,11 @@ test("Free Library search shows the trial balance before sending the first AI re
   expect(replies).toBe(0);
   await composer.press("Enter");
   await expect(page.getByText("Mock answer", { exact: true })).toBeVisible();
-  await expect(page.getByText(/AI replies left: 1/)).toBeVisible();
+  const balance = page.getByText(/AI replies left: 1/);
+  await expect(balance).toBeVisible();
+  await page.getByRole("button", { name: "Dismiss notification" }).click();
+  await expect(balance).toHaveCount(0);
+  await expect(composer).toBeFocused();
 });
 
 for (const profile of [{ width: 1050, height: 790 }, { width: 360, height: 780 }]) {

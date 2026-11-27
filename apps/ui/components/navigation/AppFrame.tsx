@@ -10,6 +10,7 @@ import type { AppDestination } from "./appDestination";
 import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { getUiMessages, formatUiMessage } from "@/lib/uiMessages";
 import type { ThemePreference } from "@/lib/training/useTrainingPreferences";
+import { DevDatabaseWarning } from "@/components/DevDatabaseWarning";
 import styles from "./AppFrame.module.css";
 
 export type AppFrameProps = {
@@ -125,6 +126,7 @@ export function AppFrame({
       data-keyboard-open={keyboardOpen ? "true" : undefined}
       data-immersive={immersive ? "true" : undefined}
     >
+      {process.env.NODE_ENV === "development" && <DevDatabaseWarning />}
       <AppHeader
         {...headerProps}
         onNavigate={onNavigate}

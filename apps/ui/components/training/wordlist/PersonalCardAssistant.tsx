@@ -53,6 +53,7 @@ type Props = {
   interfaceLanguage: OnboardingLanguage;
   senseKey: string;
   ordinal: number;
+  userId?: string;
   article?: AssistantArticle;
   session?: AssistantSession;
   onClose: () => void;
@@ -98,6 +99,7 @@ function Conversation({
   interfaceLanguage,
   senseKey,
   ordinal,
+  userId,
   article,
   session,
   onClose,
@@ -123,6 +125,10 @@ function Conversation({
     [pending, setPending] = useState(false);
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
   const [searchTurnCount] = useState(restored?.searchTurnCount ?? 0);
+  const allowanceNoticeKey = "2000nl.assistant-allowance-dismissed.v1." + (userId ?? "preview");
+  const [allowanceNoticeDismissed, setAllowanceNoticeDismissed] = useState(() => {
+    try { return localStorage.getItem(allowanceNoticeKey) === "yes"; } catch { return false; }
+  });
   const catalog = getInterfaceCatalog(interfaceLanguage);
   const speech = catalog.features.dictation;
   const payment = catalog.ui.settings.premiumOffer;
@@ -573,6 +579,19 @@ function Conversation({
           </button>
         )}
       </div>
+      {free && !allowanceNoticeDismissed && <div className={s.allowanceNote}>
+        <div role="status">
+          {turns.length === 0 && free.aiRepliesRemaining > 0 && <strong>{payment.assistantTrialNote}</strong>}
+          <span>{formatUiMessage(payment.assistantAllowanceNote, {
+            replies: readNumber.format(free.aiRepliesRemaining), dictations: readNumber.format(free.dictationsRemaining),
+          })}</span>
+        </div>
+        <IconAction className={s.dismissAllowance} label={catalog.senseCard.dismiss} onClick={() => {
+          setAllowanceNoticeDismissed(true);
+          try { localStorage.setItem(allowanceNoticeKey, "yes"); } catch { /* Valid for this panel if storage is unavailable. */ }
+          composer.current?.focus({ preventScroll: true });
+        }}><X size={15} aria-hidden="true" /></IconAction>
+      </div>}
       <form
         className={s.composer}
         onSubmit={(e) => {
@@ -580,12 +599,6 @@ function Conversation({
           void ask(draft, draftIntent);
         }}
       >
-        {free && <div role="status" className={s.allowanceNote}>
-          {turns.length === 0 && free.aiRepliesRemaining > 0 && <div>{payment.assistantTrialNote}</div>}
-          {formatUiMessage(payment.assistantAllowanceNote, {
-            replies: readNumber.format(free.aiRepliesRemaining), dictations: readNumber.format(free.dictationsRemaining),
-          })}
-        </div>}
         {(mic.issue || mic.status !== "idle") && (
           <small role="status" className={mic.issue ? undefined : "sr-only"}>
             {mic.issue

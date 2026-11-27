@@ -737,6 +737,7 @@ export function DictionarySearchTab({
   </div>;
   const closeDiscovery = () => {setDiscoveryKey(null);updateSearchState({mobileDetailOpen:false});};
   const discoveryPanel = discoveryOpen && chatContext && <PersonalCardAssistant key={chatContext.id} senseKey={chatContext.id}
+    userId={userId}
     word={chatContext.word} languageCode={chatContext.language} definition="" ordinal={1} interfaceLanguage={interfaceLanguage}
     allowances={allowances} onAllowancesChanged={refreshAllowances} onPremiumRequired={onExplorePremium}
     discovery={{chat:chatContext,storageKey:chatStorageKey,startSearch:discoveryStart,category:chatContext.category,scope:chatContext.scope,onClear:()=>{
@@ -1123,7 +1124,7 @@ export function DictionarySearchTab({
   }
 
   const draftEditor = personalEditing && personalDraft && (
-    <PersonalDictionaryEntryDraft mobile={mobile} assistantAvailable={assistantAvailable}
+    <PersonalDictionaryEntryDraft userId={userId} mobile={mobile} assistantAvailable={assistantAvailable}
       onExplorePremium={allowed !== null ? onExplorePremium : undefined}
       onExplorePersonalMeanings={onExplorePersonalMeanings} allowances={allowances} onAllowancesChanged={refreshAllowances}
       key={personalDraft.sessionKey ?? "new"}
