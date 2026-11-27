@@ -1940,5 +1940,20 @@
   "features.searchRecovery.prompt": {"source":"Help me find the meaning","translationHash":"3f3c2ea8b50fc30d83bd3bc045c61e076a61814a8120d04c1de7383c1b7fdde6"},
   "features.searchRecovery.follow": {"source":"Ask about these results…","translationHash":"8b9dada061353b0c47ee97bc1677383981588a07df13ddd2dc2e7704e6a3f9a1"},
   "features.personalCard.deleteDraft": {"source":"Delete draft","translationHash":"26d20ae170e1d1f52450d318dae0f6c32272dd63f2a72e6871d2935f726ca290"},
-  "partOfSpeech.other": {"source":"Other","translationHash":"001f75c6b3f4631ac413cc7a268dd669e4513f507ef6aebfcd98f06bbd19f0a3"}
+  "partOfSpeech.other": {"source":"Other","translationHash":"001f75c6b3f4631ac413cc7a268dd669e4513f507ef6aebfcd98f06bbd19f0a3"},
+  "ui.settings.premiumOffer.name": {"source":"Dilum Premium","translationHash":"743655d97e5967d97129b566c4d44ab7608d31ac22532b601b475b17c94875f0"},
+  "ui.settings.premiumOffer.exampleMeaning": {"source":"progress / moving forward","translationHash":"89f7e2b99b66094062754f4f076f086943e78310bcab3d8a8d6ebcb834eec007"},
+  "ui.settings.premiumOffer.title": {"source":"Your words. Your way.","translationHash":"6939cf81ef568149579035bd2b8bdb1bf56735baa848d615aa8af658111fe491"},
+  "ui.settings.premiumOffer.benefits": {"source":"Build your own vocabulary with AI assistance and practise it with spaced repetition.","translationHash":"28686e55ad947d6c6ac4e2cd9663c2ac814483476059bf5948c98f6017c3fa0b"},
+  "ui.settings.premiumOffer.month": {"source":"Monthly","translationHash":"e238ede2a34c7751917074d6fe636fdd92148ae59c56c24f46c54bd1107c7824"},
+  "ui.settings.premiumOffer.year": {"source":"Yearly","translationHash":"c36329df33622f1a0a5365347efa66266944044483b67bcfd55aaf2509ba2c47"},
+  "ui.settings.premiumOffer.monthlyTerms": {"source":"Billed monthly. Renews automatically until cancelled.","translationHash":"18a7a70ead857ca94763943564c2bf95109b028ef56a00bc8dbefae276796f47"},
+  "ui.settings.premiumOffer.yearlyTerms": {"source":"Billed yearly. Renews automatically until cancelled.","translationHash":"5d484870a231dcb70d99cba23d937788490902e7dba60a9cdb078ef15443abc6"},
+  "ui.settings.premiumOffer.checkout": {"source":"Continue to test checkout","translationHash":"84111d811bfce51634311f37b4c30f5bfe6681f94bea26b241f67253d3a921a4"},
+  "ui.settings.premiumOffer.sandbox": {"source":"Test mode. No real payment or Premium access.","translationHash":"c5d305ad0046940bfd3b57a6149e872505dddce1ea137ef46088a720578d964c"},
+  "ui.settings.premiumOffer.loading": {"source":"Loading prices…","translationHash":"204f46472460b75804d0e4605557444361c671166c3b936d04b666d0503d412b"},
+  "ui.settings.premiumOffer.unavailable": {"source":"Test checkout is unavailable. Sign in to Dilum before trying again.","translationHash":"0efdc8a0a71be56b6f91e451632d545aa8488bcd37e12fafe87a724931c71d83"},
+  "ui.settings.premiumOffer.retry": {"source":"Try again","translationHash":"1e2f1bda1368a2db85f71c5c715e71c49ef6bf19b814de5588b043d7dc46f704"},
+  "ui.settings.premiumOffer.back": {"source":"Back to Dilum","translationHash":"2443dfd085da2e11399375819dbd8ff2ca2a415f3d6e82488e2f51f05ad152c0"},
+  "ui.settings.premiumOffer.exampleWord": {"source":"vooruitgang","translationHash":"ca0d6b6d9e80bc98e796370c80b0d9528451d5d954f7c30daf69112335965fee"}
 }

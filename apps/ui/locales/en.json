@@ -608,6 +608,23 @@
       "meaningTwo": "{count} meanings available"
     },
     "settings": {
+      "premiumOffer": {
+        "name": "Dilum Premium",
+        "exampleMeaning": "progress / moving forward",
+        "title": "Your words. Your way.",
+        "benefits": "Build your own vocabulary with AI assistance and practise it with spaced repetition.",
+        "month": "Monthly",
+        "year": "Yearly",
+        "monthlyTerms": "Billed monthly. Renews automatically until cancelled.",
+        "yearlyTerms": "Billed yearly. Renews automatically until cancelled.",
+        "checkout": "Continue to test checkout",
+        "sandbox": "Test mode. No real payment or Premium access.",
+        "loading": "Loading prices…",
+        "unavailable": "Test checkout is unavailable. Sign in to Dilum before trying again.",
+        "retry": "Try again",
+        "back": "Back to Dilum",
+        "exampleWord": "vooruitgang"
+      },
       "cardSpacing": "Card spacing",
       "cardSpacings": {
         "balanced": "Balanced",

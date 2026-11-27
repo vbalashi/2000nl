@@ -608,6 +608,23 @@
       "meaningTwo": "{count} betekenissen beschikbaar"
     },
     "settings": {
+      "premiumOffer": {
+        "name": "Dilum Premium",
+        "exampleMeaning": "vooruitgaan / vordering",
+        "title": "Jouw woorden. Op jouw manier.",
+        "benefits": "Bouw je eigen woordenschat op met AI-hulp en oefen met gespreide herhaling.",
+        "month": "Maandelijks",
+        "year": "Jaarlijks",
+        "monthlyTerms": "Maandelijkse betaling. Wordt automatisch verlengd tot je opzegt.",
+        "yearlyTerms": "Jaarlijkse betaling. Wordt automatisch verlengd tot je opzegt.",
+        "checkout": "Verder naar testbetaling",
+        "sandbox": "Testmodus. Geen echte betaling of toegang tot Premium.",
+        "loading": "Prijzen laden…",
+        "unavailable": "Testbetaling is niet beschikbaar. Meld je aan bij Dilum en probeer het opnieuw.",
+        "retry": "Opnieuw proberen",
+        "back": "Terug naar Dilum",
+        "exampleWord": "vooruitgang"
+      },
       "cardSpacing": "Kaartafstand",
       "cardSpacings": {
         "balanced": "Gebalanceerd",
