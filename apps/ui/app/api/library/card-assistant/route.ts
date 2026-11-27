@@ -1,4 +1,5 @@
 import { readAssistantAccess, requireAssistantAccess } from "@/lib/platform/assistantAccess";
+import { issueAssistantFeedbackRef } from "@/lib/platform/assistantFeedbackRef";
 import { NextRequest } from "next/server";
 import { readBoundedJson } from "@/lib/http/readBoundedJson";
 import {
@@ -173,6 +174,11 @@ export async function POST(request: NextRequest) {
   const originalGroup = body.searchCategory === "examples" || body.searchCategory === "definitions" ? body.searchCategory : "headwords";
   const search = body.intent === "search" || similar;
   const accountId = auth.principal.userId;
+  const feedbackJourney = discovery ? "search" : "draft";
+  const withFeedback = (reply: AssistantReply) => {
+    const ref = issueAssistantFeedbackRef(accountId, feedbackJourney, language);
+    return jsonNoStore(ref ? { ...reply, feedback: { ref, journey: feedbackJourney } } : reply);
+  };
   async function lookup(
     query: string,
     group: "definitions" | "headwords" | "examples",
@@ -230,11 +236,11 @@ export async function POST(request: NextRequest) {
   const originalHits = discovery && word && word.length <= 200 ? await lookup(word, originalGroup, false) : [];
   if (originalHits instanceof Response) return originalHits;
   if (discovery && !apiKey) {
-    return jsonNoStore({mode:"dictionary", message:originalHits.length ? labels.results : labels.none, sources:originalHits, suggestions:[]});
+    return withFeedback({mode:"dictionary", message:originalHits.length ? labels.results : labels.none, sources:originalHits, suggestions:[]});
   }
   if (search || !apiKey) {
     if (compare && !apiKey)
-      return jsonNoStore({
+      return withFeedback({
         mode: "preview",
         message: labels.noCompare,
         suggestions: [],
@@ -287,7 +293,7 @@ export async function POST(request: NextRequest) {
       ];
       response = { mode: "preview", message: labels.sample, suggestions };
     }
-    return jsonNoStore(response);
+    return withFeedback(response);
   }
   const configured =
     config.apiUrls?.openai || "https://api.openai.com/v1/chat/completions";
@@ -423,7 +429,7 @@ export async function POST(request: NextRequest) {
     }
     const reply = record(JSON.parse(answer.content));
     if (reply.outOfScope === true) {
-      return jsonNoStore({
+      return withFeedback({
         mode: "provider",
         message: discovery ? labels.searchRedirect : labels.draftRedirect,
         suggestions: [],
@@ -441,7 +447,7 @@ export async function POST(request: NextRequest) {
     const cardDraft = discovery
       && suggestions.some(item => item.kind === "headword")
       && suggestions.some(item => item.kind === "definition");
-    return jsonNoStore({
+    return withFeedback({
       mode: "provider",
       message,
       searched,

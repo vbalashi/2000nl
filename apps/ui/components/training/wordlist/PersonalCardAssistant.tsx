@@ -34,6 +34,8 @@ import { getPartOfSpeechLabel } from "@/lib/uiMessages";
 import {saveSearchChat,type SearchChat} from "./lastSearchChat";
 import { getInterfaceCatalog } from "@/lib/i18n/catalog";
 import {searchRecoveryCopy} from "./searchRecoveryCopy";
+import { AssistantReplyFeedback } from "./AssistantReplyFeedback";
+import type { AssistantFeedbackVote } from "@/lib/platform/assistantFeedbackContract";
 import reading from "@/components/practice/article/articleContent.module.css";
 import s from "./personalCardAssistant.module.css";
 export type { Suggestion } from "@/lib/platform/personalCardAssistantContract";
@@ -56,6 +58,7 @@ type Exchange = {
   reply?: AssistantReply;
   error?: boolean;
   applied?: number[];
+  feedbackVote?: AssistantFeedbackVote;
 };
 export type AssistantSnapshot = {turns:Exchange[];draft:string;intent?:string;searchTurnCount?:number};
 export type AssistantSession = Map<string,AssistantSnapshot>;
@@ -359,6 +362,15 @@ function Conversation({
             );
           })}
         </>
+      )}
+      {turn.reply?.feedback && (
+        <AssistantReplyFeedback replyRef={turn.reply.feedback.ref} journey={turn.reply.feedback.journey}
+          locale={interfaceLanguage} question={turn.question} savedVote={turn.feedbackVote}
+          answer={[turn.reply.message.replace(/\*\*([^*\r\n]+)\*\*/g, "$1"), ...proposals.map(item => item.text)].join("\n\n").slice(0, 6000)}
+          onVoted={vote => {
+            if (vote === "down") follow.current = false;
+            setTurns(old => old.map((item, index) => index === i ? { ...item, feedbackVote: vote } : item));
+          }} />
       )}
       {turn.error && (
         <>

@@ -2222,7 +2222,25 @@
       "expandChat": "Expand chat",
       "collapseChat": "Collapse chat",
       "searchRedirect": "I can help you find a word or expression or explain its meaning. What would you like to look up?",
-      "draftRedirect": "I can help with this card. Which word, meaning or example would you like to work on?"
+      "draftRedirect": "I can help with this card. Which word, meaning or example would you like to work on?",
+      "feedback": {
+        "prompt": "Helpful?",
+        "up": "Helpful answer",
+        "down": "Unhelpful answer",
+        "thanks": "Thanks",
+        "details": "What went wrong?",
+        "wrongMeaning": "Wrong meaning",
+        "unrelated": "Off topic",
+        "notFound": "Word not found",
+        "example": "Unhelpful example",
+        "save": "Could not save",
+        "comment": "Add a comment (optional)",
+        "submit": "Send feedback",
+        "includeExcerpt": "Include this question and answer",
+        "excerptQuestion": "Question",
+        "excerptAnswer": "Answer",
+        "failed": "Feedback could not be saved. Try again."
+      }
     },
     "dictation": {
       "stop": "Stop dictation",

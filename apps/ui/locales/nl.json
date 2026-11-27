@@ -2222,7 +2222,25 @@
       "expandChat": "Chat vergroten",
       "collapseChat": "Chat verkleinen",
       "searchRedirect": "Ik kan je helpen een woord of uitdrukking te vinden of de betekenis uit te leggen. Wat wil je opzoeken?",
-      "draftRedirect": "Ik kan je helpen met deze kaart. Aan welk woord, welke betekenis of welk voorbeeld wil je werken?"
+      "draftRedirect": "Ik kan je helpen met deze kaart. Aan welk woord, welke betekenis of welk voorbeeld wil je werken?",
+      "feedback": {
+        "prompt": "Heeft dit geholpen?",
+        "up": "Nuttig antwoord",
+        "down": "Dit antwoord hielp niet",
+        "thanks": "Bedankt!",
+        "details": "Wat ging er mis?",
+        "wrongMeaning": "Verkeerde betekenis",
+        "unrelated": "Antwoord naast de kwestie",
+        "notFound": "Het juiste woord ontbreekt",
+        "example": "Ongeschikt voorbeeld",
+        "save": "Opslaan is mislukt",
+        "comment": "Opmerking toevoegen (optioneel)",
+        "submit": "Feedback versturen",
+        "includeExcerpt": "Dit verzoek en antwoord meesturen",
+        "excerptQuestion": "Verzoek",
+        "excerptAnswer": "Antwoord",
+        "failed": "Feedback opslaan is mislukt. Probeer het opnieuw."
+      }
     },
     "dictation": {
       "stop": "Dicteren stoppen",

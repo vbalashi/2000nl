@@ -1,3 +1,4 @@
+import type { AssistantFeedbackJourney } from "./assistantFeedbackContract";
 import { getInterfaceCatalog } from "@/lib/i18n/catalog";
 import type { PersonalField } from "@/lib/training/personalArticleClient";
 export const kinds = [
@@ -33,6 +34,7 @@ export type AssistantReply = {
   searched?: boolean;
   cardDraft?: boolean;
   outOfScope?: boolean;
+  feedback?: { ref: string; journey: AssistantFeedbackJourney };
 };
 export type AssistantTurn = { role: "user" | "assistant"; text: string };
 export function assistantLabels(language: string) {

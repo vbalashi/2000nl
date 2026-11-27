@@ -2007,5 +2007,21 @@
   "wordDetails.form.verbForms": {"source":"Verb forms","translationHash":"98e3a325c9b39f79ed171f09d9478e193d82d2cebe6b2239fe524338a7826212"},
   "wordDetails.reference.headword": {"source":"Related headword","translationHash":"649a154ae86a3c572423a44e9b98bffec239644fbc4d926d98465f024a23939e"},
   "wordDetails.reference.table": {"source":"Reference","translationHash":"be5fb6e520816e2975bc2219e6973d643d7d8c9640a88ccf4319d9b1295a57cb"},
-  "wordDetails.usageLabel": {"source":"Usage","translationHash":"86fa6efef227625a1266c6c9279d52f283483d971ec18c877214cc01e5181b6f"}
+  "wordDetails.usageLabel": {"source":"Usage","translationHash":"86fa6efef227625a1266c6c9279d52f283483d971ec18c877214cc01e5181b6f"},
+  "features.personalAssistant.feedback.prompt": {"source":"Helpful?","translationHash":"56c7b73026792de197ac2d92ab6c4cba323c7017472610a6afb6145c709edc07"},
+  "features.personalAssistant.feedback.up": {"source":"Helpful answer","translationHash":"45cc9fa6d9501a8cc99c722b47108293958e1a8d2240a078482e928cc973e605"},
+  "features.personalAssistant.feedback.down": {"source":"Unhelpful answer","translationHash":"27ced2a5e5092d364d4e65499a61c21a2c2a2a045a631ae1a0f07fb70e416969"},
+  "features.personalAssistant.feedback.thanks": {"source":"Thanks","translationHash":"f3907a0d563df5ddeac1267df8be2545e94dce6dd8f839aae6644fd364fcdec7"},
+  "features.personalAssistant.feedback.details": {"source":"What went wrong?","translationHash":"91023cd5f41b63e2e64e707ea78c913c5c9e927e870e9e4e82236800bb2bb0b8"},
+  "features.personalAssistant.feedback.wrongMeaning": {"source":"Wrong meaning","translationHash":"f5f143b6a7bae40f296afc2918fe6742f56014839b759b1d90be126b69fa5e43"},
+  "features.personalAssistant.feedback.unrelated": {"source":"Off topic","translationHash":"db4f798a437090adb74cecec4c173a6931fb0804b4bac9c709d20076ee9f960c"},
+  "features.personalAssistant.feedback.notFound": {"source":"Word not found","translationHash":"f254f8202f935b454f2d6ced11e094915a198771f55704fbddac05389ef738d4"},
+  "features.personalAssistant.feedback.example": {"source":"Unhelpful example","translationHash":"786ab87b7ff4393511633612bcb2f649df57e64a589cb1c6d844f6a2f046f81a"},
+  "features.personalAssistant.feedback.save": {"source":"Could not save","translationHash":"6624cd051c930803ae791f8e93403aa0de804bdcf58b769d5670d2664c5a2a45"},
+  "features.personalAssistant.feedback.comment": {"source":"Add a comment (optional)","translationHash":"d746c5c5dbb62a3b457475ad3f959ebfab7fcc67ac4adfcbae395d7e2abe4c53"},
+  "features.personalAssistant.feedback.submit": {"source":"Send feedback","translationHash":"404fef81662ff75ec9db1596fe4e467bfa2e23e724b5b68be9c30c08f9908096"},
+  "features.personalAssistant.feedback.includeExcerpt": {"source":"Include this question and answer","translationHash":"cb01cf60808feedceedd26899ed563849f3bb4bd4d3e32f8c2227be1474ca409"},
+  "features.personalAssistant.feedback.excerptQuestion": {"source":"Question","translationHash":"680bb31cfe98726cf5457a31eb487cb3acdf49688df9ef7c8fb0b70b638d8221"},
+  "features.personalAssistant.feedback.excerptAnswer": {"source":"Answer","translationHash":"fefee8f47d4b3bb05f3063e3d0f90a27bc0c94be3d45a6811c536f9becd85c43"},
+  "features.personalAssistant.feedback.failed": {"source":"Feedback could not be saved. Try again.","translationHash":"281088ce7bd639bd0c10775d92eb54ee50766727343f4a97e891679907987edb"}
 }

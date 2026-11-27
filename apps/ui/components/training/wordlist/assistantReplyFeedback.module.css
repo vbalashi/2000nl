@@ -1,0 +1,115 @@
+.feedback {
+  margin: 4px 0 16px;
+}
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--practice-text-muted);
+  font-size: var(--practice-text-caption);
+}
+.rating > span:first-child {
+  margin-inline-end: 4px;
+}
+.rating .vote {
+  color: var(--practice-text-muted);
+}
+.rating .vote[aria-pressed="true"] {
+  color: var(--practice-selected-text);
+  background: radial-gradient(circle 15px, var(--practice-selected) 98%, transparent);
+}
+.details {
+  padding: 10px 12px;
+  margin-top: 3px;
+  border-radius: var(--practice-radius-control);
+  background: var(--practice-surface-subtle);
+}
+.details fieldset {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+.details legend {
+  margin-bottom: 8px;
+  color: var(--practice-text);
+  font-size: var(--practice-text-small);
+  font-weight: 600;
+}
+.reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.reasons button {
+  min-height: 30px;
+  padding: 3px 8px;
+  border: 1px solid var(--practice-border);
+  border-radius: var(--practice-radius-control);
+  background: var(--practice-surface);
+  color: var(--practice-text-secondary);
+  font: inherit;
+  font-size: var(--practice-text-caption);
+  cursor: pointer;
+}
+.reasons button[aria-pressed="true"] {
+  background: var(--practice-selected);
+  border-color: var(--practice-control-border);
+  color: var(--practice-selected-text);
+}
+.comment {
+  width: 100%;
+  max-height: 120px;
+  resize: vertical;
+  padding: 6px 8px;
+  border: 1px solid var(--practice-border);
+  border-radius: var(--practice-radius-control);
+  background: var(--practice-surface);
+  color: var(--practice-text);
+  font: inherit;
+}
+.consent {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  font-size: var(--practice-text-caption);
+  cursor: pointer;
+}
+.consent input {
+  accent-color: var(--practice-accent);
+}
+.preview {
+  max-height: 140px;
+  overflow: auto;
+  padding: 6px 8px;
+  margin: 0;
+  background: var(--practice-canvas);
+  border-radius: var(--practice-radius-control);
+  font-size: var(--practice-text-caption);
+}
+.preview dt {
+  font-weight: 600;
+}
+.preview dd {
+  margin: 2px 0 7px;
+  white-space: pre-wrap;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}
+.failed {
+  color: var(--practice-danger);
+}
+@media (pointer: coarse) {
+  .rating .vote, .consent {
+    min-height: 44px;
+  }
+  .rating .vote {
+    min-width: 44px;
+  }
+}
