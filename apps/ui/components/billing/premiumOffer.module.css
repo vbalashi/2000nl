@@ -1,0 +1,206 @@
+.screen {
+  --offer-word-size: calc(var(--practice-text-display) * 1.5);
+  --offer-title-size: var(--practice-text-display);
+  --offer-story-size: var(--practice-text-body-lg);
+  --offer-canvas: color-mix(in srgb, var(--practice-canvas) 94%, var(--practice-surface));
+  min-height: 100dvh;
+  background: var(--offer-canvas);
+  color: var(--practice-text);
+  font-family: var(--practice-font-ui);
+}
+
+.screen[data-overlay="true"] {
+  position: fixed;
+  z-index: 1200;
+  inset: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1280px;
+  padding: max(16px, env(safe-area-inset-top)) clamp(20px, 5vw, 54px) 0;
+  margin-inline: auto;
+}
+
+.brand {
+  font-size: var(--practice-brand-size);
+  letter-spacing: -0.04em;
+}
+
+.brandAccent {
+  color: var(--practice-accent);
+}
+
+.close,
+.continueFree {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--practice-accent);
+  cursor: pointer;
+}
+
+.close:hover,
+.continueFree:hover {
+  text-decoration: underline;
+}
+
+.continueFree {
+  margin-top: 10px;
+  padding-inline: 0;
+  font-weight: 650;
+}
+
+.close:focus-visible,
+.continueFree:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.86fr);
+  gap: clamp(36px, 8vw, 112px);
+  max-width: 1110px;
+  margin: clamp(52px, 9vh, 105px) auto 0;
+  padding: 0 clamp(22px, 6vw, 68px) max(48px, env(safe-area-inset-bottom));
+}
+
+.tagline {
+  margin: 0 0 18px;
+  color: var(--practice-accent);
+  font-size: var(--practice-text-label);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.word {
+  margin: 0;
+  font-family: var(--practice-font-reading);
+  font-size: var(--offer-word-size);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.meaning,
+.benefits {
+  margin: 9px 0 0;
+  color: var(--practice-text-secondary);
+  font-size: var(--offer-story-size);
+  line-height: 1.5;
+}
+
+.story h1 {
+  margin: 36px 0 14px;
+  font-size: var(--offer-title-size);
+  font-weight: 700;
+  line-height: 1.12;
+  white-space: pre-line;
+  letter-spacing: -0.025em;
+}
+
+.story h1:focus {
+  outline: 0;
+}
+
+.purchase {
+  padding-top: 32px;
+}
+
+@media (max-width: 700px) {
+  .screen {
+    --offer-word-size: var(--practice-text-display);
+    --offer-title-size: calc(var(--practice-text-page) * 0.94);
+    --offer-story-size: var(--practice-text-body);
+  }
+
+  .header {
+    min-height: 54px;
+    padding-top: max(8px, env(safe-area-inset-top));
+  }
+
+  .content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(16px, 3vh, 24px);
+    max-width: 475px;
+    margin-top: clamp(10px, 2vh, 18px);
+    padding-bottom: calc(22px + env(safe-area-inset-bottom));
+  }
+
+  .tagline {
+    margin-bottom: 10px;
+  }
+
+  .meaning,
+  .benefits {
+    margin-top: 5px;
+    line-height: 1.42;
+  }
+
+  .story h1 {
+    margin: 14px 0 8px;
+    font-weight: 650;
+    line-height: 1.1;
+  }
+
+  .purchase {
+    padding-top: 0;
+  }
+
+  .continueFree {
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 700px) and (max-height: 740px) {
+  .screen {
+    --offer-word-size: calc(var(--practice-text-display) * 0.88);
+    --offer-title-size: calc(var(--practice-text-page) * 0.9);
+    --offer-story-size: var(--practice-text-small);
+  }
+
+  .screen[data-entry="onboarding"] {
+    scroll-padding-bottom: calc(68px + env(safe-area-inset-bottom));
+  }
+
+  .header {
+    min-height: 44px;
+  }
+
+  .content {
+    gap: 14px;
+    margin-top: 8px;
+  }
+
+  .story h1 {
+    margin-top: 12px;
+  }
+
+  .screen[data-entry="onboarding"] .content {
+    padding-bottom: calc(74px + env(safe-area-inset-bottom));
+  }
+
+  .freeDock {
+    position: fixed;
+    z-index: 1;
+    inset-inline: 0;
+    bottom: 0;
+    padding: 4px max(22px, 6vw) calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--practice-border);
+    background: var(--offer-canvas);
+  }
+
+  .continueFree {
+    margin-top: 0;
+  }
+}

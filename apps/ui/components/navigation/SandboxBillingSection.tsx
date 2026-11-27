@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ArrowUpRight, CreditCard, ReceiptText, Sparkles, XCircle } from "lucide-react";
 import { fetchSandboxCatalog } from "@/lib/billing/fetchSandboxCatalog";
@@ -20,12 +19,17 @@ type BillingSummary = {
 
 type BillingState = { checkoutReady: boolean; summary: BillingSummary | null; unavailable: boolean };
 
-export function SandboxBillingSection({ language }: { language: string }) {
+export function SandboxBillingSection({ language, offerOpen, onExplorePlans }: {
+  language: string;
+  offerOpen: boolean;
+  onExplorePlans?: (opener: HTMLButtonElement) => void;
+}) {
   const [billing, setBilling] = useState<BillingState | null>(null);
   const [opening, setOpening] = useState<PortalAction | null>(null);
   const [portalError, setPortalError] = useState(false);
   const portalRequest = useRef<AbortController | null>(null);
   useEffect(() => {
+    if (offerOpen) return;
     const controller = new AbortController();
     let reading = false;
     async function load() {
@@ -65,7 +69,7 @@ export function SandboxBillingSection({ language }: { language: string }) {
       window.removeEventListener("focus", refresh);
       window.removeEventListener("pageshow", refresh);
     };
-  }, []);
+  }, [offerOpen]);
 
   async function openPortal(action: PortalAction) {
     if (portalRequest.current) return;
@@ -141,9 +145,9 @@ export function SandboxBillingSection({ language }: { language: string }) {
             {new Intl.DateTimeFormat(language, { dateStyle: "long" }).format(new Date(date))}
           </time></dd></div>}
         </dl>}
-        {!access.active && billing.checkoutReady && <Link className={styles.cta} href={`/premium?language=${encodeURIComponent(language)}`}>
+        {!access.active && billing.checkoutReady && onExplorePlans && <button type="button" className={styles.cta} onClick={event => onExplorePlans(event.currentTarget)}>
           {settings.explorePlans}<ArrowRight size={17} aria-hidden="true" />
-        </Link>}
+        </button>}
         <p className={styles.testNote}>{copy.sandboxEnabled}</p>
       </div>
       {availableActions.length > 0 && <section className={styles.management} aria-labelledby="billing-actions">

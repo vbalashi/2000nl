@@ -611,7 +611,7 @@
       "premiumOffer": {
         "name": "Dilum Premium",
         "exampleMeaning": "progress / moving forward",
-        "title": "Your words. Your way.",
+        "title": "Your words.\nYour way.",
         "benefits": "Build your own vocabulary with AI assistance and practise it with spaced repetition.",
         "month": "Monthly",
         "year": "Yearly",
@@ -655,7 +655,12 @@
         "cancelSubscription": "Cancel subscription",
         "openingPaddle": "Opening Paddle…",
         "managedByPaddle": "Paddle manages your payments and billing details.",
-        "paddleOpenError": "Paddle could not open. Try again."
+        "paddleOpenError": "Paddle could not open. Try again.",
+        "premiumPlans": "Choose your plan",
+        "dictionaryGrows": "A dictionary that grows with you",
+        "meaningsAndDictionary": "Learn more meanings · Grow your own dictionary",
+        "wordCollections": "Organize your words into collections",
+        "continueFree": "Continue with Free"
       },
       "cardSpacing": "Card spacing",
       "cardSpacings": {
