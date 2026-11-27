@@ -48,10 +48,11 @@ export function PremiumOffer({ language, ...entry }: { language: string } & Entr
           <p className={s.benefits}>{copy.meaningsAndDictionary}<br />{copy.wordCollections}</p>
         </div>
         <div className={s.purchase}>
-          <SandboxPlanCheckout language={language} />
-          {entry.entry === "onboarding" && <button type="button" className={s.continueFree} onClick={onDismiss}>
-            {copy.continueFree}<ArrowRight size={17} aria-hidden="true" />
-          </button>}
+          <SandboxPlanCheckout language={language} freeAction={entry.entry === "onboarding" && (
+            <button type="button" className={s.continueFree} onClick={onDismiss}>
+              {copy.continueFree}<ArrowRight size={17} aria-hidden="true" />
+            </button>
+          )} />
         </div>
       </div>
     </Root>

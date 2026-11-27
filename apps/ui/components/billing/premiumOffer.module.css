@@ -99,11 +99,11 @@
 }
 
 .story h1 {
-  max-width: 12ch;
   margin: 36px 0 14px;
   font-size: var(--offer-title-size);
   font-weight: 700;
   line-height: 1.12;
+  white-space: pre-line;
   letter-spacing: -0.025em;
 }
 

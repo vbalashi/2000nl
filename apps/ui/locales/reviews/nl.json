@@ -1943,7 +1943,7 @@
   "partOfSpeech.other": {"source":"Other","translationHash":"978e44bbc6ed1de06b9c63d69bd66268e6c209825456d4c644dba636bb219aea"},
   "ui.settings.premiumOffer.name": {"source":"Dilum Premium","translationHash":"743655d97e5967d97129b566c4d44ab7608d31ac22532b601b475b17c94875f0"},
   "ui.settings.premiumOffer.exampleMeaning": {"source":"progress / moving forward","translationHash":"84895639ff8e3041fc0c85a00615b1964a77e3115b7ad3607bd5b35cf2a07b16"},
-  "ui.settings.premiumOffer.title": {"source":"Your words. Your way.","translationHash":"ae1d5bd0a11d893e9ac0cbd656347e1fcf63300a3c47d3daaee58e17b30d21d9"},
+  "ui.settings.premiumOffer.title": {"source":"Your words.\nYour way.","translationHash":"aeca220861441be5be23d00dfc63ad9f22249aaffd2e48b550a1db093fef9297"},
   "ui.settings.premiumOffer.benefits": {"source":"Build your own vocabulary with AI assistance and practise it with spaced repetition.","translationHash":"1ce911f21715de16c181b882cabd81f1d90a778de99f95daf7480775dd594d96"},
   "ui.settings.premiumOffer.month": {"source":"Monthly","translationHash":"4f0d0cf8390fe049c97d262db245598abafae2443d5eeb5269535c8058544c87"},
   "ui.settings.premiumOffer.year": {"source":"Yearly","translationHash":"b1657f043490113ddaaf1a9b5ce10e7eb9518be5d8cccc5e5ac974572838a590"},

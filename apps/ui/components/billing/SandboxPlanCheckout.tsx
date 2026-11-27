@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { LegalLinks } from "@/components/legal/LegalLinks";
 import { getUiMessages } from "@/lib/uiMessages";
 import { fetchSandboxCatalog } from "@/lib/billing/fetchSandboxCatalog";
@@ -11,7 +11,7 @@ import s from "./sandboxPlanCheckout.module.css";
 type Plan = "month" | "year";
 type Offer = Awaited<ReturnType<typeof prepareSandboxOffer>>;
 
-export function SandboxPlanCheckout({ language }: { language: string }) {
+export function SandboxPlanCheckout({ language, freeAction }: { language: string; freeAction?: ReactNode }) {
   const planGroup = useId();
   const messages = getUiMessages(language);
   const copy = messages.settings.premiumOffer;
@@ -102,6 +102,7 @@ export function SandboxPlanCheckout({ language }: { language: string }) {
       {!receipt && <button type="button" className={s.primary} disabled={!offer || !checkoutReady || failed || checkoutBusy} onClick={startCheckout}>{copy.checkout}</button>}
       {receipt && paymentStatus !== "completed" && paymentStatus !== "canceled" &&
         <button type="button" className={s.primary} disabled={checkoutBusy} onClick={refreshPayment}>{copy.checkPayment}</button>}
+      {freeAction}
       <p className={s.notice} role="status">{failed ? copy.unavailable : paymentStatus ? copy[paymentStatus === "completed" && fulfillment ? "confirmedWithFulfillment" : paymentStatus] :
         !offer ? copy.loading : checkoutReady ? copy[fulfillment ? "sandboxEnabled" : "sandbox"] : copy.checkoutNotConfigured}</p>
       {receipt && paymentStatus !== "completed" && <button type="button" className={s.secondary} disabled={checkoutBusy} onClick={() => {
