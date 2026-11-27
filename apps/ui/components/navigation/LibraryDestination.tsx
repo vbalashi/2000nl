@@ -37,6 +37,8 @@ type Props = {
   invitationCode?: string | null;
   onInvitationConsumed?:()=>void;
   meaningIntent?: LibraryMeaningIntent | null;
+  premiumOfferOpen?: boolean;
+  onExplorePremium?: (opener: HTMLButtonElement) => void;
   open: boolean;
   userId: string;
   language: string;
@@ -68,6 +70,8 @@ function LibraryDestinationSession({
   onOpenListMembership,
   onTrainWord,onTrainSelection,
   meaningIntent,
+  premiumOfferOpen,
+  onExplorePremium,
   onboardingSearch,
 }: Props) {
   const [searchState, setSearchState] = useState<DictionarySearchTabState>(() =>
@@ -158,6 +162,8 @@ function LibraryDestinationSession({
               language={language}
               translationLang={translationLang}
               interfaceLanguage={interfaceLanguage}
+              premiumOfferOpen={premiumOfferOpen}
+              onExplorePremium={onExplorePremium}
               userLists={userLists}
               collections={receivedSource?[...sourceLists.filter(list=>list.id!==receivedSource.id),receivedSource]:selectedReceivedId?sourceLists.filter(list=>list.id!==selectedReceivedId):sourceLists}
               collectionSourceRead={selectedReceivedId?{collectionId:selectedReceivedId,type:'user',status:receivedRead.status==='ready'?(receivedSource?'ready':'unavailable'):receivedRead.status==='error'?'error':'loading',onRetry:()=>void receivedRead.refresh()}:ownChoice&&!lists.some(row=>row.id===ownChoice.row.id)?{collectionId:ownChoice.row.id,type:'user',status:ownChoice.pending?'loading':ownChoice.error?'error':'unavailable',onRetry:()=>refreshOwnChoice(ownChoice)}:undefined}

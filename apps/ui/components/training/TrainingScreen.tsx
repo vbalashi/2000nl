@@ -2207,7 +2207,7 @@ function TrainingScreenContent({
         : null;
   const appRelease = useAppRelease(user.id, navigationBlocked || (hasResumableSession && v2SessionLayoutVisible) || trainingPilot.status === "preparing", onboardingLang);
   const studyTimeEnabled = destination === "training" && !detailsOpen && !showHotkeys && !showLanguageSelection && !navigationBlocked && !loadingWord && !sessionAuthorityChecking;
-  const [premiumEntry, setPremiumEntry] = useState<"checking" | "onboarding" | "settings" | null>(null);
+  const [premiumEntry, setPremiumEntry] = useState<"checking" | "onboarding" | "settings" | "assistant" | null>(null);
   const sawOnboardingOffer = useRef(false);
   const premiumOpener = useRef<HTMLElement | null>(null);
 
@@ -2234,7 +2234,7 @@ function TrainingScreenContent({
     return () => controller.abort();
   }, [premiumEntry, user.id]);
 
-  const premiumOpen = premiumEntry === "onboarding" || premiumEntry === "settings";
+  const premiumOpen = premiumEntry === "onboarding" || premiumEntry === "settings" || premiumEntry === "assistant";
   useEffect(() => {
     if (!premiumOpen) {
       premiumOpener.current?.focus({ preventScroll: true });
@@ -2539,6 +2539,11 @@ function TrainingScreenContent({
         />
       )}
       <LibraryDestination
+        premiumOfferOpen={premiumEntry === "assistant"}
+        onExplorePremium={opener => {
+          premiumOpener.current = opener;
+          setPremiumEntry("assistant");
+        }}
         onTrainSelection={({languageCode,material})=>{trainingPilot.returnToToday();setStatisticsMaterialIntent({key:Date.now(),userId:user.id,languageCode,material});onRequestDestination("training");}}
         invitationCode={invitationCode}
         onInvitationConsumed={onInvitationConsumed}

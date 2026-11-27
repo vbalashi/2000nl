@@ -1,24 +1,30 @@
 import { useEffect, useState } from "react";
 import { authenticatedJsonHeaders } from "@/lib/platform/platformV2Http";
 
-export function useAssistantAccess(userId: string) {
-  const [allowedUserId, setAllowedUserId] = useState<string | null>(null);
+export function useAssistantAccess(userId: string, enabled = true) {
+  const [access, setAccess] = useState<{ userId: string; allowed: boolean } | null>(null);
   useEffect(() => {
+    if (!userId || !enabled) return;
     const controller = new AbortController();
-    setAllowedUserId(null);
     async function read() {
-      const response = await fetch("/api/library/card-assistant", {
-        headers: await authenticatedJsonHeaders(userId),
-        signal: controller.signal,
-        cache: "no-store",
-      });
-      if (!response.ok) return;
-      const access = await response.json();
-      if (!controller.signal.aborted && access.userId === userId && access.allowed === true)
-        setAllowedUserId(userId);
+      try {
+        const response = await fetch("/api/library/card-assistant", {
+          headers: await authenticatedJsonHeaders(userId),
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        const result = response.ok ? await response.json() : null;
+        if (!controller.signal.aborted) {
+          setAccess(result?.userId === userId && typeof result.allowed === "boolean"
+            ? { userId, allowed: result.allowed }
+            : null);
+        }
+      } catch {
+        if (!controller.signal.aborted) setAccess(null);
+      }
     }
-    if (userId) void read().catch(() => {});
+    void read();
     return () => controller.abort();
-  }, [userId]);
-  return !!userId && allowedUserId === userId;
+  }, [userId, enabled]);
+  return access?.userId === userId ? access.allowed : null;
 }

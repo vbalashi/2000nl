@@ -95,6 +95,7 @@ type Props = {
   onPartialSave?: (entry: SavedSense, senses: InitialPersonalSense[]) => void;
   mobile: boolean;
   assistantAvailable: boolean;
+  onExplorePremium?: (opener: HTMLButtonElement) => void;
   assistantHost?: HTMLElement | null;
   initialConversation?: AssistantSnapshot;
   onAssistantOpenChange?: (open: boolean) => void;
@@ -158,6 +159,7 @@ export function PersonalDictionaryEntryDraft({
   onSaved,
   mobile,
   assistantAvailable,
+  onExplorePremium,
   assistantHost,
   initialConversation,
   onAssistantOpenChange,
@@ -610,12 +612,16 @@ export function PersonalDictionaryEntryDraft({
                   >
                     {busy ? copy.saving : copy.save}
                   </button>}
-                  {assistantAvailable && <button
+                  {(assistantAvailable || onExplorePremium) && <button
                     type="button"
                     className={actions.primary}
                     onClick={(e) => {
-                      askButton.current = e.currentTarget;
-                      toggleAssistant(sense.key);
+                      if (assistantAvailable) {
+                        askButton.current = e.currentTarget;
+                        toggleAssistant(sense.key);
+                      } else {
+                        onExplorePremium?.(e.currentTarget);
+                      }
                     }}
                   >
                     <Sparkles size={15} />
