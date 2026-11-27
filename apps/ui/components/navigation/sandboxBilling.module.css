@@ -61,7 +61,7 @@
 
 .plan h2 {
   margin: 1px 0 0;
-  font-size: clamp(1.35rem, 4vw, 1.65rem);
+  font-size: var(--practice-text-title);
   font-weight: 650;
   line-height: 1.14;
   letter-spacing: -0.035em;
