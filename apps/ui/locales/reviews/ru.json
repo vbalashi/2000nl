@@ -1967,5 +1967,10 @@
   "ui.settings.premiumOffer.sandboxEnabled": {"source":"Sandbox test checkout. No real charge.","translationHash":"cb3343a19c0e1f7450f567e5a40ab6bfbe75c19d8601f992e270ce6aef843a4b"},
   "ui.settings.premiumOffer.sandboxEnds": {"source":"Sandbox Premium · {plan} · ends on {date}","translationHash":"79b0abcdacfc1c767269e754c62b2f53eece7e56067530ec655e9d6afc2e341b"},
   "ui.settings.premiumOffer.sandboxPaidUntil": {"source":"Sandbox Premium · {plan} · paid through {date}","translationHash":"2c5ad1a43f7b3ba6129b24c7461581ffab273edb35a7786aa4b131b1af4a32ca"},
-  "ui.settings.premiumOffer.sandboxFree": {"source":"Sandbox · Free","translationHash":"a3588bb95f2382fc77d322cbb89132b7892c16a3cd18e8f336820db1ddcda793"}
+  "ui.settings.premiumOffer.sandboxFree": {"source":"Sandbox · Free","translationHash":"a3588bb95f2382fc77d322cbb89132b7892c16a3cd18e8f336820db1ddcda793"},
+  "ui.settings.premiumOffer.billingLoading": {"source":"Checking your subscription…","translationHash":"6610243deaf9c524693ce245f64c00ca0be9c1ab4ae600790162c883f0349e61"},
+  "ui.settings.premiumOffer.billingStatusError": {"source":"Could not check your subscription. Reopen this section to retry.","translationHash":"8c720f4d276fcfed717b717fa9281e6a1d07b55a40236a112b4981609d9ed81a"},
+  "ui.settings.premiumOffer.manageSubscription": {"source":"Manage subscription","translationHash":"f3c069e0b6cddeb68a863fcc1db18279e5a484cd4f546670caaced8ac4b721dc"},
+  "ui.settings.premiumOffer.manageSubscriptionHint": {"source":"View payments and invoices, update your payment method or cancel. Sign in with the email used at checkout.","translationHash":"7cc47d1c309c122c197b64455578985e4da668fdda9ef1f52394b57105e612e2"},
+  "ui.settings.premiumOffer.openPaddlePortal": {"source":"Open Paddle portal","translationHash":"cae25aebfce4ec64c636e97dfcdd0109e4d316fff28feee6b23362400110ec97"}
 }

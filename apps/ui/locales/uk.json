@@ -635,7 +635,12 @@
         "sandboxEnabled": "Тестова оплата в Sandbox. Реального списання не буде.",
         "sandboxEnds": "Sandbox Premium · {plan} · завершиться {date}",
         "sandboxPaidUntil": "Sandbox Premium · {plan} · оплачено до {date}",
-        "sandboxFree": "Sandbox · Free"
+        "sandboxFree": "Sandbox · Free",
+        "billingLoading": "Перевіряємо підписку…",
+        "billingStatusError": "Не вдалося перевірити підписку. Відкрийте цей розділ знову, щоб повторити спробу.",
+        "manageSubscription": "Керування підпискою",
+        "manageSubscriptionHint": "Переглядайте платежі й рахунки, змінюйте спосіб оплати або скасовуйте підписку. Увійдіть за адресою, яку вказали під час оплати.",
+        "openPaddlePortal": "Відкрити кабінет Paddle"
       },
       "cardSpacing": "Інтервали картки",
       "cardSpacings": {

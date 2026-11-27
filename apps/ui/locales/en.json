@@ -635,7 +635,12 @@
         "sandboxEnabled": "Sandbox test checkout. No real charge.",
         "sandboxEnds": "Sandbox Premium · {plan} · ends on {date}",
         "sandboxPaidUntil": "Sandbox Premium · {plan} · paid through {date}",
-        "sandboxFree": "Sandbox · Free"
+        "sandboxFree": "Sandbox · Free",
+        "billingLoading": "Checking your subscription…",
+        "billingStatusError": "Could not check your subscription. Reopen this section to retry.",
+        "manageSubscription": "Manage subscription",
+        "manageSubscriptionHint": "View payments and invoices, update your payment method or cancel. Sign in with the email used at checkout.",
+        "openPaddlePortal": "Open Paddle portal"
       },
       "cardSpacing": "Card spacing",
       "cardSpacings": {

@@ -635,7 +635,12 @@
         "sandboxEnabled": "Testbetaling in de sandbox. Er wordt niets echt afgeschreven.",
         "sandboxEnds": "Sandbox Premium · {plan} · eindigt op {date}",
         "sandboxPaidUntil": "Sandbox Premium · {plan} · betaald tot {date}",
-        "sandboxFree": "Sandbox · Free"
+        "sandboxFree": "Sandbox · Free",
+        "billingLoading": "Je abonnement controleren…",
+        "billingStatusError": "Je abonnement kon niet worden gecontroleerd. Open dit onderdeel opnieuw om het nog eens te proberen.",
+        "manageSubscription": "Abonnement beheren",
+        "manageSubscriptionHint": "Bekijk betalingen en facturen, wijzig je betaalmethode of zeg je abonnement op. Log in met het e-mailadres waarmee je hebt betaald.",
+        "openPaddlePortal": "Paddle-portaal openen"
       },
       "cardSpacing": "Kaartafstand",
       "cardSpacings": {

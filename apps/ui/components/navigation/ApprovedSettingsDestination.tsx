@@ -26,7 +26,7 @@ import { ActionMenu } from "@/components/practice/ui/ActionMenu";
 import {SegmentedControl} from "@/components/practice/ui/SegmentedControl";
 import s from "@/components/practice/settings/settings.module.css";
 import {SettingsHelp} from "@/components/practice/settings/SettingsHelp";
-import { SandboxBillingLink } from "./SandboxBillingLink";
+import { SandboxBillingSection } from "./SandboxBillingSection";
 const TranslationLanguagePicker = React.lazy(() =>
   import("@/components/practice/settings/LanguagePicker").then((module) => ({
     default: module.LanguagePicker,
@@ -159,12 +159,7 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
             </>
           );
         if (section === "billing")
-          return <>
-            <SettingsPanel title={copy.subscription}>
-              {visible && <SandboxBillingLink language={props.interfaceLanguage} />}
-            </SettingsPanel>
-            <SettingsPanel title={copy.billingDetails}><p className={s.hint}>{copy.billingUnavailable}</p></SettingsPanel>
-          </>;
+          return visible && <SandboxBillingSection language={props.interfaceLanguage} />;
         if (section === "shortcuts")
           return (
             <SettingsPanel title={copy.trainingShortcuts}>

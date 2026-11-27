@@ -635,7 +635,12 @@
         "sandboxEnabled": "Тестовая оплата в Sandbox. Реального списания не будет.",
         "sandboxEnds": "Sandbox Premium · {plan} · закончится {date}",
         "sandboxPaidUntil": "Sandbox Premium · {plan} · оплачено до {date}",
-        "sandboxFree": "Sandbox · Free"
+        "sandboxFree": "Sandbox · Free",
+        "billingLoading": "Проверяем подписку…",
+        "billingStatusError": "Не удалось проверить подписку. Откройте этот раздел снова, чтобы повторить попытку.",
+        "manageSubscription": "Управление подпиской",
+        "manageSubscriptionHint": "Просматривайте платежи и счета, меняйте способ оплаты или отменяйте подписку. Для входа используйте почту, которую указали при оплате.",
+        "openPaddlePortal": "Открыть кабинет Paddle"
       },
       "cardSpacing": "Интервалы карточки",
       "cardSpacings": {

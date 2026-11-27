@@ -8,6 +8,18 @@ export type SandboxAccess = { active: false } | {
   endsAfterCancel: boolean;
 };
 
+export function readSandboxPortalUrl(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.origin === "https://sandbox-customer-portal.paddle.com" &&
+      !url.username && !url.password && !url.search && !url.hash &&
+      /^\/[a-zA-Z0-9_-]+\/?$/.test(url.pathname) ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function readSandboxAccess(supabase: SupabaseClient): Promise<SandboxAccess> {
   if (!sandboxFulfillmentEnabled(process.env)) return { active: false };
   const { data, error } = await supabase.rpc("read_paddle_sandbox_access");

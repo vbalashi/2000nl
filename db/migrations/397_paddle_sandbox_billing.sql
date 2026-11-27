@@ -1,5 +1,4 @@
--- Sandbox qualification only. Apply to an isolated application database.
--- Managed adoption and live billing require a separately qualified migration.
+-- Sandbox payment facts. Runtime entitlement is restricted to staging.
 BEGIN;
 
 CREATE TABLE private.paddle_sandbox_attempts (
