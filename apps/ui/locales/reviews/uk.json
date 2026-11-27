@@ -1948,5 +1948,8 @@
   "features.personalAssistant.replaceExample": {"source":"Replace example","translationHash":"fda75160a8c5af72fd1db68321b8162735cec7bc3a0548e271d4e6a1cc2ee77c"},
   "features.personalAssistant.followUp": {"source":"Add a detail or ask a follow-up…","translationHash":"4da539bbc480093dab6c4bab00ad15cec1059f82dc570e26429c3017b50860a0"},
   "features.personalAssistant.quote": {"source":"Quote","translationHash":"460622b4584c8a67f77d020087a0ddd625f03d26fb1ae0fa675194ba5990aa90"},
-  "features.personalAssistant.searchHistory": {"source":"Search history","translationHash":"6b4f3c88ba0223bae280b3538867f227c12ea003b04e37e35ce7630dc83a4764"}
+  "features.personalAssistant.searchHistory": {"source":"Search history","translationHash":"6b4f3c88ba0223bae280b3538867f227c12ea003b04e37e35ce7630dc83a4764"},
+  "features.personalAssistant.openNamedDraft": {"source":"Go to the “{word}” draft","translationHash":"0511ae974419863dbe188c62970e2b2ade2546bed8df9b5faafcb6f9098a8520"},
+  "features.personalAssistant.expandChat": {"source":"Expand chat","translationHash":"f12a06a0526f3b8a733a7afc42ef8630404ac592a82ab87751afbafc876265fb"},
+  "features.personalAssistant.collapseChat": {"source":"Collapse chat","translationHash":"a66e780333553262119fcdb4c0821dd155da91ecd5fdd85a740d618cbab4c5d6"}
 }

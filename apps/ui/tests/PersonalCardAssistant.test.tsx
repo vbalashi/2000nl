@@ -140,3 +140,21 @@ it("quotes a proposal in the composer and leaves sending to the learner", async 
   await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
   expect(JSON.parse(request.mock.calls[1][1].body).question).toBe("> iets op een later moment laten gebeuren\n\n" + transcript);
 });
+
+it("emphasizes model-selected phrases and known words while rendering other text literally", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({
+    mode: "provider",
+    message: "Try uitstellen. **Put it off** until later. <script>ignored</script>",
+    suggestions: [],
+  })));
+  render(<PersonalCardAssistant
+    word="uitstellen" definition="" languageCode="nl" interfaceLanguage="en"
+    senseKey="draft" ordinal={1} onClose={() => {}} onApply={() => {}}
+  />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Suggest a definition" }));
+  expect(await screen.findByText("Put it off", { selector: "strong" })).toBeInTheDocument();
+  expect(screen.getByText("uitstellen", { selector: "strong" })).toBeInTheDocument();
+  expect(screen.getByText(/<script>ignored<\/script>/)).toBeInTheDocument();
+  expect(screen.getByRole("log").querySelector("script")).toBeNull();
+});

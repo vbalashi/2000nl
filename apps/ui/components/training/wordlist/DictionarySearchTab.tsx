@@ -1200,6 +1200,7 @@ export function DictionarySearchTab({
         <WordDetailDrawer
           selection={discoveryOpen ? null : detailSelection}
           draft={mobile ? (discoveryPanel || draftEditor) : undefined}
+          assistantMode={discoveryOpen || (personalEditing && assistantOpen)}
           initialGroup={selectedGroupResult?.group}
           open={mobileDetailOpen && Boolean(discoveryOpen || detailSelection || personalDraft) && !presentation?.organizerOpen}
           onClose={discoveryOpen ? closeDiscovery : () => updateSearchState({ mobileDetailOpen: false })}

@@ -2169,7 +2169,10 @@
       "replaceExample": "Voorbeeld vervangen",
       "followUp": "Voeg iets toe of stel een vervolgvraag…",
       "quote": "Citeren",
-      "searchHistory": "Zoekgesprek"
+      "searchHistory": "Zoekgesprek",
+      "openNamedDraft": "Ga naar het concept voor ‘{word}’",
+      "expandChat": "Chat vergroten",
+      "collapseChat": "Chat verkleinen"
     },
     "dictation": {
       "stop": "Dicteren stoppen",

@@ -2169,7 +2169,10 @@
       "replaceExample": "Заменить пример",
       "followUp": "Уточни запрос или добавь детали…",
       "quote": "Цитировать",
-      "searchHistory": "Переписка из поиска"
+      "searchHistory": "Переписка из поиска",
+      "openNamedDraft": "Перейти в черновик «{word}»",
+      "expandChat": "Развернуть чат",
+      "collapseChat": "Свернуть чат"
     },
     "dictation": {
       "stop": "Завершить диктовку",

@@ -2169,7 +2169,10 @@
       "replaceExample": "Replace example",
       "followUp": "Add a detail or ask a follow-up…",
       "quote": "Quote",
-      "searchHistory": "Search history"
+      "searchHistory": "Search history",
+      "openNamedDraft": "Go to the “{word}” draft",
+      "expandChat": "Expand chat",
+      "collapseChat": "Collapse chat"
     },
     "dictation": {
       "stop": "Stop dictation",

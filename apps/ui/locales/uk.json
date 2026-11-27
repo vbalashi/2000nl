@@ -2169,7 +2169,10 @@
       "replaceExample": "Замінити приклад",
       "followUp": "Уточни запит або додай деталі…",
       "quote": "Цитувати",
-      "searchHistory": "Розмова з пошуку"
+      "searchHistory": "Розмова з пошуку",
+      "openNamedDraft": "Перейти до чернетки «{word}»",
+      "expandChat": "Розгорнути чат",
+      "collapseChat": "Згорнути чат"
     },
     "dictation": {
       "stop": "Завершити диктування",

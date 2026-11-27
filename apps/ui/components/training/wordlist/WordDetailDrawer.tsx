@@ -12,6 +12,7 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import { WordDetailsCloseProvider } from "../WordDetailsHeader";
 import sheet from "@/components/practice/article/wordDetailsSheet.module.css";
 import { getUiMessages } from "@/lib/uiMessages";
+import { assistantLabels } from "@/lib/platform/personalCardAssistantContract";
 import { platformV2Message } from "@/lib/platform/platformV2ClientI18n";
 import type { PlatformHeadwordGroupV2 } from "../../../../../packages/shared/types/platformV2";
 
@@ -24,6 +25,7 @@ type Props = {
     contentLanguageCode?: string;
   } | null;
   draft?: ReactNode;
+  assistantMode?: boolean;
   initialGroup?: PlatformHeadwordGroupV2;
   open: boolean;
   onClose: () => void;
@@ -45,6 +47,7 @@ type Props = {
 export function WordDetailDrawer({
   selection,
   draft,
+  assistantMode = false,
   initialGroup,
   open,
   onClose,
@@ -63,8 +66,12 @@ export function WordDetailDrawer({
   onOpenListMembership,
 }: Props) {
   const [entered, setEntered] = React.useState(false);
-  const resize = useLibrarySheetResize(open ? selection?.entryId ?? (draft ? "personal-entry-draft" : null) : null,onClose);
+  const resize = useLibrarySheetResize(open ? selection?.entryId ?? (draft ? "personal-entry-draft" : null) : null,onClose,assistantMode);
   const { expanded, ref } = resize;
+  const assistant = assistantLabels(interfaceLanguage);
+  const handleLabel = assistantMode
+    ? assistant[expanded ? "collapseChat" : "expandChat"]
+    : getUiMessages(interfaceLanguage).library[expanded ? "collapseCard" : "expandCard"];
   const [keyboardViewport, setKeyboardViewport] = React.useState<{ bottom: number; height: number }>();
   React.useEffect(() => {
     if (!open) { setKeyboardViewport(undefined); return; }
@@ -144,10 +151,10 @@ export function WordDetailDrawer({
 
   return <>
   {keyboardViewport && <div aria-hidden="true" className={sheet.keyboardFill} style={{height: keyboardViewport.bottom + 12}} />}
-  <section ref={resize.ref} className={sheet.librarySheet} data-expanded={expanded} data-keyboard={keyboardViewport ? 'true' : undefined}
+  <section ref={resize.ref} className={sheet.librarySheet} data-assistant={assistantMode || undefined} data-expanded={expanded} data-keyboard={keyboardViewport ? 'true' : undefined}
     data-dragging={resize.dragging} style={{ height: resize.height, ...(keyboardViewport ? { bottom: keyboardViewport.bottom, minHeight: 0, maxHeight: keyboardViewport.height } : {}) }}
     aria-label={platformV2Message(interfaceLanguage,"senseCard.wordDetails.open")}>
-    <SheetHandle controller={resize} label={getUiMessages(interfaceLanguage).library[expanded ? "collapseCard" : "expandCard"]}/>
+    <SheetHandle controller={resize} label={handleLabel}/>
     <SheetDragProvider value={resize}><WordDetailsCloseProvider onClose={onClose} interfaceLanguage={interfaceLanguage}>
       <div className="min-h-0 flex-1">{detail(entered)}</div>
     </WordDetailsCloseProvider></SheetDragProvider>

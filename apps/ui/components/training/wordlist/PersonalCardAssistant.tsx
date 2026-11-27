@@ -2,6 +2,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   ArrowUp,
+  ArrowRight,
+  FilePenLine,
   Check,
   ChevronDown,
   ChevronUp,
@@ -57,6 +59,20 @@ type Exchange = {
 };
 export type AssistantSnapshot = {turns:Exchange[];draft:string;intent?:string;searchTurnCount?:number};
 export type AssistantSession = Map<string,AssistantSnapshot>;
+function AssistantMessage({ message, terms }: { message: string; terms: string[] }) {
+  const keyTerms = [...new Set(terms)]
+    .filter(Boolean)
+    .sort((left, right) => right.length - left.length)
+    .map(term => term.replace(/[.*+?^$(){}|[\]\\]/g, "\\$&"));
+  const emphasis = "\\*\\*[^*\\r\\n]+\\*\\*";
+  const lexical = keyTerms.length
+    ? "|(?<![\\p{L}\\p{N}])(?:" + keyTerms.join("|") + ")(?![\\p{L}\\p{N}])"
+    : "";
+  const spans = message.split(new RegExp("(" + emphasis + lexical + ")", "giu"));
+  return <p>{spans.map((text, index) => index % 2
+    ? <strong className={s.keyword} key={index}>{text.startsWith("**") ? text.slice(2, -2) : text}</strong>
+    : text)}</p>;
+}
 export function PersonalCardAssistant(props: Props) {
   return <Conversation key={props.senseKey} {...props} />;
 }
@@ -263,6 +279,9 @@ function Conversation({
       if (proposal.replaces) return "example:" + proposal.replaces.ordinal;
       return ["headword", "definition", "partOfSpeech"].includes(proposal.kind) ? proposal.kind : index;
     });
+    const draftWord = turn.reply?.suggestions.find(proposal => proposal.kind === "headword")?.text;
+    const terms = [discovery ? "" : word, draftWord ?? "", ...(turn.reply?.sources ?? []).map(source => source.word)];
+    const [draftPrefix, draftSuffix] = t.openNamedDraft.split("{word}");
     return <div key={i}>
       <p className={s.bubble}>{turn.question}</p>
       {turn.reply && (
@@ -276,7 +295,7 @@ function Conversation({
                   : null}
             </small>
           )}
-          <p>{turn.reply.message}</p>
+          <AssistantMessage message={turn.reply.message} terms={terms} />
           {!!turn.reply.sources?.length && (
             <div className={s.sources}>
               <small>{t.sources}</small>
@@ -291,7 +310,14 @@ function Conversation({
           )}
           {discovery && turn.reply.mode === "provider" && i === turns.length - 1 && (
             turn.reply.cardDraft && turn.reply.suggestions.length > 0
-              ? <ActionButton variant="primary" onClick={() => discovery.onDraft({turns, draft: "", searchTurnCount: i})}>{t.openCardDraft}</ActionButton>
+              ? <button type="button" className={s.draftLink}
+                  onClick={() => discovery.onDraft({turns, draft: "", searchTurnCount: i})}>
+                  <FilePenLine size={16} aria-hidden="true" />
+                  {draftWord
+                    ? <span>{draftPrefix}<strong lang={languageCode}>{draftWord}</strong>{draftSuffix}</span>
+                    : <span>{t.openCardDraft}</span>}
+                  <ArrowRight size={16} aria-hidden="true" />
+                </button>
               : <ActionButton variant="primary" disabled={pending || mic.status !== "idle"}
                   onClick={() => void ask(t.draftFromSearch, "draft-from-search")}>{t.draftFromSearch}</ActionButton>
           )}
@@ -375,7 +401,7 @@ function Conversation({
               composer.current?.focus();
             }}>{recovery.clearChat}</button>
           )}
-          <IconAction label={t.close} onClick={onClose}><X size={17} /></IconAction>
+          <IconAction data-card-header-close label={t.close} onClick={onClose}><X size={17} /></IconAction>
         </div>
       </header>
       <p className={s.context}>
