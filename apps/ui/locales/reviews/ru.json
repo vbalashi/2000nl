@@ -2030,5 +2030,6 @@
   "features.personalAssistant.quote": {"source":"Quote","translationHash":"378ca6b78dda9232ba35a893c118ebe90a9ec6c0416ad0bcbc918239626d28e8"},
   "features.personalAssistant.replaceExample": {"source":"Replace example","translationHash":"e8397d9a0d2d756437957b2fd7174e8ebd4bd2e2253b1348a6c49c8e1cba00fd"},
   "features.personalAssistant.searchHistory": {"source":"Search history","translationHash":"db339ddab409f6cc826db33b56a6348cadf6092020118b16cf0db4f68fafe450"},
-  "features.personalAssistant.searchRedirect": {"source":"I can help you find a word or expression or explain its meaning. What would you like to look up?","translationHash":"003ef35b453ecb8fa6b0d1f33b8d90d311b989046ea00e6986344da87c49f875"}
+  "features.personalAssistant.searchRedirect": {"source":"I can help you find a word or expression or explain its meaning. What would you like to look up?","translationHash":"003ef35b453ecb8fa6b0d1f33b8d90d311b989046ea00e6986344da87c49f875"},
+  "ui.settings.premiumOffer.assistantPremium": {"source":"Ask AI is a Premium feature.","translationHash":"c081eebe5f613f74c34491e25be56a39853f63f0f1fe156d54b064ec6c4f4351"}
 }

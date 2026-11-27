@@ -101,6 +101,8 @@ type Props = {
   onTrainSelection?:(selection:LibraryTrainingHandoff)=>void;
   onTrainWord?: (wordId: string) => void;
   autoFocusQuery?: boolean;
+  premiumOfferOpen?: boolean;
+  onExplorePremium?: (opener: HTMLButtonElement) => void;
   searchState: DictionarySearchTabState;
   onSearchStateChange: React.Dispatch<
     React.SetStateAction<DictionarySearchTabState>
@@ -168,6 +170,8 @@ export function DictionarySearchTab({
   onOpenListMembership,
   onTrainWord,onTrainSelection,
   autoFocusQuery,
+  premiumOfferOpen,
+  onExplorePremium,
   searchState,
   onSearchStateChange,
 }: Props) {
@@ -683,7 +687,8 @@ export function DictionarySearchTab({
   const [discoveryKey,setDiscoveryKey] = useState<string|null>(null);
   const category = searchState.searchCategory ?? "headwords";
   const discoveryScope = JSON.stringify([userId,searchLanguage,query,category,dictionaryId,categoryMaterial,searchState.entryFilters]);
-  const assistantAvailable = useAssistantAccess(userId);
+  const assistantAccess = useAssistantAccess(userId, open && !premiumOfferOpen);
+  const assistantAvailable = assistantAccess === true;
   const discoveryOpen = assistantAvailable && discoveryKey===discoveryScope;
   const [discoveryStart,setDiscoveryStart] = useState(false);
   const [chatContext,setChatContext] = useState<SearchChat|null>(null);
@@ -1102,7 +1107,8 @@ export function DictionarySearchTab({
   }
 
   const draftEditor = personalEditing && personalDraft && (
-    <PersonalDictionaryEntryDraft mobile={mobile} assistantAvailable={assistantAvailable} key={personalDraft.sessionKey ?? "new"}
+    <PersonalDictionaryEntryDraft mobile={mobile} assistantAvailable={assistantAvailable}
+      onExplorePremium={assistantAccess === false ? onExplorePremium : undefined} key={personalDraft.sessionKey ?? "new"}
       anchorEntryId={personalDraft.anchorEntryId} initialSenses={personalDraft.initialSenses} initialPart={personalDraft.partOfSpeech} initialArticle={personalDraft.article} initialKind={personalDraft.kind}
       initiallyDirty={personalDraft.dirty} initialHeaderDirty={personalDraft.headerDirty}
       onDraftChange={(initialSenses,partOfSpeech,headerDirty,header) => draftShelf.update(personalDraft.sessionKey,{...header,initialSenses,partOfSpeech,dirty:true,headerDirty})}

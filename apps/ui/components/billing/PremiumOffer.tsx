@@ -9,7 +9,7 @@ import { getInterfaceCatalog } from "@/lib/i18n/catalog";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
 import s from "./premiumOffer.module.css";
 
-type Entry = { entry: "legacy" } | { entry: "onboarding" | "settings"; onDismiss: () => void };
+type Entry = { entry: "legacy" } | { entry: "onboarding" | "settings" | "assistant"; onDismiss: () => void };
 
 export function PremiumOffer({ language, ...entry }: { language: string } & Entry) {
   const catalog = getInterfaceCatalog(language);
@@ -18,6 +18,7 @@ export function PremiumOffer({ language, ...entry }: { language: string } & Entr
   const title = useRef<HTMLHeadingElement>(null);
   const inApp = entry.entry !== "legacy";
   const onDismiss = inApp ? entry.onDismiss : undefined;
+  const canClose = entry.entry === "settings" || entry.entry === "assistant";
 
   useEffect(() => {
     if (inApp) title.current?.focus({ preventScroll: true });
@@ -29,7 +30,7 @@ export function PremiumOffer({ language, ...entry }: { language: string } & Entr
       data-entry={entry.entry} data-overlay={inApp || undefined} data-training-hotkeys-suspended={inApp || undefined}
       role={inApp ? "dialog" : undefined} aria-modal={inApp || undefined} aria-labelledby={titleId}
       onKeyDown={event => {
-        if (entry.entry === "settings" && event.key === "Escape" && !event.defaultPrevented) {
+        if (canClose && event.key === "Escape" && !event.defaultPrevented) {
           event.preventDefault();
           entry.onDismiss();
         }
@@ -37,10 +38,11 @@ export function PremiumOffer({ language, ...entry }: { language: string } & Entr
       <header className={s.header}>
         <BrandLogo as="span" className={s.brand} accentClassName={s.brandAccent} />
         {entry.entry === "legacy" && <Link href="/" className={s.close}><X size={17} aria-hidden="true" />{catalog.common.close}</Link>}
-        {entry.entry === "settings" && <button type="button" className={s.close} onClick={onDismiss}><X size={17} aria-hidden="true" />{catalog.common.close}</button>}
+        {canClose && <button type="button" className={s.close} onClick={onDismiss}><X size={17} aria-hidden="true" />{catalog.common.close}</button>}
       </header>
       <div className={s.content}>
         <div className={s.story}>
+          {entry.entry === "assistant" && <p className={s.tagline}>{copy.assistantPremium}</p>}
           <p className={s.tagline}>{copy.dictionaryGrows}</p>
           <p className={s.word} lang="nl">{copy.exampleWord}</p>
           <p className={s.meaning}>{copy.exampleMeaning}</p>

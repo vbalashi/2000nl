@@ -26,10 +26,14 @@ export function SandboxPlanCheckout({ language, freeAction }: { language: string
   const [paymentStatus, setPaymentStatus] = useState<"completed" | "canceled" | "pending" | "statusError" | null>(null);
   const busy = useRef(false);
   const mounted = useRef(false);
+  const disposeCheckout = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     mounted.current = true;
-    return () => { mounted.current = false; };
+    return () => {
+      mounted.current = false;
+      disposeCheckout.current?.();
+    };
   }, []);
 
   useEffect(() => {
@@ -57,10 +61,18 @@ export function SandboxPlanCheckout({ language, freeAction }: { language: string
     try {
       const transaction = await startSandboxCheckout(plan);
       if (!mounted.current) return;
-      offer.open(transaction.transactionId);
       setReceipt(transaction.receipt);
+      disposeCheckout.current?.();
+      disposeCheckout.current = offer.open(transaction.transactionId, () => {
+        if (!mounted.current) return;
+        setReceipt(null);
+        setPaymentStatus(null);
+      });
     } catch {
-      if (mounted.current) setFailed(true);
+      if (mounted.current) {
+        setReceipt(null);
+        setFailed(true);
+      }
     } finally {
       busy.current = false;
       if (mounted.current) setCheckoutBusy(false);
@@ -105,7 +117,7 @@ export function SandboxPlanCheckout({ language, freeAction }: { language: string
       {freeAction}
       <p className={s.notice} role="status">{failed ? copy.unavailable : paymentStatus ? copy[paymentStatus === "completed" && fulfillment ? "confirmedWithFulfillment" : paymentStatus] :
         !offer ? copy.loading : checkoutReady ? copy[fulfillment ? "sandboxEnabled" : "sandbox"] : copy.checkoutNotConfigured}</p>
-      {receipt && paymentStatus !== "completed" && <button type="button" className={s.secondary} disabled={checkoutBusy} onClick={() => {
+      {receipt && paymentStatus === "canceled" && <button type="button" className={s.secondary} disabled={checkoutBusy} onClick={() => {
         setReceipt(null);
         setPaymentStatus(null);
       }}>{copy.newCheckout}</button>}

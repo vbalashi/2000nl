@@ -1,9 +1,10 @@
 import type { SandboxCatalog } from "./sandboxCatalog";
 
 type Item = { priceId: string; quantity: 1 };
+type CheckoutEvent = { name?: string; data?: { transaction_id?: string; status?: string } };
 type Paddle = {
   Environment: { set(value: "sandbox"): void };
-  Initialize(options: { token: string }): void;
+  Initialize(options: { token: string; eventCallback: (event: CheckoutEvent) => void }): void;
   PricePreview(options: { items: Item[] }): Promise<{
     data: { details: { lineItems: Array<{ price: { id: string }; formattedTotals: { total: string } }> } };
   }>;
@@ -11,6 +12,12 @@ type Paddle = {
 };
 
 let pending: Promise<Paddle> | undefined;
+const checkoutListeners = new Map<string, (event: CheckoutEvent) => void>();
+
+function dispatchCheckoutEvent(event: CheckoutEvent) {
+  const transactionId = event.data?.transaction_id;
+  if (transactionId) checkoutListeners.get(transactionId)?.(event);
+}
 
 function loadSandbox(token: string): Promise<Paddle> {
   pending ??= new Promise<Paddle>((resolve, reject) => {
@@ -32,7 +39,7 @@ function loadSandbox(token: string): Promise<Paddle> {
         const paddle = (window as Window & { Paddle?: Paddle }).Paddle;
         if (!paddle) throw new Error("paddle_unavailable");
         paddle.Environment.set("sandbox");
-        paddle.Initialize({ token });
+        paddle.Initialize({ token, eventCallback: dispatchCheckoutEvent });
         finish();
         resolve(paddle);
       } catch {
@@ -58,6 +65,27 @@ export async function prepareSandboxOffer(catalog: SandboxCatalog) {
   if (!month || !year) throw new Error("incomplete_price_preview");
   return {
     amounts: { month, year },
-    open: (transactionId: string) => paddle.Checkout.open({ transactionId }),
+    open(transactionId: string, onAbandon: () => void) {
+      let paymentMayComplete = false;
+      let paymentCompleted = false;
+      const dispose = () => checkoutListeners.delete(transactionId);
+      checkoutListeners.set(transactionId, event => {
+        if (event.name === "checkout.payment.initiated") paymentMayComplete = true;
+        if (event.name === "checkout.payment.failed") paymentMayComplete = false;
+        if (event.name === "checkout.completed") paymentCompleted = true;
+        if (event.name === "checkout.closed") {
+          dispose();
+          const status = event.data?.status;
+          if (!paymentMayComplete && !paymentCompleted && (status === "draft" || status === "ready")) onAbandon();
+        }
+      });
+      try {
+        paddle.Checkout.open({ transactionId });
+      } catch (error) {
+        dispose();
+        throw error;
+      }
+      return dispose;
+    },
   };
 }
