@@ -1995,5 +1995,7 @@
   "ui.settings.premiumOffer.cancelSubscription": {"source":"Cancel subscription","translationHash":"571a9bc8326286c8e599868e928e78575f6cdf8561fbd07fe38b8896ad83e090"},
   "ui.settings.premiumOffer.openingPaddle": {"source":"Opening Paddle…","translationHash":"92599a72f62643f2c6ef0a6acc6e12fed343481b3d1465fcd29efb8db0e074a3"},
   "ui.settings.premiumOffer.managedByPaddle": {"source":"Paddle manages your payments and billing details.","translationHash":"12ce863b1a97319e70cd7963586decdeff4e0920b346b8c7adb70a5a01302d50"},
-  "ui.settings.premiumOffer.paddleOpenError": {"source":"Paddle could not open. Try again.","translationHash":"df12996cee16e1319733a116add9df4677844da2a8324bd7f711a5640a72d85a"}
+  "ui.settings.premiumOffer.paddleOpenError": {"source":"Paddle could not open. Try again.","translationHash":"df12996cee16e1319733a116add9df4677844da2a8324bd7f711a5640a72d85a"},
+  "ui.settings.premiumOffer.premiumPlans": {"source":"Premium plans","translationHash":"dcf3cd68ae2d4e58a3753eb34dc163fe00554a629a53dc6049ff544bfd246083"},
+  "ui.settings.premiumOffer.backToSubscription": {"source":"Back to subscription","translationHash":"58ba4ac03fe279c61c9bfa92754f6c5a105421e5025c45cd063fb3885b0da4f2"}
 }

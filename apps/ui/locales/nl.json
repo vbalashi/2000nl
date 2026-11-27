@@ -655,7 +655,9 @@
         "cancelSubscription": "Abonnement opzeggen",
         "openingPaddle": "Paddle openen…",
         "managedByPaddle": "Paddle beheert je betalingen en factuurgegevens.",
-        "paddleOpenError": "Paddle kon niet worden geopend. Probeer het opnieuw."
+        "paddleOpenError": "Paddle kon niet worden geopend. Probeer het opnieuw.",
+        "premiumPlans": "Premium-abonnementen",
+        "backToSubscription": "Terug naar abonnement"
       },
       "cardSpacing": "Kaartafstand",
       "cardSpacings": {

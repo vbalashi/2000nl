@@ -1,0 +1,129 @@
+.offer {
+  padding-top: 40px;
+}
+
+.offer[data-embedded="true"] {
+  padding-top: 0;
+}
+
+.plans {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.plans legend {
+  margin: 0 0 12px;
+  color: var(--practice-text-secondary);
+  font-size: var(--practice-text-caption);
+  font-weight: 600;
+}
+
+.offer[data-embedded="true"] legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.planRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.plan {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: clamp(10px, 3vw, 16px);
+  border: 1px solid var(--practice-border);
+  border-radius: var(--practice-radius-control);
+  background: var(--practice-surface-subtle);
+  cursor: pointer;
+}
+
+.plan[data-selected="true"] {
+  background: var(--practice-selected);
+  color: var(--practice-selected-text);
+  border-color: var(--practice-accent);
+}
+
+.plan span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow-wrap: anywhere;
+  font-size: var(--practice-text-caption);
+}
+
+.plan input {
+  accent-color: var(--practice-accent);
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.plan strong {
+  font-size: var(--practice-text-lead);
+  overflow-wrap: anywhere;
+}
+
+.terms {
+  margin: 16px 0;
+  color: var(--practice-text-secondary);
+  font-size: var(--practice-text-caption);
+  line-height: 1.5;
+}
+
+.primary {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--practice-control-border);
+  border-radius: var(--practice-radius-control);
+  background: var(--practice-accent);
+  color: var(--practice-on-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.offer[data-embedded="true"] .primary {
+  width: fit-content;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.notice {
+  margin: 10px 0 0;
+  font-size: var(--practice-text-label);
+  color: var(--practice-text-muted);
+}
+
+.secondary {
+  display: block;
+  margin-top: 12px;
+  padding: 6px 0;
+  background: transparent;
+  border: 0;
+  color: var(--practice-text-secondary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.offer :is(button, input):focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 3px;
+}
+
+@media (max-width: 700px) {
+  .offer {
+    padding-top: 48px;
+  }
+}

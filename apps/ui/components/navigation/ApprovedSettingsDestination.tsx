@@ -51,13 +51,15 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
   const closeInterfaceMenu = React.useCallback(() => {
     setInterfaceAnchor(anchor => { anchor?.focus(); return null; });
   }, []);
+  const [plansOpen, setPlansOpen] = React.useState(false);
+  const closePlans = () => setPlansOpen(false);
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const [secondaryPickerOpen, setSecondaryPickerOpen] = React.useState(false);
   const [rememberedSecondary, setRememberedSecondary] = React.useState<string | null>(props.secondaryTranslationLanguage && props.secondaryTranslationLanguage !== "off" ? props.secondaryTranslationLanguage : null);
   React.useEffect(() => { if (props.secondaryTranslationLanguage && props.secondaryTranslationLanguage !== "off") setRememberedSecondary(props.secondaryTranslationLanguage); }, [props.secondaryTranslationLanguage]);
   const secondaryOff = !props.translationLanguage || props.translationLanguage === "off" || !props.secondaryTranslationLanguage || props.secondaryTranslationLanguage === "off";
   React.useEffect(() => {
-    if (!props.open) { setPickerOpen(false); setSecondaryPickerOpen(false); }
+    if (!props.open) { setPickerOpen(false); setSecondaryPickerOpen(false); setPlansOpen(false); }
   }, [props.open]);
   const [rememberedTranslation,setRememberedTranslation]=React.useState<string | null>(props.translationLanguage && props.translationLanguage!=="off" ? props.translationLanguage : null);
   React.useEffect(()=>{if(props.translationLanguage && props.translationLanguage!=="off")setRememberedTranslation(props.translationLanguage);},[props.translationLanguage]);
@@ -70,7 +72,11 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
       items={[...sections]}
       onExit={props.onExit}
       initialSection={props.initialSection}
-      onSectionChange={props.onSectionChange}
+      onSectionChange={section => {
+        closePlans();
+        props.onSectionChange?.(section);
+      }}
+      detailBack={plansOpen ? { label: copy.premiumOffer.backToSubscription, onBack: closePlans } : undefined}
     >
       {(section, visible) => {
         if (section === "onboarding") return props.onboarding?.content;
@@ -160,7 +166,8 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
             </>
           );
         if (section === "billing")
-          return visible && <SandboxBillingSection language={props.interfaceLanguage} />;
+          return visible && <SandboxBillingSection language={props.interfaceLanguage}
+            plansOpen={plansOpen} onExplorePlans={() => setPlansOpen(true)} onBack={closePlans} />;
         if (section === "shortcuts")
           return (
             <SettingsPanel title={copy.trainingShortcuts}>

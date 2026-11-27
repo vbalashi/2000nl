@@ -655,7 +655,9 @@
         "cancelSubscription": "Cancel subscription",
         "openingPaddle": "Opening Paddle…",
         "managedByPaddle": "Paddle manages your payments and billing details.",
-        "paddleOpenError": "Paddle could not open. Try again."
+        "paddleOpenError": "Paddle could not open. Try again.",
+        "premiumPlans": "Premium plans",
+        "backToSubscription": "Back to subscription"
       },
       "cardSpacing": "Card spacing",
       "cardSpacings": {

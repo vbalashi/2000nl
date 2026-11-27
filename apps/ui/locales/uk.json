@@ -655,7 +655,9 @@
         "cancelSubscription": "Скасувати підписку",
         "openingPaddle": "Відкриваємо Paddle…",
         "managedByPaddle": "Платежі й платіжні дані обробляє Paddle.",
-        "paddleOpenError": "Не вдалося відкрити Paddle. Спробуйте ще раз."
+        "paddleOpenError": "Не вдалося відкрити Paddle. Спробуйте ще раз.",
+        "premiumPlans": "Тарифи Premium",
+        "backToSubscription": "Назад до підписки"
       },
       "cardSpacing": "Інтервали картки",
       "cardSpacings": {

@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ArrowUpRight, CreditCard, ReceiptText, Sparkles, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, CreditCard, ReceiptText, Sparkles, XCircle } from "lucide-react";
+import { SandboxPlanCheckout } from "@/components/billing/SandboxPlanCheckout";
 import { fetchSandboxCatalog } from "@/lib/billing/fetchSandboxCatalog";
 import { authenticatedJsonHeaders } from "@/lib/platform/platformV2Http";
 import type { SandboxAccess } from "@/lib/billing/paddleSandboxAccess";
@@ -20,12 +20,26 @@ type BillingSummary = {
 
 type BillingState = { checkoutReady: boolean; summary: BillingSummary | null; unavailable: boolean };
 
-export function SandboxBillingSection({ language }: { language: string }) {
+export function SandboxBillingSection({ language, plansOpen, onExplorePlans, onBack }: {
+  language: string;
+  plansOpen: boolean;
+  onExplorePlans: () => void;
+  onBack: () => void;
+}) {
   const [billing, setBilling] = useState<BillingState | null>(null);
   const [opening, setOpening] = useState<PortalAction | null>(null);
   const [portalError, setPortalError] = useState(false);
   const portalRequest = useRef<AbortController | null>(null);
+  const plansHeading = useRef<HTMLHeadingElement>(null);
+  const exploreButton = useRef<HTMLButtonElement>(null);
+  const plansWereOpen = useRef(false);
   useEffect(() => {
+    if (plansOpen) plansHeading.current?.focus();
+    else if (plansWereOpen.current) exploreButton.current?.focus();
+    plansWereOpen.current = plansOpen;
+  }, [plansOpen]);
+  useEffect(() => {
+    if (plansOpen) return;
     const controller = new AbortController();
     let reading = false;
     async function load() {
@@ -65,7 +79,7 @@ export function SandboxBillingSection({ language }: { language: string }) {
       window.removeEventListener("focus", refresh);
       window.removeEventListener("pageshow", refresh);
     };
-  }, []);
+  }, [plansOpen]);
 
   async function openPortal(action: PortalAction) {
     if (portalRequest.current) return;
@@ -101,6 +115,19 @@ export function SandboxBillingSection({ language }: { language: string }) {
 
   const settings = getUiMessages(language).settings;
   const copy = settings.premiumOffer;
+  if (plansOpen) return (
+    <section className={styles.billing} aria-labelledby="available-premium-plans">
+      <button type="button" className={styles.back} onClick={onBack}>
+        <ArrowLeft size={17} aria-hidden="true" />{copy.backToSubscription}
+      </button>
+      <div className={styles.plan} data-premium="false">
+        <h2 id="available-premium-plans" ref={plansHeading} tabIndex={-1}>{copy.premiumPlans}</h2>
+        <p className={styles.planBenefits}>{copy.benefits}</p>
+        <SandboxPlanCheckout language={language} embedded />
+      </div>
+    </section>
+  );
+
   const summary = billing?.summary;
   if (!summary) return (
     <section className={styles.billing} aria-label={settings.subscription}>
@@ -141,9 +168,9 @@ export function SandboxBillingSection({ language }: { language: string }) {
             {new Intl.DateTimeFormat(language, { dateStyle: "long" }).format(new Date(date))}
           </time></dd></div>}
         </dl>}
-        {!access.active && billing.checkoutReady && <Link className={styles.cta} href={`/premium?language=${encodeURIComponent(language)}`}>
+        {!access.active && billing.checkoutReady && <button ref={exploreButton} type="button" className={styles.cta} onClick={onExplorePlans}>
           {settings.explorePlans}<ArrowRight size={17} aria-hidden="true" />
-        </Link>}
+        </button>}
         <p className={styles.testNote}>{copy.sandboxEnabled}</p>
       </div>
       {availableActions.length > 0 && <section className={styles.management} aria-labelledby="billing-actions">
