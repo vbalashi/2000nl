@@ -1,4 +1,4 @@
--- Run against a disposable database with paddle-billing.sql installed.
+-- Run against a disposable database with Sandbox migrations 397 and 398 installed.
 \set ON_ERROR_STOP on
 BEGIN;
 INSERT INTO auth.users(id) VALUES ('00000000-0000-4000-8000-000000000101'), ('00000000-0000-4000-8000-000000000102');
@@ -35,7 +35,13 @@ BEGIN
   PERFORM public.register_paddle_sandbox_attempt(first_txn,owner_id,price,'month');
   PERFORM pg_temp.assert_access(owner_id,true,'initial payment confirmed');
   PERFORM pg_temp.assert_access(outsider,false,'another account cannot receive access');
+  IF public.read_paddle_sandbox_access() ? 'subscriptionId' THEN
+    RAISE EXCEPTION 'Another account can see a Paddle subscription';
+  END IF;
   PERFORM set_config('request.jwt.claim.sub',owner_id::text,true);
+  IF public.read_paddle_sandbox_access()->>'subscriptionId' IS DISTINCT FROM subid THEN
+    RAISE EXCEPTION 'Paid subscription not bound to owner';
+  END IF;
   IF (public.read_paddle_sandbox_access()->>'validUntil')::timestamptz <> now_at + interval '2 days' THEN
     RAISE EXCEPTION 'Incorrect first paid period';
   END IF;
@@ -83,6 +89,9 @@ BEGIN
     'occurredAt',now_at,'subscriptionId',subid,'terminal',true,'cancelAt',now_at - interval '1 second'));
   PERFORM public.record_paddle_sandbox_event(state_event || jsonb_build_object('eventId','evt_'||repeat('j',26)));
   PERFORM pg_temp.assert_access(owner_id,false,'effective cancellation survives late older active update');
+  IF public.read_paddle_sandbox_access()->>'subscriptionId' IS DISTINCT FROM subid THEN
+    RAISE EXCEPTION 'Former subscriber lost access to payment history';
+  END IF;
 
   IF has_function_privilege('authenticated','public.record_paddle_sandbox_event(jsonb)','EXECUTE')
     OR has_function_privilege('authenticated','public.register_paddle_sandbox_attempt(text,uuid,text,text)','EXECUTE')

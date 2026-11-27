@@ -640,7 +640,22 @@
         "billingStatusError": "Не вдалося перевірити підписку. Відкрийте цей розділ знову, щоб повторити спробу.",
         "manageSubscription": "Керування підпискою",
         "manageSubscriptionHint": "Переглядайте платежі й рахунки, змінюйте спосіб оплати або скасовуйте підписку. Увійдіть за адресою, яку вказали під час оплати.",
-        "openPaddlePortal": "Відкрити кабінет Paddle"
+        "openPaddlePortal": "Відкрити кабінет Paddle",
+        "premiumName": "Premium",
+        "freeName": "Безкоштовний",
+        "activeStatus": "Активна",
+        "endsAtPeriod": "Скасування заплановано",
+        "paymentOverdue": "Платіж прострочено",
+        "planLabel": "Період оплати",
+        "nextPayment": "Наступне списання",
+        "accessEnds": "Доступ закінчиться",
+        "paidThrough": "Оплачено до",
+        "detailsInvoices": "Деталі та рахунки",
+        "changePaymentMethod": "Змінити спосіб оплати",
+        "cancelSubscription": "Скасувати підписку",
+        "openingPaddle": "Відкриваємо Paddle…",
+        "managedByPaddle": "Платежі й платіжні дані обробляє Paddle.",
+        "paddleOpenError": "Не вдалося відкрити Paddle. Спробуйте ще раз."
       },
       "cardSpacing": "Інтервали картки",
       "cardSpacings": {

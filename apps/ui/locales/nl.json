@@ -640,7 +640,22 @@
         "billingStatusError": "Je abonnement kon niet worden gecontroleerd. Open dit onderdeel opnieuw om het nog eens te proberen.",
         "manageSubscription": "Abonnement beheren",
         "manageSubscriptionHint": "Bekijk betalingen en facturen, wijzig je betaalmethode of zeg je abonnement op. Log in met het e-mailadres waarmee je hebt betaald.",
-        "openPaddlePortal": "Paddle-portaal openen"
+        "openPaddlePortal": "Paddle-portaal openen",
+        "premiumName": "Premium",
+        "freeName": "Gratis",
+        "activeStatus": "Actief",
+        "endsAtPeriod": "Opzegging gepland",
+        "paymentOverdue": "Betaling achterstallig",
+        "planLabel": "Factureringsperiode",
+        "nextPayment": "Volgende betaling",
+        "accessEnds": "Toegang eindigt",
+        "paidThrough": "Betaald tot",
+        "detailsInvoices": "Gegevens en facturen",
+        "changePaymentMethod": "Betaalmethode wijzigen",
+        "cancelSubscription": "Abonnement opzeggen",
+        "openingPaddle": "Paddle openen…",
+        "managedByPaddle": "Paddle beheert je betalingen en factuurgegevens.",
+        "paddleOpenError": "Paddle kon niet worden geopend. Probeer het opnieuw."
       },
       "cardSpacing": "Kaartafstand",
       "cardSpacings": {

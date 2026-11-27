@@ -640,7 +640,22 @@
         "billingStatusError": "Не удалось проверить подписку. Откройте этот раздел снова, чтобы повторить попытку.",
         "manageSubscription": "Управление подпиской",
         "manageSubscriptionHint": "Просматривайте платежи и счета, меняйте способ оплаты или отменяйте подписку. Для входа используйте почту, которую указали при оплате.",
-        "openPaddlePortal": "Открыть кабинет Paddle"
+        "openPaddlePortal": "Открыть кабинет Paddle",
+        "premiumName": "Premium",
+        "freeName": "Бесплатный",
+        "activeStatus": "Активна",
+        "endsAtPeriod": "Отмена запланирована",
+        "paymentOverdue": "Платёж просрочен",
+        "planLabel": "Период оплаты",
+        "nextPayment": "Следующее списание",
+        "accessEnds": "Доступ закончится",
+        "paidThrough": "Оплачено до",
+        "detailsInvoices": "Детали и счета",
+        "changePaymentMethod": "Изменить способ оплаты",
+        "cancelSubscription": "Отменить подписку",
+        "openingPaddle": "Открываем Paddle…",
+        "managedByPaddle": "Платежи и платёжные данные обрабатывает Paddle.",
+        "paddleOpenError": "Не удалось открыть Paddle. Попробуйте снова."
       },
       "cardSpacing": "Интервалы карточки",
       "cardSpacings": {
