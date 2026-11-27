@@ -2139,7 +2139,7 @@
       "used": "Gebruikt",
       "copy": "Kopiëren",
       "copied": "Gekopieerd",
-      "type": "Vraag over deze betekenis…",
+      "type": "Bericht aan de assistent",
       "send": "Versturen",
       "mic": "Dicteren",
       "scenarios": "Opdrachten",
@@ -2162,11 +2162,14 @@
       "error": "Geen antwoord ontvangen. Probeer het opnieuw.",
       "earlier": "Eerdere berichten",
       "later": "Volgende berichten",
-      "promptHint": "Verstuur deze opdracht, kies een andere via + of spreek je eigen vraag in.",
+      "promptHint": "Kies een opdracht via + of spreek je vraag in.",
       "draftFromSearch": "Stel een kaart voor bij deze betekenis",
       "openCardDraft": "Kaartconcept openen",
       "applyAll": "Alles toepassen",
-      "replaceExample": "Voorbeeld vervangen"
+      "replaceExample": "Voorbeeld vervangen",
+      "followUp": "Voeg iets toe of stel een vervolgvraag…",
+      "quote": "Citeren",
+      "searchHistory": "Zoekgesprek"
     },
     "dictation": {
       "stop": "Dicteren stoppen",

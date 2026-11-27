@@ -37,7 +37,7 @@
 .children .children {
   padding-left: 0;
 }
-.contentSection h3 {
+.contentSection h3,.fieldHeading {
   font-size: var(--practice-text-label);
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -45,8 +45,8 @@
   color: var(--practice-text-muted);
   margin: 0 0 8px;
 }
-.contentSection h3{display:flex;align-items:center;gap:6px}
-.contentSection h3 svg{flex:none;opacity:.8}
+.contentSection h3,.fieldHeading{display:flex;align-items:center;gap:6px}
+.contentSection h3 svg,.fieldHeading svg{flex:none;opacity:.8}
 
 .detail{min-width:0}
 .detail[data-nesting=blocks] .contentSection>.contentNode[data-kind=idiom],.detail[data-nesting=blocks] .contentSection>.contentNode[data-kind=usage-pattern] {

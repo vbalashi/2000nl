@@ -46,7 +46,7 @@ it("retries the failed turn with its original intent and keeps the next draft", 
   expect(request).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Send" }));
   await screen.findByRole("alert");
-  const composer = screen.getByRole("textbox", { name: "Ask about this meaning…" });
+  const composer = screen.getByRole("textbox", { name: "Message to the assistant" });
   fireEvent.change(composer, { target: { value: "My next question" } });
   fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 
@@ -80,7 +80,7 @@ it("applies a headword to an empty card and saves it with the suggested definiti
 
   render(<EmptyDraft />);
   fireEvent.click(screen.getByRole("button", { name: "Ask AI" }));
-  const composer = screen.getByRole("textbox", { name: "Ask about this meaning…" });
+  const composer = screen.getByRole("textbox", { name: "Message to the assistant" });
   fireEvent.click(screen.getByRole("button", { name: "Dictate" }));
   expect(composer).toHaveValue(transcript);
   fireEvent.click(screen.getByRole("button", { name: "Send" }));
@@ -111,4 +111,32 @@ it("sends the visible starter directly", async () => {
   expect(JSON.parse(request.mock.calls[0][1].body)).toMatchObject({
     question: "Suggest a definition", intent: "fill",
   });
+});
+
+it("quotes a proposal in the composer and leaves sending to the learner", async () => {
+  const request = vi.fn().mockResolvedValue(Response.json({
+    mode: "provider", message: "Here is a draft.", searched: true, sources: [],
+    suggestions: [{ kind: "definition", text: "iets op een later moment laten gebeuren" }],
+  }));
+  vi.stubGlobal("fetch", request);
+  render(<PersonalCardAssistant
+    word="uitstellen" definition="" languageCode="nl" interfaceLanguage="en"
+    senseKey="draft" ordinal={1} onClose={() => {}} onApply={() => {}}
+  />);
+
+  const composer = screen.getByRole("textbox", { name: "Message to the assistant" });
+  expect(composer).toHaveAttribute("placeholder", "Choose a prompt with + or dictate your request.");
+  fireEvent.click(screen.getByRole("button", { name: "Suggest a definition" }));
+  await screen.findByRole("button", { name: "Quote" });
+  expect(composer).toHaveAttribute("placeholder", "Add a detail or ask a follow-up…");
+  expect(screen.queryByText("No matches in the accessible dictionaries for this learning language.")).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: "Quote" }));
+  expect(composer).toHaveValue("> iets op een later moment laten gebeuren\n\n");
+  fireEvent.click(screen.getByRole("button", { name: "Dictate" }));
+  expect(composer).toHaveValue("> iets op een later moment laten gebeuren\n\n" + transcript);
+  expect(request).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole("button", { name: "Send" }));
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+  expect(JSON.parse(request.mock.calls[1][1].body).question).toBe("> iets op een later moment laten gebeuren\n\n" + transcript);
 });

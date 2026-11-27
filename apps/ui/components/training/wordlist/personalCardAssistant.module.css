@@ -14,7 +14,9 @@
 }
 .header,
 .header h3,
-.composer footer {
+.headerActions,
+.composer footer,
+.composerActions {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -26,6 +28,10 @@
   font-size: var(--practice-text-body);
   font-weight: 550;
   margin: 0;
+}
+.headerActions {
+  flex: none;
+  margin-inline-start: auto;
 }
 .context,
 .panel small {
@@ -61,15 +67,54 @@
   border-radius: var(--practice-radius-dialog);
 }
 .proposal {
-  border: 1px solid var(--practice-border);
-  border-radius: var(--practice-radius-control);
-  background: var(--practice-surface);
-  padding: 8px 10px;
-  margin: 8px 0;
+  margin: 0 0 16px;
 }
-.proposal p {
-  font-family: var(--practice-font-reading);
-  font-size: var(--practice-text-body-lg);
+.proposalBody {
+  background: var(--practice-surface-subtle);
+  border-radius: var(--practice-radius-control);
+  padding: 10px 12px;
+}
+.proposalBody p {
+  margin: 0;
+}
+.proposalActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding-inline: 12px;
+}
+.inlineAction {
+  min-height: 34px;
+  border: 0;
+  padding: 2px 0;
+  background: transparent;
+  color: var(--practice-text-secondary);
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--practice-border);
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.inlineAction:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 2px;
+}
+.inlineAction:disabled {
+  text-decoration: none;
+  cursor: default;
+  opacity: 0.55;
+}
+.applyAll {
+  margin-bottom: 10px;
+}
+.searchHistory {
+  margin: 4px 0 12px;
+  color: var(--practice-text-muted);
+  font-size: var(--practice-text-caption);
+}
+.searchHistory summary {
+  cursor: pointer;
+  width: fit-content;
 }
 .up,
 .down {
@@ -115,8 +160,8 @@
   font: inherit;
   line-height: 1.5;
 }
-.composer footer > :first-child {
-  margin-right: auto;
+.composerActions {
+  margin-inline-start: auto;
 }
 .send {
   display: grid;
@@ -188,9 +233,6 @@
 .sources > div {
   margin: 5px 0;
 }
-.composer .recorder > :first-child {
-  margin-right: 0;
-}
 .recorder {
   display: flex;
   align-items: center;
@@ -211,8 +253,11 @@
 .sourceLink { color:var(--practice-accent); text-decoration:underline; text-underline-offset:3px; font-weight:600; cursor:pointer; }
 
 .starter {
-  display: grid;
-  justify-items: start;
-  gap: 5px;
-  padding: 2px 4px 6px;
+  margin: 0 0 5px;
+}
+
+@media (pointer: coarse) {
+  .inlineAction {
+    min-height: 44px;
+  }
 }

@@ -2139,7 +2139,7 @@
       "used": "Applied",
       "copy": "Copy",
       "copied": "Copied",
-      "type": "Ask about this meaning…",
+      "type": "Message to the assistant",
       "send": "Send",
       "mic": "Dictate",
       "scenarios": "Prompts",
@@ -2162,11 +2162,14 @@
       "error": "Could not get an answer. Try again.",
       "earlier": "Earlier messages",
       "later": "Later messages",
-      "promptHint": "Send this prompt, choose another with +, or dictate your own.",
+      "promptHint": "Choose a prompt with + or dictate your request.",
       "draftFromSearch": "Suggest a card for the meaning we discussed",
       "openCardDraft": "Open card draft",
       "applyAll": "Apply all",
-      "replaceExample": "Replace example"
+      "replaceExample": "Replace example",
+      "followUp": "Add a detail or ask a follow-up…",
+      "quote": "Quote",
+      "searchHistory": "Search history"
     },
     "dictation": {
       "stop": "Stop dictation",

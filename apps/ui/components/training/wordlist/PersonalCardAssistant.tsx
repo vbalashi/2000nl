@@ -1,12 +1,14 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Trash2,
   ArrowUp,
   Check,
   ChevronDown,
   ChevronUp,
   Mic,
+  Link2,
+  List,
+  Quote,
   Plus,
   Sparkles,
   X,
@@ -30,6 +32,7 @@ import { getPartOfSpeechLabel } from "@/lib/uiMessages";
 import {saveSearchChat,type SearchChat} from "./lastSearchChat";
 import { getInterfaceCatalog } from "@/lib/i18n/catalog";
 import {searchRecoveryCopy} from "./searchRecoveryCopy";
+import reading from "@/components/practice/article/articleContent.module.css";
 import s from "./personalCardAssistant.module.css";
 export type { Suggestion } from "@/lib/platform/personalCardAssistantContract";
 type Props = {
@@ -52,7 +55,7 @@ type Exchange = {
   error?: boolean;
   applied?: number[];
 };
-export type AssistantSnapshot = {turns:Exchange[];draft:string;intent?:string};
+export type AssistantSnapshot = {turns:Exchange[];draft:string;intent?:string;searchTurnCount?:number};
 export type AssistantSession = Map<string,AssistantSnapshot>;
 export function PersonalCardAssistant(props: Props) {
   return <Conversation key={props.senseKey} {...props} />;
@@ -81,13 +84,13 @@ function Conversation({
     [draft, setDraft] = useState(restored?.draft ?? ""),
     [draftIntent, setDraftIntent] = useState(restored?.intent),
     [pending, setPending] = useState(false);
-  const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null),
-    [copied, setCopied] = useState("");
+  const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
+  const [searchTurnCount] = useState(restored?.searchTurnCount ?? 0);
   const catalog = getInterfaceCatalog(interfaceLanguage);
   const speech = catalog.features.dictation;
   const mic = useAzureDictation((text) => {
     setDraftIntent(undefined);
-    setDraft((current) => (current.trimEnd() + " " + text).trimStart().slice(0, 1500));
+    setDraft(current => (current + (!current || /\s$/.test(current) ? "" : " ") + text).slice(0, 1500));
   });
   const [edges, setEdges] = useState({ top: false, bottom: false });
   const history = useRef<HTMLDivElement>(null),
@@ -102,6 +105,7 @@ function Conversation({
     // Closing the panel cancels the request. Keep its unanswered question in the composer.
     const snapshot = {
       turns: completed,
+      searchTurnCount,
       intent: draft ? draftIntent : completed.length < turns.length ? turns.at(-1)?.intent : undefined,
       draft:
         draft ||
@@ -111,7 +115,7 @@ function Conversation({
     };
     session?.set(senseKey,snapshot);
     if (searchStorageKey && searchChat) saveSearchChat(searchStorageKey,searchChat,snapshot);
-  }, [session, senseKey, turns, draft, draftIntent, searchStorageKey, searchChat]);
+  }, [session, senseKey, turns, draft, draftIntent, searchTurnCount, searchStorageKey, searchChat]);
   const updateEdges = () => {
     const h = history.current;
     if (h)
@@ -231,6 +235,16 @@ function Conversation({
       ? { ...item, applied: [...(item.applied ?? []), ...indexes] }
       : item));
   }
+  function quote(text: string) {
+    const cited = text.slice(0, 1500).split(/\r?\n/).map(line => "> " + line).join("\n");
+    setDraft(current => (cited.slice(0, Math.max(0, 1498 - current.length)) + "\n\n" + current).slice(0, 1500));
+    setDraftIntent(undefined);
+    composer.current?.focus();
+    window.requestAnimationFrame(() => {
+      const input = composer.current;
+      input?.setSelectionRange(input.value.length, input.value.length);
+    });
+  }
   function scroll(direction: number) {
     const h = history.current;
     h?.scrollBy({
@@ -240,6 +254,101 @@ function Conversation({
         : "smooth",
     });
   }
+  const showStarter = !discovery && turns.length === 0 && !!word.trim();
+  const renderedTurns = turns.map((turn, i) => {
+    const proposals = discovery ? [] : turn.reply?.suggestions ?? [];
+    const applicable = proposals.flatMap((proposal, index) => canApply(turn, proposal, index) ? [index] : []);
+    const targets = applicable.map(index => {
+      const proposal = proposals[index];
+      if (proposal.replaces) return "example:" + proposal.replaces.ordinal;
+      return ["headword", "definition", "partOfSpeech"].includes(proposal.kind) ? proposal.kind : index;
+    });
+    return <div key={i}>
+      <p className={s.bubble}>{turn.question}</p>
+      {turn.reply && (
+        <>
+          {turn.reply.mode !== "provider" && (
+            <small>
+              {turn.reply.mode === "preview"
+                ? t.demo
+                : turn.reply.mode === "dictionary"
+                  ? t.dictionary
+                  : null}
+            </small>
+          )}
+          <p>{turn.reply.message}</p>
+          {!!turn.reply.sources?.length && (
+            <div className={s.sources}>
+              <small>{t.sources}</small>
+              {turn.reply.sources.map((hit) => (
+                <div key={hit.entryId}>
+                  {discovery ? <button type="button" className={s.sourceLink} onClick={()=>discovery.onSelect(hit)}>{hit.word}</button> : <strong>{hit.word}</strong>} · {hit.dictionary}
+                  <p lang={languageCode}>{hit.definition}</p>
+                  {hit.example && <p lang={languageCode}><i>{hit.example}</i></p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {discovery && turn.reply.mode === "provider" && i === turns.length - 1 && (
+            turn.reply.cardDraft && turn.reply.suggestions.length > 0
+              ? <ActionButton variant="primary" onClick={() => discovery.onDraft({turns, draft: "", searchTurnCount: i})}>{t.openCardDraft}</ActionButton>
+              : <ActionButton variant="primary" disabled={pending || mic.status !== "idle"}
+                  onClick={() => void ask(t.draftFromSearch, "draft-from-search")}>{t.draftFromSearch}</ActionButton>
+          )}
+          {applicable.length > 1 && new Set(targets).size === targets.length && (
+            <ActionButton variant="primary" className={s.applyAll} onClick={() => apply(i, applicable)}>{t.applyAll}</ActionButton>
+          )}
+          {proposals.map((proposal, j) => {
+            const text =
+              proposal.kind === "partOfSpeech"
+                ? (getPartOfSpeechLabel(
+                    interfaceLanguage,
+                    proposal.text,
+                  ) ?? proposal.text)
+                : proposal.text;
+            const Icon = proposal.kind === "example" ? List
+              : proposal.kind === "reference" || proposal.kind === "synonym" ? Link2
+              : proposal.kind === "note" || proposal.kind === "expression" ? Quote : null;
+            return (
+              <section className={s.proposal} key={j}>
+                <div className={s.proposalBody}>
+                  <h4 className={reading.fieldHeading}>
+                    {Icon && <Icon size={12} aria-hidden="true" />}
+                    {proposal.kind === "headword" ? catalog.features.personalCard.word : t[proposal.kind]}
+                  </h4>
+                  <p className={proposal.kind === "example" ? reading.literary : reading.definitionText}
+                    lang={proposal.kind === "partOfSpeech" ? interfaceLanguage : languageCode}>
+                    {text}
+                  </p>
+                </div>
+                <div className={s.proposalActions}>
+                  <button type="button" className={s.inlineAction}
+                    disabled={!canApply(turn, proposal, j)} onClick={() => apply(i, [j])}>
+                    {turn.applied?.includes(j) ? t.used : proposal.replaces ? t.replaceExample : t.use}
+                  </button>
+                  <button type="button" className={s.inlineAction}
+                    disabled={mic.status !== "idle" || draft.length > 1495} onClick={() => quote(text)}>{t.quote}</button>
+                </div>
+              </section>
+            );
+          })}
+        </>
+      )}
+      {turn.error && (
+        <>
+          <p role="alert">{t.error}</p>
+          {i === turns.length - 1 && (
+            <ActionButton
+              disabled={pending || mic.status !== "idle"}
+              onClick={() => void ask(turn.question, turn.intent, true)}
+            >
+              {catalog.common.retry}
+            </ActionButton>
+          )}
+        </>
+      )}
+    </div>;
+  });
   return (
     <aside
       className={s.panel}
@@ -256,12 +365,18 @@ function Conversation({
           <Sparkles size={16} />
           {discovery ? recovery.chat : t.title}
         </h3>
-        {discovery && (turns.length>0 || draft) && <IconAction label={recovery.clearChat} title={recovery.clearChat} disabled={pending} onClick={()=>{setTurns([]);setDraft("");setDraftIntent(undefined);discovery.onClear();composer.current?.focus();}}>
-          <Trash2 size={15}/>
-        </IconAction>}
-        <IconAction label={t.close} onClick={onClose}>
-          <X size={17} />
-        </IconAction>
+        <div className={s.headerActions}>
+          {discovery && (turns.length > 0 || draft) && (
+            <button type="button" className={s.inlineAction} disabled={pending} onClick={() => {
+              setTurns([]);
+              setDraft("");
+              setDraftIntent(undefined);
+              discovery.onClear();
+              composer.current?.focus();
+            }}>{recovery.clearChat}</button>
+          )}
+          <IconAction label={t.close} onClick={onClose}><X size={17} /></IconAction>
+        </div>
       </header>
       <p className={s.context}>
         {discovery ? [word,discovery.scope].filter(Boolean).join(" · ") : <>{word || t.word} · {t.sense} {ordinal} · {definition || t.noDef}</>}
@@ -327,124 +442,13 @@ function Conversation({
           }}
         >
           <div ref={list}>
-            {turns.map((turn, i) => {
-              const proposals = discovery ? [] : turn.reply?.suggestions ?? [];
-              const applicable = proposals.flatMap((proposal, index) => canApply(turn, proposal, index) ? [index] : []);
-              const targets = applicable.map(index => {
-                const proposal = proposals[index];
-                if (proposal.replaces) return "example:" + proposal.replaces.ordinal;
-                return ["headword", "definition", "partOfSpeech"].includes(proposal.kind) ? proposal.kind : index;
-              });
-              return <div key={i}>
-                <p className={s.bubble}>{turn.question}</p>
-                {turn.reply && (
-                  <>
-                    {turn.reply.mode !== "provider" && (
-                      <small>
-                        {turn.reply.mode === "preview"
-                          ? t.demo
-                          : turn.reply.mode === "dictionary"
-                            ? t.dictionary
-                            : null}
-                      </small>
-                    )}
-                    <p>{turn.reply.message}</p>
-                    {turn.reply.searched && !turn.reply.sources?.length && (
-                      <small>{t.none}</small>
-                    )}
-                    {!!turn.reply.sources?.length && (
-                      <div className={s.sources}>
-                        <small>{t.sources}</small>
-                        {turn.reply.sources.map((hit) => (
-                          <div key={hit.entryId}>
-                            {discovery ? <button type="button" className={s.sourceLink} onClick={()=>discovery.onSelect(hit)}>{hit.word}</button> : <strong>{hit.word}</strong>} · {hit.dictionary}
-                            <p lang={languageCode}>{hit.definition}</p>
-                            {hit.example && <p lang={languageCode}><i>{hit.example}</i></p>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {discovery && turn.reply.mode === "provider" && i === turns.length - 1 && (
-                      turn.reply.cardDraft && turn.reply.suggestions.length > 0
-                        ? <ActionButton onClick={() => discovery.onDraft({turns, draft: ""})}>{t.openCardDraft}</ActionButton>
-                        : <ActionButton disabled={pending || mic.status !== "idle"}
-                            onClick={() => void ask(t.draftFromSearch, "draft-from-search")}>{t.draftFromSearch}</ActionButton>
-                    )}
-                    {applicable.length > 1 && new Set(targets).size === targets.length && (
-                      <ActionButton onClick={() => apply(i, applicable)}>{t.applyAll}</ActionButton>
-                    )}
-                    {proposals.map((proposal, j) => {
-                      const text =
-                        proposal.kind === "partOfSpeech"
-                          ? (getPartOfSpeechLabel(
-                              interfaceLanguage,
-                              proposal.text,
-                            ) ?? proposal.text)
-                          : proposal.text;
-                      return (
-                        <section className={s.proposal} key={j}>
-                          <small>{proposal.kind === "headword" ? catalog.features.personalCard.word : t[proposal.kind]}</small>
-                          <p
-                            id={"assistant-copy-" + i + "-" + j}
-                            lang={
-                              proposal.kind === "partOfSpeech"
-                                ? interfaceLanguage
-                                : languageCode
-                            }
-                          >
-                            {text}
-                          </p>
-                          <ActionButton
-                            disabled={!canApply(turn, proposal, j)}
-                            onClick={() => apply(i, [j])}
-                          >
-                            {turn.applied?.includes(j) ? t.used : proposal.replaces ? t.replaceExample : t.use}
-                          </ActionButton>
-                          <ActionButton
-                            onClick={() =>
-                              void navigator.clipboard
-                                .writeText(text)
-                                .then(() => setCopied(i + "-" + j))
-                                .catch(() => {
-                                  const range = document.createRange();
-                                  const target = document.getElementById(
-                                    "assistant-copy-" + i + "-" + j,
-                                  );
-                                  if (target) {
-                                    range.selectNodeContents(target);
-                                    const sel = window.getSelection();
-                                    sel?.removeAllRanges();
-                                    sel?.addRange(range);
-                                  }
-                                })
-                            }
-                          >
-                            {copied === i + "-" + j ? (
-                              <Check size={14} aria-label={t.copied} />
-                            ) : (
-                              t.copy
-                            )}
-                          </ActionButton>
-                        </section>
-                      );
-                    })}
-                  </>
-                )}
-                {turn.error && (
-                  <>
-                    <p role="alert">{t.error}</p>
-                    {i === turns.length - 1 && (
-                      <ActionButton
-                        disabled={pending || mic.status !== "idle"}
-                        onClick={() => void ask(turn.question, turn.intent, true)}
-                      >
-                        {catalog.common.retry}
-                      </ActionButton>
-                    )}
-                  </>
-                )}
-              </div>;
-            })}
+            {searchTurnCount > 0 && (
+              <details className={s.searchHistory}>
+                <summary>{t.searchHistory}</summary>
+                {renderedTurns.slice(0, searchTurnCount)}
+              </details>
+            )}
+            {renderedTurns.slice(searchTurnCount)}
             {pending && <p role="status">{t.waiting}</p>}
           </div>
         </div>
@@ -475,20 +479,17 @@ function Conversation({
                 : ""}
           </small>
         )}
-        {!discovery && turns.length === 0 && word.trim() && (
-          <div className={s.starter}>
-            <ActionButton disabled={mic.status !== "idle" || !!draft.trim()}
-              onClick={() => void ask(t.fill, "fill")}>{t.fill}</ActionButton>
-            <small>{t.promptHint}</small>
-          </div>
+        {showStarter && (
+          <ActionButton variant="primary" className={s.starter} disabled={mic.status !== "idle" || !!draft.trim()}
+            onClick={() => void ask(t.fill, "fill")}>{t.fill}<ArrowUp size={14} aria-hidden="true" /></ActionButton>
         )}
         <textarea
           ref={composer}
           value={draft}
           maxLength={1500}
           rows={2}
-          aria-label={discovery ? recovery.follow : t.type}
-          placeholder={discovery ? recovery.follow : t.type}
+          aria-label={t.type}
+          placeholder={showStarter ? t.promptHint : turns.length ? t.followUp : t.type}
           onChange={(e) => {
             setDraft(e.target.value);
             setDraftIntent(undefined);
@@ -577,22 +578,24 @@ function Conversation({
                 }))}
               />
             )}
-            <IconAction
-              label={t.mic}
-              title={t.mic}
-              disabled={!mic.supported || pending}
-              onClick={() => void mic.toggle()}
-            >
-              <Mic size={17} />
-            </IconAction>
-            <button
-              className={s.send}
-              type="submit"
-              aria-label={t.send}
-              disabled={pending || mic.status !== "idle" || !draft.trim()}
-            >
-              <ArrowUp size={18} />
-            </button>
+            <div className={s.composerActions}>
+              <IconAction
+                label={t.mic}
+                title={t.mic}
+                disabled={!mic.supported || pending}
+                onClick={() => void mic.toggle()}
+              >
+                <Mic size={17} />
+              </IconAction>
+              <button
+                className={s.send}
+                type="submit"
+                aria-label={t.send}
+                disabled={pending || mic.status !== "idle" || !draft.trim()}
+              >
+                <ArrowUp size={18} />
+              </button>
+            </div>
           </footer>
         )}
       </form>
