@@ -281,7 +281,6 @@ function Conversation({
     });
     const draftWord = turn.reply?.suggestions.find(proposal => proposal.kind === "headword")?.text;
     const terms = [discovery ? "" : word, draftWord ?? "", ...(turn.reply?.sources ?? []).map(source => source.word)];
-    const [draftPrefix, draftSuffix] = t.openNamedDraft.split("{word}");
     return <div key={i}>
       <p className={s.bubble}>{turn.question}</p>
       {turn.reply && (
@@ -313,9 +312,10 @@ function Conversation({
               ? <button type="button" className={s.draftLink}
                   onClick={() => discovery.onDraft({turns, draft: "", searchTurnCount: i})}>
                   <FilePenLine size={16} aria-hidden="true" />
-                  {draftWord
-                    ? <span>{draftPrefix}<strong lang={languageCode}>{draftWord}</strong>{draftSuffix}</span>
-                    : <span>{t.openCardDraft}</span>}
+                  <span className={s.draftDestination}>
+                    {draftWord && <strong lang={languageCode}>{draftWord}</strong>}
+                    <span>{t.openCardDraft}</span>
+                  </span>
                   <ArrowRight size={16} aria-hidden="true" />
                 </button>
               : <ActionButton variant="primary" disabled={pending || mic.status !== "idle"}

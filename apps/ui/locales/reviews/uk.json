@@ -1943,13 +1943,12 @@
   "partOfSpeech.other": {"source":"Other","translationHash":"e6510ad6c762a948b9bc8bdaa2211372dedabe329009a590c0ca913b29aa3346"},
   "features.personalAssistant.promptHint": {"source":"Choose a prompt with + or dictate your request.","translationHash":"cc7b6c81a48cdb516ae8888039e6e2fb7f78171649db188b15b1a70632d367eb"},
   "features.personalAssistant.draftFromSearch": {"source":"Suggest a card for the meaning we discussed","translationHash":"f47a8e7489ce7cca4f0b1b1be5b72dc9bb020c06fe8019e1e6d5b0dc39081b56"},
-  "features.personalAssistant.openCardDraft": {"source":"Open card draft","translationHash":"76cec7f287917e344a90dccf3a573cb10c8f5886c1e50fed3efe485e30c1fbe3"},
+  "features.personalAssistant.openCardDraft": {"source":"Go to draft","translationHash":"97a007c72bc92dfbf011121e4afae5abff27be9ba77b2a5f106ff6738235d5ab"},
   "features.personalAssistant.applyAll": {"source":"Apply all","translationHash":"acbaf80f26a32c382b67e496f3dd0adf22e517d1a800634308b25a4f017e522e"},
   "features.personalAssistant.replaceExample": {"source":"Replace example","translationHash":"fda75160a8c5af72fd1db68321b8162735cec7bc3a0548e271d4e6a1cc2ee77c"},
   "features.personalAssistant.followUp": {"source":"Add a detail or ask a follow-up…","translationHash":"4da539bbc480093dab6c4bab00ad15cec1059f82dc570e26429c3017b50860a0"},
   "features.personalAssistant.quote": {"source":"Quote","translationHash":"460622b4584c8a67f77d020087a0ddd625f03d26fb1ae0fa675194ba5990aa90"},
   "features.personalAssistant.searchHistory": {"source":"Search history","translationHash":"6b4f3c88ba0223bae280b3538867f227c12ea003b04e37e35ce7630dc83a4764"},
-  "features.personalAssistant.openNamedDraft": {"source":"Go to the “{word}” draft","translationHash":"0511ae974419863dbe188c62970e2b2ade2546bed8df9b5faafcb6f9098a8520"},
   "features.personalAssistant.expandChat": {"source":"Expand chat","translationHash":"f12a06a0526f3b8a733a7afc42ef8630404ac592a82ab87751afbafc876265fb"},
   "features.personalAssistant.collapseChat": {"source":"Collapse chat","translationHash":"a66e780333553262119fcdb4c0821dd155da91ecd5fdd85a740d618cbab4c5d6"}
 }
