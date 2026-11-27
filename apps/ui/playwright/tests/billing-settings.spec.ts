@@ -110,6 +110,7 @@ for (const profile of [{ width: 1050, height: 790 }, { width: 360, height: 780 }
       window.dispatchEvent(new CustomEvent("paddle-fixture-event", { detail: event }));
     }, { name, data: { transaction_id: transactionId, status } });
 
+    await expect(page.getByRole("button", { name: "Check test payment" })).toBeVisible();
     await expect(page.getByRole("radio", { name: /Yearly/i })).toBeDisabled();
     await emitPaddle("checkout.closed", "txn_month", "draft");
     await expect(page.getByRole("button", { name: "Check test payment" })).toHaveCount(0);
