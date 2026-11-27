@@ -1,11 +1,12 @@
 "use client";
 import { createContext, useContext } from "react";
 import { termsPath, privacyPath } from "@/lib/legal/serviceTerms";
-import { localizedSection } from "@/lib/i18n/catalog";
+import { getInterfaceCatalog } from "@/lib/i18n/catalog";
 import { useInterfaceLanguage } from "@/lib/i18n/useInterfaceLanguage";
 
 export function useTermsCopy() {
-  return localizedSection("serviceTerms")[useInterfaceLanguage()];
+  const catalog = getInterfaceCatalog(useInterfaceLanguage());
+  return { ...catalog.features.serviceTerms, retry: catalog.common.retry };
 }
 
 export const Managed = createContext(false);

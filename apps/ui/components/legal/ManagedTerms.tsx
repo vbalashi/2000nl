@@ -13,18 +13,51 @@ function AccountTerms({ children }: { children: ReactNode }) {
   const copy = useTermsCopy();
   const [user, setUser] = useState<User | null>();
   const [accepted, setAccepted] = useState<string | null>(null);
+  const [checkedAccount, setCheckedAccount] = useState<string | null>(null);
+  const [refreshCheck, setRefreshCheck] = useState(0);
+  const [checkFailed, setCheckFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (!session) setAccepted(null);
+      if (!session) { setAccepted(null); setCheckedAccount(null); }
     });
     return () => data.subscription.unsubscribe();
   }, []);
+  const accountId = user?.id;
+  const acceptedHere = Boolean(accountId && (hasAcceptedTerms(user?.app_metadata) || accepted === accountId));
+  // An existing tab can still hold the session from before acceptance on another device.
+  useEffect(() => {
+    if (!accountId || acceptedHere) return;
+    let active = true;
+    async function verify() {
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (!active) return;
+        if (error || data.user?.id !== accountId) throw new Error();
+        if (hasAcceptedTerms(data.user.app_metadata)) setAccepted(data.user.id);
+        setCheckedAccount(data.user.id);
+        setCheckFailed(false);
+      } catch {
+        if (active) setCheckFailed(true);
+      }
+    }
+    void verify();
+    window.addEventListener("focus", verify);
+    return () => {
+      active = false;
+      window.removeEventListener("focus", verify);
+    };
+  }, [accountId, acceptedHere, refreshCheck]);
   if (user === undefined) return <main aria-busy="true" aria-label={copy.loading} />;
   if (!user) return <AuthScreen />;
-  if (hasAcceptedTerms(user.app_metadata) || accepted === user.id) return children;
+  if (acceptedHere) return children;
+  if (checkedAccount !== user.id) {
+    return checkFailed
+      ? <main className="mx-auto max-w-lg px-6 py-12"><button className="underline" onClick={() => { setCheckFailed(false); setRefreshCheck(value => value + 1); }}>{copy.retry}</button></main>
+      : <main aria-busy="true" aria-label={copy.loading} />;
+  }
 
   async function accept(account: User) {
     setBusy(true);
