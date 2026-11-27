@@ -123,13 +123,6 @@
   font-weight: 600;
 }
 
-.actionList {
-  overflow: hidden;
-  border: 1px solid var(--practice-border);
-  border-radius: var(--practice-radius-dialog);
-  background: var(--practice-surface);
-}
-
 .actionList .portalAction {
   display: grid;
   width: 100%;
@@ -137,16 +130,13 @@
   align-items: center;
   gap: 13px;
   min-height: 48px;
-  padding: 11px 15px;
+  padding: 11px 9px;
   border: 0;
+  border-radius: var(--practice-radius-control);
   background: transparent;
   color: var(--practice-text);
   text-align: start;
   cursor: pointer;
-}
-
-.portalAction + .portalAction {
-  border-top: 1px solid var(--practice-border);
 }
 
 .portalAction[data-danger="true"],
