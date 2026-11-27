@@ -407,7 +407,7 @@ function Conversation({
                     {Icon && <Icon size={12} aria-hidden="true" />}
                     {proposal.kind === "headword" ? catalog.features.personalCard.word : t[proposal.kind]}
                   </h4>
-                  <p className={proposal.kind === "example" ? reading.literary : reading.definitionText}
+                  <p className={`${s.proposalText} ${proposal.kind === "example" ? reading.literary : reading.definitionText}`}
                     lang={proposal.kind === "partOfSpeech" ? interfaceLanguage : languageCode}>
                     {text}
                   </p>
