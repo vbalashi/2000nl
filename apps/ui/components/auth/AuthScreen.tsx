@@ -2,6 +2,7 @@
 import { localizedSection, type MessageCatalog } from "@/lib/i18n/catalog";
 
 import { useInterfaceLanguage } from "@/lib/i18n/useInterfaceLanguage";
+import { LegalLinks } from "@/components/legal/LegalLinks";
 import React, { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { supabase } from "@/lib/supabaseClient";
@@ -208,6 +209,7 @@ export function AuthScreen() {
             {t.title}
           </p>
         </div>
+        <LegalLinks />
         {!otpSent ? (
           <>
             <form className="space-y-4" onSubmit={handleSendOtp}>

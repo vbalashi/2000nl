@@ -1,0 +1,6 @@
+html { color-scheme: light dark; }
+body { max-width: 44rem; margin: auto; padding: 1.5rem; font: 1rem/1.6 system-ui, sans-serif; }
+h1, h2 { line-height: 1.25; }
+h2 { margin-top: 2rem; }
+footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid GrayText; }
+@media print { footer { display: none; } }

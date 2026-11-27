@@ -1,3 +1,5 @@
+import { managedTermsEnabled } from "@/lib/legal/managedTerms";
+import { hasAcceptedTerms } from "@/lib/legal/serviceTerms";
 import { getAuthenticatedUserSupabase, getPlatformServiceSupabase, jsonNoStore } from "@/lib/platform/serverSupabase";
 import { createSandboxTransaction, isSandboxPlan, readSandboxTransaction, readSandboxTransactionConfig } from "@/lib/billing/sandboxTransactions";
 import { readSandboxWebhookConfig, sandboxFulfillmentEnabled } from "@/lib/billing/paddleSandboxWebhook";
@@ -30,6 +32,7 @@ export async function POST(request: Request) {
 
   try {
     if ("plan" in body && isSandboxPlan(body.plan) && Object.keys(body).length === 1) {
+      if (managedTermsEnabled() && !hasAcceptedTerms(auth.user.app_metadata)) return jsonNoStore({ error: "terms_required" }, 403);
       if (!admitStart(auth.user.id)) return jsonNoStore({ error: "checkout_rate_limited" }, 429);
       const service = sandboxFulfillmentEnabled(process.env) ? getPlatformServiceSupabase() : null;
       if (service && (service instanceof Response || !readSandboxWebhookConfig(process.env))) {

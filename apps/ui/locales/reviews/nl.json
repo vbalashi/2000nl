@@ -1972,5 +1972,13 @@
   "ui.settings.premiumOffer.billingStatusError": {"source":"Could not check your subscription. Reopen this section to retry.","translationHash":"f048ac9a0ba73f6b450f85e8c9ed892cd5153148f2660b4386058356768cecf3"},
   "ui.settings.premiumOffer.manageSubscription": {"source":"Manage subscription","translationHash":"5ce175ab059d197246eaed1d6d893d836ff358a00155a15dcf1d9f26a2e7adc2"},
   "ui.settings.premiumOffer.manageSubscriptionHint": {"source":"View payments and invoices, update your payment method or cancel. Sign in with the email used at checkout.","translationHash":"ab28b66db18f46bd3a930cffdc308dcaaac6c3a067cbb35740f14697a354701f"},
-  "ui.settings.premiumOffer.openPaddlePortal": {"source":"Open Paddle portal","translationHash":"95c38fea19ba9b52dd535c578c44b5673e852e3fb4f44f967b1835b951f4d137"}
+  "ui.settings.premiumOffer.openPaddlePortal": {"source":"Open Paddle portal","translationHash":"95c38fea19ba9b52dd535c578c44b5673e852e3fb4f44f967b1835b951f4d137"},
+  "features.serviceTerms.terms": {"source":"Terms of service (English)","translationHash":"6fd425a63fa27802061f164ecba8819376c2a76bc03ed66e171a88e8f6b1917d"},
+  "features.serviceTerms.privacy": {"source":"Privacy notice (English)","translationHash":"8b6690287ce597c6b173642a35b51431d1401032bfe164ebbe57c0f7b5ee72b1"},
+  "features.serviceTerms.loading": {"source":"Loading account","translationHash":"97f1bfbfbca44d4a6ef9b1fab739dcfe21523d39295b88c8be9dbade1d828668"},
+  "features.serviceTerms.welcome": {"source":"Welcome to 2000NL","translationHash":"3ae59f4798c210424451b95ed96211ad9d04d4fcb4e7e2daa92e8baa4ff97136"},
+  "features.serviceTerms.explanation": {"source":"Please read the terms before continuing. The privacy notice explains how we use account, learning and subscription data.","translationHash":"7fc7d5e11cfd77629b0f7c7e70066f8e851635a8015f4b8148933745b462fcbb"},
+  "features.serviceTerms.error": {"source":"Your acceptance could not be saved. Please try again.","translationHash":"0bd76aef0e047cd288489e2d9fcf1d38251c5633c77e715aa4b937f6d28136be"},
+  "features.serviceTerms.accept": {"source":"I accept the terms of service","translationHash":"f7c4b14aa84db53d72c13d5978d3650739f582d652f72d8d238d15d409f134a5"},
+  "features.serviceTerms.signOut": {"source":"Sign out","translationHash":"8181580ff5616ea4205e44e2eb900e46788ac9a08e8665cbf0b549beca0b820a"}
 }

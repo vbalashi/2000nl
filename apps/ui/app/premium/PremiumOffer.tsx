@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { LegalLinks } from "@/components/legal/LegalLinks";
 import Link from "next/link";
 import { getUiMessages } from "@/lib/uiMessages";
 import { fetchSandboxCatalog } from "@/lib/billing/fetchSandboxCatalog";
@@ -104,6 +105,7 @@ export function PremiumOffer({ language }: { language: string }) {
               </div>
             </fieldset>
             <p className={s.terms}>{copy[plan === "month" ? "monthlyTerms" : "yearlyTerms"]}</p>
+            <LegalLinks />
             {!receipt && <button type="button" className={s.primary} disabled={!offer || !checkoutReady || failed || checkoutBusy} onClick={startCheckout}>{copy.checkout}</button>}
             {receipt && paymentStatus !== "completed" && paymentStatus !== "canceled" &&
               <button type="button" className={s.primary} disabled={checkoutBusy} onClick={refreshPayment}>{copy.checkPayment}</button>}
