@@ -51,15 +51,17 @@ for (const language of ["en", "nl", "ru"] as const) {
       await expect(stage).toHaveAttribute("data-side",side);
       await expect(stage).not.toHaveAttribute("data-reveal-moving","true");
       await page.evaluate(async()=>{await document.fonts.ready;await new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));});
-      const shellBefore = await page.getByTestId("training-sense-card-shell").boundingBox();
-      const dockBefore = await page.getByTestId("training-sense-card-dock").boundingBox();
       await opener.click();
       const choice = page.getByRole("region", {name:copy.choiceLabel, exact:true});
       await expect(choice.getByRole("button",{name:copy.next,exact:true})).toBeEnabled();
       await expect(choice.getByRole("group")).toHaveCount(2);
       expect(await choice.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
-      expect(await page.getByTestId("training-sense-card-shell").boundingBox()).toEqual(shellBefore);
-      expect(await page.getByTestId("training-sense-card-dock").boundingBox()).toEqual(dockBefore);
+      const back = choice.getByRole("button", {name:copy.back, exact:true});
+      const dock = choice.getByTestId("training-sense-card-dock");
+      await expect(dock).toContainText(copy.back);
+      const bounds = await back.boundingBox();
+      expect(bounds).not.toBeNull();
+      expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(568);
       // Editing either direction remains local until Next.
       await choice.getByRole("button",{name:copy.markKnown,exact:true}).click();
       await expect(choice.getByText(copy.known,{exact:true})).toHaveCount(2);

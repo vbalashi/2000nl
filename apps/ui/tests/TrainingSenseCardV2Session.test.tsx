@@ -433,8 +433,8 @@ describe("TrainingSenseCardV2Session", () => {
     fireEvent.click(await screen.findByRole("button",{name:"Mark as known"}));
     await screen.findByRole("button",{name:"Return to learning"});
     expect(progressRead).toHaveBeenCalledWith(word.id,expect.any(AbortSignal));
-    expect(screen.getByRole("group",{name:"Word from meaning"})).toHaveTextContent("Already know");
-    expect(screen.getByRole("group",{name:"Meaning from word"})).toHaveTextContent("Still learning");
+    expect(screen.getByRole("group",{name:"Meaning → Word"})).toHaveTextContent("Already know");
+    expect(screen.getByRole("group",{name:"Word → Meaning"})).toHaveTextContent("Still learning");
     fireEvent.click(screen.getByRole("button",{name:"Go back"}));expect(performAction).not.toHaveBeenCalled();
   });
 

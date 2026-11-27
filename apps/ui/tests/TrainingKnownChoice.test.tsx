@@ -13,8 +13,8 @@ beforeEach(()=>{vi.clearAllMocks();vi.mocked(fetchMeaningProgress).mockResolvedV
 test("stages current direction, preserves existing sibling and cancels without any write",async()=>{
  const {onBack}=mount();await screen.findAllByRole('button',{name:'Вернуть в обучение'});
  expect(screen.getAllByText('Уже знаю')).toHaveLength(2);
- const current=screen.getByRole('group',{name:'Определение по слову'});
- const sibling=screen.getByRole('group',{name:'Слово по определению'});
+ const current=screen.getByRole('group',{name:'Слово → Значение'});
+ const sibling=screen.getByRole('group',{name:'Значение → Слово'});
  expect(current).toHaveAttribute('data-motion','mark');
  expect(sibling).not.toHaveAttribute('data-motion');
  fireEvent.click(screen.getAllByRole('button',{name:'Вернуть в обучение'})[1]);
