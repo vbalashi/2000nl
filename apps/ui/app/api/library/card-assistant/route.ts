@@ -40,6 +40,13 @@ function extract(value: unknown): Suggestion[] {
     return [{ kind: kind as Suggestion["kind"], text: trimmed }];
   });
 }
+function sourcesForMatches(matches: unknown, candidates: SourceHit[]): SourceHit[] {
+  if (!Array.isArray(matches)) return [];
+  const sourcesById = new Map(candidates.map((hit) => [hit.entryId, hit]));
+  return [...new Set(matches)]
+    .flatMap((id) => sourcesById.get(id) ?? [])
+    .slice(0, 8);
+}
 function readArticle(raw: unknown) {
   const input = record(raw);
   if (
@@ -410,13 +417,14 @@ export async function POST(request: NextRequest) {
     }
     const reply = record(JSON.parse(answer.content)),
       message = bounded(reply.message, 6000);
-    if (!message) return jsonNoStore({ error: "invalid_answer" }, 502);
+    if (!message || (discovery && !Array.isArray(reply.matches)))
+      return jsonNoStore({ error: "invalid_answer" }, 502);
     return jsonNoStore({
       mode: "provider",
       message,
       searched,
-      sources: discovery && Array.isArray(reply.matches)
-        ? Array.from(new Set(reply.matches)).flatMap(id=>sources.find(hit=>hit.entryId===id) ?? []).slice(0,8)
+      sources: discovery
+        ? sourcesForMatches(reply.matches, sources)
         : sources,
       suggestions: compare || discovery ? [] : extract(reply.suggestions),
     });

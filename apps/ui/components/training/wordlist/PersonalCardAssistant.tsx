@@ -47,6 +47,7 @@ type Props = {
 };
 type Exchange = {
   question: string;
+  intent?: string;
   reply?: AssistantReply;
   error?: boolean;
   applied?: number[];
@@ -81,7 +82,8 @@ function Conversation({
     [pending, setPending] = useState(false);
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null),
     [copied, setCopied] = useState("");
-  const speech = getInterfaceCatalog(interfaceLanguage).features.dictation;
+  const catalog = getInterfaceCatalog(interfaceLanguage);
+  const speech = catalog.features.dictation;
   const mic = useAzureDictation((text) =>
     setDraft((current) =>
       (current.trimEnd() + " " + text).trimStart().slice(0, 1500),
@@ -138,7 +140,7 @@ function Conversation({
       input.style.height = input.scrollHeight + "px";
     }
   }, [draft]);
-  const ask = async (value: string, intent?: string) => {
+  const ask = async (value: string, intent?: string, retry = false) => {
     const question = value.trim();
     if (!question || request.current || mic.status !== "idle") return;
     const controller = new AbortController();
@@ -159,9 +161,9 @@ function Conversation({
             ]
           : [],
     );
-    setTurns((old) => [...old, { question }]);
+    setTurns((old) => [...(retry ? old.slice(0, -1) : old), { question, intent }]);
     setAnchor(null);
-    setDraft("");
+    if (!retry) setDraft("");
     setPending(true);
     try {
       const response = await fetch("/api/library/card-assistant", {
@@ -406,7 +408,19 @@ function Conversation({
                     })}
                   </>
                 )}
-                {turn.error && <p role="alert">{t.error}</p>}
+                {turn.error && (
+                  <>
+                    <p role="alert">{t.error}</p>
+                    {i === turns.length - 1 && (
+                      <ActionButton
+                        disabled={pending || mic.status !== "idle"}
+                        onClick={() => void ask(turn.question, turn.intent, true)}
+                      >
+                        {catalog.common.retry}
+                      </ActionButton>
+                    )}
+                  </>
+                )}
               </div>
             ))}
             {pending && <p role="status">{t.waiting}</p>}
