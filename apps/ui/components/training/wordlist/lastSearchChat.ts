@@ -7,7 +7,7 @@ export function openSearchChat(key:string, userId:string, context:Context, start
   const fresh = {...context,id:crypto.randomUUID(),turns:[],draft:""};
   try {
     const stored = JSON.parse(localStorage.getItem(key) ?? "null");
-    if (!startSearch && stored && typeof stored.id==="string" && typeof stored.language==="string" && Array.isArray(stored.turns)) return stored;
+    if (!startSearch && stored && typeof stored.id==="string" && stored.language===context.language && Array.isArray(stored.turns)) return stored;
     // Bring forward the conversation from the preceding tab-only editor once.
     const legacy = "2000nl.search-chat.v1." + JSON.stringify([userId,context.language]);
     const old = JSON.parse(sessionStorage.getItem(legacy) ?? "null");

@@ -1940,5 +1940,10 @@
   "features.searchRecovery.prompt": {"source":"Help me find the meaning","translationHash":"793368abba2f901446bf3bbd58f70f1ad3ef240f354559a79427189018b5a3ae"},
   "features.searchRecovery.follow": {"source":"Ask about these results…","translationHash":"102d242d7ac81ef5f345d85ff0277dc60d34b77935eaf97c7ae97675d101c5dd"},
   "features.personalCard.deleteDraft": {"source":"Delete draft","translationHash":"295c4731fc4e699bb22fe7c97428f14eb3314649cc2d88bf0eeb887bfda20dc3"},
-  "partOfSpeech.other": {"source":"Other","translationHash":"978e44bbc6ed1de06b9c63d69bd66268e6c209825456d4c644dba636bb219aea"}
+  "partOfSpeech.other": {"source":"Other","translationHash":"978e44bbc6ed1de06b9c63d69bd66268e6c209825456d4c644dba636bb219aea"},
+  "features.personalAssistant.promptHint": {"source":"Send this prompt, choose another with +, or dictate your own.","translationHash":"9d3384dd29db2facccb9270ac20397fa3ce073be3c6911a8241f1f9f80d35607"},
+  "features.personalAssistant.draftFromSearch": {"source":"Suggest a card for the meaning we discussed","translationHash":"6c7ce9c03d1e34fccf4f950eeb8821cfdbf96a13db29c387b04e36c45bf31093"},
+  "features.personalAssistant.openCardDraft": {"source":"Open card draft","translationHash":"0dc2e74428e7d086d2b435b7e45e4f22952957fdb382767a72771819067c730e"},
+  "features.personalAssistant.applyAll": {"source":"Apply all","translationHash":"6a896cfc00e68324c7da9b5b9f72382e6f4f61e0f8f5732adcd6d465dbe10363"},
+  "features.personalAssistant.replaceExample": {"source":"Replace example","translationHash":"f642135cd8b3e8e3a0ad35833be47090f7c12386e5bfe225dcc02eea493af9af"}
 }

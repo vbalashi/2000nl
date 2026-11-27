@@ -2161,7 +2161,12 @@
       "waiting": "Even denken…",
       "error": "Geen antwoord ontvangen. Probeer het opnieuw.",
       "earlier": "Eerdere berichten",
-      "later": "Volgende berichten"
+      "later": "Volgende berichten",
+      "promptHint": "Verstuur deze opdracht, kies een andere via + of spreek je eigen vraag in.",
+      "draftFromSearch": "Stel een kaart voor bij deze betekenis",
+      "openCardDraft": "Kaartconcept openen",
+      "applyAll": "Alles toepassen",
+      "replaceExample": "Voorbeeld vervangen"
     },
     "dictation": {
       "stop": "Dicteren stoppen",

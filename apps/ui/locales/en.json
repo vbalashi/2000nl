@@ -2161,7 +2161,12 @@
       "waiting": "Thinking…",
       "error": "Could not get an answer. Try again.",
       "earlier": "Earlier messages",
-      "later": "Later messages"
+      "later": "Later messages",
+      "promptHint": "Send this prompt, choose another with +, or dictate your own.",
+      "draftFromSearch": "Suggest a card for the meaning we discussed",
+      "openCardDraft": "Open card draft",
+      "applyAll": "Apply all",
+      "replaceExample": "Replace example"
     },
     "dictation": {
       "stop": "Stop dictation",

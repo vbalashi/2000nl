@@ -36,14 +36,14 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-async function discover(matches?: unknown) {
+async function discover(matches?: unknown, reply: Record<string, unknown> = {}, intent = "find-meaning") {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(Response.json({
     choices: [{ message: { tool_calls: [{
       id: "lookup",
       function: { name: "search_library", arguments: '{"query":"soeplepel"}' },
     }] } }],
   })).mockResolvedValueOnce(Response.json({
-    choices: [{ message: { content: JSON.stringify({ message: "A ladle is a soeplepel.", matches }) } }],
+    choices: [{ message: { content: JSON.stringify({ message: "A ladle is a soeplepel.", matches, ...reply }) } }],
   })));
   return POST(new NextRequest("http://localhost/api/library/card-assistant", {
     method: "POST",
@@ -51,7 +51,7 @@ async function discover(matches?: unknown) {
       word: "soep",
       definition: "",
       question: "What is the word for a soup ladle?",
-      intent: "find-meaning",
+      intent,
       languageCode: "nl",
       interfaceLanguage: "en",
     }),
@@ -100,4 +100,45 @@ it.each(["", "eigen keuze"])("only returns a valid headword for an empty draft (
     ...(word ? [] : [{ kind: "headword", text: "op de hoogte houden" }]),
     { kind: "definition", text: "iemand blijven informeren" },
   ]);
+});
+
+it.each(["find-meaning", "draft-from-search"])("passes a validated card draft through the search route (%s)", async (intent) => {
+  const suggestions = [
+    { kind: "headword", text: "soeplepel" },
+    { kind: "definition", text: "grote lepel om soep op te scheppen" },
+  ];
+  const response = await discover(["ladle"], { cardDraft: true, suggestions }, intent);
+  const reply = await response.json();
+  expect(reply).toMatchObject({ cardDraft: true, suggestions, sources: [{ entryId: "ladle" }] });
+  const incomplete = await discover([], { cardDraft: true, suggestions: suggestions.slice(0, 1) }, intent);
+  expect(await incomplete.json()).toMatchObject({ suggestions: [] });
+});
+
+it("binds an example replacement to the example present in the draft", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({
+    choices: [{ message: { content: JSON.stringify({
+      message: "Here is a revision.",
+      suggestions: [
+        { kind: "example", text: "New second example", replaceExample: 2 },
+        { kind: "example", text: "An invalid replacement", replaceExample: 3 },
+      ],
+    }) } }],
+  })));
+  const definition = "een lamp aan een muur";
+  const response = await POST(new NextRequest("http://localhost/api/library/card-assistant", {
+    method: "POST",
+    body: JSON.stringify({
+      word: "wandlamp", definition, question: "Replace the second example",
+      languageCode: "nl", interfaceLanguage: "en",
+      article: { senses: [{ definition, fields: [
+        { kind: "example", text: "First example" },
+        { kind: "note", text: "A note between examples" },
+        { kind: "example", text: "Second example" },
+      ] }] },
+    }),
+  }));
+
+  expect(await response.json()).toMatchObject({ suggestions: [
+    { kind: "example", text: "New second example", replaces: { ordinal: 2, text: "Second example" } },
+  ] });
 });

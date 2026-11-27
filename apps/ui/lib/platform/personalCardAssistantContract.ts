@@ -10,7 +10,7 @@ export const kinds = [
   "expression",
   "partOfSpeech",
 ] as const;
-export type Suggestion = { kind: (typeof kinds)[number]; text: string };
+export type Suggestion = { kind: (typeof kinds)[number]; text: string; replaces?: { ordinal: number; text: string } };
 export type AssistantArticle = {
   kind?: "word" | "expression";
   nounArticle?: "de" | "het" | null;
@@ -31,6 +31,7 @@ export type AssistantReply = {
   suggestions: Suggestion[];
   sources?: SourceHit[];
   searched?: boolean;
+  cardDraft?: boolean;
 };
 export type AssistantTurn = { role: "user" | "assistant"; text: string };
 export function assistantLabels(language: string) {

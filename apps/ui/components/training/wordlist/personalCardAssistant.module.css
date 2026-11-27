@@ -209,3 +209,10 @@
 }
 
 .sourceLink { color:var(--practice-accent); text-decoration:underline; text-underline-offset:3px; font-weight:600; cursor:pointer; }
+
+.starter {
+  display: grid;
+  justify-items: start;
+  gap: 5px;
+  padding: 2px 4px 6px;
+}

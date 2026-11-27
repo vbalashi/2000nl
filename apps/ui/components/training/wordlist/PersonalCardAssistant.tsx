@@ -33,7 +33,7 @@ import {searchRecoveryCopy} from "./searchRecoveryCopy";
 import s from "./personalCardAssistant.module.css";
 export type { Suggestion } from "@/lib/platform/personalCardAssistantContract";
 type Props = {
-  discovery?: {chat:SearchChat;storageKey:string; startSearch:boolean; category:string; scope:string; onClear:()=>void; onSelect:(hit:SourceHit)=>void};
+  discovery?: {chat:SearchChat;storageKey:string; startSearch:boolean; category:string; scope:string; onClear:()=>void; onSelect:(hit:SourceHit)=>void; onDraft:(snapshot:AssistantSnapshot)=>void};
   word: string;
   definition: string;
   languageCode: string;
@@ -43,7 +43,7 @@ type Props = {
   article?: AssistantArticle;
   session?: AssistantSession;
   onClose: () => void;
-  onApply: (suggestion: Suggestion, senseKey: string) => void;
+  onApply: (suggestions: Suggestion[], senseKey: string) => void;
 };
 type Exchange = {
   question: string;
@@ -52,7 +52,7 @@ type Exchange = {
   error?: boolean;
   applied?: number[];
 };
-export type AssistantSnapshot = {turns:Exchange[];draft:string};
+export type AssistantSnapshot = {turns:Exchange[];draft:string;intent?:string};
 export type AssistantSession = Map<string,AssistantSnapshot>;
 export function PersonalCardAssistant(props: Props) {
   return <Conversation key={props.senseKey} {...props} />;
@@ -79,16 +79,16 @@ function Conversation({
   const restored = discovery?.chat ?? session?.get(senseKey);
   const [turns, setTurns] = useState<Exchange[]>(restored?.turns ?? []),
     [draft, setDraft] = useState(restored?.draft ?? ""),
+    [draftIntent, setDraftIntent] = useState(restored?.intent),
     [pending, setPending] = useState(false);
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null),
     [copied, setCopied] = useState("");
   const catalog = getInterfaceCatalog(interfaceLanguage);
   const speech = catalog.features.dictation;
-  const mic = useAzureDictation((text) =>
-    setDraft((current) =>
-      (current.trimEnd() + " " + text).trimStart().slice(0, 1500),
-    ),
-  );
+  const mic = useAzureDictation((text) => {
+    setDraftIntent(undefined);
+    setDraft((current) => (current.trimEnd() + " " + text).trimStart().slice(0, 1500));
+  });
   const [edges, setEdges] = useState({ top: false, bottom: false });
   const history = useRef<HTMLDivElement>(null),
     list = useRef<HTMLDivElement>(null),
@@ -102,6 +102,7 @@ function Conversation({
     // Closing the panel cancels the request. Keep its unanswered question in the composer.
     const snapshot = {
       turns: completed,
+      intent: draft ? draftIntent : completed.length < turns.length ? turns.at(-1)?.intent : undefined,
       draft:
         draft ||
         (completed.length < turns.length
@@ -110,7 +111,7 @@ function Conversation({
     };
     session?.set(senseKey,snapshot);
     if (searchStorageKey && searchChat) saveSearchChat(searchStorageKey,searchChat,snapshot);
-  }, [session, senseKey, turns, draft, searchStorageKey, searchChat]);
+  }, [session, senseKey, turns, draft, draftIntent, searchStorageKey, searchChat]);
   const updateEdges = () => {
     const h = history.current;
     if (h)
@@ -163,7 +164,10 @@ function Conversation({
     );
     setTurns((old) => [...(retry ? old.slice(0, -1) : old), { question, intent }]);
     setAnchor(null);
-    if (!retry) setDraft("");
+    if (!retry) {
+      setDraft("");
+      setDraftIntent(undefined);
+    }
     setPending(true);
     try {
       const response = await fetch("/api/library/card-assistant", {
@@ -178,7 +182,7 @@ function Conversation({
           question,
           languageCode,
           interfaceLanguage,
-          intent: discovery ? "find-meaning" : intent,
+          intent: discovery ? intent ?? "find-meaning" : intent,
           searchCategory:discovery?.category,
           searchScope:discovery?.scope,
           history: conversation
@@ -213,6 +217,20 @@ function Conversation({
     const timer = window.setTimeout(() => { void sendInitial.current(initialSearch.current!); },0);
     return () => window.clearTimeout(timer);
   }, []);
+  const currentExamples = context.senses[ordinal - 1]?.fields.filter(field => field.kind === "example") ?? [];
+  function canApply(turn: Exchange, proposal: Suggestion, index: number) {
+    return !turn.applied?.includes(index) &&
+      (proposal.kind !== "headword" || !word.trim()) &&
+      (!proposal.replaces || currentExamples[proposal.replaces.ordinal - 1]?.text === proposal.replaces.text);
+  }
+  function apply(turnIndex: number, indexes: number[]) {
+    const turn = turns[turnIndex];
+    const proposals = turn.reply?.suggestions ?? [];
+    onApply(indexes.map(index => proposals[index]), senseKey);
+    setTurns(old => old.map((item, index) => index === turnIndex
+      ? { ...item, applied: [...(item.applied ?? []), ...indexes] }
+      : item));
+  }
   function scroll(direction: number) {
     const h = history.current;
     h?.scrollBy({
@@ -238,7 +256,7 @@ function Conversation({
           <Sparkles size={16} />
           {discovery ? recovery.chat : t.title}
         </h3>
-        {discovery && (turns.length>0 || draft) && <IconAction label={recovery.clearChat} title={recovery.clearChat} disabled={pending} onClick={()=>{setTurns([]);setDraft("");discovery.onClear();composer.current?.focus();}}>
+        {discovery && (turns.length>0 || draft) && <IconAction label={recovery.clearChat} title={recovery.clearChat} disabled={pending} onClick={()=>{setTurns([]);setDraft("");setDraftIntent(undefined);discovery.onClear();composer.current?.focus();}}>
           <Trash2 size={15}/>
         </IconAction>}
         <IconAction label={t.close} onClick={onClose}>
@@ -309,8 +327,15 @@ function Conversation({
           }}
         >
           <div ref={list}>
-            {turns.map((turn, i) => (
-              <div key={i}>
+            {turns.map((turn, i) => {
+              const proposals = discovery ? [] : turn.reply?.suggestions ?? [];
+              const applicable = proposals.flatMap((proposal, index) => canApply(turn, proposal, index) ? [index] : []);
+              const targets = applicable.map(index => {
+                const proposal = proposals[index];
+                if (proposal.replaces) return "example:" + proposal.replaces.ordinal;
+                return ["headword", "definition", "partOfSpeech"].includes(proposal.kind) ? proposal.kind : index;
+              });
+              return <div key={i}>
                 <p className={s.bubble}>{turn.question}</p>
                 {turn.reply && (
                   <>
@@ -339,7 +364,16 @@ function Conversation({
                         ))}
                       </div>
                     )}
-                    {turn.reply.suggestions.map((proposal, j) => {
+                    {discovery && turn.reply.mode === "provider" && i === turns.length - 1 && (
+                      turn.reply.cardDraft && turn.reply.suggestions.length > 0
+                        ? <ActionButton onClick={() => discovery.onDraft({turns, draft: ""})}>{t.openCardDraft}</ActionButton>
+                        : <ActionButton disabled={pending || mic.status !== "idle"}
+                            onClick={() => void ask(t.draftFromSearch, "draft-from-search")}>{t.draftFromSearch}</ActionButton>
+                    )}
+                    {applicable.length > 1 && new Set(targets).size === targets.length && (
+                      <ActionButton onClick={() => apply(i, applicable)}>{t.applyAll}</ActionButton>
+                    )}
+                    {proposals.map((proposal, j) => {
                       const text =
                         proposal.kind === "partOfSpeech"
                           ? (getPartOfSpeechLabel(
@@ -361,22 +395,10 @@ function Conversation({
                             {text}
                           </p>
                           <ActionButton
-                            disabled={turn.applied?.includes(j) || (proposal.kind === "headword" && !!word.trim())}
-                            onClick={() => {
-                              onApply(proposal, senseKey);
-                              setTurns((old) =>
-                                old.map((v, k) =>
-                                  k === i
-                                    ? {
-                                        ...v,
-                                        applied: [...(v.applied ?? []), j],
-                                      }
-                                    : v,
-                                ),
-                              );
-                            }}
+                            disabled={!canApply(turn, proposal, j)}
+                            onClick={() => apply(i, [j])}
                           >
-                            {turn.applied?.includes(j) ? t.used : t.use}
+                            {turn.applied?.includes(j) ? t.used : proposal.replaces ? t.replaceExample : t.use}
                           </ActionButton>
                           <ActionButton
                             onClick={() =>
@@ -421,8 +443,8 @@ function Conversation({
                     )}
                   </>
                 )}
-              </div>
-            ))}
+              </div>;
+            })}
             {pending && <p role="status">{t.waiting}</p>}
           </div>
         </div>
@@ -441,7 +463,7 @@ function Conversation({
         className={s.composer}
         onSubmit={(e) => {
           e.preventDefault();
-          void ask(draft);
+          void ask(draft, draftIntent);
         }}
       >
         {(mic.issue || mic.status !== "idle") && (
@@ -453,6 +475,13 @@ function Conversation({
                 : ""}
           </small>
         )}
+        {!discovery && turns.length === 0 && word.trim() && (
+          <div className={s.starter}>
+            <ActionButton disabled={mic.status !== "idle" || !!draft.trim()}
+              onClick={() => void ask(t.fill, "fill")}>{t.fill}</ActionButton>
+            <small>{t.promptHint}</small>
+          </div>
+        )}
         <textarea
           ref={composer}
           value={draft}
@@ -460,7 +489,10 @@ function Conversation({
           rows={2}
           aria-label={discovery ? recovery.follow : t.type}
           placeholder={discovery ? recovery.follow : t.type}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            setDraftIntent(undefined);
+          }}
           onKeyDown={(e) => {
             if (
               e.key === "Enter" &&
@@ -468,7 +500,7 @@ function Conversation({
               !e.nativeEvent.isComposing
             ) {
               e.preventDefault();
-              void ask(draft);
+              void ask(draft, draftIntent);
             }
           }}
         />
@@ -536,7 +568,12 @@ function Conversation({
                   id: key,
                   label: t[key],
                   disabled: key === "compare" && context.senses.length < 2,
-                  onSelect: () => void ask(t[key], key),
+                  onSelect: () => {
+                    setDraft(current => (current.trim() ? current.trimEnd() + "\n" + t[key] : t[key]).slice(0, 1500));
+                    setDraftIntent(draft.trim() ? undefined : key);
+                    setAnchor(null);
+                    composer.current?.focus();
+                  },
                 }))}
               />
             )}

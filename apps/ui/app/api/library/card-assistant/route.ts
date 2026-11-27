@@ -26,10 +26,10 @@ const record = (value: unknown): Record<string, unknown> =>
 function bounded(value: unknown, max: number) {
   return typeof value === "string" && value.length <= max ? value.trim() : null;
 }
-function extract(value: unknown, allowHeadword: boolean): Suggestion[] {
+function extract(value: unknown, allowHeadword: boolean, examples: string[]): Suggestion[] {
   if (!Array.isArray(value)) return [];
   return value.slice(0, 8).flatMap((item) => {
-    const { kind, text } = record(item),
+    const { kind, text, replaceExample } = record(item),
       trimmed = bounded(text, kind === "headword" ? 300 : 1500);
     if (!trimmed || !kinds.includes(kind as Suggestion["kind"])) return [];
     if (kind === "headword" && (!allowHeadword || /[\r\n\u2028\u2029]/.test(trimmed))) return [];
@@ -38,7 +38,12 @@ function extract(value: unknown, allowHeadword: boolean): Suggestion[] {
       !VOCABULARY_PARTS.some((item) => item.code === trimmed)
     )
       return [];
-    return [{ kind: kind as Suggestion["kind"], text: trimmed }];
+    const suggestion: Suggestion = { kind: kind as Suggestion["kind"], text: trimmed };
+    if (kind === "example" && replaceExample !== undefined) {
+      if (typeof replaceExample !== "number" || !Number.isInteger(replaceExample) || !examples[replaceExample - 1]) return [];
+      suggestion.replaces = { ordinal: replaceExample, text: examples[replaceExample - 1] };
+    }
+    return [suggestion];
   });
 }
 function sourcesForMatches(matches: unknown, candidates: SourceHit[]): SourceHit[] {
@@ -153,7 +158,7 @@ export async function POST(request: NextRequest) {
   // Russian questions can contain long Dutch quotes. Give the model an explicit
   // language hint when the learner uses common Russian question or request words.
   const russianRequest = /(?:^|[^\p{L}])(?:что|это|как|чем|почему|можно|слово|значит|объясни|объясните|сравни|предложи|помоги|напиши|русском|расскажи|дай|хочу|пожалуйста|добавь|переведи)(?=$|[^\p{L}])/iu;
-  const lastFreeQuestion = body.intent && body.intent !== "find-meaning"
+  const lastFreeQuestion = body.intent && body.intent !== "find-meaning" && body.intent !== "draft-from-search"
     ? history.filter(turn => turn.role === "user").at(-1)?.text
     : question;
   const replyLanguageHint = lastFreeQuestion && russianRequest.test(lastFreeQuestion)
@@ -163,7 +168,8 @@ export async function POST(request: NextRequest) {
     apiKey = config.apiKeys.openai;
   const similar = body.intent === "similar",
     compare = body.intent === "compare";
-  const discovery = body.intent === "find-meaning";
+  const draftFromSearch = body.intent === "draft-from-search";
+  const discovery = body.intent === "find-meaning" || draftFromSearch;
   const originalGroup = body.searchCategory === "examples" || body.searchCategory === "definitions" ? body.searchCategory : "headwords";
   const search = body.intent === "search" || similar;
   const accountId = auth.principal.userId;
@@ -420,6 +426,14 @@ export async function POST(request: NextRequest) {
       message = bounded(reply.message, 6000);
     if (!message || (discovery && !Array.isArray(reply.matches)))
       return jsonNoStore({ error: "invalid_answer" }, 502);
+    const examples = article.senses[selectedOrdinal - 1].fields
+      .filter((field) => field.kind === "example").map((field) => field.text);
+    const suggestions = compare || (discovery && reply.cardDraft !== true)
+      ? []
+      : extract(reply.suggestions, discovery || !word, examples);
+    const cardDraft = discovery
+      && suggestions.some(item => item.kind === "headword")
+      && suggestions.some(item => item.kind === "definition");
     return jsonNoStore({
       mode: "provider",
       message,
@@ -427,7 +441,8 @@ export async function POST(request: NextRequest) {
       sources: discovery
         ? sourcesForMatches(reply.matches, sources)
         : sources,
-      suggestions: compare || discovery ? [] : extract(reply.suggestions, !word),
+      ...(cardDraft ? { cardDraft: true } : {}),
+      suggestions: discovery && !cardDraft ? [] : suggestions,
     });
   } catch (error) {
     return jsonNoStore(

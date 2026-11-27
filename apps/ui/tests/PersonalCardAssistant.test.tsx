@@ -43,6 +43,8 @@ it("retries the failed turn with its original intent and keeps the next draft", 
 
   fireEvent.click(screen.getByRole("button", { name: "Prompts" }));
   fireEvent.click(screen.getByRole("menuitem", { name: "Suggest a definition" }));
+  expect(request).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Send" }));
   await screen.findByRole("alert");
   const composer = screen.getByRole("textbox", { name: "Ask about this meaning…" });
   fireEvent.change(composer, { target: { value: "My next question" } });
@@ -93,4 +95,20 @@ it("applies a headword to an empty card and saves it with the suggested definiti
     headword: "uitstellen",
     senses: [expect.objectContaining({ definition: "iets op een later moment laten gebeuren" })],
   })));
+});
+
+it("sends the visible starter directly", async () => {
+  const request = vi.fn().mockResolvedValue(Response.json({
+    mode: "provider", message: "Here is a definition.", suggestions: [],
+  }));
+  vi.stubGlobal("fetch", request);
+  render(<PersonalCardAssistant
+    word="uitstellen" definition="" languageCode="nl" interfaceLanguage="en"
+    senseKey="draft" ordinal={1} onClose={() => {}} onApply={() => {}}
+  />);
+  fireEvent.click(screen.getByRole("button", { name: "Suggest a definition" }));
+  await screen.findByText("Here is a definition.");
+  expect(JSON.parse(request.mock.calls[0][1].body)).toMatchObject({
+    question: "Suggest a definition", intent: "fill",
+  });
 });
