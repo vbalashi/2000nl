@@ -52,6 +52,14 @@ describe("server-owned sandbox checkout", () => {
     expect(api).not.toHaveBeenCalled();
   });
 
+  it("requires a server-recorded service agreement before starting a managed checkout", async () => {
+    vi.stubEnv("DILUM_SERVICE_TERMS_DIR", "/managed/legal");
+    vi.stubEnv("DEPLOYMENT_ENV", "staging");
+    auth.mockResolvedValue({ user: { id: "learner", user_metadata: { dilum_terms_version: "2026-11-27" } } });
+    expect((await POST(request({ plan: "year" }))).status).toBe(403);
+    expect(api).not.toHaveBeenCalled();
+  });
+
   it("opens the configured monthly transaction and confirms payment only from Paddle for its owner", async () => {
     api.mockResolvedValueOnce(providerTransaction("draft"));
     const created = await POST(request({ plan: "month" }));

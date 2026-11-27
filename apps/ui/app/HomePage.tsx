@@ -1,4 +1,5 @@
 "use client";
+import { TermsGate } from "@/components/legal/ManagedTerms";
 import { requestAdmission } from "@/lib/admission/client";
 import type { AdmissionState } from "@/lib/admission/contract";
 import { PendingAdmission } from "@/components/admission/PendingAdmission";
@@ -193,7 +194,7 @@ export default function HomePage({invitationCode}:{invitationCode?:string|null}=
   }
 
   return (
-    <>
+    <TermsGate>
       <DevDatabaseWarning />
       <TrainingLibraryShell
         key={user.id}
@@ -202,6 +203,6 @@ export default function HomePage({invitationCode}:{invitationCode?:string|null}=
         invitationCode={recoveredInvitation?.userId===user.id?recoveredInvitation.code:intakeOwner===user.id?pendingInvitation:null}
         onInvitationConsumed={clearInvitation}
       />
-    </>
+    </TermsGate>
   );
 }

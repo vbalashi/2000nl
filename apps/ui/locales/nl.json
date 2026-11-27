@@ -2219,6 +2219,16 @@
       "help": "Help de betekenis te vinden",
       "prompt": "Help me de betekenis te vinden",
       "follow": "Vraag naar deze resultaten…"
+    },
+    "serviceTerms": {
+      "terms": "Gebruiksvoorwaarden (Engels)",
+      "privacy": "Privacyverklaring (Engels)",
+      "loading": "Account laden",
+      "welcome": "Welkom bij 2000NL",
+      "explanation": "Lees de gebruiksvoorwaarden voordat je doorgaat. De privacyverklaring legt uit hoe we accountgegevens, leergegevens en abonnementsgegevens gebruiken.",
+      "error": "Je akkoord kon niet worden opgeslagen. Probeer het opnieuw.",
+      "accept": "Ik ga akkoord met de gebruiksvoorwaarden",
+      "signOut": "Uitloggen"
     }
   },
   "tour": {

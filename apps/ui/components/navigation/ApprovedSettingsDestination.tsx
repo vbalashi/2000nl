@@ -1,4 +1,5 @@
 "use client";
+import { LegalLinks } from "@/components/legal/LegalLinks";
 import {DelayedReadNotice} from "@/components/system/DelayedReadNotice";
 import { interfaceLanguages } from "@/lib/i18n/registry";
 
@@ -73,7 +74,7 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
     >
       {(section, visible) => {
         if (section === "onboarding") return props.onboarding?.content;
-        if (section === "updates") return <ReleaseUpdatesSection language={props.interfaceLanguage} visible={visible} />;
+        if (section === "updates") return <><ReleaseUpdatesSection language={props.interfaceLanguage} visible={visible} /><LegalLinks /></>;
         if (section === "languages")
           return (
             <>

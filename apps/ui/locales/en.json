@@ -2219,6 +2219,16 @@
       "help": "Help find the meaning",
       "prompt": "Help me find the meaning",
       "follow": "Ask about these results…"
+    },
+    "serviceTerms": {
+      "terms": "Terms of service (English)",
+      "privacy": "Privacy notice (English)",
+      "loading": "Loading account",
+      "welcome": "Welcome to 2000NL",
+      "explanation": "Please read the terms before continuing. The privacy notice explains how we use account, learning and subscription data.",
+      "error": "Your acceptance could not be saved. Please try again.",
+      "accept": "I accept the terms of service",
+      "signOut": "Sign out"
     }
   },
   "tour": {

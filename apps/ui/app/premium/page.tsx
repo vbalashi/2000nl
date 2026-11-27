@@ -1,3 +1,4 @@
+import { TermsGate } from "@/components/legal/ManagedTerms";
 import { notFound } from "next/navigation";
 import { InterfaceCatalogBoundary } from "@/components/system/InterfaceCatalogBoundary";
 import { getRequestInterfaceSnapshot } from "@/lib/i18n/serverSnapshot";
@@ -10,5 +11,5 @@ export default async function PremiumPage({ searchParams }: { searchParams: Prom
   if (!readSandboxCatalog(process.env)) notFound();
   const [{ language }, snapshot] = await Promise.all([searchParams, getRequestInterfaceSnapshot()]);
   const locale = typeof language === "string" && Object.hasOwn(snapshot.registry, language) ? language : "en";
-  return <InterfaceCatalogBoundary><PremiumOffer language={locale} /></InterfaceCatalogBoundary>;
+  return <InterfaceCatalogBoundary><TermsGate><PremiumOffer language={locale} /></TermsGate></InterfaceCatalogBoundary>;
 }
