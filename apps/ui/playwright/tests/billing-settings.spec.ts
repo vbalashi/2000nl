@@ -1,6 +1,51 @@
 import { expect, test } from "@playwright/test";
 import { setupAuthenticatedTrainingAttributionPage } from "../support/trainingAttributionHarness";
 
+test("Free Library search shows the trial balance before sending the first AI request", async ({ page }) => {
+  const userId = "b764ef14-55c7-47ab-b691-8a962fccdfa0";
+  let replies = 0;
+  await page.route("**/api/library/card-assistant", route => {
+    if (route.request().method() === "POST") {
+      replies += 1;
+      return route.fulfill({ json: { mode: "provider", message: "Mock answer", suggestions: [] } });
+    }
+    return route.fulfill({ json: {
+      userId,
+      allowed: true,
+      allowances: { premium: false, manualUntil: null, aiRepliesRemaining: 2 - replies, dictationsRemaining: 10, personalMeaningsRemaining: 100 },
+    } });
+  });
+  await page.route("**/api/library/search", route => {
+    const request = route.request().postDataJSON();
+    return route.fulfill({ json: {
+      contractVersion: "platform-lookup-v2", query: request.query, request, groups: [],
+      page: { selectedTierComplete: true, nextGroupCursor: null },
+      librarySearch: { totalGroups: 0, totalMeanings: 0, matchingEntryIds: [] },
+    } });
+  });
+  await page.route("**/api/library/category-search", route => {
+    const { group } = route.request().postDataJSON();
+    return route.fulfill({ json: { groups: [{
+      id: group, total: 0, wordGroupCount: 0, items: [], page: { hasMore: false, nextCursor: null },
+    }] } });
+  });
+  await setupAuthenticatedTrainingAttributionPage(page, 0, {
+    userId, visualProfile: "answer",
+    settingsOverrides: { preferences: { onboardingCompleted: true, onboardingLanguage: "en" } },
+  });
+  await page.getByRole("button", { name: "Library", exact: true }).click();
+  await page.getByRole("textbox", { name: "Search words", exact: true }).fill("vooruitgang");
+  await page.getByRole("button", { name: "Help find the meaning", exact: true }).click();
+  await expect(page.getByText("Try Ask AI on Free.", { exact: true })).toBeVisible();
+  await expect(page.getByText(/AI replies left: 2/)).toBeVisible();
+  const composer = page.getByRole("complementary").locator("textarea");
+  await expect(composer).toHaveValue(/vooruitgang/);
+  expect(replies).toBe(0);
+  await composer.press("Enter");
+  await expect(page.getByText("Mock answer", { exact: true })).toBeVisible();
+  await expect(page.getByText(/AI replies left: 1/)).toBeVisible();
+});
+
 for (const profile of [{ width: 1050, height: 790 }, { width: 360, height: 780 }]) {
   test(`billing settings expose plan and Paddle actions at ${profile.width}px`, async ({ page }, testInfo) => {
     const mobile = profile.width < 700;

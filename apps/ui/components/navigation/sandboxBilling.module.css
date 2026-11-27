@@ -183,28 +183,47 @@
   outline-offset: 3px;
 }
 
+.billing .allowancePanel {
+  margin-bottom: 0;
+}
+
+.billing .allowancePanel > h2 {
+  margin-bottom: 8px;
+}
+
 .allowances {
   display: grid;
-  gap: 0;
+  gap: 2px;
   margin: 0;
+  font-size: var(--practice-text-caption);
+  line-height: 1.5;
 }
 
 .allowances > div {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
   gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--practice-border);
+  padding-block: 6px;
 }
 
 .allowances dt {
-  color: var(--practice-text-secondary);
+  font-weight: 500;
 }
 
 .allowances dd {
   margin: 0;
-  color: var(--practice-text);
+  color: var(--practice-text-secondary);
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
   text-align: end;
+}
+
+.allowances dd svg {
+  display: block;
+}
+
+@media (max-width: 650px) {
+  .allowances {
+    font-size: var(--practice-text-body);
+  }
 }

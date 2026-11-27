@@ -6,12 +6,10 @@
 }
 
 .plans legend {
-  margin: 0 0 12px;
-  font-size: var(--practice-text-caption);
-  color: var(--practice-selected-text);
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  margin: 0 0 10px;
+  font-size: var(--practice-text-body);
+  color: var(--practice-text);
+  font-weight: 600;
 }
 
 .planRow {
@@ -23,9 +21,9 @@
 .plan {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
-  padding: clamp(10px, 3vw, 16px);
+  padding: 10px 12px;
   border: 1px solid var(--practice-border);
   border-radius: var(--practice-radius-control);
   background: var(--practice-surface);
@@ -42,10 +40,9 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  overflow-wrap: anywhere;
-  font-size: var(--practice-text-caption);
-  font-weight: 650;
-  text-transform: uppercase;
+  hyphens: auto;
+  font-size: var(--practice-text-small);
+  font-weight: 600;
 }
 
 .plan input {
@@ -61,7 +58,7 @@
 }
 
 .terms {
-  margin: 16px 0;
+  margin: 12px 0;
   color: var(--practice-text-secondary);
   font-size: var(--practice-text-caption);
   line-height: 1.5;
@@ -70,12 +67,13 @@
 .primary {
   width: 100%;
   min-height: 44px;
-  margin-top: 8px;
+  margin-top: 4px;
   padding: 8px 12px;
   border: 1px solid transparent;
   border-radius: var(--practice-radius-control);
   background: var(--practice-accent);
   color: var(--practice-on-accent);
+  font-size: var(--practice-text-small);
   font-weight: 600;
   cursor: pointer;
 }
@@ -156,8 +154,8 @@
 
 .paymentBar h2 {
   margin: 0;
-  font-size: var(--practice-text-lead);
-  font-weight: 650;
+  font-size: var(--practice-text-body-lg);
+  font-weight: 600;
 }
 
 .back {
@@ -247,4 +245,18 @@
 .frameStatus {
   color: var(--practice-text-muted);
   font-size: var(--practice-text-small);
+}
+
+
+@media (prefers-reduced-motion: no-preference) {
+  .paymentBar,
+  .summary,
+  .checkoutFrame[data-ready] {
+    animation: paymentFadeIn 160ms ease-out both;
+  }
+}
+
+@keyframes paymentFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

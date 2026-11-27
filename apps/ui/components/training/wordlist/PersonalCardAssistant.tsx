@@ -115,8 +115,10 @@ function Conversation({
     senses: [{ definition, fields: [] }],
   };
   const restored = discovery?.chat ?? session?.get(senseKey);
+  const free = allowances?.premium === false ? allowances : null;
+  const discoveryPrompt = discovery?.startSearch && word ? recovery.prompt + " «" + word + "»" : null;
   const [turns, setTurns] = useState<Exchange[]>(restored?.turns ?? []),
-    [draft, setDraft] = useState(restored?.draft ?? ""),
+    [draft, setDraft] = useState(restored?.draft || (free ? discoveryPrompt ?? "" : "")),
     [draftIntent, setDraftIntent] = useState(restored?.intent),
     [pending, setPending] = useState(false);
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
@@ -124,7 +126,6 @@ function Conversation({
   const catalog = getInterfaceCatalog(interfaceLanguage);
   const speech = catalog.features.dictation;
   const payment = catalog.ui.settings.premiumOffer;
-  const free = allowances?.premium === false ? allowances : null;
   const readNumber = new Intl.NumberFormat(interfaceLanguage);
   const openPremium = (feature: AssistantAllowanceKind = "ai_reply") =>
     onPremiumRequired?.(document.activeElement instanceof HTMLElement ? document.activeElement : undefined, feature);
@@ -287,7 +288,7 @@ function Conversation({
       if (!controller.signal.aborted) setPending(false);
     }
   };
-  const initialSearch = useRef(discovery?.startSearch && word ? recovery.prompt + " «" + word + "»" : null);
+  const initialSearch = useRef(free ? null : discoveryPrompt);
   const sendInitial = useRef(ask);
   sendInitial.current = ask;
   useEffect(() => {
@@ -579,9 +580,12 @@ function Conversation({
           void ask(draft, draftIntent);
         }}
       >
-        {free && <small role="status" className={s.allowanceNote}>{formatUiMessage(payment.assistantAllowanceNote, {
-          replies: readNumber.format(free.aiRepliesRemaining), dictations: readNumber.format(free.dictationsRemaining),
-        })}</small>}
+        {free && <div role="status" className={s.allowanceNote}>
+          {turns.length === 0 && free.aiRepliesRemaining > 0 && <div>{payment.assistantTrialNote}</div>}
+          {formatUiMessage(payment.assistantAllowanceNote, {
+            replies: readNumber.format(free.aiRepliesRemaining), dictations: readNumber.format(free.dictationsRemaining),
+          })}
+        </div>}
         {(mic.issue || mic.status !== "idle") && (
           <small role="status" className={mic.issue ? undefined : "sr-only"}>
             {mic.issue
