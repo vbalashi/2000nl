@@ -1,4 +1,5 @@
 import { readAssistantAccess, requireAssistantAccess } from "@/lib/platform/assistantAccess";
+import { issueAssistantFeedbackRef } from "@/lib/platform/assistantFeedbackRef";
 import { NextRequest } from "next/server";
 import { readBoundedJson } from "@/lib/http/readBoundedJson";
 import {
@@ -26,19 +27,32 @@ const record = (value: unknown): Record<string, unknown> =>
 function bounded(value: unknown, max: number) {
   return typeof value === "string" && value.length <= max ? value.trim() : null;
 }
-function extract(value: unknown): Suggestion[] {
+function extract(value: unknown, allowHeadword: boolean, examples: string[]): Suggestion[] {
   if (!Array.isArray(value)) return [];
   return value.slice(0, 8).flatMap((item) => {
-    const { kind, text } = record(item),
-      trimmed = bounded(text, 1500);
+    const { kind, text, replaceExample } = record(item),
+      trimmed = bounded(text, kind === "headword" ? 300 : 1500);
     if (!trimmed || !kinds.includes(kind as Suggestion["kind"])) return [];
+    if (kind === "headword" && (!allowHeadword || /[\r\n\u2028\u2029]/.test(trimmed))) return [];
     if (
       kind === "partOfSpeech" &&
       !VOCABULARY_PARTS.some((item) => item.code === trimmed)
     )
       return [];
-    return [{ kind: kind as Suggestion["kind"], text: trimmed }];
+    const suggestion: Suggestion = { kind: kind as Suggestion["kind"], text: trimmed };
+    if (kind === "example" && replaceExample !== undefined) {
+      if (typeof replaceExample !== "number" || !Number.isInteger(replaceExample) || !examples[replaceExample - 1]) return [];
+      suggestion.replaces = { ordinal: replaceExample, text: examples[replaceExample - 1] };
+    }
+    return [suggestion];
   });
+}
+function sourcesForMatches(matches: unknown, candidates: SourceHit[]): SourceHit[] {
+  if (!Array.isArray(matches)) return [];
+  const sourcesById = new Map(candidates.map((hit) => [hit.entryId, hit]));
+  return [...new Set(matches)]
+    .flatMap((id) => sourcesById.get(id) ?? [])
+    .slice(0, 8);
 }
 function readArticle(raw: unknown) {
   const input = record(raw);
@@ -145,7 +159,7 @@ export async function POST(request: NextRequest) {
   // Russian questions can contain long Dutch quotes. Give the model an explicit
   // language hint when the learner uses common Russian question or request words.
   const russianRequest = /(?:^|[^\p{L}])(?:что|это|как|чем|почему|можно|слово|значит|объясни|объясните|сравни|предложи|помоги|напиши|русском|расскажи|дай|хочу|пожалуйста|добавь|переведи)(?=$|[^\p{L}])/iu;
-  const lastFreeQuestion = body.intent && body.intent !== "find-meaning"
+  const lastFreeQuestion = body.intent && body.intent !== "find-meaning" && body.intent !== "draft-from-search"
     ? history.filter(turn => turn.role === "user").at(-1)?.text
     : question;
   const replyLanguageHint = lastFreeQuestion && russianRequest.test(lastFreeQuestion)
@@ -155,10 +169,16 @@ export async function POST(request: NextRequest) {
     apiKey = config.apiKeys.openai;
   const similar = body.intent === "similar",
     compare = body.intent === "compare";
-  const discovery = body.intent === "find-meaning";
+  const draftFromSearch = body.intent === "draft-from-search";
+  const discovery = body.intent === "find-meaning" || draftFromSearch;
   const originalGroup = body.searchCategory === "examples" || body.searchCategory === "definitions" ? body.searchCategory : "headwords";
   const search = body.intent === "search" || similar;
   const accountId = auth.principal.userId;
+  const feedbackJourney = discovery ? "search" : "draft";
+  const withFeedback = (reply: AssistantReply) => {
+    const ref = issueAssistantFeedbackRef(accountId, feedbackJourney, language);
+    return jsonNoStore(ref ? { ...reply, feedback: { ref, journey: feedbackJourney } } : reply);
+  };
   async function lookup(
     query: string,
     group: "definitions" | "headwords" | "examples",
@@ -213,14 +233,14 @@ export async function POST(request: NextRequest) {
     }
     return matches;
   }
-  const originalHits = discovery ? await lookup(word, originalGroup, false) : [];
+  const originalHits = discovery && word && word.length <= 200 ? await lookup(word, originalGroup, false) : [];
   if (originalHits instanceof Response) return originalHits;
   if (discovery && !apiKey) {
-    return jsonNoStore({mode:"dictionary", message:originalHits.length ? labels.results : labels.none, sources:originalHits, suggestions:[]});
+    return withFeedback({mode:"dictionary", message:originalHits.length ? labels.results : labels.none, sources:originalHits, suggestions:[]});
   }
   if (search || !apiKey) {
     if (compare && !apiKey)
-      return jsonNoStore({
+      return withFeedback({
         mode: "preview",
         message: labels.noCompare,
         suggestions: [],
@@ -273,7 +293,7 @@ export async function POST(request: NextRequest) {
       ];
       response = { mode: "preview", message: labels.sample, suggestions };
     }
-    return jsonNoStore(response);
+    return withFeedback(response);
   }
   const configured =
     config.apiUrls?.openai || "https://api.openai.com/v1/chat/completions";
@@ -355,7 +375,6 @@ export async function POST(request: NextRequest) {
                   },
                 },
               ],
-              ...(discovery && !messages.some(message=>message.role==="tool") ? {tool_choice:{type:"function",function:{name:"search_library"}}} : {}),
               parallel_tool_calls: false,
             }
           : {}),
@@ -408,17 +427,35 @@ export async function POST(request: NextRequest) {
       if (!res.ok) return jsonNoStore({ error: "provider_failed" }, 502);
       answer = (await res.json()).choices?.[0]?.message;
     }
-    const reply = record(JSON.parse(answer.content)),
-      message = bounded(reply.message, 6000);
-    if (!message) return jsonNoStore({ error: "invalid_answer" }, 502);
-    return jsonNoStore({
+    const reply = record(JSON.parse(answer.content));
+    if (reply.outOfScope === true) {
+      return withFeedback({
+        mode: "provider",
+        message: discovery ? labels.searchRedirect : labels.draftRedirect,
+        suggestions: [],
+        outOfScope: true,
+      });
+    }
+    const message = bounded(reply.message, 6000);
+    if (!message || (discovery && !Array.isArray(reply.matches)))
+      return jsonNoStore({ error: "invalid_answer" }, 502);
+    const examples = article.senses[selectedOrdinal - 1].fields
+      .filter((field) => field.kind === "example").map((field) => field.text);
+    const suggestions = compare || (discovery && reply.cardDraft !== true)
+      ? []
+      : extract(reply.suggestions, discovery || !word, examples);
+    const cardDraft = discovery
+      && suggestions.some(item => item.kind === "headword")
+      && suggestions.some(item => item.kind === "definition");
+    return withFeedback({
       mode: "provider",
       message,
       searched,
-      sources: discovery && Array.isArray(reply.matches)
-        ? Array.from(new Set(reply.matches)).flatMap(id=>sources.find(hit=>hit.entryId===id) ?? []).slice(0,8)
+      sources: discovery
+        ? sourcesForMatches(reply.matches, sources)
         : sources,
-      suggestions: compare || discovery ? [] : extract(reply.suggestions),
+      ...(cardDraft ? { cardDraft: true } : {}),
+      suggestions: discovery && !cardDraft ? [] : suggestions,
     });
   } catch (error) {
     return jsonNoStore(

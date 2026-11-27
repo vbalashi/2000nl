@@ -4,7 +4,7 @@ import {ActionButton} from "@/components/practice/ui/ActionButton";
 import {vocabularySelectionActive} from "@/lib/vocabulary/selection";
 import {openSearchChat,type SearchChat} from "./lastSearchChat";
 import { useAssistantAccess } from "./useAssistantAccess";
-import {PersonalCardAssistant} from "./PersonalCardAssistant";
+import {PersonalCardAssistant,type AssistantSnapshot} from "./PersonalCardAssistant";
 import {searchRecoveryCopy} from "./searchRecoveryCopy";
 import {ChoiceSelect} from "@/components/library/organization/ChoiceSelect";
 import {SearchField} from "@/components/practice/ui/SearchField";
@@ -687,6 +687,7 @@ export function DictionarySearchTab({
   const discoveryOpen = assistantAvailable && discoveryKey===discoveryScope;
   const [discoveryStart,setDiscoveryStart] = useState(false);
   const [chatContext,setChatContext] = useState<SearchChat|null>(null);
+  const [transferredChat,setTransferredChat] = useState<{key:string;snapshot:AssistantSnapshot}|null>(null);
   const chatStorageKey = "2000nl.last-search-chat.v1." + userId;
   function openDiscovery(startSearch:boolean) {
     setChatContext(openSearchChat(chatStorageKey,userId,{word:query.trim(),scope:resultScopeLabel,category,language:searchLanguage},startSearch));
@@ -724,6 +725,11 @@ export function DictionarySearchTab({
     },onSelect:hit=>{
       setDiscoveryKey(null);
       updateSearchState({selectedHeadwordGroupId:null,detailSelection:{entryId:hit.entryId,headword:hit.word,contentLanguageCode:chatContext.language},mobileDetailOpen:true});
+    },onDraft:snapshot=>{
+      const sessionKey=crypto.randomUUID();
+      setTransferredChat({key:sessionKey,snapshot});
+      setDiscoveryKey(null);
+      openDraft({sessionKey,word:"",definition:"",partOfSpeech:null});
     }}} onClose={closeDiscovery} onApply={()=>{}}/>;
   const presentationController = {
     collections: filterCollections,
@@ -1104,6 +1110,7 @@ export function DictionarySearchTab({
         draftShelf.update(personalDraft.sessionKey,{anchorEntryId:personalDraft.anchorEntryId ?? entry.id,initialSenses,headerDirty:false});
         refreshAfterPersonalSave();
       }}
+      initialConversation={transferredChat && transferredChat.key===personalDraft.sessionKey ? transferredChat.snapshot : undefined}
       assistantHost={mobile ? null : assistantHost} onAssistantOpenChange={setAssistantOpen} translationLanguage={translationLang}
       word={personalDraft.word} definition={personalDraft.definition} languageCode={searchLanguage} interfaceLanguage={interfaceLanguage}
       onChange={patch => draftShelf.update(personalDraft.sessionKey,patch)}
@@ -1193,6 +1200,7 @@ export function DictionarySearchTab({
         <WordDetailDrawer
           selection={discoveryOpen ? null : detailSelection}
           draft={mobile ? (discoveryPanel || draftEditor) : undefined}
+          assistantMode={discoveryOpen || (personalEditing && assistantOpen)}
           initialGroup={selectedGroupResult?.group}
           open={mobileDetailOpen && Boolean(discoveryOpen || detailSelection || personalDraft) && !presentation?.organizerOpen}
           onClose={discoveryOpen ? closeDiscovery : () => updateSearchState({ mobileDetailOpen: false })}

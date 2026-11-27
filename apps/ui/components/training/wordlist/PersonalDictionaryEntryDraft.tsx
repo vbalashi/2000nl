@@ -29,6 +29,8 @@ import type { OnboardingLanguage } from "@/lib/onboardingI18n";
 import {
   PersonalCardAssistant,
   type AssistantSession,
+  type AssistantSnapshot,
+  type Suggestion,
 } from "./PersonalCardAssistant";
 import {
   AddData,
@@ -94,6 +96,7 @@ type Props = {
   mobile: boolean;
   assistantAvailable: boolean;
   assistantHost?: HTMLElement | null;
+  initialConversation?: AssistantSnapshot;
   onAssistantOpenChange?: (open: boolean) => void;
   onClose: () => void;
   onDeleteDraft?: () => void;
@@ -156,6 +159,7 @@ export function PersonalDictionaryEntryDraft({
   mobile,
   assistantAvailable,
   assistantHost,
+  initialConversation,
   onAssistantOpenChange,
 }: Props) {
   const copy = personalCardCopy(interfaceLanguage);
@@ -181,11 +185,18 @@ export function PersonalDictionaryEntryDraft({
   React.useEffect(() => {
     if (dirty) mirror.current?.(senses.map(snapshotSense), part, headerDirty, {article, kind});
   }, [dirty, senses, part, headerDirty, article, kind]);
-  const [assistant, setAssistant] = React.useState<string | null>(null);
+  const [assistant, setAssistant] = React.useState<string | null>(
+    () => initialConversation && assistantAvailable ? senses[0].key : null,
+  );
   const [moveTarget, setMoveTarget] = React.useState<DraftSense | null>(null);
   const [translated, setTranslated] = React.useState(false);
   const lock = React.useRef(false);
-  const [assistantSession] = React.useState<AssistantSession>(() => new Map());
+  const [assistantSession] = React.useState<AssistantSession>(() =>
+    initialConversation ? new Map([[senses[0].key, initialConversation]]) : new Map(),
+  );
+  React.useEffect(() => {
+    if (initialConversation && assistantAvailable) onAssistantOpenChange?.(true);
+  }, [initialConversation, assistantAvailable, onAssistantOpenChange]);
   const askButton = React.useRef<HTMLButtonElement | null>(null);
   const root = React.useRef<HTMLElement>(null);
   const chosen = senses.find((s) => s.key === assistant);
@@ -204,6 +215,11 @@ export function PersonalDictionaryEntryDraft({
     setDirty(true);
     setFailed(false);
     setTranslated(false);
+  }
+  function changeHeadword(value: string) {
+    edit();
+    setHeaderDirty(true);
+    onChange({ word: value });
   }
   function changeSense(key: string, patch: Partial<DraftSense>) {
     edit();
@@ -304,6 +320,32 @@ export function PersonalDictionaryEntryDraft({
     setPosAnchor(null);
     posAnchor?.focus();
   }
+  function applySuggestions(suggestions: Suggestion[], key: string) {
+    const target = senses.find((sense) => sense.key === key);
+    if (!target || target.key !== assistant) return;
+    const patch: Partial<DraftSense> = {};
+    let fields = target.fields;
+    for (const suggestion of suggestions) {
+      if (suggestion.kind === "headword") {
+        if (!word.trim()) changeHeadword(suggestion.text);
+      } else if (suggestion.kind === "definition") {
+        patch.definition = suggestion.text;
+      } else if (suggestion.kind === "partOfSpeech") {
+        const id = partId(suggestion.text);
+        if (id) choosePart(partCode(id));
+      } else if (suggestion.replaces) {
+        const { ordinal, text } = suggestion.replaces;
+        const previous = fields.filter((field) => field.kind === "example")[ordinal - 1];
+        if (previous?.text === text) {
+          fields = fields.map((field) => field.key === previous.key ? { ...field, text: suggestion.text } : field);
+        }
+      } else {
+        fields = [...fields, draftField({ kind: suggestion.kind, text: suggestion.text })];
+      }
+    }
+    if (fields !== target.fields) patch.fields = fields;
+    if (patch.definition !== undefined || patch.fields) changeSense(key, patch);
+  }
   const assistantPanel = assistantAvailable && chosen && (
     <aside data-personal-assistant="" className={s.assistant}>
       <PersonalCardAssistant
@@ -325,26 +367,11 @@ export function PersonalDictionaryEntryDraft({
         senseKey={chosen.key}
         ordinal={senses.indexOf(chosen) + 1}
         onClose={() => toggleAssistant(null)}
-        onApply={(suggestion, key) => {
-          const target = senses.find((s) => s.key === key);
-          if (!target || target.key !== assistant) return;
-          if (suggestion.kind === "definition")
-            changeSense(key, { definition: suggestion.text });
-          else if (suggestion.kind === "partOfSpeech") {
-            const id = partId(suggestion.text);
-            if (id) choosePart(partCode(id));
-          } else
-            changeSense(key, {
-              fields: [
-                ...target.fields,
-                draftField({ kind: suggestion.kind, text: suggestion.text }),
-              ],
-            });
-        }}
+        onApply={(suggestions, key) => applySuggestions(suggestions, key)}
       />
     </aside>
   );
-  const panelHost =
+  const panelHost = mobile ? null :
     assistantHost ??
     (assistant &&
       root.current?.closest<HTMLElement>("[data-practice-palette]")) ??
@@ -437,11 +464,7 @@ export function PersonalDictionaryEntryDraft({
                 value={word}
                 placeholder={copy.word}
                 label={copy.editWord}
-                onChange={(word) => {
-                  edit();
-                  setHeaderDirty(true);
-                  onChange({ word });
-                }}
+                onChange={changeHeadword}
               />
             }
           />

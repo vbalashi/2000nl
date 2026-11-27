@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "contractId": "2000nl-db-398",
+  "contractId": "2000nl-db-400",
   "rollout": {
     "status": "hold",
     "coordinationIssue": 229,
-    "requiredMigrationId": 398
+    "requiredMigrationId": 400
   },
   "baseline": {
     "migrationId": 287,
@@ -522,11 +522,21 @@
       "migrationId": 398,
       "file": "db/migrations/398_paddle_sandbox_portal.sql",
       "sha256": "aa8fa7e014e0589b4ac1eaf34d8d71c068e0c1cb55e71bf7debcb96b4c08d64d"
+    },
+    {
+      "migrationId": 399,
+      "file": "db/migrations/399_assistant_reply_feedback.sql",
+      "sha256": "11da5a592ead93406ccdf359216ddd973bc02a2f11bf4afcaf8a228588d0a1dc"
+    },
+    {
+      "migrationId": 400,
+      "file": "db/migrations/400_assistant_feedback_chat_history.sql",
+      "sha256": "278e5f8d37dd8f9cf22b43328afbecd21ed6e799c218b52cb689115e88df9896"
     }
   ],
-  "postflightProbe": "db/deploy-contract/postflight-398.sql",
+  "postflightProbe": "db/deploy-contract/postflight-400.sql",
   "readOnlyPostflightProbe": {
-    "file": "db/deploy-contract/read-only-postflight-398.sql",
-    "sha256": "93cfc1cabb0a5159e572adbe0907d2a54dc79aec29e9dfc2d72eef58d62c80b5"
+    "file": "db/deploy-contract/read-only-postflight-400.sql",
+    "sha256": "547ec77ae9f946dd851b9ea28a42043a73dcb7377384870470c0edef372372a4"
   }
 }

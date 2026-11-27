@@ -1,12 +1,16 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Trash2,
   ArrowUp,
+  ArrowRight,
+  FilePenLine,
   Check,
   ChevronDown,
   ChevronUp,
   Mic,
+  Link2,
+  List,
+  Quote,
   Plus,
   Sparkles,
   X,
@@ -30,10 +34,18 @@ import { getPartOfSpeechLabel } from "@/lib/uiMessages";
 import {saveSearchChat,type SearchChat} from "./lastSearchChat";
 import { getInterfaceCatalog } from "@/lib/i18n/catalog";
 import {searchRecoveryCopy} from "./searchRecoveryCopy";
+import { AssistantReplyFeedback } from "./AssistantReplyFeedback";
+import {
+  assistantFeedbackAnswerLimit,
+  assistantFeedbackHistoryLimit,
+  assistantFeedbackQuestionLimit,
+} from "@/lib/platform/assistantFeedbackContract";
+import type { AssistantFeedbackVote } from "@/lib/platform/assistantFeedbackContract";
+import reading from "@/components/practice/article/articleContent.module.css";
 import s from "./personalCardAssistant.module.css";
 export type { Suggestion } from "@/lib/platform/personalCardAssistantContract";
 type Props = {
-  discovery?: {chat:SearchChat;storageKey:string; startSearch:boolean; category:string; scope:string; onClear:()=>void; onSelect:(hit:SourceHit)=>void};
+  discovery?: {chat:SearchChat;storageKey:string; startSearch:boolean; category:string; scope:string; onClear:()=>void; onSelect:(hit:SourceHit)=>void; onDraft:(snapshot:AssistantSnapshot)=>void};
   word: string;
   definition: string;
   languageCode: string;
@@ -43,16 +55,32 @@ type Props = {
   article?: AssistantArticle;
   session?: AssistantSession;
   onClose: () => void;
-  onApply: (suggestion: Suggestion, senseKey: string) => void;
+  onApply: (suggestions: Suggestion[], senseKey: string) => void;
 };
 type Exchange = {
   question: string;
+  intent?: string;
   reply?: AssistantReply;
   error?: boolean;
   applied?: number[];
+  feedbackVote?: AssistantFeedbackVote;
 };
-export type AssistantSnapshot = {turns:Exchange[];draft:string};
+export type AssistantSnapshot = {turns:Exchange[];draft:string;intent?:string;searchTurnCount?:number};
 export type AssistantSession = Map<string,AssistantSnapshot>;
+function AssistantMessage({ message, terms }: { message: string; terms: string[] }) {
+  const keyTerms = [...new Set(terms)]
+    .filter(Boolean)
+    .sort((left, right) => right.length - left.length)
+    .map(term => term.replace(/[.*+?^$(){}|[\]\\]/g, "\\$&"));
+  const emphasis = "\\*\\*[^*\\r\\n]+\\*\\*";
+  const lexical = keyTerms.length
+    ? "|(?<![\\p{L}\\p{N}])(?:" + keyTerms.join("|") + ")(?![\\p{L}\\p{N}])"
+    : "";
+  const spans = message.split(new RegExp("(" + emphasis + lexical + ")", "giu"));
+  return <p>{spans.map((text, index) => index % 2
+    ? <strong className={s.keyword} key={index}>{text.startsWith("**") ? text.slice(2, -2) : text}</strong>
+    : text)}</p>;
+}
 export function PersonalCardAssistant(props: Props) {
   return <Conversation key={props.senseKey} {...props} />;
 }
@@ -78,15 +106,16 @@ function Conversation({
   const restored = discovery?.chat ?? session?.get(senseKey);
   const [turns, setTurns] = useState<Exchange[]>(restored?.turns ?? []),
     [draft, setDraft] = useState(restored?.draft ?? ""),
+    [draftIntent, setDraftIntent] = useState(restored?.intent),
     [pending, setPending] = useState(false);
-  const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null),
-    [copied, setCopied] = useState("");
-  const speech = getInterfaceCatalog(interfaceLanguage).features.dictation;
-  const mic = useAzureDictation((text) =>
-    setDraft((current) =>
-      (current.trimEnd() + " " + text).trimStart().slice(0, 1500),
-    ),
-  );
+  const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
+  const [searchTurnCount] = useState(restored?.searchTurnCount ?? 0);
+  const catalog = getInterfaceCatalog(interfaceLanguage);
+  const speech = catalog.features.dictation;
+  const mic = useAzureDictation((text) => {
+    setDraftIntent(undefined);
+    setDraft(current => (current + (!current || /\s$/.test(current) ? "" : " ") + text).slice(0, 1500));
+  });
   const [edges, setEdges] = useState({ top: false, bottom: false });
   const history = useRef<HTMLDivElement>(null),
     list = useRef<HTMLDivElement>(null),
@@ -100,6 +129,8 @@ function Conversation({
     // Closing the panel cancels the request. Keep its unanswered question in the composer.
     const snapshot = {
       turns: completed,
+      searchTurnCount,
+      intent: draft ? draftIntent : completed.length < turns.length ? turns.at(-1)?.intent : undefined,
       draft:
         draft ||
         (completed.length < turns.length
@@ -108,7 +139,7 @@ function Conversation({
     };
     session?.set(senseKey,snapshot);
     if (searchStorageKey && searchChat) saveSearchChat(searchStorageKey,searchChat,snapshot);
-  }, [session, senseKey, turns, draft, searchStorageKey, searchChat]);
+  }, [session, senseKey, turns, draft, draftIntent, searchTurnCount, searchStorageKey, searchChat]);
   const updateEdges = () => {
     const h = history.current;
     if (h)
@@ -138,7 +169,7 @@ function Conversation({
       input.style.height = input.scrollHeight + "px";
     }
   }, [draft]);
-  const ask = async (value: string, intent?: string) => {
+  const ask = async (value: string, intent?: string, retry = false) => {
     const question = value.trim();
     if (!question || request.current || mic.status !== "idle") return;
     const controller = new AbortController();
@@ -159,9 +190,12 @@ function Conversation({
             ]
           : [],
     );
-    setTurns((old) => [...old, { question }]);
+    setTurns((old) => [...(retry ? old.slice(0, -1) : old), { question, intent }]);
     setAnchor(null);
-    setDraft("");
+    if (!retry) {
+      setDraft("");
+      setDraftIntent(undefined);
+    }
     setPending(true);
     try {
       const response = await fetch("/api/library/card-assistant", {
@@ -176,7 +210,7 @@ function Conversation({
           question,
           languageCode,
           interfaceLanguage,
-          intent: discovery ? "find-meaning" : intent,
+          intent: discovery ? intent ?? "find-meaning" : intent,
           searchCategory:discovery?.category,
           searchScope:discovery?.scope,
           history: conversation
@@ -211,6 +245,30 @@ function Conversation({
     const timer = window.setTimeout(() => { void sendInitial.current(initialSearch.current!); },0);
     return () => window.clearTimeout(timer);
   }, []);
+  const currentExamples = context.senses[ordinal - 1]?.fields.filter(field => field.kind === "example") ?? [];
+  function canApply(turn: Exchange, proposal: Suggestion, index: number) {
+    return !turn.applied?.includes(index) &&
+      (proposal.kind !== "headword" || !word.trim()) &&
+      (!proposal.replaces || currentExamples[proposal.replaces.ordinal - 1]?.text === proposal.replaces.text);
+  }
+  function apply(turnIndex: number, indexes: number[]) {
+    const turn = turns[turnIndex];
+    const proposals = turn.reply?.suggestions ?? [];
+    onApply(indexes.map(index => proposals[index]), senseKey);
+    setTurns(old => old.map((item, index) => index === turnIndex
+      ? { ...item, applied: [...(item.applied ?? []), ...indexes] }
+      : item));
+  }
+  function quote(text: string) {
+    const cited = text.slice(0, 1500).split(/\r?\n/).map(line => "> " + line).join("\n");
+    setDraft(current => (cited.slice(0, Math.max(0, 1498 - current.length)) + "\n\n" + current).slice(0, 1500));
+    setDraftIntent(undefined);
+    composer.current?.focus();
+    window.requestAnimationFrame(() => {
+      const input = composer.current;
+      input?.setSelectionRange(input.value.length, input.value.length);
+    });
+  }
   function scroll(direction: number) {
     const h = history.current;
     h?.scrollBy({
@@ -220,6 +278,136 @@ function Conversation({
         : "smooth",
     });
   }
+  const showStarter = !discovery && turns.length === 0 && !!word.trim();
+  const renderedTurns = turns.map((turn, i) => {
+    const proposals = discovery ? [] : turn.reply?.suggestions ?? [];
+    const applicable = proposals.flatMap((proposal, index) => canApply(turn, proposal, index) ? [index] : []);
+    const targets = applicable.map(index => {
+      const proposal = proposals[index];
+      if (proposal.replaces) return "example:" + proposal.replaces.ordinal;
+      return ["headword", "definition", "partOfSpeech"].includes(proposal.kind) ? proposal.kind : index;
+    });
+    const draftWord = turn.reply?.suggestions.find(proposal => proposal.kind === "headword")?.text;
+    const terms = [discovery ? "" : word, draftWord ?? "", ...(turn.reply?.sources ?? []).map(source => source.word)];
+    return <div key={i}>
+      <p className={s.bubble}>{turn.question}</p>
+      {turn.reply && (
+        <>
+          {turn.reply.mode !== "provider" && (
+            <small>
+              {turn.reply.mode === "preview"
+                ? t.demo
+                : turn.reply.mode === "dictionary"
+                  ? t.dictionary
+                  : null}
+            </small>
+          )}
+          <AssistantMessage message={turn.reply.message} terms={terms} />
+          {!!turn.reply.sources?.length && (
+            <div className={s.sources}>
+              <small>{t.sources}</small>
+              {turn.reply.sources.map((hit) => (
+                <div key={hit.entryId}>
+                  {discovery ? <button type="button" className={s.sourceLink} onClick={()=>discovery.onSelect(hit)}>{hit.word}</button> : <strong>{hit.word}</strong>} · {hit.dictionary}
+                  <p lang={languageCode}>{hit.definition}</p>
+                  {hit.example && <p lang={languageCode}><i>{hit.example}</i></p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {discovery && turn.reply.mode === "provider" && !turn.reply.outOfScope && i === turns.length - 1 && (
+            turn.reply.cardDraft && turn.reply.suggestions.length > 0
+              ? <button type="button" className={s.draftLink}
+                  onClick={() => discovery.onDraft({turns, draft: "", searchTurnCount: i})}>
+                  <FilePenLine size={16} aria-hidden="true" />
+                  <span className={s.draftDestination}>
+                    {draftWord && <strong lang={languageCode}>{draftWord}</strong>}
+                    <span>{t.openCardDraft}</span>
+                  </span>
+                  <ArrowRight size={16} aria-hidden="true" />
+                </button>
+              : <ActionButton variant="primary" disabled={pending || mic.status !== "idle"}
+                  onClick={() => void ask(t.draftFromSearch, "draft-from-search")}>{t.draftFromSearch}</ActionButton>
+          )}
+          {applicable.length > 1 && new Set(targets).size === targets.length && (
+            <ActionButton variant="primary" className={s.applyAll} onClick={() => apply(i, applicable)}>{t.applyAll}</ActionButton>
+          )}
+          {proposals.map((proposal, j) => {
+            const text =
+              proposal.kind === "partOfSpeech"
+                ? (getPartOfSpeechLabel(
+                    interfaceLanguage,
+                    proposal.text,
+                  ) ?? proposal.text)
+                : proposal.text;
+            const Icon = proposal.kind === "example" ? List
+              : proposal.kind === "reference" || proposal.kind === "synonym" ? Link2
+              : proposal.kind === "note" || proposal.kind === "expression" ? Quote : null;
+            return (
+              <section className={s.proposal} key={j}>
+                <div className={s.proposalBody}>
+                  <h4 className={reading.fieldHeading}>
+                    {Icon && <Icon size={12} aria-hidden="true" />}
+                    {proposal.kind === "headword" ? catalog.features.personalCard.word : t[proposal.kind]}
+                  </h4>
+                  <p className={proposal.kind === "example" ? reading.literary : reading.definitionText}
+                    lang={proposal.kind === "partOfSpeech" ? interfaceLanguage : languageCode}>
+                    {text}
+                  </p>
+                </div>
+                <div className={s.proposalActions}>
+                  <button type="button" className={s.inlineAction}
+                    disabled={!canApply(turn, proposal, j)} onClick={() => apply(i, [j])}>
+                    {turn.applied?.includes(j) ? t.used : proposal.replaces ? t.replaceExample : t.use}
+                  </button>
+                  <button type="button" className={s.inlineAction}
+                    disabled={mic.status !== "idle" || draft.length > 1495} onClick={() => quote(text)}>{t.quote}</button>
+                </div>
+              </section>
+            );
+          })}
+        </>
+      )}
+      {turn.reply?.feedback && (
+        <AssistantReplyFeedback replyRef={turn.reply.feedback.ref} journey={turn.reply.feedback.journey}
+          locale={interfaceLanguage} savedVote={turn.feedbackVote}
+          getHistory={() => {
+            const exchanges = turns.slice(0, i + 1).flatMap(item => {
+              if (!item.reply) return [];
+              const answer = [item.reply.message.replace(/\*\*([^*\r\n]+)\*\*/g, "$1"),
+                ...(!discovery || item.reply.cardDraft ? item.reply.suggestions.map(proposal => proposal.text) : []),
+              ].join("\n\n").trim();
+              return [{ question: item.question, answer }];
+            });
+            const latest = exchanges.slice(-assistantFeedbackHistoryLimit);
+            const shortened = latest.length < exchanges.length || latest.some(item =>
+              item.question.length > assistantFeedbackQuestionLimit || item.answer.length > assistantFeedbackAnswerLimit);
+            const clip = (value: string, limit: number) => value.length <= limit ? value : value.slice(0, limit - 1).trimEnd() + "…";
+            return { shortened, exchanges: latest.map(item => ({
+              question: clip(item.question, assistantFeedbackQuestionLimit),
+              answer: clip(item.answer, assistantFeedbackAnswerLimit),
+            })) };
+          }}
+          onVoted={vote => {
+            if (vote === "down") follow.current = false;
+            setTurns(old => old.map((item, index) => index === i ? { ...item, feedbackVote: vote } : item));
+          }} />
+      )}
+      {turn.error && (
+        <>
+          <p role="alert">{t.error}</p>
+          {i === turns.length - 1 && (
+            <ActionButton
+              disabled={pending || mic.status !== "idle"}
+              onClick={() => void ask(turn.question, turn.intent, true)}
+            >
+              {catalog.common.retry}
+            </ActionButton>
+          )}
+        </>
+      )}
+    </div>;
+  });
   return (
     <aside
       className={s.panel}
@@ -236,12 +424,18 @@ function Conversation({
           <Sparkles size={16} />
           {discovery ? recovery.chat : t.title}
         </h3>
-        {discovery && (turns.length>0 || draft) && <IconAction label={recovery.clearChat} title={recovery.clearChat} disabled={pending} onClick={()=>{setTurns([]);setDraft("");discovery.onClear();composer.current?.focus();}}>
-          <Trash2 size={15}/>
-        </IconAction>}
-        <IconAction label={t.close} onClick={onClose}>
-          <X size={17} />
-        </IconAction>
+        <div className={s.headerActions}>
+          {discovery && (turns.length > 0 || draft) && (
+            <button type="button" className={s.inlineAction} disabled={pending} onClick={() => {
+              setTurns([]);
+              setDraft("");
+              setDraftIntent(undefined);
+              discovery.onClear();
+              composer.current?.focus();
+            }}>{recovery.clearChat}</button>
+          )}
+          <IconAction data-card-header-close label={t.close} onClick={onClose}><X size={17} /></IconAction>
+        </div>
       </header>
       <p className={s.context}>
         {discovery ? [word,discovery.scope].filter(Boolean).join(" · ") : <>{word || t.word} · {t.sense} {ordinal} · {definition || t.noDef}</>}
@@ -307,108 +501,13 @@ function Conversation({
           }}
         >
           <div ref={list}>
-            {turns.map((turn, i) => (
-              <div key={i}>
-                <p className={s.bubble}>{turn.question}</p>
-                {turn.reply && (
-                  <>
-                    {turn.reply.mode !== "provider" && (
-                      <small>
-                        {turn.reply.mode === "preview"
-                          ? t.demo
-                          : turn.reply.mode === "dictionary"
-                            ? t.dictionary
-                            : null}
-                      </small>
-                    )}
-                    <p>{turn.reply.message}</p>
-                    {turn.reply.searched && !turn.reply.sources?.length && (
-                      <small>{t.none}</small>
-                    )}
-                    {!!turn.reply.sources?.length && (
-                      <div className={s.sources}>
-                        <small>{t.sources}</small>
-                        {turn.reply.sources.map((hit) => (
-                          <div key={hit.entryId}>
-                            {discovery ? <button type="button" className={s.sourceLink} onClick={()=>discovery.onSelect(hit)}>{hit.word}</button> : <strong>{hit.word}</strong>} · {hit.dictionary}
-                            <p lang={languageCode}>{hit.definition}</p>
-                            {hit.example && <p lang={languageCode}><i>{hit.example}</i></p>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {turn.reply.suggestions.map((proposal, j) => {
-                      const text =
-                        proposal.kind === "partOfSpeech"
-                          ? (getPartOfSpeechLabel(
-                              interfaceLanguage,
-                              proposal.text,
-                            ) ?? proposal.text)
-                          : proposal.text;
-                      return (
-                        <section className={s.proposal} key={j}>
-                          <small>{t[proposal.kind]}</small>
-                          <p
-                            id={"assistant-copy-" + i + "-" + j}
-                            lang={
-                              proposal.kind === "partOfSpeech"
-                                ? interfaceLanguage
-                                : languageCode
-                            }
-                          >
-                            {text}
-                          </p>
-                          <ActionButton
-                            disabled={turn.applied?.includes(j)}
-                            onClick={() => {
-                              onApply(proposal, senseKey);
-                              setTurns((old) =>
-                                old.map((v, k) =>
-                                  k === i
-                                    ? {
-                                        ...v,
-                                        applied: [...(v.applied ?? []), j],
-                                      }
-                                    : v,
-                                ),
-                              );
-                            }}
-                          >
-                            {turn.applied?.includes(j) ? t.used : t.use}
-                          </ActionButton>
-                          <ActionButton
-                            onClick={() =>
-                              void navigator.clipboard
-                                .writeText(text)
-                                .then(() => setCopied(i + "-" + j))
-                                .catch(() => {
-                                  const range = document.createRange();
-                                  const target = document.getElementById(
-                                    "assistant-copy-" + i + "-" + j,
-                                  );
-                                  if (target) {
-                                    range.selectNodeContents(target);
-                                    const sel = window.getSelection();
-                                    sel?.removeAllRanges();
-                                    sel?.addRange(range);
-                                  }
-                                })
-                            }
-                          >
-                            {copied === i + "-" + j ? (
-                              <Check size={14} aria-label={t.copied} />
-                            ) : (
-                              t.copy
-                            )}
-                          </ActionButton>
-                        </section>
-                      );
-                    })}
-                  </>
-                )}
-                {turn.error && <p role="alert">{t.error}</p>}
-              </div>
-            ))}
+            {searchTurnCount > 0 && (
+              <details className={s.searchHistory}>
+                <summary>{t.searchHistory}</summary>
+                {renderedTurns.slice(0, searchTurnCount)}
+              </details>
+            )}
+            {renderedTurns.slice(searchTurnCount)}
             {pending && <p role="status">{t.waiting}</p>}
           </div>
         </div>
@@ -427,7 +526,7 @@ function Conversation({
         className={s.composer}
         onSubmit={(e) => {
           e.preventDefault();
-          void ask(draft);
+          void ask(draft, draftIntent);
         }}
       >
         {(mic.issue || mic.status !== "idle") && (
@@ -439,14 +538,21 @@ function Conversation({
                 : ""}
           </small>
         )}
+        {showStarter && (
+          <ActionButton variant="primary" className={s.starter} disabled={mic.status !== "idle" || !!draft.trim()}
+            onClick={() => void ask(t.fill, "fill")}>{t.fill}<ArrowUp size={14} aria-hidden="true" /></ActionButton>
+        )}
         <textarea
           ref={composer}
           value={draft}
           maxLength={1500}
           rows={2}
-          aria-label={discovery ? recovery.follow : t.type}
-          placeholder={discovery ? recovery.follow : t.type}
-          onChange={(e) => setDraft(e.target.value)}
+          aria-label={t.type}
+          placeholder={showStarter ? t.promptHint : turns.length ? t.followUp : t.type}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            setDraftIntent(undefined);
+          }}
           onKeyDown={(e) => {
             if (
               e.key === "Enter" &&
@@ -454,7 +560,7 @@ function Conversation({
               !e.nativeEvent.isComposing
             ) {
               e.preventDefault();
-              void ask(draft);
+              void ask(draft, draftIntent);
             }
           }}
         />
@@ -522,26 +628,33 @@ function Conversation({
                   id: key,
                   label: t[key],
                   disabled: key === "compare" && context.senses.length < 2,
-                  onSelect: () => void ask(t[key], key),
+                  onSelect: () => {
+                    setDraft(current => (current.trim() ? current.trimEnd() + "\n" + t[key] : t[key]).slice(0, 1500));
+                    setDraftIntent(draft.trim() ? undefined : key);
+                    setAnchor(null);
+                    composer.current?.focus();
+                  },
                 }))}
               />
             )}
-            <IconAction
-              label={t.mic}
-              title={t.mic}
-              disabled={!mic.supported || pending}
-              onClick={() => void mic.toggle()}
-            >
-              <Mic size={17} />
-            </IconAction>
-            <button
-              className={s.send}
-              type="submit"
-              aria-label={t.send}
-              disabled={pending || mic.status !== "idle" || !draft.trim()}
-            >
-              <ArrowUp size={18} />
-            </button>
+            <div className={s.composerActions}>
+              <IconAction
+                label={t.mic}
+                title={t.mic}
+                disabled={!mic.supported || pending}
+                onClick={() => void mic.toggle()}
+              >
+                <Mic size={17} />
+              </IconAction>
+              <button
+                className={s.send}
+                type="submit"
+                aria-label={t.send}
+                disabled={pending || mic.status !== "idle" || !draft.trim()}
+              >
+                <ArrowUp size={18} />
+              </button>
+            </div>
           </footer>
         )}
       </form>

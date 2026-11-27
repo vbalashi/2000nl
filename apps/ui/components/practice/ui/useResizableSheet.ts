@@ -19,7 +19,7 @@ export function clampSheetHeight(
 export function useResizableSheet(
   resetKey: string | null,
   onDismiss?: () => void,
-  { snapOnDrag = true }: { snapOnDrag?: boolean } = {},
+  { snapOnDrag = true, toggleFullHeight = false }: { snapOnDrag?: boolean; toggleFullHeight?: boolean } = {},
 ) {
   const ref = React.useRef<HTMLElement>(null);
   const [height, setHeight] = React.useState<number>();
@@ -152,6 +152,10 @@ export function useResizableSheet(
         }
         suppressClick.current = false;
         const limits = bounds();
+        if (toggleFullHeight) {
+          update(expanded ? limits.max * 0.66 : limits.max);
+          return;
+        }
         const current =
           ref.current?.getBoundingClientRect().height ?? limits.max * 0.66;
         const stops = [limits.min, Math.max(limits.min, limits.max * 0.66), limits.max];

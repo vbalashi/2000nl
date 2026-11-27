@@ -103,3 +103,5 @@
 \i db/migrations/396_personal_articles.sql
 \i db/migrations/397_paddle_sandbox_billing.sql
 \i db/migrations/398_paddle_sandbox_portal.sql
+\i db/migrations/399_assistant_reply_feedback.sql
+\i db/migrations/400_assistant_feedback_chat_history.sql

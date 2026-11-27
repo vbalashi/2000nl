@@ -1,6 +1,8 @@
+import type { AssistantFeedbackJourney } from "./assistantFeedbackContract";
 import { getInterfaceCatalog } from "@/lib/i18n/catalog";
 import type { PersonalField } from "@/lib/training/personalArticleClient";
 export const kinds = [
+  "headword",
   "definition",
   "example",
   "note",
@@ -9,7 +11,7 @@ export const kinds = [
   "expression",
   "partOfSpeech",
 ] as const;
-export type Suggestion = { kind: (typeof kinds)[number]; text: string };
+export type Suggestion = { kind: (typeof kinds)[number]; text: string; replaces?: { ordinal: number; text: string } };
 export type AssistantArticle = {
   kind?: "word" | "expression";
   nounArticle?: "de" | "het" | null;
@@ -30,6 +32,9 @@ export type AssistantReply = {
   suggestions: Suggestion[];
   sources?: SourceHit[];
   searched?: boolean;
+  cardDraft?: boolean;
+  outOfScope?: boolean;
+  feedback?: { ref: string; journey: AssistantFeedbackJourney };
 };
 export type AssistantTurn = { role: "user" | "assistant"; text: string };
 export function assistantLabels(language: string) {
