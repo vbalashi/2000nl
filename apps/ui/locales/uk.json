@@ -630,7 +630,12 @@
         "completed": "Paddle підтвердив тестовий платіж. Доступ не змінився.",
         "canceled": "Paddle скасував тестову транзакцію.",
         "pending": "Paddle ще не підтвердив платіж. Перевірте після оплати.",
-        "statusError": "Не вдалося перевірити платіж. Спробуйте ще раз."
+        "statusError": "Не вдалося перевірити платіж. Спробуйте ще раз.",
+        "confirmedWithFulfillment": "Paddle підтвердив тестовий платіж. Перевірте доступ у налаштуваннях.",
+        "sandboxEnabled": "Тестова оплата в Sandbox. Реального списання не буде.",
+        "sandboxEnds": "Sandbox Premium · {plan} · завершиться {date}",
+        "sandboxPaidUntil": "Sandbox Premium · {plan} · оплачено до {date}",
+        "sandboxFree": "Sandbox · Free"
       },
       "cardSpacing": "Інтервали картки",
       "cardSpacings": {

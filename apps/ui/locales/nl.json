@@ -630,7 +630,12 @@
         "completed": "Paddle heeft de testbetaling bevestigd. Je toegang is ongewijzigd.",
         "canceled": "Paddle heeft de testtransactie geannuleerd.",
         "pending": "Paddle heeft de betaling nog niet bevestigd. Controleer opnieuw na het afrekenen.",
-        "statusError": "De betaling kon niet worden gecontroleerd. Probeer het opnieuw."
+        "statusError": "De betaling kon niet worden gecontroleerd. Probeer het opnieuw.",
+        "confirmedWithFulfillment": "Paddle heeft de testbetaling bevestigd. Bekijk je toegang in Instellingen.",
+        "sandboxEnabled": "Testbetaling in de sandbox. Er wordt niets echt afgeschreven.",
+        "sandboxEnds": "Sandbox Premium · {plan} · eindigt op {date}",
+        "sandboxPaidUntil": "Sandbox Premium · {plan} · betaald tot {date}",
+        "sandboxFree": "Sandbox · Free"
       },
       "cardSpacing": "Kaartafstand",
       "cardSpacings": {

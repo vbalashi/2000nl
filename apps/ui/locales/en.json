@@ -630,7 +630,12 @@
         "completed": "Paddle confirmed the test payment. Access is unchanged.",
         "canceled": "Paddle cancelled the test transaction.",
         "pending": "Paddle has not confirmed the payment yet. Check again after checkout.",
-        "statusError": "Could not check the payment. Try again."
+        "statusError": "Could not check the payment. Try again.",
+        "confirmedWithFulfillment": "Paddle confirmed the test payment. Check your access in Settings.",
+        "sandboxEnabled": "Sandbox test checkout. No real charge.",
+        "sandboxEnds": "Sandbox Premium · {plan} · ends on {date}",
+        "sandboxPaidUntil": "Sandbox Premium · {plan} · paid through {date}",
+        "sandboxFree": "Sandbox · Free"
       },
       "cardSpacing": "Card spacing",
       "cardSpacings": {

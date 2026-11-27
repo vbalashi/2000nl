@@ -161,7 +161,6 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
         if (section === "billing")
           return <>
             <SettingsPanel title={copy.subscription}>
-              <p className={s.hint}>{copy.subscriptionsUnavailable}</p>
               {visible && <SandboxBillingLink language={props.interfaceLanguage} />}
             </SettingsPanel>
             <SettingsPanel title={copy.billingDetails}><p className={s.hint}>{copy.billingUnavailable}</p></SettingsPanel>

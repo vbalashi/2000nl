@@ -20,6 +20,7 @@ export function PremiumOffer({ language }: { language: string }) {
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [checkoutReady, setCheckoutReady] = useState(false);
+  const [fulfillment, setFulfillment] = useState(false);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [receipt, setReceipt] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<"completed" | "canceled" | "pending" | "statusError" | null>(null);
@@ -34,6 +35,7 @@ export function PremiumOffer({ language }: { language: string }) {
       if (!controller.signal.aborted) {
         setOffer(prepared);
         setCheckoutReady(catalog.checkoutReady);
+        setFulfillment(catalog.fulfillment);
       }
     }
     void load().catch(() => {
@@ -105,8 +107,8 @@ export function PremiumOffer({ language }: { language: string }) {
             {!receipt && <button type="button" className={s.primary} disabled={!offer || !checkoutReady || failed || checkoutBusy} onClick={startCheckout}>{copy.checkout}</button>}
             {receipt && paymentStatus !== "completed" && paymentStatus !== "canceled" &&
               <button type="button" className={s.primary} disabled={checkoutBusy} onClick={refreshPayment}>{copy.checkPayment}</button>}
-            <p className={s.notice} role="status">{failed ? copy.unavailable : paymentStatus ? copy[paymentStatus] :
-              !offer ? copy.loading : checkoutReady ? copy.sandbox : copy.checkoutNotConfigured}</p>
+            <p className={s.notice} role="status">{failed ? copy.unavailable : paymentStatus ? copy[paymentStatus === "completed" && fulfillment ? "confirmedWithFulfillment" : paymentStatus] :
+              !offer ? copy.loading : checkoutReady ? copy[fulfillment ? "sandboxEnabled" : "sandbox"] : copy.checkoutNotConfigured}</p>
             {receipt && paymentStatus !== "completed" && <button type="button" className={s.secondary} disabled={checkoutBusy} onClick={() => {
               setReceipt(null);
               setPaymentStatus(null);

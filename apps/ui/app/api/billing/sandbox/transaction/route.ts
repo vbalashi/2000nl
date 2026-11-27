@@ -1,5 +1,6 @@
-import { getAuthenticatedUserSupabase, jsonNoStore } from "@/lib/platform/serverSupabase";
+import { getAuthenticatedUserSupabase, getPlatformServiceSupabase, jsonNoStore } from "@/lib/platform/serverSupabase";
 import { createSandboxTransaction, isSandboxPlan, readSandboxTransaction, readSandboxTransactionConfig } from "@/lib/billing/sandboxTransactions";
+import { readSandboxWebhookConfig, sandboxFulfillmentEnabled } from "@/lib/billing/paddleSandboxWebhook";
 import { readSmallJson } from "@/lib/billing/readSmallJson";
 
 export const runtime = "nodejs";
@@ -30,7 +31,19 @@ export async function POST(request: Request) {
   try {
     if ("plan" in body && isSandboxPlan(body.plan) && Object.keys(body).length === 1) {
       if (!admitStart(auth.user.id)) return jsonNoStore({ error: "checkout_rate_limited" }, 429);
-      return jsonNoStore(await createSandboxTransaction(config, auth.user.id, body.plan), 201);
+      const service = sandboxFulfillmentEnabled(process.env) ? getPlatformServiceSupabase() : null;
+      if (service && (service instanceof Response || !readSandboxWebhookConfig(process.env))) {
+        return jsonNoStore({ error: "sandbox_fulfillment_unavailable" }, 503);
+      }
+      const transaction = await createSandboxTransaction(config, auth.user.id, body.plan);
+      if (service) {
+        const { error } = await service.supabase.rpc("register_paddle_sandbox_attempt", {
+          p_transaction: transaction.transactionId, p_user: auth.user.id,
+          p_price: config.prices[body.plan], p_plan: body.plan,
+        });
+        if (error) return jsonNoStore({ error: "sandbox_fulfillment_unavailable" }, 503);
+      }
+      return jsonNoStore(transaction, 201);
     }
     if ("receipt" in body && typeof body.receipt === "string" && Object.keys(body).length === 1) {
       const result = await readSandboxTransaction(config, auth.user.id, body.receipt);

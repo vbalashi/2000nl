@@ -1,4 +1,5 @@
 import { readSandboxCatalog } from "@/lib/billing/sandboxCatalog";
+import { readSandboxWebhookConfig, sandboxFulfillmentEnabled } from "@/lib/billing/paddleSandboxWebhook";
 import { readSandboxTransactionConfig } from "@/lib/billing/sandboxTransactions";
 import { getAuthenticatedUserSupabase, jsonNoStore } from "@/lib/platform/serverSupabase";
 
@@ -8,5 +9,8 @@ export async function GET(request: Request) {
 
   const auth = await getAuthenticatedUserSupabase(request);
   if (auth instanceof Response) return auth;
-  return jsonNoStore({ ...catalog, checkoutReady: Boolean(readSandboxTransactionConfig(process.env)) });
+  const fulfillment = sandboxFulfillmentEnabled(process.env);
+  const checkoutReady = Boolean(readSandboxTransactionConfig(process.env)) &&
+    (!fulfillment || Boolean(readSandboxWebhookConfig(process.env)));
+  return jsonNoStore({ ...catalog, checkoutReady, fulfillment });
 }

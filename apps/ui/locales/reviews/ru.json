@@ -1962,5 +1962,10 @@
   "ui.settings.premiumOffer.completed": {"source":"Paddle confirmed the test payment. Access is unchanged.","translationHash":"5ab16a64965eca6ac5750da2abc87d11044524902d18e9e97fb01e66f4bb2fc1"},
   "ui.settings.premiumOffer.canceled": {"source":"Paddle cancelled the test transaction.","translationHash":"7bd567516d36da2d9e66bc207f9afe42c45dcc18fa8c53c17b29a9130bf01bab"},
   "ui.settings.premiumOffer.pending": {"source":"Paddle has not confirmed the payment yet. Check again after checkout.","translationHash":"db36abb5fd417e3abca9e47cfb8cf5ba579bd9da7fec6757b1393e442e8104f1"},
-  "ui.settings.premiumOffer.statusError": {"source":"Could not check the payment. Try again.","translationHash":"c7ce91c32a4c3ee6cc07851ad41b62625748db7c44a65fd9ba0f316c60c37d9f"}
+  "ui.settings.premiumOffer.statusError": {"source":"Could not check the payment. Try again.","translationHash":"c7ce91c32a4c3ee6cc07851ad41b62625748db7c44a65fd9ba0f316c60c37d9f"},
+  "ui.settings.premiumOffer.confirmedWithFulfillment": {"source":"Paddle confirmed the test payment. Check your access in Settings.","translationHash":"a773e12d33d6da0f73c6f86fed97ae721bc4a71ff811ee5b6f4dd676258bcd67"},
+  "ui.settings.premiumOffer.sandboxEnabled": {"source":"Sandbox test checkout. No real charge.","translationHash":"cb3343a19c0e1f7450f567e5a40ab6bfbe75c19d8601f992e270ce6aef843a4b"},
+  "ui.settings.premiumOffer.sandboxEnds": {"source":"Sandbox Premium · {plan} · ends on {date}","translationHash":"79b0abcdacfc1c767269e754c62b2f53eece7e56067530ec655e9d6afc2e341b"},
+  "ui.settings.premiumOffer.sandboxPaidUntil": {"source":"Sandbox Premium · {plan} · paid through {date}","translationHash":"2c5ad1a43f7b3ba6129b24c7461581ffab273edb35a7786aa4b131b1af4a32ca"},
+  "ui.settings.premiumOffer.sandboxFree": {"source":"Sandbox · Free","translationHash":"a3588bb95f2382fc77d322cbb89132b7892c16a3cd18e8f336820db1ddcda793"}
 }
