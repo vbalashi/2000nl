@@ -623,7 +623,14 @@
         "unavailable": "Тестова оплата недоступна. Увійдіть у Dilum і спробуйте ще раз.",
         "retry": "Спробувати ще раз",
         "back": "Повернутися до Dilum",
-        "exampleWord": "vooruitgang"
+        "exampleWord": "vooruitgang",
+        "checkPayment": "Перевірити тестовий платіж",
+        "checkoutNotConfigured": "Тестову оплату ще не налаштовано.",
+        "newCheckout": "Почати нову тестову оплату",
+        "completed": "Paddle підтвердив тестовий платіж. Доступ не змінився.",
+        "canceled": "Paddle скасував тестову транзакцію.",
+        "pending": "Paddle ще не підтвердив платіж. Перевірте після оплати.",
+        "statusError": "Не вдалося перевірити платіж. Спробуйте ще раз."
       },
       "cardSpacing": "Інтервали картки",
       "cardSpacings": {

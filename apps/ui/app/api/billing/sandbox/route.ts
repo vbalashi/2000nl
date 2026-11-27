@@ -1,12 +1,12 @@
 import { readSandboxCatalog } from "@/lib/billing/sandboxCatalog";
-import { getAuthenticatedSupabase, jsonNoStore } from "@/lib/platform/serverSupabase";
+import { readSandboxTransactionConfig } from "@/lib/billing/sandboxTransactions";
+import { getAuthenticatedUserSupabase, jsonNoStore } from "@/lib/platform/serverSupabase";
 
 export async function GET(request: Request) {
   const catalog = readSandboxCatalog(process.env);
   if (!catalog) return jsonNoStore({ error: "checkout_unavailable" }, 404);
 
-  const auth = await getAuthenticatedSupabase(request);
+  const auth = await getAuthenticatedUserSupabase(request);
   if (auth instanceof Response) return auth;
-  if (auth.principal.authKind !== "first_party") return jsonNoStore({ error: "first_party_required" }, 403);
-  return jsonNoStore(catalog);
+  return jsonNoStore({ ...catalog, checkoutReady: Boolean(readSandboxTransactionConfig(process.env)) });
 }

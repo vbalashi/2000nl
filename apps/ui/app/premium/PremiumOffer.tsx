@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getUiMessages } from "@/lib/uiMessages";
 import { fetchSandboxCatalog } from "@/lib/billing/fetchSandboxCatalog";
 import { prepareSandboxOffer } from "@/lib/billing/paddleSandboxClient";
+import { getSandboxCheckoutStatus, startSandboxCheckout } from "@/lib/billing/sandboxTransactionClient";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
 import s from "./offer.module.css";
 
@@ -18,6 +19,11 @@ export function PremiumOffer({ language }: { language: string }) {
   const [offer, setOffer] = useState<Offer | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [checkoutReady, setCheckoutReady] = useState(false);
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [receipt, setReceipt] = useState<string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<"completed" | "canceled" | "pending" | "statusError" | null>(null);
+  const busy = useRef(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -25,7 +31,10 @@ export function PremiumOffer({ language }: { language: string }) {
       const catalog = await fetchSandboxCatalog(controller.signal);
       if (controller.signal.aborted) return;
       const prepared = await prepareSandboxOffer(catalog);
-      if (!controller.signal.aborted) setOffer(prepared);
+      if (!controller.signal.aborted) {
+        setOffer(prepared);
+        setCheckoutReady(catalog.checkoutReady);
+      }
     }
     void load().catch(() => {
       if (!controller.signal.aborted) setFailed(true);
@@ -33,11 +42,33 @@ export function PremiumOffer({ language }: { language: string }) {
     return () => controller.abort();
   }, [attempt]);
 
-  function startCheckout() {
+  async function startCheckout() {
+    if (!offer || !checkoutReady || busy.current || receipt) return;
+    busy.current = true;
+    setCheckoutBusy(true);
     try {
-      offer?.open(plan);
+      const transaction = await startSandboxCheckout(plan);
+      offer.open(transaction.transactionId);
+      setReceipt(transaction.receipt);
     } catch {
       setFailed(true);
+    } finally {
+      busy.current = false;
+      setCheckoutBusy(false);
+    }
+  }
+
+  async function refreshPayment() {
+    if (!receipt || busy.current) return;
+    busy.current = true;
+    setCheckoutBusy(true);
+    try {
+      setPaymentStatus(await getSandboxCheckoutStatus(receipt));
+    } catch {
+      setPaymentStatus("statusError");
+    } finally {
+      busy.current = false;
+      setCheckoutBusy(false);
     }
   }
 
@@ -57,7 +88,7 @@ export function PremiumOffer({ language }: { language: string }) {
             <p className={s.benefits}>{copy.benefits}</p>
           </section>
           <section className={s.offer}>
-            <fieldset className={s.plans} disabled={!offer}>
+            <fieldset className={s.plans} disabled={!offer || checkoutBusy || Boolean(receipt)}>
               <legend>{messages.settings.explorePlans}</legend>
               <div className={s.planRow}>
                 {(["month", "year"] as const).map(option => (
@@ -71,8 +102,15 @@ export function PremiumOffer({ language }: { language: string }) {
               </div>
             </fieldset>
             <p className={s.terms}>{copy[plan === "month" ? "monthlyTerms" : "yearlyTerms"]}</p>
-            <button type="button" className={s.primary} disabled={!offer || failed} onClick={startCheckout}>{copy.checkout}</button>
-            <p className={s.notice} role="status">{failed ? copy.unavailable : offer ? copy.sandbox : copy.loading}</p>
+            {!receipt && <button type="button" className={s.primary} disabled={!offer || !checkoutReady || failed || checkoutBusy} onClick={startCheckout}>{copy.checkout}</button>}
+            {receipt && paymentStatus !== "completed" && paymentStatus !== "canceled" &&
+              <button type="button" className={s.primary} disabled={checkoutBusy} onClick={refreshPayment}>{copy.checkPayment}</button>}
+            <p className={s.notice} role="status">{failed ? copy.unavailable : paymentStatus ? copy[paymentStatus] :
+              !offer ? copy.loading : checkoutReady ? copy.sandbox : copy.checkoutNotConfigured}</p>
+            {receipt && paymentStatus !== "completed" && <button type="button" className={s.secondary} disabled={checkoutBusy} onClick={() => {
+              setReceipt(null);
+              setPaymentStatus(null);
+            }}>{copy.newCheckout}</button>}
             {failed && <button type="button" className={s.secondary} onClick={() => {
               setFailed(false);
               setOffer(null);

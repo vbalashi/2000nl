@@ -7,7 +7,7 @@ type Paddle = {
   PricePreview(options: { items: Item[] }): Promise<{
     data: { details: { lineItems: Array<{ price: { id: string }; formattedTotals: { total: string } }> } };
   }>;
-  Checkout: { open(options: { items: Item[] }): void };
+  Checkout: { open(options: { transactionId: string }): void };
 };
 
 let pending: Promise<Paddle> | undefined;
@@ -58,6 +58,6 @@ export async function prepareSandboxOffer(catalog: SandboxCatalog) {
   if (!month || !year) throw new Error("incomplete_price_preview");
   return {
     amounts: { month, year },
-    open: (plan: keyof SandboxCatalog["prices"]) => paddle.Checkout.open({ items: [item(plan)] }),
+    open: (transactionId: string) => paddle.Checkout.open({ transactionId }),
   };
 }

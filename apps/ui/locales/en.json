@@ -623,7 +623,14 @@
         "unavailable": "Test checkout is unavailable. Sign in to Dilum before trying again.",
         "retry": "Try again",
         "back": "Back to Dilum",
-        "exampleWord": "vooruitgang"
+        "exampleWord": "vooruitgang",
+        "checkPayment": "Check test payment",
+        "checkoutNotConfigured": "Test checkout setup is incomplete.",
+        "newCheckout": "Start another test checkout",
+        "completed": "Paddle confirmed the test payment. Access is unchanged.",
+        "canceled": "Paddle cancelled the test transaction.",
+        "pending": "Paddle has not confirmed the payment yet. Check again after checkout.",
+        "statusError": "Could not check the payment. Try again."
       },
       "cardSpacing": "Card spacing",
       "cardSpacings": {

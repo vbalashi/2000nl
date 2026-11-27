@@ -1955,5 +1955,12 @@
   "ui.settings.premiumOffer.unavailable": {"source":"Test checkout is unavailable. Sign in to Dilum before trying again.","translationHash":"0a8c702389d70bd6b0fb00ba83ec87eccb54d89f69847c0821049cb7a9e2653f"},
   "ui.settings.premiumOffer.retry": {"source":"Try again","translationHash":"867469888f882902637b4bdd67b98b6b638196404d75095cc96d0198e80dc183"},
   "ui.settings.premiumOffer.back": {"source":"Back to Dilum","translationHash":"1aacbee852ed386e7b3961eaaa3739fb0a051156db0073811a0baffc065786c1"},
-  "ui.settings.premiumOffer.exampleWord": {"source":"vooruitgang","translationHash":"ca0d6b6d9e80bc98e796370c80b0d9528451d5d954f7c30daf69112335965fee"}
+  "ui.settings.premiumOffer.exampleWord": {"source":"vooruitgang","translationHash":"ca0d6b6d9e80bc98e796370c80b0d9528451d5d954f7c30daf69112335965fee"},
+  "ui.settings.premiumOffer.checkPayment": {"source":"Check test payment","translationHash":"ec17aecb925fe136ac234bf28018e95ad5a0699c8c0a4d4f5453a4d0b419ef78"},
+  "ui.settings.premiumOffer.checkoutNotConfigured": {"source":"Test checkout setup is incomplete.","translationHash":"5181bfb81a9742e6c79b23af46ed249d989734dde37af74a43433d110a6658a1"},
+  "ui.settings.premiumOffer.newCheckout": {"source":"Start another test checkout","translationHash":"0e46ea55f48eeb6330dc969a3a041dcd25cd94d7021b3c3d7013d7d3f58d7016"},
+  "ui.settings.premiumOffer.completed": {"source":"Paddle confirmed the test payment. Access is unchanged.","translationHash":"5eafab3419bb9b20b006ad707ee4d39cbc0ed366276f49f17a2985dd5b7a8e19"},
+  "ui.settings.premiumOffer.canceled": {"source":"Paddle cancelled the test transaction.","translationHash":"6c009a074885ff101bcccf12c3d9e1126290785eb4828ef92a08dc5cd3f1f1e5"},
+  "ui.settings.premiumOffer.pending": {"source":"Paddle has not confirmed the payment yet. Check again after checkout.","translationHash":"593d35c17175377017d8aa711597f3c1af92ac7ad2d3a56770ab050467883883"},
+  "ui.settings.premiumOffer.statusError": {"source":"Could not check the payment. Try again.","translationHash":"a2b7437daf0497a509a6af60a2119930cac2d7f3355065bbdfb612b2803c0b43"}
 }

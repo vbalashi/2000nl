@@ -623,7 +623,14 @@
         "unavailable": "Testbetaling is niet beschikbaar. Meld je aan bij Dilum en probeer het opnieuw.",
         "retry": "Opnieuw proberen",
         "back": "Terug naar Dilum",
-        "exampleWord": "vooruitgang"
+        "exampleWord": "vooruitgang",
+        "checkPayment": "Testbetaling controleren",
+        "checkoutNotConfigured": "De testbetaling is nog niet ingesteld.",
+        "newCheckout": "Een nieuwe testbetaling starten",
+        "completed": "Paddle heeft de testbetaling bevestigd. Je toegang is ongewijzigd.",
+        "canceled": "Paddle heeft de testtransactie geannuleerd.",
+        "pending": "Paddle heeft de betaling nog niet bevestigd. Controleer opnieuw na het afrekenen.",
+        "statusError": "De betaling kon niet worden gecontroleerd. Probeer het opnieuw."
       },
       "cardSpacing": "Kaartafstand",
       "cardSpacings": {
