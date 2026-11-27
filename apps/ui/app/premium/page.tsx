@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { InterfaceCatalogBoundary } from "@/components/system/InterfaceCatalogBoundary";
 import { getRequestInterfaceSnapshot } from "@/lib/i18n/serverSnapshot";
 import { readSandboxCatalog } from "@/lib/billing/sandboxCatalog";
-import { PremiumOffer } from "./PremiumOffer";
+import { PremiumOffer } from "@/components/billing/PremiumOffer";
 
 export const dynamic = "force-dynamic";
 
@@ -11,5 +11,5 @@ export default async function PremiumPage({ searchParams }: { searchParams: Prom
   if (!readSandboxCatalog(process.env)) notFound();
   const [{ language }, snapshot] = await Promise.all([searchParams, getRequestInterfaceSnapshot()]);
   const locale = typeof language === "string" && Object.hasOwn(snapshot.registry, language) ? language : "en";
-  return <InterfaceCatalogBoundary><TermsGate><PremiumOffer language={locale} /></TermsGate></InterfaceCatalogBoundary>;
+  return <InterfaceCatalogBoundary><TermsGate><PremiumOffer language={locale} entry="legacy" /></TermsGate></InterfaceCatalogBoundary>;
 }

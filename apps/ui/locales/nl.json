@@ -611,7 +611,7 @@
       "premiumOffer": {
         "name": "Dilum Premium",
         "exampleMeaning": "vooruitgaan / vordering",
-        "title": "Jouw woorden. Op jouw manier.",
+        "title": "Jouw woorden.\nOp jouw manier.",
         "benefits": "Bouw je eigen woordenschat op met AI-hulp en oefen met gespreide herhaling.",
         "month": "Maandelijks",
         "year": "Jaarlijks",
@@ -655,7 +655,12 @@
         "cancelSubscription": "Abonnement opzeggen",
         "openingPaddle": "Paddle openen…",
         "managedByPaddle": "Paddle beheert je betalingen en factuurgegevens.",
-        "paddleOpenError": "Paddle kon niet worden geopend. Probeer het opnieuw."
+        "paddleOpenError": "Paddle kon niet worden geopend. Probeer het opnieuw.",
+        "premiumPlans": "Kies je abonnement",
+        "dictionaryGrows": "Een woordenboek dat met je meegroeit",
+        "meaningsAndDictionary": "Leer meer betekenissen · Bouw je eigen woordenboek",
+        "wordCollections": "Orden je woorden in collecties",
+        "continueFree": "Verder met Free"
       },
       "cardSpacing": "Kaartafstand",
       "cardSpacings": {

@@ -93,23 +93,24 @@
   font-weight: 600;
 }
 
-.cta {
+.billing .cta {
   display: inline-flex;
   align-items: center;
   gap: 12px;
   min-height: 40px;
   margin-top: 19px;
-  border: 1px solid transparent;
+  border: 1px solid color-mix(in srgb, var(--practice-accent) 32%, var(--practice-border));
   border-radius: var(--practice-radius-control);
   padding: 6px 13px;
-  background: var(--practice-accent);
-  color: var(--practice-on-accent);
+  background: color-mix(in srgb, var(--practice-selected) 62%, var(--practice-hero));
+  color: var(--practice-selected-text);
+  cursor: pointer;
   font-weight: 600;
   text-decoration: none;
 }
 
 .cta:hover {
-  background: var(--practice-accent-hover);
+  background: var(--practice-selected);
 }
 
 .testNote {
@@ -170,4 +171,14 @@
 .error {
   margin: 0;
   font-size: var(--practice-text-caption);
+}
+
+.plan[data-premium="false"] {
+  background: linear-gradient(120deg, var(--practice-hero), var(--practice-hero-end));
+  border-color: var(--practice-border);
+}
+
+.cta:focus-visible {
+  outline: 2px solid var(--practice-focus);
+  outline-offset: 3px;
 }

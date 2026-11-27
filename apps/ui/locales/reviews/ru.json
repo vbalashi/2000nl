@@ -1943,7 +1943,7 @@
   "partOfSpeech.other": {"source":"Other","translationHash":"001f75c6b3f4631ac413cc7a268dd669e4513f507ef6aebfcd98f06bbd19f0a3"},
   "ui.settings.premiumOffer.name": {"source":"Dilum Premium","translationHash":"743655d97e5967d97129b566c4d44ab7608d31ac22532b601b475b17c94875f0"},
   "ui.settings.premiumOffer.exampleMeaning": {"source":"progress / moving forward","translationHash":"89f7e2b99b66094062754f4f076f086943e78310bcab3d8a8d6ebcb834eec007"},
-  "ui.settings.premiumOffer.title": {"source":"Your words. Your way.","translationHash":"6939cf81ef568149579035bd2b8bdb1bf56735baa848d615aa8af658111fe491"},
+  "ui.settings.premiumOffer.title": {"source":"Your words.\nYour way.","translationHash":"9bb362a78862a4e6a474884f84c8476e3bef667ef96d68d85abbfe57b8eb4fc0"},
   "ui.settings.premiumOffer.benefits": {"source":"Build your own vocabulary with AI assistance and practise it with spaced repetition.","translationHash":"28686e55ad947d6c6ac4e2cd9663c2ac814483476059bf5948c98f6017c3fa0b"},
   "ui.settings.premiumOffer.month": {"source":"Monthly","translationHash":"e238ede2a34c7751917074d6fe636fdd92148ae59c56c24f46c54bd1107c7824"},
   "ui.settings.premiumOffer.year": {"source":"Yearly","translationHash":"c36329df33622f1a0a5365347efa66266944044483b67bcfd55aaf2509ba2c47"},
@@ -1995,5 +1995,10 @@
   "ui.settings.premiumOffer.cancelSubscription": {"source":"Cancel subscription","translationHash":"64a231175583cd68eb66639788cc61ca86312be7ba1fc7133c83944973f12d53"},
   "ui.settings.premiumOffer.openingPaddle": {"source":"Opening Paddle…","translationHash":"f414595c3b48cb48adbfd0a03254a980f4ba4d4e57d9d1e7ed003b64ad58a365"},
   "ui.settings.premiumOffer.managedByPaddle": {"source":"Paddle manages your payments and billing details.","translationHash":"c177e901a25f3c3f7fb8fe7c46c1e7b3c7e857ecafacb58205e9da6a6155cb37"},
-  "ui.settings.premiumOffer.paddleOpenError": {"source":"Paddle could not open. Try again.","translationHash":"8e2dc05d248e67311e9758850a220ad93dc14acfbc220a09b75be868b7ca1c87"}
+  "ui.settings.premiumOffer.paddleOpenError": {"source":"Paddle could not open. Try again.","translationHash":"8e2dc05d248e67311e9758850a220ad93dc14acfbc220a09b75be868b7ca1c87"},
+  "ui.settings.premiumOffer.premiumPlans": {"source":"Choose your plan","translationHash":"8121887710255d396e37db2ca6343d39bba1f32ff58cdab520de007b8f3ce23c"},
+  "ui.settings.premiumOffer.dictionaryGrows": {"source":"A dictionary that grows with you","translationHash":"0ba38eae9a9a52976c2e10a0fcd4ac4d10ae628fdf695b5954a90d0643f810bb"},
+  "ui.settings.premiumOffer.meaningsAndDictionary": {"source":"Learn more meanings · Grow your own dictionary","translationHash":"42eedbc88627455cf71238d2ab73696a2d43871e97150f3b1ba6003a9e895246"},
+  "ui.settings.premiumOffer.wordCollections": {"source":"Organize your words into collections","translationHash":"d7bea3400691205974fce93503991ee1b87ed10222843c9bc13fa7f311c65986"},
+  "ui.settings.premiumOffer.continueFree": {"source":"Continue with Free","translationHash":"69ac8f73211a5169ce5dbea89cc9d752e0dde9e7b0917a9bc73f0df9129f2519"}
 }

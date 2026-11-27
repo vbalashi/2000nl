@@ -19,6 +19,7 @@ export type AppFrameProps = {
   settingsActive?: boolean;
   navigationDisabled?: boolean;
   utilitiesDisabled?: boolean;
+  blockedByOverlay?: boolean;
   /** Active practice session: on narrow screens the app chrome steps aside. */
   immersive?: boolean;
   onNavigate: (destination: AppDestination) => void;
@@ -28,7 +29,7 @@ export type AppFrameProps = {
   className?: string;
 };
 
-type AppHeaderProps = Omit<AppFrameProps, "children" | "className" | "immersive">;
+type AppHeaderProps = Omit<AppFrameProps, "children" | "className" | "immersive" | "blockedByOverlay">;
 
 const primaryDestination = (destination: AppDestination) =>
   destination === "training" || destination === "library" || destination === "statistics"
@@ -89,6 +90,7 @@ export function AppFrame({
   className,
   children,
   immersive = false,
+  blockedByOverlay = false,
   ...headerProps
 }: AppFrameProps) {
   const [keyboardOpen, setKeyboardOpen] = React.useState(false);
@@ -118,6 +120,7 @@ export function AppFrame({
   return (
     <div
       className={`${styles.frame}${className ? ` ${className}` : ""}`}
+      inert={blockedByOverlay}
       data-app-frame="true"
       data-keyboard-open={keyboardOpen ? "true" : undefined}
       data-immersive={immersive ? "true" : undefined}

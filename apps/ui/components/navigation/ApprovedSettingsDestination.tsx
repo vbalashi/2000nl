@@ -160,7 +160,8 @@ export function ApprovedSettingsDestination(props: SettingsDestinationProps) {
             </>
           );
         if (section === "billing")
-          return visible && <SandboxBillingSection language={props.interfaceLanguage} />;
+          return visible && <SandboxBillingSection language={props.interfaceLanguage}
+            offerOpen={Boolean(props.premiumOfferOpen)} onExplorePlans={props.onExplorePremium} />;
         if (section === "shortcuts")
           return (
             <SettingsPanel title={copy.trainingShortcuts}>

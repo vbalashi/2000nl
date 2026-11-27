@@ -107,7 +107,20 @@ for(const readingSize of ['normal','largest','extra'])test(`mobile launch guidan
  await expect(tooltip).toContainText('5 / 10');
 });
 
-for(const device of [{width:393,height:852,size:'largest'},{width:320,height:568,size:'extra'}])test(`core walkthrough keeps every required control tappable ${device.width}`,async({page})=>{
+for(const device of [{width:393,height:852,size:'largest'},{width:320,height:568,size:'extra'}])test(`core walkthrough keeps every required control tappable ${device.width}`,async({page}, testInfo)=>{
+ const showPremium = device.width === 393;
+ await page.route("**/api/billing/sandbox", route => showPremium ? route.fulfill({ json: {
+   clientToken: "test_billing", prices: { month: "monthly", year: "yearly" }, checkoutReady: true, fulfillment: true,
+ } }) : route.fulfill({ status: 404 }));
+ await page.route("**/api/billing/sandbox/access", route => route.fulfill({ json: { access: { active: false } } }));
+ await page.route("https://cdn.paddle.com/paddle/v2/paddle.js", route => route.fulfill({
+   contentType: "application/javascript",
+   body: `window.Paddle = { Environment: { set() {} }, Initialize() {}, async PricePreview({items}) {
+     return { data: { details: { lineItems: items.map(({priceId}) => ({
+       price: { id: priceId }, formattedTotals: { total: priceId === "monthly" ? "€6.00" : "€60.00" }
+     })) } } };
+   } };`,
+ }));
  await page.setViewportSize(device);
  await setupAuthenticatedTrainingAttributionPage(page,0,{devTestLogin:false,visualProfile:'answer',settingsOverrides:{reading_size_phone:device.size,reading_size_desktop:device.size,preferences:{onboardingCompleted:false,onboardingLanguage:'ru'}}});
  const guide=page.locator('[data-training-hotkeys-suspended="true"]');
@@ -129,6 +142,29 @@ for(const device of [{width:393,height:852,size:'largest'},{width:320,height:568
    await expectTourActionAccessible(guide,action);
    await action.click();
   }
+ }
+ if (showPremium) {
+  const url = page.url();
+  const offer = page.getByRole("dialog");
+  await expect(offer.getByText("vooruitgang", { exact: true })).toBeVisible();
+  await expect(offer.getByText("€60.00", { exact: true })).toBeVisible();
+  await expect(offer.getByRole("button", { name: "Закрыть", exact: true })).toHaveCount(0);
+  const continueFree = offer.getByRole("button", { name: "Продолжить с Free", exact: true });
+  await expect(continueFree).toBeInViewport({ ratio: 1 });
+  const action = await continueFree.boundingBox();
+  expect(action && action.y + action.height).toBeLessThanOrEqual(device.height - 20);
+  await page.screenshot({ path: testInfo.outputPath("onboarding-premium.png"), style: "nextjs-portal { display: none }" });
+  await page.setViewportSize({ width: 360, height: 640 });
+  await expect(continueFree).toBeInViewport({ ratio: 1 });
+  const compactAction = await continueFree.boundingBox();
+  expect(compactAction?.height).toBeGreaterThanOrEqual(44);
+  expect(compactAction && compactAction.y + compactAction.height).toBeLessThanOrEqual(628);
+  await continueFree.click({ trial: true });
+  await page.screenshot({ path: testInfo.outputPath("onboarding-premium-compact.png"), style: "nextjs-portal { display: none }" });
+  await continueFree.click();
+  await expect(offer).toHaveCount(0);
+  await expect(page).toHaveURL(url);
+  await expect(page.locator('[data-onboarding="launch"]')).toBeVisible();
  }
  await expect(guide).toHaveCount(0);
 });

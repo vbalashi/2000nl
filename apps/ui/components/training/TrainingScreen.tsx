@@ -7,6 +7,9 @@ import { useTrainingOperationScope } from "./useTrainingOperationScope";
 import { recoverTrainingRun } from "@/lib/training/trainingRunRecovery";
 import { startTrainingDiagnostics } from "@/lib/diagnostics/client";
 import { authenticatedJsonHeaders } from "@/lib/platform/platformV2Http";
+import { PremiumOffer } from "@/components/billing/PremiumOffer";
+import { fetchSandboxCatalog } from "@/lib/billing/fetchSandboxCatalog";
+import type { SandboxAccess } from "@/lib/billing/paddleSandboxAccess";
 import {CollectionSelectionContext} from '@/components/library/sharing/CollectionSelectionContext';
 import {canonicalDraft as canonicalEmptyTrainingDraft} from "@/lib/training/setups/model";
 import { useTrainingRunSelection, type TrainingRunSelection } from "@/lib/training/useTrainingRunSelection";
@@ -2204,6 +2207,48 @@ function TrainingScreenContent({
         : null;
   const appRelease = useAppRelease(user.id, navigationBlocked || (hasResumableSession && v2SessionLayoutVisible) || trainingPilot.status === "preparing", onboardingLang);
   const studyTimeEnabled = destination === "training" && !detailsOpen && !showHotkeys && !showLanguageSelection && !navigationBlocked && !loadingWord && !sessionAuthorityChecking;
+  const [premiumEntry, setPremiumEntry] = useState<"checking" | "onboarding" | "settings" | null>(null);
+  const sawOnboardingOffer = useRef(false);
+  const premiumOpener = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (premiumEntry !== "checking") return;
+    const controller = new AbortController();
+    async function checkOffer() {
+      try {
+        const catalog = await fetchSandboxCatalog(controller.signal);
+        if (!catalog.checkoutReady || controller.signal.aborted) return;
+        const response = await fetch("/api/billing/sandbox/access", {
+          headers: await authenticatedJsonHeaders(user.id), signal: controller.signal, cache: "no-store",
+        });
+        if (!response.ok) return;
+        const { access } = await response.json() as { access: SandboxAccess };
+        if (!controller.signal.aborted && access.active === false) setPremiumEntry("onboarding");
+      } catch {
+        // Access to the app does not depend on billing availability.
+      } finally {
+        if (!controller.signal.aborted) setPremiumEntry(entry => entry === "checking" ? null : entry);
+      }
+    }
+    void checkOffer();
+    return () => controller.abort();
+  }, [premiumEntry, user.id]);
+
+  const premiumOpen = premiumEntry === "onboarding" || premiumEntry === "settings";
+  useEffect(() => {
+    if (!premiumOpen) {
+      premiumOpener.current?.focus({ preventScroll: true });
+      premiumOpener.current = null;
+    }
+  }, [premiumOpen]);
+
+  const finishCoreOnboarding = () => {
+    void completeOnboarding();
+    if (initialPreferences.preferences.onboardingCompleted || sawOnboardingOffer.current) return false;
+    sawOnboardingOffer.current = true;
+    setPremiumEntry("checking");
+    return true;
+  };
   const onboardingDestination = (topic:TourTopic,step:number):AppDestination => {
     const id=tourFlows[topic][step]?.id;
     if(topic==='languages'||topic==='core'&&step<2||topic==='appearance'&&step===0)return 'settings';
@@ -2223,7 +2268,7 @@ function TrainingScreenContent({
   return (
     <OnboardingProvider key={user.id} userId={user.id} language={onboardingLang}
       autoStart={!initialPreferences.preferences.onboardingCompleted && (!trainingTodaySetupEnabled || homeStartupSettled) && sessionResumeResolved && !invitationCode && !hasResumableSession && !navigationBlocked}
-      port={{prepare:prepareOnboarding,pause:pauseOnboarding,canNavigate:!navigationBlocked&&!navigationGuardBlocked,destination,isPrepared:(topic,step)=>destination===onboardingDestination(topic,step),interrupted:(topic,step)=>destination==='settings'&&onboardingDestination(topic,step)!=='settings',completeCore:()=>{void completeOnboarding();},enter:(topic,step)=>{if(topic==='appearance'&&step===1){setOpenTrainingEditor(false);trainingPilot.returnToToday();onRequestDestination('training');}}}}>
+      port={{prepare:prepareOnboarding,pause:pauseOnboarding,canNavigate:!navigationBlocked&&!navigationGuardBlocked,destination,isPrepared:(topic,step)=>destination===onboardingDestination(topic,step),interrupted:(topic,step)=>destination==='settings'&&onboardingDestination(topic,step)!=='settings',completeCore:finishCoreOnboarding,enter:(topic,step)=>{if(topic==='appearance'&&step===1){setOpenTrainingEditor(false);trainingPilot.returnToToday();onRequestDestination('training');}}}}>
     <CollectionSelectionContext.Provider value={{userId:user.id,languageCode:currentTrainingLanguage,onTrainingResolved:(ids,rows)=>rememberTrainingReferences(ids,rows.map(row=>({id:row.id,name:row.name,type:'user',ownership:row.ownership,item_count:row.availableItemCount,available_item_count:row.availableItemCount})))}}>
     <CardTranslationLanguagesProvider ownerId={user.id} primary={translationLang} secondary={secondaryTranslationLang}>
     <TrainingStartupGate
@@ -2239,6 +2284,7 @@ function TrainingScreenContent({
       interfaceLanguage={onboardingLang}
       themePreference={themePreference}
       settingsActive={destination === "settings"}
+      blockedByOverlay={premiumOpen}
       navigationDisabled={navigationBlocked}
       immersive={visibleDestination === "training" && v2SessionLayoutVisible}
       onNavigate={onRequestDestination}
@@ -2540,6 +2586,11 @@ function TrainingScreenContent({
       />
       <SettingsDestination key={`settings-tour-${onboardingNavigation}`}
         initialSection={onboardingSection}
+        premiumOfferOpen={premiumEntry === "settings"}
+        onExplorePremium={opener => {
+          premiumOpener.current = opener;
+          setPremiumEntry("settings");
+        }}
         onboarding={{title:tourCopy[onboardingLang].tourName,content:<OnboardingSettings collections={process.env.NEXT_PUBLIC_COLLECTION_ORGANIZATION_ENABLED==='true'} sharing={process.env.NEXT_PUBLIC_COLLECTION_SHARING_ENABLED==='true'}/>}}
         onExit={() => onRequestDestination("training")}
         open={destination === "settings"}
@@ -2555,6 +2606,7 @@ function TrainingScreenContent({
         onSignOut={handleSignOut}
       />
     </AppFrame>
+    {premiumOpen && <PremiumOffer language={onboardingLang} entry={premiumEntry} onDismiss={() => setPremiumEntry(null)} />}
     </AppReleaseContext.Provider>
     </TrainingStartupGate>
     </CardTranslationLanguagesProvider>
