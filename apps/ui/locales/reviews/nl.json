@@ -2056,5 +2056,9 @@
   "ui.settings.premiumOffer.allowancesHelpLabel": {"source":"How Free limits work","translationHash":"2f2e1b0e7f65d8bea594592fa169ecaa67b26a03f25c468d0d95fceedf81bed5"},
   "ui.settings.premiumOffer.allowancesHelpAI": {"source":"Free starts with 2 AI replies and 10 dictations to try Premium features. Each AI reply received or successful dictation uses one attempt.","translationHash":"ffaf25f100eca950a34458fc4179e6b0baa264d479446a08bda622e009f046a2"},
   "ui.settings.premiumOffer.allowancesHelpMeanings": {"source":"Free includes room for up to 100 personal meanings across all languages. Each new meaning uses one slot. Editing a saved meaning keeps the same slot.","translationHash":"087f5c14b9f5a6ad9122467f38c0bcb6323ba9955f752022208c39d255fcf286"},
-  "ui.settings.premiumOffer.assistantTrialNote": {"source":"Try Ask AI on Free.","translationHash":"af8b47ed5e65ecde710bf36e84c4a7df16794a70e246a6b05983e7a8c3015ee5"}
+  "ui.settings.premiumOffer.assistantTrialNote": {"source":"Try Ask AI on Free.","translationHash":"af8b47ed5e65ecde710bf36e84c4a7df16794a70e246a6b05983e7a8c3015ee5"},
+  "ui.settings.premiumOffer.benefitsTitle": {"source":"Included with Premium","translationHash":"1cdfa05d71271f4cd33764dfcffe62fde1c8f3ee44aa8ebd43e9c222cd6a71d7"},
+  "ui.settings.premiumOffer.benefitAssistant": {"source":"AI assistant and voice dictation","translationHash":"7fe96079e19ec73f37c7c1279f191d4c8351d200334d046f5803126c71b94ed0"},
+  "ui.settings.premiumOffer.benefitMeanings": {"source":"Unlimited personal meanings and cards","translationHash":"9899e6cfe9b28b48f37ee1d153c80f62f987faf15cf85950a8111dbe1a6e9e40"},
+  "ui.settings.premiumOffer.benefitFuture": {"source":"New Premium features as they launch","translationHash":"ab2a15a9395210143736629a8066d839d9bf611363139336591a918450fc59b7"}
 }

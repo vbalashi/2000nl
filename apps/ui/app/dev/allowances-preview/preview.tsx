@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PremiumOffer } from "@/components/billing/PremiumOffer";
+import { Managed } from "@/components/legal/LegalLinks";
 import type { SandboxCheckoutClient } from "@/components/billing/SandboxPlanCheckout";
 import { SandboxBillingSection } from "@/components/navigation/SandboxBillingSection";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
@@ -110,7 +111,9 @@ export function AllowancesPreview() {
         </main>
       </div>
     </div>
-    {offer && <PremiumOffer entry={offer} language="en" checkoutClient={checkoutClient} previewColourMode={dark ? "dark" : "light"}
-      onDismiss={() => { setOffer(null); requestAnimationFrame(() => opener?.focus({ preventScroll: true })); }}/>}
+    {offer && <Managed.Provider value>
+      <PremiumOffer entry={offer} language="en" checkoutClient={checkoutClient} previewColourMode={dark ? "dark" : "light"}
+        onDismiss={() => { setOffer(null); requestAnimationFrame(() => opener?.focus({ preventScroll: true })); }}/>
+    </Managed.Provider>}
   </div>;
 }

@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
-import { LegalLinks } from "@/components/legal/LegalLinks";
 import { getUiMessages } from "@/lib/uiMessages";
 import { fetchSandboxCatalog } from "@/lib/billing/fetchSandboxCatalog";
 import { prepareSandboxOffer, type SandboxCheckoutSummary } from "@/lib/billing/paddleSandboxClient";
@@ -248,7 +247,6 @@ export function SandboxPlanCheckout({ language, freeAction, client = paddleClien
             </div>
           </fieldset>
           <p className={s.terms}>{terms}</p>
-          <LegalLinks />
           <button ref={checkoutButton} type="button" className={s.primary}
             disabled={!offer || !checkoutReady || failed || checkoutBusy} onClick={startCheckout}>{copy.checkout}</button>
           {freeAction}

@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, X } from "lucide-react";
+import { ArrowRight, Check, X } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SandboxPlanCheckout, type SandboxCheckoutClient } from "@/components/billing/SandboxPlanCheckout";
+import { LegalLinks } from "@/components/legal/LegalLinks";
 import { getInterfaceCatalog } from "@/lib/i18n/catalog";
 import theme from "@/components/practice/ui/practiceTheme.module.css";
 import s from "./premiumOffer.module.css";
@@ -62,7 +63,14 @@ export function PremiumOffer({ language, checkoutClient, previewColourMode, ...e
             <p className={s.word} lang="nl">{copy.exampleWord}</p>
             <p className={s.meaning}>{copy.exampleMeaning}</p>
             <h1 id={titleId} ref={title} tabIndex={inApp ? -1 : undefined}>{copy.title}</h1>
-            <p className={s.benefits}>{copy.meaningsAndDictionary}<br />{copy.wordCollections}</p>
+            <div className={s.benefits}>
+              <h2>{copy.benefitsTitle}</h2>
+              <ul>
+                {[copy.benefitAssistant, copy.benefitMeanings, copy.benefitFuture].map(label => (
+                  <li key={label}><Check size={15} aria-hidden="true" /><span>{label}</span></li>
+                ))}
+              </ul>
+            </div>
           </div>
           <div className={s.purchase}>
             <SandboxPlanCheckout language={language} client={checkoutClient} onDismissLockChange={reportDismissLock} freeAction={entry.entry === "onboarding" && (
@@ -74,6 +82,7 @@ export function PremiumOffer({ language, checkoutClient, previewColourMode, ...e
             )} />
           </div>
         </div>
+        <footer className={s.legal}><LegalLinks /></footer>
       </div>
     </Root>
   );
