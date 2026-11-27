@@ -74,8 +74,11 @@
   border-radius: var(--practice-radius-control);
   padding: 10px 12px;
 }
-.proposalBody p {
+.proposalBody .proposalText {
   margin: 0;
+  font-size: var(--practice-reading-literary);
+  line-height: var(--practice-literary-leading);
+  overflow-wrap: anywhere;
 }
 .proposalActions {
   display: flex;
@@ -287,7 +290,7 @@
 }
 .draftDestination strong {
   font-family: var(--practice-font-reading);
-  font-size: var(--practice-text-title);
+  font-size: var(--practice-reading-literary);
   font-weight: 650;
   line-height: 1.1;
   overflow-wrap: anywhere;
