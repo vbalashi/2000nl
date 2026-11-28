@@ -106,13 +106,14 @@ export function AppFrame({
     const orientation = screen.orientation;
     const update = () => {
       const phone = Math.min(screen.width, screen.height) < 600 && matchMedia("(pointer: coarse)").matches;
-      const landscape = orientation?.type ? orientation.type.startsWith("landscape") : screen.width > screen.height;
+      const landscape = (orientation?.type ? orientation.type.startsWith("landscape") : Math.abs(window.orientation) === 90) && window.innerWidth > window.innerHeight;
       setLandscapePhone(phone && landscape);
     };
     update();
     orientation?.addEventListener("change", update);
     window.addEventListener("orientationchange", update);
-    return () => { orientation?.removeEventListener("change", update); window.removeEventListener("orientationchange", update); };
+    window.addEventListener("resize", update);
+    return () => { orientation?.removeEventListener("change", update); window.removeEventListener("orientationchange", update); window.removeEventListener("resize", update); };
   }, []);
   React.useEffect(() => {
     const viewport = window.visualViewport;

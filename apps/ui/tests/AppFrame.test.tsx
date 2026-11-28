@@ -197,16 +197,23 @@ test("hides mobile navigation during keyboard resize and restores it afterwards"
 test("blocks landscape on a phone and restores the same content in portrait", () => {
   const orientation = new EventTarget() as ScreenOrientation;
   Object.defineProperty(orientation, "type", { configurable: true, value: "portrait-primary" });
-  vi.stubGlobal("screen", { width: 402, height: 874, orientation });
+  const deviceScreen = { width: 402, height: 874, orientation };
+  vi.stubGlobal("screen", deviceScreen);
   vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true })));
+  vi.stubGlobal("innerWidth", 402);
+  vi.stubGlobal("innerHeight", 874);
   const view = renderFrame();
   const frame = view.container.querySelector("[data-app-frame]")!;
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  vi.stubGlobal("innerWidth", 874);
+  vi.stubGlobal("innerHeight", 402);
   Object.defineProperty(orientation, "type", { configurable: true, value: "landscape-primary" });
   act(() => orientation.dispatchEvent(new Event("change")));
   expect(screen.getByRole("alert")).toHaveTextContent("Turn your phone upright to continue.");
   expect(frame).toHaveAttribute("inert");
   expect(frame).toHaveAttribute("aria-hidden", "true");
+  vi.stubGlobal("innerWidth", 402);
+  vi.stubGlobal("innerHeight", 874);
   Object.defineProperty(orientation, "type", { configurable: true, value: "portrait-primary" });
   act(() => orientation.dispatchEvent(new Event("change")));
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -224,6 +231,21 @@ test("does not mistake a resized keyboard viewport for phone rotation", () => {
   const view = renderFrame();
   act(() => window.dispatchEvent(new Event("resize")));
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  view.unmount();
+  vi.unstubAllGlobals();
+});
+
+
+test("does not block a portrait screen when the orientation API is stale", () => {
+  const orientation = new EventTarget() as ScreenOrientation;
+  Object.defineProperty(orientation, "type", { configurable: true, value: "landscape-primary" });
+  vi.stubGlobal("screen", { width: 390, height: 844, orientation });
+  vi.stubGlobal("innerWidth", 390);
+  vi.stubGlobal("innerHeight", 844);
+  vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true })));
+  const view = renderFrame();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(screen.getByRole("main")).toHaveTextContent("Destination content");
   view.unmount();
   vi.unstubAllGlobals();
 });
