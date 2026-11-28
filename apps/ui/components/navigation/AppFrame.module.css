@@ -295,9 +295,8 @@
   position: fixed; inset: 0; z-index: 2147483647; display: flex;
   flex-direction: column; align-items: center; justify-content: center; gap: 18px;
   padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
-  background: var(--practice-canvas, #f1f5f9); color: var(--practice-text, #334155);
-  text-align: center; font: 500 18px/1.4 sans-serif;
+  background: var(--practice-canvas); color: var(--practice-text);
+  text-align: center; font-family: var(--practice-font-ui); font-size: var(--practice-text-lead); font-weight: 500; line-height: 1.4;
 }
 .portraitPrompt svg { width: 40px; height: 40px; }
 
-:global(.dark) .portraitPrompt { background: #171c24; color: #f8fafc; }

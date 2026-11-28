@@ -166,7 +166,7 @@ export function AppFrame({
         />
       </div>
     </div>
-    {landscapePhone && <div className={styles.portraitPrompt} role="alert"><Smartphone aria-hidden="true" /><span>{getUiMessages(headerProps.interfaceLanguage).navigation.portraitRequired}</span></div>}
+    {landscapePhone && <div className={`${practiceTheme.theme} ${styles.portraitPrompt}`} data-colour-mode="app" role="alert"><Smartphone aria-hidden="true" /><span>{getUiMessages(headerProps.interfaceLanguage).navigation.portraitRequired}</span></div>}
     </>
   );
 }
