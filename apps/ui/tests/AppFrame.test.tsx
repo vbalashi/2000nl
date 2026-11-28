@@ -193,3 +193,37 @@ test("hides mobile navigation during keyboard resize and restores it afterwards"
   Object.defineProperty(window, "innerHeight", { configurable: true, value: originalHeight });
   vi.unstubAllGlobals();
 });
+
+test("blocks landscape on a phone and restores the same content in portrait", () => {
+  const orientation = new EventTarget() as ScreenOrientation;
+  Object.defineProperty(orientation, "type", { configurable: true, value: "portrait-primary" });
+  vi.stubGlobal("screen", { width: 402, height: 874, orientation });
+  vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true })));
+  const view = renderFrame();
+  const frame = view.container.querySelector("[data-app-frame]")!;
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  Object.defineProperty(orientation, "type", { configurable: true, value: "landscape-primary" });
+  act(() => orientation.dispatchEvent(new Event("change")));
+  expect(screen.getByRole("alert")).toHaveTextContent("Turn your phone upright to continue.");
+  expect(frame).toHaveAttribute("inert");
+  expect(frame).toHaveAttribute("aria-hidden", "true");
+  Object.defineProperty(orientation, "type", { configurable: true, value: "portrait-primary" });
+  act(() => orientation.dispatchEvent(new Event("change")));
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(frame).not.toHaveAttribute("inert");
+  expect(screen.getByRole("main")).toHaveTextContent("Destination content");
+  view.unmount();
+  vi.unstubAllGlobals();
+});
+
+test("does not mistake a resized keyboard viewport for phone rotation", () => {
+  const orientation = new EventTarget() as ScreenOrientation;
+  Object.defineProperty(orientation, "type", { configurable: true, value: "portrait-primary" });
+  vi.stubGlobal("screen", { width: 402, height: 874, orientation });
+  vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true })));
+  const view = renderFrame();
+  act(() => window.dispatchEvent(new Event("resize")));
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  view.unmount();
+  vi.unstubAllGlobals();
+});

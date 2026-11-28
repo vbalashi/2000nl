@@ -439,7 +439,8 @@
       "statistics": "Statistics",
       "settings": "Settings",
       "history": "History",
-      "appLabel": "2000nl: {destination}"
+      "appLabel": "2000nl: {destination}",
+      "portraitRequired": "Turn your phone upright to continue."
     },
     "trainingOverview": {
       "nothingDue": "Nothing to review right now.",
