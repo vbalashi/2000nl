@@ -2062,5 +2062,6 @@
   "ui.settings.premiumOffer.benefitMeanings": {"source":"Unlimited personal meanings and cards","translationHash":"5918f818e39569a41e87cf90ab24d4ca7fe6a2ce3b544d2d50fd0cfe6ee8056b"},
   "ui.settings.premiumOffer.benefitFuture": {"source":"New Premium features as they launch","translationHash":"59b290771c3eebf38f4fda29db7e800c0fdafba43763e3c46907ad1aa9636dcf"},
   "ui.settings.premiumOffer.benefitTranslations": {"source":"AI-assisted translations in two languages at once","translationHash":"a7253a576cea83a1678934c29a8d826b156a3506c7315b3ba7754b8e661f20ff"},
-  "ui.settings.premiumOffer.benefitDevices": {"source":"Automatic sync across phones, tablets and computers","translationHash":"e74ff70c2346bddee68885fb535e60c864ea263dedf4b2ea62b0ad16923bf29f"}
+  "ui.settings.premiumOffer.benefitDevices": {"source":"Automatic sync across phones, tablets and computers","translationHash":"e74ff70c2346bddee68885fb535e60c864ea263dedf4b2ea62b0ad16923bf29f"},
+  "ui.navigation.portraitRequired": {"source":"Turn your phone upright to continue.","translationHash":"5b5653d765f3647873ed3e998efb870be3a2d1cba8ee386cb02edb3fdad51a0c"}
 }

@@ -439,7 +439,8 @@
       "statistics": "Statistieken",
       "settings": "Instellingen",
       "history": "Geschiedenis",
-      "appLabel": "2000nl: {destination}"
+      "appLabel": "2000nl: {destination}",
+      "portraitRequired": "Draai je telefoon rechtop om verder te gaan."
     },
     "trainingOverview": {
       "nothingDue": "Er is nu niets te herhalen.",

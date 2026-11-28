@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Smartphone } from "lucide-react";
 import practiceTheme from "@/components/practice/ui/practiceTheme.module.css";
 import { MaintenanceOrReleaseBanner } from "@/components/maintenance/MaintenanceNotice";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -96,6 +97,24 @@ export function AppFrame({
   ...headerProps
 }: AppFrameProps) {
   const [keyboardOpen, setKeyboardOpen] = React.useState(false);
+  const [landscapePhone, setLandscapePhone] = React.useState(false);
+  const frameRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    frameRef.current?.toggleAttribute("inert", blockedByOverlay || landscapePhone);
+  }, [blockedByOverlay, landscapePhone]);
+  React.useEffect(() => {
+    const orientation = screen.orientation;
+    const update = () => {
+      const phone = Math.min(screen.width, screen.height) < 600 && matchMedia("(pointer: coarse)").matches;
+      const landscape = (orientation?.type ? orientation.type.startsWith("landscape") : Math.abs(window.orientation) === 90) && window.innerWidth > window.innerHeight;
+      setLandscapePhone(phone && landscape);
+    };
+    update();
+    orientation?.addEventListener("change", update);
+    window.addEventListener("orientationchange", update);
+    window.addEventListener("resize", update);
+    return () => { orientation?.removeEventListener("change", update); window.removeEventListener("orientationchange", update); window.removeEventListener("resize", update); };
+  }, []);
   React.useEffect(() => {
     const viewport = window.visualViewport;
     if (!viewport) return;
@@ -120,9 +139,11 @@ export function AppFrame({
     headerProps.onNavigate(destination);
   };
   return (
+    <>
     <div
       className={`${styles.frame}${className ? ` ${className}` : ""}`}
-      inert={blockedByOverlay}
+      ref={frameRef}
+      aria-hidden={landscapePhone || undefined}
       data-app-frame="true"
       data-keyboard-open={keyboardOpen ? "true" : undefined}
       data-immersive={immersive ? "true" : undefined}
@@ -146,5 +167,7 @@ export function AppFrame({
         />
       </div>
     </div>
+    {landscapePhone && <div className={`${practiceTheme.theme} ${styles.portraitPrompt}`} data-colour-mode="app" role="alert"><Smartphone aria-hidden="true" /><span>{getUiMessages(headerProps.interfaceLanguage).navigation.portraitRequired}</span></div>}
+    </>
   );
 }

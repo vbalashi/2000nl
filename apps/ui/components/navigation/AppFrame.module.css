@@ -25,6 +25,19 @@
   color: var(--app-frame-ink);
 }
 
+/* Installed iOS web apps can leave 100dvh short by the status-bar height
+   after the keyboard closes. In standalone mode there is no browser toolbar,
+   so the large viewport gives the frame the full available screen again. */
+@supports (-webkit-touch-callout: none) {
+  @media (display-mode: standalone) {
+    :global(html):has(.frame),
+    :global(body):has(.frame),
+    .frame {
+      height: 100vh;
+    }
+  }
+}
+
 :global(.dark) .frame {
   --app-frame-surface: var(--practice-canvas, #171c24);
   --app-frame-ink: var(--practice-text, #f8fafc);
@@ -277,3 +290,13 @@
 
 /* Banner tokens must exist above the independently themed destination screens. */
 .releaseSurface{display:contents}
+
+.portraitPrompt {
+  position: fixed; inset: 0; z-index: 2147483647; display: flex;
+  flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+  background: var(--practice-canvas); color: var(--practice-text);
+  text-align: center; font-family: var(--practice-font-ui); font-size: var(--practice-text-lead); font-weight: 500; line-height: 1.4;
+}
+.portraitPrompt svg { width: 40px; height: 40px; }
+
