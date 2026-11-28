@@ -9,6 +9,7 @@
 }
 
 .frame {
+  --app-bottom-reclaimed: 0px;
   --app-frame-surface: var(--practice-canvas, #f1f5f9);
   --app-frame-ink: var(--practice-text, #334155);
   --app-frame-muted: var(--practice-text-muted, #64748b);
@@ -34,6 +35,10 @@
     :global(body):has(.frame),
     .frame {
       height: 100vh;
+    }
+    .frame {
+      /* Keep the home indicator clear while reclaiming part of the inset. */
+      --app-bottom-reclaimed: min(24px, env(safe-area-inset-bottom, 0px));
     }
   }
 }
@@ -162,7 +167,7 @@
 .tabBar {
   display: none;
   flex-shrink: 0;
-  padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
+  padding: 4px 8px calc(4px + env(safe-area-inset-bottom) - var(--app-bottom-reclaimed));
   border-top: 1px solid var(--app-frame-line);
   background: var(--app-frame-surface);
 }
